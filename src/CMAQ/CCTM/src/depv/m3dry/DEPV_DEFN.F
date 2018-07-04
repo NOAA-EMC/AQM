@@ -568,7 +568,9 @@ C-----------------------------------------------------------------------
 !         USE LSM_Mod,  Only: n_lufrac
          USE ASX_DATA_MOD, Only: GRID_DATA !, MOSAIC_DATA
 
+#ifdef _MIO
          use mio_module
+#endif
 
          IMPLICIT NONE
 

@@ -122,7 +122,9 @@ C...modules
          use HGRD_DEFN, ONLY : MYPE, NCOLS, NROWS
          use Cloud_Optics
 
+#ifdef _MIO
          use mio_module
+#endif
          use get_env_module
 
       USE RXNS_DATA            ! chemistry varaibles and data

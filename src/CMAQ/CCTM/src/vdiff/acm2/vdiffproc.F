@@ -93,7 +93,9 @@ C-----------------------------------------------------------------------
 !     USE SEDIMENTATION
 
       use mydata_module
+#ifdef _MIO
       use mio_module
+#endif
 
       IMPLICIT NONE
 

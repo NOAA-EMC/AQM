@@ -56,7 +56,9 @@ C-----------------------------------------------------------------------
 !     USE GRID_CONF           ! horizontal & vertical domain specifications      
       USE HGRD_DEFN
       USE VGRD_DEFN
+#ifdef _MIO
       use mio_module
+#endif
 
       IMPLICIT NONE
 
@@ -105,6 +107,10 @@ C-----------------------------------------------------------------------
 
       REAL(4), ALLOCATABLE :: BUFF2( :,: )
       REAL, ALLOCATABLE :: BUFF( :,:,: )
+#ifndef _MIO
+      INTEGER, PARAMETER :: max_time_length  = 255
+      INTEGER, PARAMETER :: max_filename_len = 255
+#endif
       character (max_time_length) :: my_emis_buffer_time
 
       character (len = max_filename_len) :: my_emis_1
@@ -158,6 +164,8 @@ C-----------------------------------------------------------------------
          SUCCESS = .TRUE.
 
          LOGDEV = 6
+
+#ifdef _MIO
 
 !        IF ( GDTYP_GD .EQ. LATGRD3 ) THEN
 !           DX1 = DG2M * XCELL_GD ! in m.
@@ -365,6 +373,7 @@ C or Print Warnings if Mistakes Are Made.
 !            FERT = 0.0   ! array assignment
 !         END IF
 C combined gas emssions conversion factor
+#endif
 
 C RETURN FROM INITIALIZATION
          SUCCESS = .TRUE.; RETURN
@@ -495,6 +504,7 @@ C Local Variables:
 
 C-----------------------------------------------------------------------
 
+#ifdef _MIO
          call setfile (my_emis_1)
 
 !        write (logdev, '(a21, 2i8, i5, a20)') 
@@ -1010,6 +1020,8 @@ C accounts for emissions species names as a subset of the vert. diffused species
             end do
             write( logdev,'("@@@3 ", a, g16.6)') nr_emis( s ), sumem
          end do
+#endif
+
 #endif
 
          RETURN

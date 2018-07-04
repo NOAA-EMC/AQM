@@ -131,7 +131,9 @@ C:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
      &                              GAMMA_IEPOX, GAMMA_IMAE, KPARTIEPOX, AERO_CHEM_SET
 !     USE PMDIAG_DATA_MODULE
       USE get_env_module
+#ifdef _MIO
       USE mio_module
+#endif
 
       IMPLICIT NONE
 
@@ -818,10 +820,12 @@ C *** Write data to the aerosol diagnostic file.
 
         write (logdev, *) ' ==d== pmdiag c ', TIME_STAMP
 
+#ifdef _MIO
             do v = 1, mio_file_data(mio_cfile)%nvars
                VNAME = mio_file_data(mio_cfile)%var_name(v)
                call fwrite (CTM_PMDIAG_1, VNAME, real(PMDIAG_SPC(1,:,1,v), 4), TIME_STAMP)
             end do
+#endif
 
 !           IF ( .NOT. WRITE3( CTM_PMDIAG_1, ALLVAR3,
 !    &                         MDATE, MTIME, PMDIAG_SPC ) ) THEN

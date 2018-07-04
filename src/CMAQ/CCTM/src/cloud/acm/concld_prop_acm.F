@@ -111,7 +111,9 @@ C-----------------------------------------------------------------------
       USE VGRD_DEFN, ONLY : NLAYS
       USE HGRD_DEFN, ONLY : NCOLS, NROWS, MYPE
 
+#ifdef _MIO
       use mio_module
+#endif
 
       USE PHOT_MET_DATA, ONLY: IND_ACM_CLOUD, CLEAR_ACM_CLOUD, CAPTURE_ACM_CLOUD
       USE ASX_DATA_MOD,  ONLY: GRID_DATA

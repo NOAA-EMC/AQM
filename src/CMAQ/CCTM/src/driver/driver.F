@@ -115,7 +115,9 @@ C-----------------------------------------------------------------------
       use get_env_module
       use lus_defn
 
+#ifdef _MIO
       use mio_module
+#endif
 #else
       USE PCGRID_DEFN           ! inherits GRID_CONF
       USE STD_CONC              ! standard CONC
@@ -500,9 +502,9 @@ C Verify input file header consistency and run duration
         call get_env (ncd_64bit_offset, 'ncd_64bit_offset', .false.)
 
         if (ncd_64bit_offset) then
-            io_mode = ior (nf90_noclobber, nf90_64bit_offset)
+!           io_mode = ior (nf90_noclobber, nf90_64bit_offset)
          else
-            io_mode = nf90_noclobber
+!           io_mode = nf90_noclobber
          end if
 
         call setfile (EMIS_1)

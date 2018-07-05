@@ -14,6 +14,7 @@ AC_PROG_RANLIB
 AM_PROG_AR
 
 AC_PROG_FC
+AC_FC_MODULE_EXTENSION
 AC_PROG_F77($FC)
 
 # Checks for libraries.
@@ -30,6 +31,7 @@ AC_CONFIG_FILES([Makefile
                  src/CMAQ/Makefile
                  src/CMAQ/UTIL/Makefile
                  src/CMAQ/util/Makefile
+                 src/shr//Makefile
                  src/Makefile])
 AC_OUTPUT
 

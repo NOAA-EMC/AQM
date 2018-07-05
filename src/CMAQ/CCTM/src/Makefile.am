@@ -143,7 +143,13 @@ libCCTM_a_FFLAGS += -I . \
 libCCTM_a_FCFLAGS  = -free -override-limits
 libCCTM_a_FCFLAGS += -I $(builddir)/../../util
 
-CLEANFILES = *.mod
+.PHONY : clean-modules
+
+clean-modules:
+	-test -z "$(FC_MODEXT)" || rm -f *.$(FC_MODEXT)
+
+clean-local: clean-modules
+
 # CCTM dependencies
 # aero
 aero/aero6/libCCTM_a-getpar.$(OBJEXT) : aero/aero6/libCCTM_a-AEROMET_DATA.$(OBJEXT) aero/aero6/libCCTM_a-AERO_DATA.$(OBJEXT) 

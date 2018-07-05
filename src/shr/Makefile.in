@@ -76,7 +76,7 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-subdir = src/CMAQ/util
+subdir = src/shr
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -91,16 +91,24 @@ AM_V_AR = $(am__v_AR_@AM_V@)
 am__v_AR_ = $(am__v_AR_@AM_DEFAULT_V@)
 am__v_AR_0 = @echo "  AR      " $@;
 am__v_AR_1 = 
-libutil_a_AR = $(AR) $(ARFLAGS)
-libutil_a_LIBADD =
-am_libutil_a_OBJECTS = libutil_a-dt2str.$(OBJEXT) \
-	libutil_a-getefile.$(OBJEXT) libutil_a-get_env_mod.$(OBJEXT) \
-	libutil_a-hhmmss.$(OBJEXT) libutil_a-mmddyy.$(OBJEXT) \
-	libutil_a-mydata.$(OBJEXT) libutil_a-nextime.$(OBJEXT) \
-	libutil_a-sec2time.$(OBJEXT) libutil_a-secsdiff.$(OBJEXT) \
-	libutil_a-time2sec.$(OBJEXT) libutil_a-upcase.$(OBJEXT) \
-	libutil_a-yr2day.$(OBJEXT)
-libutil_a_OBJECTS = $(am_libutil_a_OBJECTS)
+libshr_a_AR = $(AR) $(ARFLAGS)
+libshr_a_LIBADD =
+am_libshr_a_OBJECTS = libshr_a-aqm_clock_mod.$(OBJEXT) \
+	libshr_a-aqm_comm_mod.$(OBJEXT) \
+	libshr_a-aqm_config_mod.$(OBJEXT) \
+	libshr_a-aqm_const_mod.$(OBJEXT) \
+	libshr_a-aqm_data_mod.$(OBJEXT) \
+	libshr_a-aqm_domain_mod.$(OBJEXT) \
+	libshr_a-aqm_io_mod.$(OBJEXT) \
+	libshr_a-aqm_iodata_mod.$(OBJEXT) \
+	libshr_a-aqm_iolayout_mod.$(OBJEXT) \
+	libshr_a-aqm_model_mod.$(OBJEXT) libshr_a-aqm_rc_mod.$(OBJEXT) \
+	libshr_a-aqm_species_mod.$(OBJEXT) \
+	libshr_a-aqm_state_mod.$(OBJEXT) \
+	libshr_a-aqm_tracers_mod.$(OBJEXT) \
+	libshr_a-aqm_types_mod.$(OBJEXT) \
+	libshr_a-aqm_vars_mod.$(OBJEXT)
+libshr_a_OBJECTS = $(am_libshr_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -118,29 +126,12 @@ AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
-PPF77COMPILE = $(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_FFLAGS) $(FFLAGS)
-AM_V_PPF77 = $(am__v_PPF77_@AM_V@)
-am__v_PPF77_ = $(am__v_PPF77_@AM_DEFAULT_V@)
-am__v_PPF77_0 = @echo "  PPF77   " $@;
-am__v_PPF77_1 = 
-F77LD = $(F77)
-F77LINK = $(F77LD) $(AM_FFLAGS) $(FFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o \
-	$@
-AM_V_F77LD = $(am__v_F77LD_@AM_V@)
-am__v_F77LD_ = $(am__v_F77LD_@AM_DEFAULT_V@)
-am__v_F77LD_0 = @echo "  F77LD   " $@;
-am__v_F77LD_1 = 
-F77COMPILE = $(F77) $(AM_FFLAGS) $(FFLAGS)
-AM_V_F77 = $(am__v_F77_@AM_V@)
-am__v_F77_ = $(am__v_F77_@AM_DEFAULT_V@)
-am__v_F77_0 = @echo "  F77     " $@;
-am__v_F77_1 = 
-FCCOMPILE = $(FC) $(AM_FCFLAGS) $(FCFLAGS)
-AM_V_FC = $(am__v_FC_@AM_V@)
-am__v_FC_ = $(am__v_FC_@AM_DEFAULT_V@)
-am__v_FC_0 = @echo "  FC      " $@;
-am__v_FC_1 = 
+PPFCCOMPILE = $(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
+	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_FCFLAGS) $(FCFLAGS)
+AM_V_PPFC = $(am__v_PPFC_@AM_V@)
+am__v_PPFC_ = $(am__v_PPFC_@AM_DEFAULT_V@)
+am__v_PPFC_0 = @echo "  PPFC    " $@;
+am__v_PPFC_1 = 
 FCLD = $(FC)
 FCLINK = $(FCLD) $(AM_FCFLAGS) $(FCFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o \
 	$@
@@ -148,20 +139,8 @@ AM_V_FCLD = $(am__v_FCLD_@AM_V@)
 am__v_FCLD_ = $(am__v_FCLD_@AM_DEFAULT_V@)
 am__v_FCLD_0 = @echo "  FCLD    " $@;
 am__v_FCLD_1 = 
-COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
-	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
-AM_V_CC = $(am__v_CC_@AM_V@)
-am__v_CC_ = $(am__v_CC_@AM_DEFAULT_V@)
-am__v_CC_0 = @echo "  CC      " $@;
-am__v_CC_1 = 
-CCLD = $(CC)
-LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-AM_V_CCLD = $(am__v_CCLD_@AM_V@)
-am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
-am__v_CCLD_0 = @echo "  CCLD    " $@;
-am__v_CCLD_1 = 
-SOURCES = $(libutil_a_SOURCES)
-DIST_SOURCES = $(libutil_a_SOURCES)
+SOURCES = $(libshr_a_SOURCES)
+DIST_SOURCES = $(libshr_a_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -281,19 +260,17 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-noinst_LIBRARIES = libutil.a
+noinst_LIBRARIES = libshr.a
+libshr_a_SOURCES = aqm_clock_mod.F90 aqm_comm_mod.F90 aqm_config_mod.F90 aqm_const_mod.F90 \
+	aqm_data_mod.F90 aqm_domain_mod.F90 aqm_io_mod.F90 aqm_iodata_mod.F90 aqm_iolayout_mod.F90 \
+	aqm_model_mod.F90 aqm_rc_mod.F90 aqm_species_mod.F90 \
+	aqm_state_mod.F90 aqm_tracers_mod.F90 aqm_types_mod.F90 aqm_vars_mod.F90
 
-# libutil_a_SOURCES = dt2str.f getefile.F get_env_mod.f90 hhmmss.f mmddyy.F mydata.F \
-# 	nextime.F sec2time.f secsdiff.F time2sec.f unload_cgrid.F upcase.f yr2day.F
-libutil_a_SOURCES = dt2str.f getefile.F get_env_mod.f90 hhmmss.f mmddyy.F mydata.F \
-	nextime.F sec2time.f secsdiff.F time2sec.f upcase.f yr2day.F
-
-libutil_a_FFLAGS = -I .
-libutil_a_FCFLAGS = 
+libshr_a_FCFLAGS = 
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .F .f .f90 .o .obj
+.SUFFIXES: .F90 .o .obj
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -303,9 +280,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu src/CMAQ/util/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu src/shr//Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu src/CMAQ/util/Makefile
+	  $(AUTOMAKE) --gnu src/shr//Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -328,10 +305,10 @@ $(am__aclocal_m4_deps):
 clean-noinstLIBRARIES:
 	-test -z "$(noinst_LIBRARIES)" || rm -f $(noinst_LIBRARIES)
 
-libutil.a: $(libutil_a_OBJECTS) $(libutil_a_DEPENDENCIES) $(EXTRA_libutil_a_DEPENDENCIES) 
-	$(AM_V_at)-rm -f libutil.a
-	$(AM_V_AR)$(libutil_a_AR) libutil.a $(libutil_a_OBJECTS) $(libutil_a_LIBADD)
-	$(AM_V_at)$(RANLIB) libutil.a
+libshr.a: $(libshr_a_OBJECTS) $(libshr_a_DEPENDENCIES) $(EXTRA_libshr_a_DEPENDENCIES) 
+	$(AM_V_at)-rm -f libshr.a
+	$(AM_V_AR)$(libshr_a_AR) libshr.a $(libshr_a_OBJECTS) $(libshr_a_LIBADD)
+	$(AM_V_at)$(RANLIB) libshr.a
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -339,97 +316,107 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-.F.o:
-	$(AM_V_PPF77)$(PPF77COMPILE) -c -o $@ $<
+.F90.o:
+	$(AM_V_PPFC)$(PPFCCOMPILE) -c -o $@ $<
 
-.F.obj:
-	$(AM_V_PPF77)$(PPF77COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+.F90.obj:
+	$(AM_V_PPFC)$(PPFCCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
-libutil_a-getefile.o: getefile.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libutil_a_FFLAGS) $(FFLAGS) -c -o libutil_a-getefile.o `test -f 'getefile.F' || echo '$(srcdir)/'`getefile.F
+libshr_a-aqm_clock_mod.o: aqm_clock_mod.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_clock_mod.o `test -f 'aqm_clock_mod.F90' || echo '$(srcdir)/'`aqm_clock_mod.F90
 
-libutil_a-getefile.obj: getefile.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libutil_a_FFLAGS) $(FFLAGS) -c -o libutil_a-getefile.obj `if test -f 'getefile.F'; then $(CYGPATH_W) 'getefile.F'; else $(CYGPATH_W) '$(srcdir)/getefile.F'; fi`
+libshr_a-aqm_clock_mod.obj: aqm_clock_mod.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_clock_mod.obj `if test -f 'aqm_clock_mod.F90'; then $(CYGPATH_W) 'aqm_clock_mod.F90'; else $(CYGPATH_W) '$(srcdir)/aqm_clock_mod.F90'; fi`
 
-libutil_a-mmddyy.o: mmddyy.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libutil_a_FFLAGS) $(FFLAGS) -c -o libutil_a-mmddyy.o `test -f 'mmddyy.F' || echo '$(srcdir)/'`mmddyy.F
+libshr_a-aqm_comm_mod.o: aqm_comm_mod.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_comm_mod.o `test -f 'aqm_comm_mod.F90' || echo '$(srcdir)/'`aqm_comm_mod.F90
 
-libutil_a-mmddyy.obj: mmddyy.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libutil_a_FFLAGS) $(FFLAGS) -c -o libutil_a-mmddyy.obj `if test -f 'mmddyy.F'; then $(CYGPATH_W) 'mmddyy.F'; else $(CYGPATH_W) '$(srcdir)/mmddyy.F'; fi`
+libshr_a-aqm_comm_mod.obj: aqm_comm_mod.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_comm_mod.obj `if test -f 'aqm_comm_mod.F90'; then $(CYGPATH_W) 'aqm_comm_mod.F90'; else $(CYGPATH_W) '$(srcdir)/aqm_comm_mod.F90'; fi`
 
-libutil_a-mydata.o: mydata.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libutil_a_FFLAGS) $(FFLAGS) -c -o libutil_a-mydata.o `test -f 'mydata.F' || echo '$(srcdir)/'`mydata.F
+libshr_a-aqm_config_mod.o: aqm_config_mod.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_config_mod.o `test -f 'aqm_config_mod.F90' || echo '$(srcdir)/'`aqm_config_mod.F90
 
-libutil_a-mydata.obj: mydata.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libutil_a_FFLAGS) $(FFLAGS) -c -o libutil_a-mydata.obj `if test -f 'mydata.F'; then $(CYGPATH_W) 'mydata.F'; else $(CYGPATH_W) '$(srcdir)/mydata.F'; fi`
+libshr_a-aqm_config_mod.obj: aqm_config_mod.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_config_mod.obj `if test -f 'aqm_config_mod.F90'; then $(CYGPATH_W) 'aqm_config_mod.F90'; else $(CYGPATH_W) '$(srcdir)/aqm_config_mod.F90'; fi`
 
-libutil_a-nextime.o: nextime.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libutil_a_FFLAGS) $(FFLAGS) -c -o libutil_a-nextime.o `test -f 'nextime.F' || echo '$(srcdir)/'`nextime.F
+libshr_a-aqm_const_mod.o: aqm_const_mod.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_const_mod.o `test -f 'aqm_const_mod.F90' || echo '$(srcdir)/'`aqm_const_mod.F90
 
-libutil_a-nextime.obj: nextime.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libutil_a_FFLAGS) $(FFLAGS) -c -o libutil_a-nextime.obj `if test -f 'nextime.F'; then $(CYGPATH_W) 'nextime.F'; else $(CYGPATH_W) '$(srcdir)/nextime.F'; fi`
+libshr_a-aqm_const_mod.obj: aqm_const_mod.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_const_mod.obj `if test -f 'aqm_const_mod.F90'; then $(CYGPATH_W) 'aqm_const_mod.F90'; else $(CYGPATH_W) '$(srcdir)/aqm_const_mod.F90'; fi`
 
-libutil_a-secsdiff.o: secsdiff.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libutil_a_FFLAGS) $(FFLAGS) -c -o libutil_a-secsdiff.o `test -f 'secsdiff.F' || echo '$(srcdir)/'`secsdiff.F
+libshr_a-aqm_data_mod.o: aqm_data_mod.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_data_mod.o `test -f 'aqm_data_mod.F90' || echo '$(srcdir)/'`aqm_data_mod.F90
 
-libutil_a-secsdiff.obj: secsdiff.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libutil_a_FFLAGS) $(FFLAGS) -c -o libutil_a-secsdiff.obj `if test -f 'secsdiff.F'; then $(CYGPATH_W) 'secsdiff.F'; else $(CYGPATH_W) '$(srcdir)/secsdiff.F'; fi`
+libshr_a-aqm_data_mod.obj: aqm_data_mod.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_data_mod.obj `if test -f 'aqm_data_mod.F90'; then $(CYGPATH_W) 'aqm_data_mod.F90'; else $(CYGPATH_W) '$(srcdir)/aqm_data_mod.F90'; fi`
 
-libutil_a-yr2day.o: yr2day.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libutil_a_FFLAGS) $(FFLAGS) -c -o libutil_a-yr2day.o `test -f 'yr2day.F' || echo '$(srcdir)/'`yr2day.F
+libshr_a-aqm_domain_mod.o: aqm_domain_mod.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_domain_mod.o `test -f 'aqm_domain_mod.F90' || echo '$(srcdir)/'`aqm_domain_mod.F90
 
-libutil_a-yr2day.obj: yr2day.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libutil_a_FFLAGS) $(FFLAGS) -c -o libutil_a-yr2day.obj `if test -f 'yr2day.F'; then $(CYGPATH_W) 'yr2day.F'; else $(CYGPATH_W) '$(srcdir)/yr2day.F'; fi`
-.F.f:
-	$(F77COMPILE) -F $<
+libshr_a-aqm_domain_mod.obj: aqm_domain_mod.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_domain_mod.obj `if test -f 'aqm_domain_mod.F90'; then $(CYGPATH_W) 'aqm_domain_mod.F90'; else $(CYGPATH_W) '$(srcdir)/aqm_domain_mod.F90'; fi`
 
-.f.o:
-	$(AM_V_F77)$(F77COMPILE) -c -o $@ $<
+libshr_a-aqm_io_mod.o: aqm_io_mod.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_io_mod.o `test -f 'aqm_io_mod.F90' || echo '$(srcdir)/'`aqm_io_mod.F90
 
-.f.obj:
-	$(AM_V_F77)$(F77COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+libshr_a-aqm_io_mod.obj: aqm_io_mod.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_io_mod.obj `if test -f 'aqm_io_mod.F90'; then $(CYGPATH_W) 'aqm_io_mod.F90'; else $(CYGPATH_W) '$(srcdir)/aqm_io_mod.F90'; fi`
 
-libutil_a-dt2str.o: dt2str.f
-	$(AM_V_F77)$(F77) $(libutil_a_FFLAGS) $(FFLAGS) -c -o libutil_a-dt2str.o `test -f 'dt2str.f' || echo '$(srcdir)/'`dt2str.f
+libshr_a-aqm_iodata_mod.o: aqm_iodata_mod.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_iodata_mod.o `test -f 'aqm_iodata_mod.F90' || echo '$(srcdir)/'`aqm_iodata_mod.F90
 
-libutil_a-dt2str.obj: dt2str.f
-	$(AM_V_F77)$(F77) $(libutil_a_FFLAGS) $(FFLAGS) -c -o libutil_a-dt2str.obj `if test -f 'dt2str.f'; then $(CYGPATH_W) 'dt2str.f'; else $(CYGPATH_W) '$(srcdir)/dt2str.f'; fi`
+libshr_a-aqm_iodata_mod.obj: aqm_iodata_mod.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_iodata_mod.obj `if test -f 'aqm_iodata_mod.F90'; then $(CYGPATH_W) 'aqm_iodata_mod.F90'; else $(CYGPATH_W) '$(srcdir)/aqm_iodata_mod.F90'; fi`
 
-libutil_a-hhmmss.o: hhmmss.f
-	$(AM_V_F77)$(F77) $(libutil_a_FFLAGS) $(FFLAGS) -c -o libutil_a-hhmmss.o `test -f 'hhmmss.f' || echo '$(srcdir)/'`hhmmss.f
+libshr_a-aqm_iolayout_mod.o: aqm_iolayout_mod.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_iolayout_mod.o `test -f 'aqm_iolayout_mod.F90' || echo '$(srcdir)/'`aqm_iolayout_mod.F90
 
-libutil_a-hhmmss.obj: hhmmss.f
-	$(AM_V_F77)$(F77) $(libutil_a_FFLAGS) $(FFLAGS) -c -o libutil_a-hhmmss.obj `if test -f 'hhmmss.f'; then $(CYGPATH_W) 'hhmmss.f'; else $(CYGPATH_W) '$(srcdir)/hhmmss.f'; fi`
+libshr_a-aqm_iolayout_mod.obj: aqm_iolayout_mod.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_iolayout_mod.obj `if test -f 'aqm_iolayout_mod.F90'; then $(CYGPATH_W) 'aqm_iolayout_mod.F90'; else $(CYGPATH_W) '$(srcdir)/aqm_iolayout_mod.F90'; fi`
 
-libutil_a-sec2time.o: sec2time.f
-	$(AM_V_F77)$(F77) $(libutil_a_FFLAGS) $(FFLAGS) -c -o libutil_a-sec2time.o `test -f 'sec2time.f' || echo '$(srcdir)/'`sec2time.f
+libshr_a-aqm_model_mod.o: aqm_model_mod.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_model_mod.o `test -f 'aqm_model_mod.F90' || echo '$(srcdir)/'`aqm_model_mod.F90
 
-libutil_a-sec2time.obj: sec2time.f
-	$(AM_V_F77)$(F77) $(libutil_a_FFLAGS) $(FFLAGS) -c -o libutil_a-sec2time.obj `if test -f 'sec2time.f'; then $(CYGPATH_W) 'sec2time.f'; else $(CYGPATH_W) '$(srcdir)/sec2time.f'; fi`
+libshr_a-aqm_model_mod.obj: aqm_model_mod.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_model_mod.obj `if test -f 'aqm_model_mod.F90'; then $(CYGPATH_W) 'aqm_model_mod.F90'; else $(CYGPATH_W) '$(srcdir)/aqm_model_mod.F90'; fi`
 
-libutil_a-time2sec.o: time2sec.f
-	$(AM_V_F77)$(F77) $(libutil_a_FFLAGS) $(FFLAGS) -c -o libutil_a-time2sec.o `test -f 'time2sec.f' || echo '$(srcdir)/'`time2sec.f
+libshr_a-aqm_rc_mod.o: aqm_rc_mod.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_rc_mod.o `test -f 'aqm_rc_mod.F90' || echo '$(srcdir)/'`aqm_rc_mod.F90
 
-libutil_a-time2sec.obj: time2sec.f
-	$(AM_V_F77)$(F77) $(libutil_a_FFLAGS) $(FFLAGS) -c -o libutil_a-time2sec.obj `if test -f 'time2sec.f'; then $(CYGPATH_W) 'time2sec.f'; else $(CYGPATH_W) '$(srcdir)/time2sec.f'; fi`
+libshr_a-aqm_rc_mod.obj: aqm_rc_mod.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_rc_mod.obj `if test -f 'aqm_rc_mod.F90'; then $(CYGPATH_W) 'aqm_rc_mod.F90'; else $(CYGPATH_W) '$(srcdir)/aqm_rc_mod.F90'; fi`
 
-libutil_a-upcase.o: upcase.f
-	$(AM_V_F77)$(F77) $(libutil_a_FFLAGS) $(FFLAGS) -c -o libutil_a-upcase.o `test -f 'upcase.f' || echo '$(srcdir)/'`upcase.f
+libshr_a-aqm_species_mod.o: aqm_species_mod.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_species_mod.o `test -f 'aqm_species_mod.F90' || echo '$(srcdir)/'`aqm_species_mod.F90
 
-libutil_a-upcase.obj: upcase.f
-	$(AM_V_F77)$(F77) $(libutil_a_FFLAGS) $(FFLAGS) -c -o libutil_a-upcase.obj `if test -f 'upcase.f'; then $(CYGPATH_W) 'upcase.f'; else $(CYGPATH_W) '$(srcdir)/upcase.f'; fi`
+libshr_a-aqm_species_mod.obj: aqm_species_mod.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_species_mod.obj `if test -f 'aqm_species_mod.F90'; then $(CYGPATH_W) 'aqm_species_mod.F90'; else $(CYGPATH_W) '$(srcdir)/aqm_species_mod.F90'; fi`
 
-.f90.o:
-	$(AM_V_FC)$(FCCOMPILE) -c -o $@ $<
+libshr_a-aqm_state_mod.o: aqm_state_mod.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_state_mod.o `test -f 'aqm_state_mod.F90' || echo '$(srcdir)/'`aqm_state_mod.F90
 
-.f90.obj:
-	$(AM_V_FC)$(FCCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+libshr_a-aqm_state_mod.obj: aqm_state_mod.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_state_mod.obj `if test -f 'aqm_state_mod.F90'; then $(CYGPATH_W) 'aqm_state_mod.F90'; else $(CYGPATH_W) '$(srcdir)/aqm_state_mod.F90'; fi`
 
-libutil_a-get_env_mod.o: get_env_mod.f90
-	$(AM_V_FC)$(FC) $(libutil_a_FCFLAGS) $(FCFLAGS) -c -o libutil_a-get_env_mod.o `test -f 'get_env_mod.f90' || echo '$(srcdir)/'`get_env_mod.f90
+libshr_a-aqm_tracers_mod.o: aqm_tracers_mod.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_tracers_mod.o `test -f 'aqm_tracers_mod.F90' || echo '$(srcdir)/'`aqm_tracers_mod.F90
 
-libutil_a-get_env_mod.obj: get_env_mod.f90
-	$(AM_V_FC)$(FC) $(libutil_a_FCFLAGS) $(FCFLAGS) -c -o libutil_a-get_env_mod.obj `if test -f 'get_env_mod.f90'; then $(CYGPATH_W) 'get_env_mod.f90'; else $(CYGPATH_W) '$(srcdir)/get_env_mod.f90'; fi`
+libshr_a-aqm_tracers_mod.obj: aqm_tracers_mod.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_tracers_mod.obj `if test -f 'aqm_tracers_mod.F90'; then $(CYGPATH_W) 'aqm_tracers_mod.F90'; else $(CYGPATH_W) '$(srcdir)/aqm_tracers_mod.F90'; fi`
+
+libshr_a-aqm_types_mod.o: aqm_types_mod.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_types_mod.o `test -f 'aqm_types_mod.F90' || echo '$(srcdir)/'`aqm_types_mod.F90
+
+libshr_a-aqm_types_mod.obj: aqm_types_mod.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_types_mod.obj `if test -f 'aqm_types_mod.F90'; then $(CYGPATH_W) 'aqm_types_mod.F90'; else $(CYGPATH_W) '$(srcdir)/aqm_types_mod.F90'; fi`
+
+libshr_a-aqm_vars_mod.o: aqm_vars_mod.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_vars_mod.o `test -f 'aqm_vars_mod.F90' || echo '$(srcdir)/'`aqm_vars_mod.F90
+
+libshr_a-aqm_vars_mod.obj: aqm_vars_mod.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_vars_mod.obj `if test -f 'aqm_vars_mod.F90'; then $(CYGPATH_W) 'aqm_vars_mod.F90'; else $(CYGPATH_W) '$(srcdir)/aqm_vars_mod.F90'; fi`
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
@@ -631,14 +618,31 @@ uninstall-am:
 	tags tags-am uninstall uninstall-am
 
 
-libutil_a-getefile.$(OBJEXT) : libutil_a-get_env_mod.$(OBJEXT)
-
 .PHONY: clean-modules
 
 clean-modules:
-	-test -z "$(FC_MODEXT)" || rm -f get_env_module.$(FC_MODEXT) mydata_module.$(FC_MODEXT)
+	-test -z "$(FC_MODEXT)" || rm -f $(libshr_a_SOURCES:.F90=.mod)
 
 clean-local: clean-modules
+
+libshr_a-aqm_clock_mod.$(OBJEXT): libshr_a-aqm_rc_mod.$(OBJEXT) libshr_a-aqm_types_mod.$(OBJEXT)
+libshr_a-aqm_comm_mod.$(OBJEXT): libshr_a-aqm_rc_mod.$(OBJEXT) libshr_a-aqm_types_mod.$(OBJEXT)
+libshr_a-aqm_config_mod.$(OBJEXT): libshr_a-aqm_comm_mod.$(OBJEXT) libshr_a-aqm_rc_mod.$(OBJEXT) \
+	libshr_a-aqm_species_mod.$(OBJEXT) libshr_a-aqm_types_mod.$(OBJEXT)
+libshr_a-aqm_const_mod.$(OBJEXT): libshr_a-aqm_types_mod.$(OBJEXT)
+libshr_a-aqm_data_mod.$(OBJEXT): libshr_a-aqm_rc_mod.$(OBJEXT) libshr_a-aqm_types_mod.$(OBJEXT)
+libshr_a-aqm_domain_mod.$(OBJEXT): libshr_a-aqm_types_mod.$(OBJEXT)
+libshr_a-aqm_io_mod.$(OBJEXT): libshr_a-aqm_comm_mod.$(OBJEXT) libshr_a-aqm_model_mod.$(OBJEXT) \
+	libshr_a-aqm_rc_mod.$(OBJEXT) libshr_a-aqm_types_mod.$(OBJEXT)
+libshr_a-aqm_iodata_mod.$(OBJEXT): libshr_a-aqm_comm_mod.$(OBJEXT) libshr_a-aqm_config_mod.$(OBJEXT) \
+	libshr_a-aqm_io_mod.$(OBJEXT) libshr_a-aqm_model_mod.$(OBJEXT) libshr_a-aqm_rc_mod.$(OBJEXT) \
+	libshr_a-aqm_types_mod.$(OBJEXT)
+libshr_a-aqm_model_mod.$(OBJEXT): libshr_a-aqm_clock_mod.$(OBJEXT) libshr_a-aqm_comm_mod.$(OBJEXT) \
+	libshr_a-aqm_config_mod.$(OBJEXT) libshr_a-aqm_data_mod.$(OBJEXT) libshr_a-aqm_domain_mod.$(OBJEXT) \
+	libshr_a-aqm_iolayout_mod.$(OBJEXT) libshr_a-aqm_rc_mod.$(OBJEXT) libshr_a-aqm_species_mod.$(OBJEXT) \
+	libshr_a-aqm_state_mod.$(OBJEXT) libshr_a-aqm_types_mod.$(OBJEXT)
+libshr_a-aqm_state_mod.$(OBJEXT): libshr_a-aqm_types_mod.$(OBJEXT)
+libshr_a-aqm_tracers_mod.$(OBJEXT): libshr_a-aqm_rc_mod.$(OBJEXT) libshr_a-aqm_config_mod.$(OBJEXT)
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

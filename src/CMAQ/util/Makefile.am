@@ -11,5 +11,9 @@ libutil_a_FCFLAGS =
 
 libutil_a-getefile.$(OBJEXT) : libutil_a-get_env_mod.$(OBJEXT)
 
-CLEANFILES = *.mod
-	
+.PHONY: clean-modules
+
+clean-modules:
+	-test -z "$(FC_MODEXT)" || rm -f get_env_module.$(FC_MODEXT) mydata_module.$(FC_MODEXT)
+
+clean-local: clean-modules

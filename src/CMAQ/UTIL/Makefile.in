@@ -94,8 +94,8 @@ am__v_AR_1 =
 libUTIL_a_AR = $(AR) $(ARFLAGS)
 libUTIL_a_LIBADD =
 am__dirstamp = $(am__leading_dot)dirstamp
-am_libUTIL_a_OBJECTS = chemmech/src/index1.$(OBJEXT) \
-	create_ebi/src_RXNSU/junit.$(OBJEXT)
+am_libUTIL_a_OBJECTS = chemmech/src/libUTIL_a-index1.$(OBJEXT) \
+	create_ebi/src_RXNSU/libUTIL_a-junit.$(OBJEXT)
 libUTIL_a_OBJECTS = $(am_libUTIL_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -110,6 +110,10 @@ am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
 am__v_at_0 = @
 am__v_at_1 = 
 DEFAULT_INCLUDES = -I.@am__isrc@
+AM_V_lt = $(am__v_lt_@AM_V@)
+am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
+am__v_lt_0 = --silent
+am__v_lt_1 = 
 PPF77COMPILE = $(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_FFLAGS) $(FFLAGS)
 AM_V_PPF77 = $(am__v_PPF77_@AM_V@)
@@ -189,6 +193,7 @@ EXEEXT = @EXEEXT@
 F77 = @F77@
 FC = @FC@
 FCFLAGS = @FCFLAGS@
+FC_MODEXT = @FC_MODEXT@
 FFLAGS = @FFLAGS@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
@@ -262,6 +267,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 noinst_LIBRARIES = libUTIL.a
 libUTIL_a_SOURCES = chemmech/src/index1.f create_ebi/src_RXNSU/junit.F
+libUTIL_a_FFLAGS = 
 all: all-am
 
 .SUFFIXES:
@@ -305,7 +311,7 @@ chemmech/src/$(am__dirstamp):
 chemmech/src/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) chemmech/src/$(DEPDIR)
 	@: > chemmech/src/$(DEPDIR)/$(am__dirstamp)
-chemmech/src/index1.$(OBJEXT): chemmech/src/$(am__dirstamp) \
+chemmech/src/libUTIL_a-index1.$(OBJEXT): chemmech/src/$(am__dirstamp) \
 	chemmech/src/$(DEPDIR)/$(am__dirstamp)
 create_ebi/src_RXNSU/$(am__dirstamp):
 	@$(MKDIR_P) create_ebi/src_RXNSU
@@ -313,7 +319,7 @@ create_ebi/src_RXNSU/$(am__dirstamp):
 create_ebi/src_RXNSU/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) create_ebi/src_RXNSU/$(DEPDIR)
 	@: > create_ebi/src_RXNSU/$(DEPDIR)/$(am__dirstamp)
-create_ebi/src_RXNSU/junit.$(OBJEXT):  \
+create_ebi/src_RXNSU/libUTIL_a-junit.$(OBJEXT):  \
 	create_ebi/src_RXNSU/$(am__dirstamp) \
 	create_ebi/src_RXNSU/$(DEPDIR)/$(am__dirstamp)
 
@@ -335,6 +341,12 @@ distclean-compile:
 
 .F.obj:
 	$(AM_V_PPF77)$(PPF77COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+
+create_ebi/src_RXNSU/libUTIL_a-junit.o: create_ebi/src_RXNSU/junit.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libUTIL_a_FFLAGS) $(FFLAGS) -c -o create_ebi/src_RXNSU/libUTIL_a-junit.o `test -f 'create_ebi/src_RXNSU/junit.F' || echo '$(srcdir)/'`create_ebi/src_RXNSU/junit.F
+
+create_ebi/src_RXNSU/libUTIL_a-junit.obj: create_ebi/src_RXNSU/junit.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libUTIL_a_FFLAGS) $(FFLAGS) -c -o create_ebi/src_RXNSU/libUTIL_a-junit.obj `if test -f 'create_ebi/src_RXNSU/junit.F'; then $(CYGPATH_W) 'create_ebi/src_RXNSU/junit.F'; else $(CYGPATH_W) '$(srcdir)/create_ebi/src_RXNSU/junit.F'; fi`
 .F.f:
 	$(F77COMPILE) -F $<
 
@@ -343,6 +355,12 @@ distclean-compile:
 
 .f.obj:
 	$(AM_V_F77)$(F77COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+
+chemmech/src/libUTIL_a-index1.o: chemmech/src/index1.f
+	$(AM_V_F77)$(F77) $(libUTIL_a_FFLAGS) $(FFLAGS) -c -o chemmech/src/libUTIL_a-index1.o `test -f 'chemmech/src/index1.f' || echo '$(srcdir)/'`chemmech/src/index1.f
+
+chemmech/src/libUTIL_a-index1.obj: chemmech/src/index1.f
+	$(AM_V_F77)$(F77) $(libUTIL_a_FFLAGS) $(FFLAGS) -c -o chemmech/src/libUTIL_a-index1.obj `if test -f 'chemmech/src/index1.f'; then $(CYGPATH_W) 'chemmech/src/index1.f'; else $(CYGPATH_W) '$(srcdir)/chemmech/src/index1.f'; fi`
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique

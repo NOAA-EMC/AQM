@@ -76,8 +76,9 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
+DIST_COMMON = $(srcdir)/cmaq.mk $(srcdir)/Makefile.in \
+	$(srcdir)/Makefile.am
 subdir = src/CMAQ
-DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
@@ -92,24 +93,7 @@ am__v_AR_ = $(am__v_AR_@AM_DEFAULT_V@)
 am__v_AR_0 = @echo "  AR      " $@;
 am__v_AR_1 = 
 libCMAQ_a_AR = $(AR) $(ARFLAGS)
-libCMAQ_a_DEPENDENCIES =  \
-	$(builddir)/CCTM/src/aero/aero6/libCCTM_a-*.$(OBJEXT) \
-	$(builddir)/CCTM/src/cloud/acm/libCCTM_a-*.$(OBJEXT) \
-	$(builddir)/CCTM/src/couple/libCCTM_a-*.$(OBJEXT) \
-	$(builddir)/CCTM/src/depv/m3dry/libCCTM_a-*.$(OBJEXT) \
-	$(builddir)/CCTM/src/driver/libCCTM_a-*.$(OBJEXT) \
-	$(builddir)/CCTM/src/emis/emis/libCCTM_a-*.$(OBJEXT) \
-	$(builddir)/CCTM/src/gas/ebi_cb6r3_ae6_aq/libCCTM_a-*.$(OBJEXT) \
-	$(builddir)/CCTM/src/grid/libCCTM_a-*.$(OBJEXT) \
-	$(builddir)/CCTM/src/init/yamo/libCCTM_a-*.$(OBJEXT) \
-	$(builddir)/CCTM/src/MECHS/cb6r3_ae6_aq/libCCTM_a-*.$(OBJEXT) \
-	$(builddir)/CCTM/src/phot/inline/libCCTM_a-*.$(OBJEXT) \
-	$(builddir)/CCTM/src/spcs/cgrid_spcs_nml/libCCTM_a-*.$(OBJEXT) \
-	$(builddir)/CCTM/src/vdiff/acm2/libCCTM_a-*.$(OBJEXT) \
-	$(builddir)/CCTM/src/util/util/libCCTM_a-*.$(OBJEXT) \
-	$(builddir)/util/libutil_a-*.$(OBJEXT) \
-	$(builddir)/UTIL/chemmech/src/*.$(OBJEXT) \
-	$(builddir)/UTIL/create_ebi/src_RXNSU/*.$(OBJEXT)
+libCMAQ_a_DEPENDENCIES = $(cmaq_objects)
 am_libCMAQ_a_OBJECTS =
 libCMAQ_a_OBJECTS = $(am_libCMAQ_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
@@ -228,6 +212,7 @@ EXEEXT = @EXEEXT@
 F77 = @F77@
 FC = @FC@
 FCFLAGS = @FCFLAGS@
+FC_MODEXT = @FC_MODEXT@
 FFLAGS = @FFLAGS@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
@@ -301,29 +286,32 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 SUBDIRS = util UTIL CCTM .
 noinst_LIBRARIES = libCMAQ.a
-libCMAQ_a_SOURCES = 
-libCMAQ_a_LIBADD = $(builddir)/CCTM/src/aero/aero6/libCCTM_a-*.$(OBJEXT) \
-	$(builddir)/CCTM/src/cloud/acm/libCCTM_a-*.$(OBJEXT) \
-	$(builddir)/CCTM/src/couple/libCCTM_a-*.$(OBJEXT) \
-	$(builddir)/CCTM/src/depv/m3dry/libCCTM_a-*.$(OBJEXT) \
-	$(builddir)/CCTM/src/driver/libCCTM_a-*.$(OBJEXT) \
-	$(builddir)/CCTM/src/emis/emis/libCCTM_a-*.$(OBJEXT) \
-	$(builddir)/CCTM/src/gas/ebi_cb6r3_ae6_aq/libCCTM_a-*.$(OBJEXT) \
-	$(builddir)/CCTM/src/grid/libCCTM_a-*.$(OBJEXT) \
-	$(builddir)/CCTM/src/init/yamo/libCCTM_a-*.$(OBJEXT) \
-	$(builddir)/CCTM/src/MECHS/cb6r3_ae6_aq/libCCTM_a-*.$(OBJEXT) \
-	$(builddir)/CCTM/src/phot/inline/libCCTM_a-*.$(OBJEXT) \
-	$(builddir)/CCTM/src/spcs/cgrid_spcs_nml/libCCTM_a-*.$(OBJEXT) \
-	$(builddir)/CCTM/src/vdiff/acm2/libCCTM_a-*.$(OBJEXT) \
-	$(builddir)/CCTM/src/util/util/libCCTM_a-*.$(OBJEXT) \
-	$(builddir)/util/libutil_a-*.$(OBJEXT) \
-	$(builddir)/UTIL/chemmech/src/*.$(OBJEXT) \
-	$(builddir)/UTIL/create_ebi/src_RXNSU/*.$(OBJEXT)
+cmaq_dir = $(builddir)
+cmaq_objects = \
+	$(cmaq_dir)/CCTM/src/aero/aero6/libCCTM_a-*.$(OBJEXT) \
+	$(cmaq_dir)/CCTM/src/cloud/acm/libCCTM_a-*.$(OBJEXT) \
+	$(cmaq_dir)/CCTM/src/couple/libCCTM_a-*.$(OBJEXT) \
+	$(cmaq_dir)/CCTM/src/depv/m3dry/libCCTM_a-*.$(OBJEXT) \
+	$(cmaq_dir)/CCTM/src/driver/libCCTM_a-*.$(OBJEXT) \
+	$(cmaq_dir)/CCTM/src/emis/emis/libCCTM_a-*.$(OBJEXT) \
+	$(cmaq_dir)/CCTM/src/gas/ebi_cb6r3_ae6_aq/libCCTM_a-*.$(OBJEXT) \
+	$(cmaq_dir)/CCTM/src/grid/libCCTM_a-*.$(OBJEXT) \
+	$(cmaq_dir)/CCTM/src/init/yamo/libCCTM_a-*.$(OBJEXT) \
+	$(cmaq_dir)/CCTM/src/MECHS/cb6r3_ae6_aq/libCCTM_a-*.$(OBJEXT) \
+	$(cmaq_dir)/CCTM/src/phot/inline/libCCTM_a-*.$(OBJEXT) \
+	$(cmaq_dir)/CCTM/src/spcs/cgrid_spcs_nml/libCCTM_a-*.$(OBJEXT) \
+	$(cmaq_dir)/CCTM/src/vdiff/acm2/libCCTM_a-*.$(OBJEXT) \
+	$(cmaq_dir)/CCTM/src/util/util/libCCTM_a-*.$(OBJEXT) \
+	$(cmaq_dir)/util/libutil_a-*.$(OBJEXT) \
+	$(cmaq_dir)/UTIL/chemmech/src/libUTIL_a-*.$(OBJEXT) \
+	$(cmaq_dir)/UTIL/create_ebi/src_RXNSU/libUTIL_a-*.$(OBJEXT)
 
+libCMAQ_a_SOURCES = 
+libCMAQ_a_LIBADD = $(cmaq_objects)
 all: all-recursive
 
 .SUFFIXES:
-$(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
+$(srcdir)/Makefile.in:  $(srcdir)/Makefile.am $(srcdir)/cmaq.mk $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -344,6 +332,7 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	    echo ' cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__depfiles_maybe)'; \
 	    cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__depfiles_maybe);; \
 	esac;
+$(srcdir)/cmaq.mk:
 
 $(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh

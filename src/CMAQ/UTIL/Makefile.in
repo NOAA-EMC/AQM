@@ -79,7 +79,8 @@ POST_UNINSTALL = :
 subdir = src/CMAQ/UTIL
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/configure.ac
+am__aclocal_m4_deps = $(top_srcdir)/m4/ax_compiler_vendor.m4 \
+	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
@@ -181,6 +182,8 @@ AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
+CCTM_FCFLAGS = @CCTM_FCFLAGS@
+CCTM_FFLAGS = @CCTM_FFLAGS@
 CFLAGS = @CFLAGS@
 CPPFLAGS = @CPPFLAGS@
 CUT = @CUT@

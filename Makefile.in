@@ -85,7 +85,8 @@ DIST_COMMON = INSTALL NEWS README AUTHORS ChangeLog \
 	$(top_srcdir)/build-aux/install-sh \
 	$(top_srcdir)/build-aux/missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/configure.ac
+am__aclocal_m4_deps = $(top_srcdir)/m4/ax_compiler_vendor.m4 \
+	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
@@ -230,6 +231,8 @@ AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
+CCTM_FCFLAGS = @CCTM_FCFLAGS@
+CCTM_FFLAGS = @CCTM_FFLAGS@
 CFLAGS = @CFLAGS@
 CPPFLAGS = @CPPFLAGS@
 CUT = @CUT@
@@ -322,6 +325,7 @@ top_srcdir = @top_srcdir@
 SUBDIRS = src
 dist_doc_DATA = README
 nodist_data_DATA = aqm.mk
+ACLOCAL_AMFLAGS = -I m4
 CLEANFILES = aqm.mk
 all: all-recursive
 

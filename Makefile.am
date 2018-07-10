@@ -2,6 +2,8 @@ SUBDIRS = src
 dist_doc_DATA = README
 nodist_data_DATA = aqm.mk
 
+ACLOCAL_AMFLAGS = -I m4
+
 aqm.mk:
 	@echo "# ESMF self-describing build dependency makefile fragment" > $(@)
 	@echo >> $(@)

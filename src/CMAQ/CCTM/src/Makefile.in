@@ -79,7 +79,8 @@ POST_UNINSTALL = :
 subdir = src/CMAQ/CCTM/src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/configure.ac
+am__aclocal_m4_deps = $(top_srcdir)/m4/ax_compiler_vendor.m4 \
+	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
@@ -264,6 +265,8 @@ AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
+CCTM_FCFLAGS = @CCTM_FCFLAGS@
+CCTM_FFLAGS = @CCTM_FFLAGS@
 CFLAGS = @CFLAGS@
 CPPFLAGS = @CPPFLAGS@
 CUT = @CUT@
@@ -436,11 +439,14 @@ libCCTM_a_SOURCES = aero/aero6/AERO_DATA.F aero/aero6/aero_depv.F \
 libCCTM_a_CPPFLAGS = -DSUBST_FILES_ID=\"FILES_CTM.EXT\" \
 	-DSUBST_CONST=\"CONST.EXT\" -DSUBST_EMISPRM=\"EMISPRM.EXT\" \
 	-Dparallel -Dmpas
-libCCTM_a_FFLAGS = -fixed -132 -override-limits -I . -I \
+
+# libCCTM_a_FFLAGS = -fixed -132 -override-limits
+libCCTM_a_FFLAGS = $(CCTM_FFLAGS) -I . -I \
 	$(srcdir)/ICL/fixed/filenames -I $(srcdir)/ICL/fixed/const -I \
 	$(srcdir)/ICL/fixed/emctrl -I $(builddir)/../../util -I \
 	$(builddir)/../../shr
-libCCTM_a_FCFLAGS = -free -override-limits -I $(builddir)/../../util
+# libCCTM_a_FCFLAGS  = -free -override-limits
+libCCTM_a_FCFLAGS = $(CCTM_FCFLAGS) -I $(builddir)/../../util
 all: all-am
 
 .SUFFIXES:

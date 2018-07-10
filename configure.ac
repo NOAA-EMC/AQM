@@ -1,10 +1,11 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.63])
-AC_INIT([AQM], [0.1], [raffaele.montuoro@noaa.gov])
+AC_PREREQ([2.69])
+AC_INIT([AQM],[0.1],[raffaele.montuoro@noaa.gov])
 
 AC_CONFIG_AUX_DIR([build-aux])
+AC_CONFIG_MACRO_DIR([m4])
 
 AM_INIT_AUTOMAKE([subdir-objects])
 
@@ -31,7 +32,7 @@ AS_IF([test "x$with_esmfmk" != xno],
      with_esmfmk=no]))
 
 AS_IF([test "x$with_esmfmk" = xno],
-  [AC_CHECKING([environment for ESMFMKFILE])
+  [AS_MESSAGE([checking environment for ESMFMKFILE...])
    AC_CHECK_FILE(["${ESMFMKFILE}"],
       [AC_SUBST(ESMFMKFILE,["${ESMFMKFILE}"])
        AC_MSG_RESULT([getting ESMF Makefile fragment from environment variable ESMFMKFILE])
@@ -58,9 +59,18 @@ AS_IF([test "x$FC" = x],
   [AC_MSG_ERROR([Cannot find a suitable Fortran compiler.])],
   [AC_FC_MODULE_EXTENSION])
 
-dnl AC_PROG_FC
-dnl AC_FC_MODULE_EXTENSION
 AC_PROG_F77($FC)
+
+# Check for compiler vendor
+AC_LANG_PUSH([Fortran])
+ac_ext=F90
+AX_COMPILER_VENDOR
+AS_IF([test "x$ax_cv_fc_compiler_vendor" = "xintel"],
+  [CCTM_FCFLAGS="-free -override-limits"
+   CCTM_FFLAGS="-fixed -132 -override-limits"
+   AC_SUBST([CCTM_FCFLAGS])
+   AC_SUBST([CCTM_FFLAGS])])
+AC_LANG_POP([Fortran])
 
 # Checks for libraries.
 

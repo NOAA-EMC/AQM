@@ -136,12 +136,14 @@ libCCTM_a_CPPFLAGS += -DSUBST_CONST=\"CONST.EXT\"
 libCCTM_a_CPPFLAGS += -DSUBST_EMISPRM=\"EMISPRM.EXT\"
 libCCTM_a_CPPFLAGS += -Dparallel -Dmpas
 
-libCCTM_a_FFLAGS = -fixed -132 -override-limits
+# libCCTM_a_FFLAGS = -fixed -132 -override-limits
+libCCTM_a_FFLAGS = $(CCTM_FFLAGS)
 libCCTM_a_FFLAGS += -I . \
 	-I $(srcdir)/ICL/fixed/filenames -I $(srcdir)/ICL/fixed/const -I $(srcdir)/ICL/fixed/emctrl \
 	-I $(builddir)/../../util \
 	-I $(builddir)/../../shr
-libCCTM_a_FCFLAGS  = -free -override-limits
+# libCCTM_a_FCFLAGS  = -free -override-limits
+libCCTM_a_FCFLAGS  = $(CCTM_FCFLAGS)
 libCCTM_a_FCFLAGS += -I $(builddir)/../../util
 
 .PHONY : clean-modules

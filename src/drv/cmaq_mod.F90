@@ -22,6 +22,8 @@ module cmaq_mod
 
   use cgrid_spcs, only : cgrid_spcs_init, nspcsd
 
+  use get_env_module
+
   use cmaq_shr_mod, only : cmaq_rc, cmaq_xmsg, &
                            CMAQ_RC_SUCCESS, &
                            cmaq_logdev

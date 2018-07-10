@@ -255,7 +255,8 @@ top_srcdir = @top_srcdir@
 noinst_LIBRARIES = libdrv.a
 libdrv_a_SOURCES = cmaq_model_mod.F90 cmaq_mod.F90
 libdrv_a_FCFLAGS = -I $(builddir)/../shr -I \
-	$(builddir)/../CMAQ/CCTM/src -I $(builddir)/../CMAQ/shr
+	$(builddir)/../CMAQ/CCTM/src -I $(builddir)/../CMAQ/shr -I \
+	$(builddir)/../CMAQ/util
 libdrv_a_DEPENDENCIES = $(builddir)/../shr/libshr.a
 all: all-am
 

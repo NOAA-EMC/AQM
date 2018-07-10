@@ -525,12 +525,14 @@ C If last call this hour:  write accumulated depositions:
 !        END IF
 #endif
 
+#if 0
          call julian_to_calendar (mdate, year, month, day)
          hour = mtime / 10000
          minute = mod(mtime, 10000) / 100
 
          WRITE (TIME_STAMP, '(i4, 4(a1, i2.2), a3)')
      $          year, '-', month, '-', day, '_', hour, ':', minute, ':00'
+#endif
 
          DO V = 1, N_SPC_DDEP
             S = DD2DV( V )
@@ -540,7 +542,9 @@ C If last call this hour:  write accumulated depositions:
                END DO
             END DO
 
+#ifdef _MIO
             call fwrite (CTM_DRY_DEP_1, DDEP_SPC( V ), real(WRDD(:,1), 4), TIME_STAMP)
+#endif
 
 !           IF ( .NOT. WRITE3( CTM_DRY_DEP_1, DDEP_SPC( V ),
 !    &                 MDATE, MTIME, WRDD ) ) THEN

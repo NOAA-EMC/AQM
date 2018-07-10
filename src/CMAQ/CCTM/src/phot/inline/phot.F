@@ -1010,6 +1010,7 @@ C...modules
 
       IF ( JTIME_CHK ) THEN
 
+#if 0
          call julian_to_calendar (jdate, year, month, day)
 !        hour = jtime / 10000
 !        minute = mod(jtime, 10000) / 100
@@ -1018,15 +1019,22 @@ C...modules
 
          WRITE (TIME_STAMP, '(i4, 4(a1, i2.2), a3)') 
      $         year, '-', month, '-', day, '_', hour, ':', minute, ':00'
+#endif
 
          VARNM = 'COSZENS'
+#ifdef _MIO
          call fwrite (CTM_RJ_1, VARNM, real(COSINE_ZENITH(:,1), 4), TIME_STAMP)
+#endif
 
          VARNM = 'OZONE_COLUMN'
+#ifdef _MIO
          call fwrite (CTM_RJ_1, VARNM, real(TOTAL_OC(:,1), 4), TIME_STAMP)
+#endif
 
          VARNM = 'TROPO_O3_COLUMN'
+#ifdef _MIO
          call fwrite (CTM_RJ_1, VARNM, real(TROPO_OC(:,1), 4), TIME_STAMP)
+#endif
 
          IMONTH = IMONTH + 1
          IF( IMONTH .GT. 12 )THEN
@@ -1044,79 +1052,123 @@ C...modules
 !         END IF
 
          VARNM = 'TRANS_DIFFUSE'
+#ifdef _MIO
          call fwrite (CTM_RJ_1, VARNM, real(TRANSMIS_DIFFUSE(:,1), 4), TIME_STAMP)
+#endif
 
          VARNM = 'TRANS_DIRECT'
+#ifdef _MIO
          call fwrite (CTM_RJ_1, VARNM, real(TRANSMIS_DIRECT(:,1), 4), TIME_STAMP)
+#endif
 
          VARNM = 'REFLECTION'
+#ifdef _MIO
          call fwrite (CTM_RJ_1, VARNM, real(REFLECT_COEFF(:,1), 4), TIME_STAMP)
+#endif
 
          VARNM = 'CLR_TRANS_DIF'
+#ifdef _MIO
          call fwrite (CTM_RJ_1, VARNM, real(CLR_TRANSMISSION(:,1), 4), TIME_STAMP)
+#endif
 
          VARNM = 'CLR_TRANS_DIR'
+#ifdef _MIO
          call fwrite (CTM_RJ_1, VARNM, real(CLR_TRANS_DIRECT(:,1), 4), TIME_STAMP)
+#endif
 
          VARNM = 'CLR_REFLECTION'
+#ifdef _MIO
          call fwrite (CTM_RJ_1, VARNM, real(CLR_REFLECTION(:,1), 4), TIME_STAMP)
+#endif
 
          VARNM = 'TROPO_O3_EXCEED'
          TROPO_O3_EXCEED = TROPO_O3_EXCEED / REAL( MAX(1, TSTEP_COUNT) )
+#ifdef _MIO
          call fwrite (CTM_RJ_1, VARNM, real(TROPO_O3_EXCEED(:,1), 4), TIME_STAMP)
+#endif
          TROPO_O3_EXCEED = 0.0 ! reset sum and counter
          TSTEP_COUNT     = 0
 
          VARNM = 'N_EXCEED_TROPO3'
+#ifdef _MIO
          call fwrite (CTM_RJ_1, VARNM, real(N_EXCEED_TROPO3(:,1), 4), TIME_STAMP)
+#endif
          N_EXCEED_TROPO3 = 0.0 ! reset counter
 
          VARNM = 'JNO2'
+#ifdef _MIO
          call fwrite (CTM_RJ_1, VARNM, real(RJ( :,1,1, LNO2 ), 4), TIME_STAMP)
+#endif
 
          VARNM = 'JO3O1D'
+#ifdef _MIO
          call fwrite (CTM_RJ_1, VARNM, real(RJ( :,1,1, LO3O1D ), 4), TIME_STAMP)
+#endif
 
          VARNM = 'RESOLVED_CFRAC'
+#ifdef _MIO
          call fwrite (CTM_RJ_1, VARNM, real(CFRAC(:,1), 4), TIME_STAMP)
+#endif
 
          VARNM = 'RESOLVED_WBAR'
+#ifdef _MIO
          call fwrite (CTM_RJ_1, VARNM, real(AVE_HYDROMETEORS(:,1), 4), TIME_STAMP)
+#endif
 
          IF ( IND_ACM_CLOUD .OR. USE_ACM_CLOUD .OR. USE_CUM_CLOUD ) THEN
             VARNM = 'SUBGRID_CFRAC'
+#ifdef _MIO
             call fwrite (CTM_RJ_1, VARNM, real(ACM_CLOUDS(:,1), 4), TIME_STAMP)
+#endif
 
             VARNM = 'SUBGRID_WBAR'
+#ifdef _MIO
             call fwrite (CTM_RJ_1, VARNM, real(ACM_AVE_H2O(:,1), 4), TIME_STAMP)
+#endif
          END IF
 
          DO IWL = 1, NWL
 
             VARNM = 'ETOT_SFC_W' // WLTXT( IWL )
+#ifdef _MIO
             call fwrite (CTM_RJ_1, VARNM, real(ETOT_SFC_WL( :,1,IWL ), 4), TIME_STAMP)
+#endif
 
             VARNM = 'TAU_AERO_W' // WLTXT( IWL )
+#ifdef _MIO
             call fwrite (CTM_RJ_1, VARNM, real(TAU_AERO_WL( :,1,IWL ), 4), TIME_STAMP)
+#endif
 
             VARNM = 'TAU_CLOUD_W' // WLTXT( IWL )
+#ifdef _MIO
             call fwrite (CTM_RJ_1, VARNM, real(TAU_CLOUD_WL( :,1,IWL ), 4), TIME_STAMP)
+#endif
 
 #ifdef phot_debug
             VARNM = 'SSA_CLOUD_W' // WLTXT( IWL )
+#ifdef _MIO
             call fwrite (CTM_RJ_1, VARNM, real(SSA_CLOUD_WL( :,1,IWL ), 4), TIME_STAMP)
+#endif
 
             VARNM = 'ASY_CLOUD_W' // WLTXT( IWL )
+#ifdef _MIO
             call fwrite (CTM_RJ_1, VARNM, real(ASY_CLOUD_WL( :,1,IWL ), 4), TIME_STAMP)
 #endif
+#endif
             VARNM = 'TAU_TOT_W' // WLTXT( IWL )
+#ifdef _MIO
             call fwrite (CTM_RJ_1, VARNM, real(TAU_TOT_WL( :,1,IWL ), 4), TIME_STAMP)
+#endif
 
             VARNM = 'TAUO3_TOP_W' // WLTXT( IWL )
+#ifdef _MIO
             call fwrite (CTM_RJ_1, VARNM, real(TAUO3_TOP_WL( :,1,IWL ), 4), TIME_STAMP)
+#endif
 
             VARNM = 'ALBEDO_W' // WLTXT( IWL )
+#ifdef _MIO
             call fwrite (CTM_RJ_1, VARNM, real(SURFACE_ALBEDO( IWL,:,1 ), 4), TIME_STAMP)
+#endif
 
          END DO  ! iwl
 
@@ -1128,34 +1180,48 @@ C...modules
             do l = 1, nlays
                data_2d(l,:) = rj(:,1,l,IPHOT)
             end do
+#ifdef _MIO
             call fwrite (CTM_RJ_2, PHOTAB( IPHOT ), real(data_2d, 4), TIME_STAMP)
+#endif
          END DO
 
          VARNM = 'CFRAC_3D'
          do l = 1, nlays
             data_2d(l,:) = CFRAC_3D(:,1,l)
          end do
+#ifdef _MIO
          call fwrite (CTM_RJ_2, VARNM, real(data_2d, 4), TIME_STAMP)
+#endif
 
          DO IWL = 1, NWL
             VARNM = 'ACTINIC_FX_W' // WLTXT( IWL )
+#ifdef _MIO
             call fwrite (CTM_RJ_2, VARNM, real(ACTINIC_FX(:,:,1,iwl), 4), TIME_STAMP)
+#endif
          END DO
 
          DO L = 1, N_DIAG_WVL
             IWL = DIAG_WVL( L )
 
             VARNM = 'AERO_SSA_W' // WLTXT( IWL )
+#ifdef _MIO
             call fwrite (CTM_RJ_2, VARNM, real(AERO_SSA( :,:,1,L ), 4), TIME_STAMP)
+#endif
 
             VARNM = 'AERO_ASYM_W' // WLTXT( IWL )
+#ifdef _MIO
             call fwrite (CTM_RJ_2, VARNM, real(AERO_ASYM( :,:,1,L ), 4), TIME_STAMP)
+#endif
 
             VARNM = 'TAU_AERO_W' // WLTXT( IWL )
+#ifdef _MIO
             call fwrite (CTM_RJ_2, VARNM, real(TAU_AERO( :,:,1,L ), 4), TIME_STAMP)
+#endif
 
             VARNM = 'TAU_W' // WLTXT( IWL )
+#ifdef _MIO
             call fwrite (CTM_RJ_2, VARNM, real(TAU( :,:,1,L ), 4), TIME_STAMP)
+#endif
          END DO
 
          WRITE( LOGDEV, '( /5X, 3( A, :, 1X ), I8, ":", I6.6 )' )

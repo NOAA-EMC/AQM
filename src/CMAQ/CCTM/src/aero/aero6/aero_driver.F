@@ -809,6 +809,7 @@ C *** If last call this hour, write visibility information.
 C *** Write data to the aerosol diagnostic file.
          IF ( PMDIAG ) THEN
 
+#if 0
             call setfile (CTM_PMDIAG_1)
 
             call julian_to_calendar (mdate, year, month, day)
@@ -817,6 +818,7 @@ C *** Write data to the aerosol diagnostic file.
 
             WRITE (TIME_STAMP, '(i4, 4(a1, i2.2), a3)')
      $             year, '-', month, '-', day, '_', hour, ':', minute, ':00'
+#endif
 
         write (logdev, *) ' ==d== pmdiag c ', TIME_STAMP
 

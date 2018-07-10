@@ -801,12 +801,14 @@ C-----------------------------------------------------------------------
 !              END IF
 #endif
 
+#if 0
                call julian_to_calendar (wdate, year, month, day)
                hour = wtime / 10000
                minute = mod(wtime, 10000) / 100
 
                WRITE (TIME_STAMP, '(i4, 4(a1, i2.2), a3)')
      $                year, '-', month, '-', day, '_', hour, ':', minute, ':00'
+#endif
 
                N = 0
                DO V = 1, N_GC_DEPV
@@ -821,8 +823,10 @@ C-----------------------------------------------------------------------
                         END DO
                      END DO
                      
+#ifdef _MIO
                      call fwrite (CTM_DEPV_DIAG, UNIQUE_GDEPV( NDX ), 
      &                            real(DBUFF(:,1), 4), TIME_STAMP)
+#endif
 
 !                    IF ( .NOT. WRITE3( CTM_DEPV_DIAG, UNIQUE_GDEPV( NDX ),
 !    &                                  WDATE, WTIME, DBUFF ) ) THEN
@@ -846,8 +850,10 @@ C-----------------------------------------------------------------------
                         END DO
                      END DO
 
+#ifdef _MIO
                      call fwrite (CTM_DEPV_DIAG, UNIQUE_GDEPV( NDX ), 
      &                            real(DBUFF(:,1), 4), TIME_STAMP)
+#endif
 !                    IF ( .NOT. WRITE3( CTM_DEPV_DIAG, UNIQUE_GDEPV( NDX ),
 !    &                                  WDATE, WTIME, DBUFF ) ) THEN
 !                        XMSG = 'Could not write ' // CTM_DEPV_DIAG // ' file'
@@ -867,8 +873,10 @@ C-----------------------------------------------------------------------
                         DBUFF( C,R ) = 100.0 * ADEPV( NDX,C,R )   ! cm/sec
                      END DO
                   END DO
+#ifdef _MIO
                   call fwrite (CTM_DEPV_DIAG, UNIQUE_ADEPV( N ), 
      &                         real(DBUFF(:,1), 4), TIME_STAMP)
+#endif
 !                 IF ( .NOT. WRITE3( CTM_DEPV_DIAG, UNIQUE_ADEPV( N ),
 !    &                               WDATE, WTIME, DBUFF ) ) THEN
 !                     XMSG = 'Could not write ' // CTM_DEPV_DIAG // ' file'

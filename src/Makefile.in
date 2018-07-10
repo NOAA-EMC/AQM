@@ -329,6 +329,7 @@ cmaq_dir = $(builddir)/CMAQ
 cmaq_objects = \
 	$(cmaq_dir)/CCTM/src/aero/aero6/libCCTM_a-*.$(OBJEXT) \
 	$(cmaq_dir)/CCTM/src/cloud/acm/libCCTM_a-*.$(OBJEXT) \
+	$(cmaq_dir)/CCTM/src/cloud/acm_ae6/libCCTM_a-*.$(OBJEXT) \
 	$(cmaq_dir)/CCTM/src/couple/libCCTM_a-*.$(OBJEXT) \
 	$(cmaq_dir)/CCTM/src/depv/m3dry/libCCTM_a-*.$(OBJEXT) \
 	$(cmaq_dir)/CCTM/src/driver/libCCTM_a-*.$(OBJEXT) \

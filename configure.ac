@@ -13,8 +13,53 @@ AC_PROG_INSTALL
 AC_PROG_RANLIB
 AM_PROG_AR
 
-AC_PROG_FC
-AC_FC_MODULE_EXTENSION
+AC_PROG_GREP
+AC_PROG_SED
+AC_PATH_PROG(CUT,cut)
+
+AC_ARG_WITH([esmfmk],
+  [AS_HELP_STRING([--with-esmfmk=<path-to-esmf.mk>],
+    [set full path to makefile fragment from ESMF library.])],
+  [],
+  [with_esmfmk=no])
+
+AS_IF([test "x$with_esmfmk" != xno],
+  AC_CHECK_FILE(["$with_esmfmk"],
+    [AC_SUBST(ESMFMKFILE,["$with_esmfmk"])
+     with_esmfmk=yes],
+    [AC_MSG_WARN([File $with_esmfmk not found. Carry on.])
+     with_esmfmk=no]))
+
+AS_IF([test "x$with_esmfmk" = xno],
+  [AC_CHECKING([environment for ESMFMKFILE])
+   AC_CHECK_FILE(["${ESMFMKFILE}"],
+      [AC_SUBST(ESMFMKFILE,["${ESMFMKFILE}"])
+       AC_MSG_RESULT([getting ESMF Makefile fragment from environment variable ESMFMKFILE])
+       with_esmfmk=yes],
+      [AC_MSG_WARN([Makefile fragment from ESMF library not found.])])])
+
+AS_IF([test "x$with_esmfmk" = xyes],
+  [FCOMPILER=`$GREP ESMF_F90COMPILER ${ESMFMKFILE} | $SED -e 's/ESMF_F90COMPILER *= *//g'`
+#   for v in ESMF_F90COMPILEOPTS ESMF_F90COMPILEPATHS ESMF_F90COMPILECPPFLAGS
+#   do
+#     FCFLAGS="${FCFLAGS} `$GREP $v ${ESMFMKFILE} 2>/dev/null | $CUT -d= -f2-`"
+#   done
+   FCLIBS="${LDFLAGS}"
+   for v in ESMF_F90LINKOPTS ESMF_F90LINKPATHS ESMF_F90LINKRPATHS ESMF_F90ESMFLINKLIBS
+   do
+     FCLIBS="${FCLIBS} `$GREP $v ${ESMFMKFILE} 2>/dev/null | $CUT -d= -f2-`"
+   done
+   AC_PROG_FC([$FCOMPILER])
+   AC_SUBST([FCLIBS])],
+   [AC_PROG_FC([mpiifort])
+    FCFLAGS="${FCFLAGS} -O2"])
+
+AS_IF([test "x$FC" = x],
+  [AC_MSG_ERROR([Cannot find a suitable Fortran compiler.])],
+  [AC_FC_MODULE_EXTENSION])
+
+dnl AC_PROG_FC
+dnl AC_FC_MODULE_EXTENSION
 AC_PROG_F77($FC)
 
 # Checks for libraries.
@@ -31,7 +76,9 @@ AC_CONFIG_FILES([Makefile
                  src/CMAQ/Makefile
                  src/CMAQ/UTIL/Makefile
                  src/CMAQ/util/Makefile
-                 src/shr//Makefile
+                 src/CMAQ/shr/Makefile
+                 src/shr/Makefile
+                 src/drv/Makefile
                  src/Makefile])
 AC_OUTPUT
 

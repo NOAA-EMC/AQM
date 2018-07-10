@@ -20,7 +20,6 @@ contains
     ! -- local variables
     integer, parameter :: maxMsgLen = 255
     character(len=maxMsgLen) :: descr  = "Internal error"
-!   character(len=maxMsgLen) :: errmsg = ""
     character(len=maxMsgLen) :: label  = ""
 
     ! -- begin

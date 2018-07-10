@@ -178,18 +178,22 @@ CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
 CPPFLAGS = @CPPFLAGS@
+CUT = @CUT@
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
+ESMFMKFILE = @ESMFMKFILE@
 EXEEXT = @EXEEXT@
 F77 = @F77@
 FC = @FC@
 FCFLAGS = @FCFLAGS@
+FCLIBS = @FCLIBS@
 FC_MODEXT = @FC_MODEXT@
 FFLAGS = @FFLAGS@
+GREP = @GREP@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -211,6 +215,7 @@ PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 RANLIB = @RANLIB@
+SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
@@ -266,7 +271,8 @@ libshr_a_SOURCES = aqm_clock_mod.F90 aqm_comm_mod.F90 aqm_config_mod.F90 aqm_con
 	aqm_model_mod.F90 aqm_rc_mod.F90 aqm_species_mod.F90 \
 	aqm_state_mod.F90 aqm_tracers_mod.F90 aqm_types_mod.F90 aqm_vars_mod.F90
 
-libshr_a_FCFLAGS = 
+libshr_a_FCFLAGS = -I $(builddir)/../CMAQ/CCTM/src -I \
+	$(builddir)/../CMAQ/shr
 all: all-am
 
 .SUFFIXES:
@@ -280,9 +286,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu src/shr//Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu src/shr/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu src/shr//Makefile
+	  $(AUTOMAKE) --gnu src/shr/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -621,7 +627,7 @@ uninstall-am:
 .PHONY: clean-modules
 
 clean-modules:
-	-test -z "$(FC_MODEXT)" || rm -f $(libshr_a_SOURCES:.F90=.mod)
+	-test -z "$(FC_MODEXT)" || rm -f $(libshr_a_SOURCES:.F90=.$(FC_MODEXT))
 
 clean-local: clean-modules
 

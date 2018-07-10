@@ -1,16 +1,15 @@
-module aqm_methods
+module aqm_comp_mod
 
   use ESMF
   use NUOPC
+  use NUOPC_Model, only : NUOPC_ModelGet
   use aqm_rc_mod
   use aqm_comm_mod
   use aqm_types_mod, only : AQM_MAXSTR
   use aqm_model_mod
   use aqm_io_mod
   use aqm_iodata_mod
-#ifdef TODO
-  use gocart_model_mod
-#endif
+  use cmaq_model_mod
 
   implicit none
 
@@ -18,37 +17,157 @@ module aqm_methods
 
 contains
 
+  subroutine aqm_comp_create(model, rc)
+    type(ESMF_GridComp) :: model
+    integer, optional, intent(out) :: rc
+
+    ! -- local variables
+    integer                 :: localrc
+    integer                 :: comm
+    integer                 :: yy, mm, dd, h, m
+    real(ESMF_KIND_R8)      :: dts
+    type(ESMF_State)        :: importState, exportState
+    type(ESMF_Clock)        :: clock
+    type(ESMF_VM)           :: vm
+    type(ESMF_Time)         :: startTime
+    type(ESMF_TimeInterval) :: TimeStep
+
+
+    ! -- begin
+    if (present(rc)) rc = ESMF_SUCCESS
+
+    ! -- query the Component for its clock, importState and exportState
+    call NUOPC_ModelGet(model, modelClock=clock, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, file=__FILE__, rcToReturn=rc)) return  ! bail out
+
+    ! -- init model communication subsystem over ESMF communicator
+    call ESMF_GridCompGet(model, vm=vm, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, file=__FILE__, rcToReturn=rc)) return  ! bail out
+
+    call ESMF_VMGet(vm, mpiCommunicator=comm, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, file=__FILE__, rcToReturn=rc)) return  ! bail out
+
+    ! -- initialize model after creation to setup correct communication
+    call aqm_model_init(comm=comm, isolate=.true., rc=localrc)
+    if (aqm_rc_check(localrc)) then
+      call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, &
+        msg="Failed to initialize air quality model", &
+        line=__LINE__, &
+        file=__FILE__, &
+        rcToReturn=rc)
+      return  ! bail out
+    end if
+
+    ! -- initialize model I/O
+    call aqm_io_init(rc=localrc)
+    if (aqm_rc_check(localrc)) then
+      call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, &
+        msg="Failed to initialize I/O model subsystem", &
+        line=__LINE__, &
+        file=__FILE__, &
+        rcToReturn=rc)
+      return  ! bail out
+    end if
+
+    ! -- read-in emission and background fields, setup internal parameters
+    call aqm_model_config_init(rc=localrc)
+    if (aqm_rc_check(localrc)) then
+      call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, &
+        msg="Failed to initialize model configuration", &
+        line=__LINE__, &
+        file=__FILE__, &
+        rcToReturn=rc)
+      return  ! bail out
+    end if
+
+    ! -- initialize internal clock
+    ! -- get clock information
+    call ESMF_ClockGet(clock, startTime=startTime, timeStep=timeStep, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+    ! -- get forecast initial time
+    call ESMF_TimeGet(startTime, yy=yy, mm=mm, dd=dd, h=h, m=m, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+    ! -- get time step
+    call ESMF_TimeIntervalGet(timeStep, s_r8=dts, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+    ! -- set internal clock
+    call aqm_model_clock_create(rc=localrc)
+    if (aqm_rc_check(localrc)) then
+      call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, &
+        msg="Failed to create model clock", &
+        line=__LINE__, &
+        file=__FILE__, &
+        rcToReturn=rc)
+      return  ! bail out
+    end if
+    call aqm_model_clock_set(yy=yy, mm=mm, dd=dd, h=h, m=m, dts=dts, tz=0, rc=localrc)
+    if (aqm_rc_check(localrc)) then
+      call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, &
+        msg="Failed to initialize model clock", &
+        line=__LINE__, &
+        file=__FILE__, &
+        rcToReturn=rc)
+      return  ! bail out
+    end if
+
+#if 0
+    ! -- allocate memory for internal workspace
+    call aqm_backgd_init(rc=localrc)
+    if (aqm_rc_check(localrc)) then
+      call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, &
+        msg="Failed to initialize I/O model subsystem", &
+        line=__LINE__, &
+        file=__FILE__, &
+        rcToReturn=rc)
+      return  ! bail out
+    end if
+
+    ! -- read-in emission and background fields
+    call aqm_backgd_read(rc=localrc)
+    if (aqm_rc_check(localrc)) then
+      call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, &
+        msg="Failed to initialize I/O model subsystem", &
+        line=__LINE__, &
+        file=__FILE__, &
+        rcToReturn=rc)
+      return  ! bail out
+    end if
+#endif
+
+  end subroutine aqm_comp_create
+
   subroutine aqm_comp_init(rc)
     integer, optional, intent(out) :: rc
 
     ! -- local variables
     integer :: localrc
-    integer :: deCount
+    integer :: de, deCount
     type(aqm_config_type), pointer :: config
 
     ! -- begin
-    if (present(rc)) rc = ESMF_FAILURE
-
-    call aqm_model_get(deCount=deCount, config=config, rc=localrc)
-    if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__)) return
-
-    if (deCount > 0) then
-#ifdef TODO
-      select case (config % aqm_opt)
-        case(AQM_OPT_GOCART, AQM_OPT_GOCART_RACM, AQM_OPT_RACM_SOA_VBS)
-          call gocart_model_init(rc=localrc)
-          if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__)) then
-            call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, msg="Failed to initialize model", &
-              line=__LINE__, file=__FILE__, rcToReturn=rc)
-            return  ! bail out
-          end if
-        case default
-          return
-      end select
-#endif
-    end if
-
     if (present(rc)) rc = ESMF_SUCCESS
+
+    call cmaq_model_init(rc=localrc)
+    if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__)) then
+      call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, msg="Failed to initialize model", &
+        line=__LINE__, file=__FILE__, rcToReturn=rc)
+      return  ! bail out
+    end if
 
   end subroutine aqm_comp_init
 
@@ -123,19 +242,12 @@ contains
       return  ! bail out
     end if
 
-#ifdef TODO
-    select case (config % aqm_opt)
-      case(AQM_OPT_GOCART, AQM_OPT_GOCART_RACM, AQM_OPT_RACM_SOA_VBS)
-        call gocart_model_advance(rc=rc)
-        if (aqm_rc_check(rc, file=__FILE__, line=__LINE__)) then
-          call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, msg="Failed to advance model", &
-            line=__LINE__, file=__FILE__, rcToReturn=rc)
-          return  ! bail out
-        end if
-      case default
-        return
-    end select
-#endif
+    call cmaq_model_advance(rc=rc)
+    if (aqm_rc_check(rc, file=__FILE__, line=__LINE__)) then
+      call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, msg="Failed to advance model", &
+        line=__LINE__, file=__FILE__, rcToReturn=rc)
+      return  ! bail out
+    end if
 
   end subroutine aqm_comp_advance
 
@@ -572,4 +684,4 @@ contains
 
   !-----------------------------------------------------------------------------
 
-end module aqm_methods
+end module aqm_comp_mod

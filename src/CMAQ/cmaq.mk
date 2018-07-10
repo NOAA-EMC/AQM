@@ -15,4 +15,5 @@ cmaq_objects = \
 	$(cmaq_dir)/CCTM/src/util/util/libCCTM_a-*.$(OBJEXT) \
 	$(cmaq_dir)/util/libutil_a-*.$(OBJEXT) \
 	$(cmaq_dir)/UTIL/chemmech/src/libUTIL_a-*.$(OBJEXT) \
-	$(cmaq_dir)/UTIL/create_ebi/src_RXNSU/libUTIL_a-*.$(OBJEXT)
+	$(cmaq_dir)/UTIL/create_ebi/src_RXNSU/libUTIL_a-*.$(OBJEXT) \
+	$(cmaq_dir)/shr/libshr_a-*.$(OBJEXT)

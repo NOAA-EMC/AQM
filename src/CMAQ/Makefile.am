@@ -1,4 +1,4 @@
-SUBDIRS = util UTIL CCTM .
+SUBDIRS = shr util UTIL CCTM .
 
 noinst_LIBRARIES = libCMAQ.a
 

@@ -266,18 +266,22 @@ CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
 CPPFLAGS = @CPPFLAGS@
+CUT = @CUT@
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
+ESMFMKFILE = @ESMFMKFILE@
 EXEEXT = @EXEEXT@
 F77 = @F77@
 FC = @FC@
 FCFLAGS = @FCFLAGS@
+FCLIBS = @FCLIBS@
 FC_MODEXT = @FC_MODEXT@
 FFLAGS = @FFLAGS@
+GREP = @GREP@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -299,6 +303,7 @@ PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 RANLIB = @RANLIB@
+SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
@@ -433,7 +438,8 @@ libCCTM_a_CPPFLAGS = -DSUBST_FILES_ID=\"FILES_CTM.EXT\" \
 	-Dparallel -Dmpas
 libCCTM_a_FFLAGS = -fixed -132 -override-limits -I . -I \
 	$(srcdir)/ICL/fixed/filenames -I $(srcdir)/ICL/fixed/const -I \
-	$(srcdir)/ICL/fixed/emctrl -I $(builddir)/../../util
+	$(srcdir)/ICL/fixed/emctrl -I $(builddir)/../../util -I \
+	$(builddir)/../../shr
 libCCTM_a_FCFLAGS = -free -override-limits -I $(builddir)/../../util
 all: all-am
 

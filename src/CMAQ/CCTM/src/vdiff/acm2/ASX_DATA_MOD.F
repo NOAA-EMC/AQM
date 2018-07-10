@@ -171,8 +171,13 @@ C Land use information:
          Character( 16 ), Allocatable   :: LU_Type ( : )     ! general land use type e.g. water, forest, etc.
       End Type GRID_Type
 
-      Type( MET_Type ),     Save :: Met_Data 
-      Type( GRID_Type ),    Save :: Grid_Data 
+      Type( MET_Type ),     Pointer :: Met_Data  => null()
+      Type( GRID_Type ),    Pointer :: Grid_Data => null()
+
+      Public :: GRID_Type, MET_Type
+      Public :: Grid_Data, Met_Data
+!     Type( MET_Type ),     Save :: Met_Data
+!     Type( GRID_Type ),    Save :: Grid_Data
 !      Type( MOSAIC_Type ),  Save :: Mosaic_Data
 !      Type( ChemMos_Type ), Save :: ChemMos_Data
 

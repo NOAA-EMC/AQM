@@ -5,12 +5,13 @@ libshr_a_SOURCES = aqm_clock_mod.F90 aqm_comm_mod.F90 aqm_config_mod.F90 aqm_con
 	aqm_model_mod.F90 aqm_rc_mod.F90 aqm_species_mod.F90 \
 	aqm_state_mod.F90 aqm_tracers_mod.F90 aqm_types_mod.F90 aqm_vars_mod.F90
 
-libshr_a_FCFLAGS =
+libshr_a_FCFLAGS  = -I $(builddir)/../CMAQ/CCTM/src
+libshr_a_FCFLAGS += -I $(builddir)/../CMAQ/shr
 
 .PHONY: clean-modules
 
 clean-modules:
-	-test -z "$(FC_MODEXT)" || rm -f $(libshr_a_SOURCES:.F90=.mod)
+	-test -z "$(FC_MODEXT)" || rm -f $(libshr_a_SOURCES:.F90=.$(FC_MODEXT))
 
 clean-local: clean-modules
 

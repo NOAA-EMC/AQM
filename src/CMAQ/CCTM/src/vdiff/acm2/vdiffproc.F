@@ -97,11 +97,17 @@ C-----------------------------------------------------------------------
       use mio_module
 #endif
 
+      USE CMAQ_SHR_MOD, ONLY : P    => VDIFFP,
+     &                         RC   => CMAQ_RC,
+     &                         XMSG => CMAQ_XMSG,
+     &                         CMAQ_RC_SUCCESS,
+     &                         CMAQ_RC_FAILURE
+
       IMPLICIT NONE
 
       INCLUDE SUBST_FILES_ID  ! file name parameters
 
-      CHARACTER( 120 ) :: XMSG = ' '
+C     CHARACTER( 120 ) :: XMSG = ' '
 
 C Arguments:
 
@@ -123,39 +129,48 @@ C Local Variables:
       CHARACTER( 16 ), SAVE :: AERO_GRAV_SETL = 'CTM_GRAV_SETL'
       CHARACTER( 80 ) :: VARDESC                ! env variable description
       LOGICAL, SAVE :: GRAV_SETL
-      LOGICAL, SAVE :: FIRSTIME = .TRUE.
+!     LOGICAL, SAVE :: FIRSTIME = .TRUE.
       LOGICAL, SAVE :: WRITE_FIRSTIME = .TRUE.
       INTEGER, SAVE :: WSTEP  = 0               ! local write counter
       INTEGER  STATUS                           ! ENV... status
 
+      REAL, POINTER :: CNGRD( :,:,:,: )    ! cgrid aero in mixing
+      REAL, POINTER :: DDEP     ( :,:,: )   ! ddep accumulator
+      REAL, POINTER :: ICMP     ( :,:,: )   ! component flux
+      REAL, POINTER :: WRDD( :,: )                 ! ddep write buffer
+      REAL, POINTER :: DDEP_PA  ( :,:,: )   ! ddep for process
+      REAL, POINTER :: EMIS_PA( :,:,:,: )   ! emis for process
+      REAL, POINTER :: EDDYV ( :,:,: )   ! from EDYINTB
+      REAL, POINTER :: SEDDY ( :,:,: )   ! flipped EDDYV
+
 !     REAL          :: FCJACMF( NCOLS,NROWS,NLAYS )  ! 1/ mid-full layer vert Jac factor
-      REAL, ALLOCATABLE, SAVE :: FCJACMF( :,:,: )  ! 1/ mid-full layer vert Jac factor
+!     REAL, ALLOCATABLE, SAVE :: FCJACMF( :,:,: )  ! 1/ mid-full layer vert Jac factor
 !      REAL             LRDX3M                        ! loop local RDX3M( L )
 !      REAL             FCMSF                         ! loop local RMSFX4( C,R )
 
-      REAL, ALLOCATABLE, SAVE :: CNGRD( :,:,:,: )    ! cgrid aero in mixing ratio
-      REAL, ALLOCATABLE, SAVE :: DDEP     ( :,:,: )   ! ddep accumulator
-      REAL, ALLOCATABLE, SAVE :: ICMP     ( :,:,: )   ! component flux accumlator 
+!     REAL, ALLOCATABLE, SAVE :: CNGRD( :,:,:,: )    ! cgrid aero in mixing ratio
+!     REAL, ALLOCATABLE, SAVE :: DDEP     ( :,:,: )   ! ddep accumulator
+!     REAL, ALLOCATABLE, SAVE :: ICMP     ( :,:,: )   ! component flux accumlator
 !      REAL, ALLOCATABLE, SAVE :: DDEPJ    ( :,:,:,: ) ! ddep for mosaic
 !      REAL, ALLOCATABLE, SAVE :: DDEPJ_FST( :,:,:,: ) ! ddep for stomtal/cuticular pathway
 
-      REAL, allocatable, save :: WRDD( :,: )                 ! ddep write buffer
+!     REAL, allocatable, save :: WRDD( :,: )                 ! ddep write buffer
 !     REAL     :: WRDD( NCOLS,NROWS )                 ! ddep write buffer
 !      REAL     :: WRDDJ( NCOLS,NROWS,N_LUFRAC+1 )     ! mosaic ddep write buffer
 !      REAL     :: WRDDJ_FST( NCOLS,NROWS,N_LUFRAC+1 ) ! mosaic stomatal flux write buffer
 
-      REAL, ALLOCATABLE, SAVE :: DDEP_PA  ( :,:,: )   ! ddep for process analysis
-      REAL, ALLOCATABLE, SAVE :: EMIS_PA( :,:,:,: )   ! emis for process analysis
+!     REAL, ALLOCATABLE, SAVE :: DDEP_PA  ( :,:,: )   ! ddep for process analysis
+!     REAL, ALLOCATABLE, SAVE :: EMIS_PA( :,:,:,: )   ! emis for process analysis
 
       INTEGER, SAVE :: N_SPC_CGRID              ! no. of CGRID species
 
 !     REAL     :: EDDYV ( NCOLS,NROWS,NLAYS )   ! from EDYINTB
 !     REAL     :: SEDDY ( NLAYS,NCOLS,NROWS )   ! flipped EDDYV
-      REAL, ALLOCATABLE, SAVE :: EDDYV ( :,:,: )   ! from EDYINTB
-      REAL, ALLOCATABLE, SAVE :: SEDDY ( :,:,: )   ! flipped EDDYV
+!     REAL, ALLOCATABLE, SAVE :: EDDYV ( :,:,: )   ! from EDYINTB
+!     REAL, ALLOCATABLE, SAVE :: SEDDY ( :,:,: )   ! flipped EDDYV
       REAL        DTSEC                         ! model time step in seconds
 
-      REAL, ALLOCATABLE, SAVE :: VSED_AE( :,:,:,: )
+!     REAL, ALLOCATABLE, SAVE :: VSED_AE( :,:,:,: )
 
 C Local Variables
 
@@ -209,34 +224,55 @@ C Local Variables
       END INTERFACE
 
 C-----------------------------------------------------------------------
+      NULLIFY( CNGRD, DDEP, ICMP, WRDD, DDEP_PA, EMIS_PA, EDDYV, SEDDY )
 
-      IF ( FIRSTIME ) THEN
+      RC = CMAQ_RC_SUCCESS
 
-         ALLOCATE (EDDYV ( NCOLS,NROWS,NLAYS ),
-     $             SEDDY ( NLAYS,NCOLS,NROWS ),
-     &             FCJACMF( NCOLS,NROWS,NLAYS ),
-     &             WRDD( NCOLS,NROWS ),
+      IF ( P % FIRSTIME ) THEN
+
+         ALLOCATE (P % EDDYV ( NCOLS,NROWS,NLAYS ),
+     $             P % SEDDY ( NLAYS,NCOLS,NROWS ),
+!    &             P % FCJACMF( NCOLS,NROWS,NLAYS ),
+     &             P % WRDD( NCOLS,NROWS ),
      $             STAT = ASTAT)
+         IF ( ASTAT .NE. 0 ) THEN
+            XMSG = 'Failure allocating DDEP'
+            RC = CMAQ_RC_FAILURE
+            RETURN
+!           print *, trim(xmsg); stop
+!           CALL M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+         END IF
+         EDDYV => P % EDDYV
+         SEDDY => P % SEDDY
+         WRDD  => P % WRDD
 
-         FIRSTIME = .FALSE.
+         P % FIRSTIME = .FALSE.
          LOGDEV = 6
 
 !        IF ( .NOT. DEPV_INIT ( JDATE, JTIME, TSTEP, CGRID ) ) THEN
          IF ( .NOT. DEPV_INIT ( JDATE, JTIME, TSTEP ) ) THEN
             XMSG = 'Failure initializing deposition velocities module'
-            print *, trim(xmsg); stop
+            RC = CMAQ_RC_FAILURE
+            RETURN
+!           print *, trim(xmsg); stop
 !           CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          END IF
 
 C create global maps
          IF ( .NOT. VDIFF_MAP_INIT( N_SPC_DEPV ) ) THEN
             XMSG = 'Failure initializing index mapping module'
-            print *, trim(xmsg); stop
+            RC = CMAQ_RC_FAILURE
+            RETURN
+!           print *, trim(xmsg); stop
 !           CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          END IF
 
 C Initialize the met data
          CALL INIT_MET( JDATE, JTIME) !, MOSAIC, ABFLUX, HGBIDI )
+         IF (RC .NE. CMAQ_RC_SUCCESS) THEN
+           XMSG = 'Failure initializing met data'
+           RETURN
+         END IF
 
 C Get gravitational settling (sedi) flag.
          GRAV_SETL = .TRUE.         ! default
@@ -266,25 +302,32 @@ C Open vdiff diagnostics file (ioapi header from cgrd)
 
 C Allocate and initialize dry deposition array
 
-         ALLOCATE ( DDEP( N_SPC_DEPV,NCOLS,NROWS ), STAT = ASTAT )
+         ALLOCATE ( P % DDEP( N_SPC_DEPV,NCOLS,NROWS ), STAT = ASTAT )
          IF ( ASTAT .NE. 0 ) THEN
             XMSG = 'Failure allocating DDEP'
-            print *, trim(xmsg); stop
+            RC = CMAQ_RC_FAILURE
+            RETURN
+!           print *, trim(xmsg); stop
 !           CALL M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          END IF
+         DDEP => P % DDEP
          DDEP = 0.0   ! array assignment
   
-         ALLOCATE ( ICMP( LCMP,NCOLS,NROWS ), STAT = ASTAT )
+         ALLOCATE ( P % ICMP( LCMP,NCOLS,NROWS ), STAT = ASTAT )
          IF ( ASTAT .NE. 0 ) THEN
             XMSG = 'Failure allocating ICMP'
-            print *, trim(xmsg); stop
+            RC = CMAQ_RC_FAILURE
+            RETURN
+!           print *, trim(xmsg); stop
 !           CALL M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          END IF
          ICMP = 0.0   ! array assignment
 
          IF ( .NOT. EMIS_INIT ( JDATE, JTIME, TSTEP( 1 ) ) ) THEN
             XMSG = 'Failure initializing emissions module'
-            print *, trim(xmsg); stop
+            RC = CMAQ_RC_FAILURE
+            RETURN
+!           print *, trim(xmsg); stop
 !           CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          END IF
 
@@ -303,6 +346,7 @@ C Set up for process analysis
 !        END IF
 
 C Set up for grav. settling
+#if 0
          IF ( GRAV_SETL ) THEN
             ALLOCATE ( VSED_AE( N_AE_SPC,NLAYS,NCOLS,NROWS ), STAT = ASTAT )
             IF ( ASTAT .NE. 0 ) THEN
@@ -311,17 +355,33 @@ C Set up for grav. settling
                print *, trim(xmsg); stop
             END IF
          END IF
+#endif
 
          N_SPC_CGRID = SIZE ( CGRID,4 )
 
-         ALLOCATE ( CNGRD( N_SPC_CGRID,NLAYS,NCOLS,NROWS ), STAT = ASTAT )
+         ALLOCATE ( P % CNGRD( N_SPC_CGRID,NLAYS,NCOLS,NROWS ), STAT = ASTAT )
          IF ( ASTAT .NE. 0 ) THEN
             XMSG = 'Failure allocating CNGRD'
-            print *, trim(xmsg); stop
+            RC = CMAQ_RC_FAILURE
+            RETURN
+!           print *, trim(xmsg); stop
 !           CALL M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          END IF
+         CNGRD => P % CNGRD
          CNGRD = 0.0   ! array assignment
+
+C        Add return to separate init and run phases
+         RETURN
  
+      ELSE
+         CNGRD   => P % CNGRD
+         DDEP    => P % DDEP
+         ICMP    => P % ICMP
+         WRDD    => P % WRDD
+         DDEP_PA => P % DDEP_PA
+         EMIS_PA => P % EMIS_PA
+         EDDYV   => P % EDDYV
+         SEDDY   => P % SEDDY
       END IF   !  if Firstime
 
 !     goto 999
@@ -337,9 +397,17 @@ C Convert non-molar mixing ratio species and re-order CGRID
 
 C read & interpolate met data
       CALL GET_MET ( MDATE, MTIME, MSTEP) !, MOSAIC, ABFLUX, HGBIDI )
+      IF (RC .NE. CMAQ_RC_SUCCESS) THEN
+        XMSG = 'Failure retrieving met data'
+        RETURN
+      END IF
 
 C read & interpolate deposition velocities
       CALL GET_DEPV ( MDATE, MTIME, TSTEP, CGRID )      
+      IF (RC .NE. CMAQ_RC_SUCCESS) THEN
+        XMSG = 'Failure retrieving deposition velocities'
+        RETURN
+      END IF
 
 !     IF ( GRAV_SETL ) THEN
 C Get gravitational settling velocity for the vsed aero species:
@@ -351,6 +419,10 @@ C Calculate the changes in the layer J-,K-mode aerosol concentrations
 C read & interpolate emissions data => VDEMIS from EMIS_DEFN module
 !     print *, ' ==d== vdiff get emis ', mtime
       CALL GET_EMIS ( MDATE, MTIME, TSTEP, CONVPA, CGRID )
+      IF (RC .NE. CMAQ_RC_SUCCESS) THEN
+        XMSG = 'Failure retrieving emissions'
+        RETURN
+      END IF
 
 !     IF ( LIPR ) THEN
 !        DO S = 1, N_SPC_EMIS+1
@@ -399,6 +471,10 @@ C Note: cngrd is the argument keyword (from the INTERFACE); CNGRD is the actual 
 
          CALL VDIFFACMX( DTSEC, SEDDY, DDEP, ICMP,
      &                   cngrd = CNGRD )
+         IF (RC .NE. CMAQ_RC_SUCCESS) THEN
+           XMSG = 'Failure in VDIFFCMAX'
+           RETURN
+         END IF
 
 !     IF ( VDIFFDIAG ) THEN
 !        NTICS = NTICS + 1
@@ -422,6 +498,10 @@ C Note: cngrd is the argument keyword (from the INTERFACE); CNGRD is the actual 
 
 C Revert non-molar mixing ratio species and re-order CGRID
       CALL REV_CGRID ( CNGRD, MDATE, MTIME, CGRID )
+      IF (RC .NE. CMAQ_RC_SUCCESS) THEN
+        XMSG = 'Failure reverting to CGRID from CNGRD'
+        RETURN
+      END IF
 
 C If last call this hour:  write accumulated depositions:
 

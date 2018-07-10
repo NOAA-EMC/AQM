@@ -103,6 +103,10 @@ module aqm_config_mod
   ! -- control variables
     logical :: call_gocart     = .false.
 
+  ! -- CMAQ configuration options
+    logical :: run_aero
+
+  ! -- species
     type(aqm_species_type), pointer :: species => null()
 
   end type aqm_config_type

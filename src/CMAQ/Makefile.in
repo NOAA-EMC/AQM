@@ -202,18 +202,22 @@ CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
 CPPFLAGS = @CPPFLAGS@
+CUT = @CUT@
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
+ESMFMKFILE = @ESMFMKFILE@
 EXEEXT = @EXEEXT@
 F77 = @F77@
 FC = @FC@
 FCFLAGS = @FCFLAGS@
+FCLIBS = @FCLIBS@
 FC_MODEXT = @FC_MODEXT@
 FFLAGS = @FFLAGS@
+GREP = @GREP@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -235,6 +239,7 @@ PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 RANLIB = @RANLIB@
+SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
@@ -284,7 +289,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-SUBDIRS = util UTIL CCTM .
+SUBDIRS = shr util UTIL CCTM .
 noinst_LIBRARIES = libCMAQ.a
 cmaq_dir = $(builddir)
 cmaq_objects = \
@@ -304,7 +309,8 @@ cmaq_objects = \
 	$(cmaq_dir)/CCTM/src/util/util/libCCTM_a-*.$(OBJEXT) \
 	$(cmaq_dir)/util/libutil_a-*.$(OBJEXT) \
 	$(cmaq_dir)/UTIL/chemmech/src/libUTIL_a-*.$(OBJEXT) \
-	$(cmaq_dir)/UTIL/create_ebi/src_RXNSU/libUTIL_a-*.$(OBJEXT)
+	$(cmaq_dir)/UTIL/create_ebi/src_RXNSU/libUTIL_a-*.$(OBJEXT) \
+	$(cmaq_dir)/shr/libshr_a-*.$(OBJEXT)
 
 libCMAQ_a_SOURCES = 
 libCMAQ_a_LIBADD = $(cmaq_objects)

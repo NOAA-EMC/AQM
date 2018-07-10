@@ -139,7 +139,8 @@ libCCTM_a_CPPFLAGS += -Dparallel -Dmpas
 libCCTM_a_FFLAGS = -fixed -132 -override-limits
 libCCTM_a_FFLAGS += -I . \
 	-I $(srcdir)/ICL/fixed/filenames -I $(srcdir)/ICL/fixed/const -I $(srcdir)/ICL/fixed/emctrl \
-	-I $(builddir)/../../util
+	-I $(builddir)/../../util \
+	-I $(builddir)/../../shr
 libCCTM_a_FCFLAGS  = -free -override-limits
 libCCTM_a_FCFLAGS += -I $(builddir)/../../util
 

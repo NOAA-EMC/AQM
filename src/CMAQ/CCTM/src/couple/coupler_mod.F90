@@ -1,6 +1,6 @@
        module coupler_module
 
-         use mydata_module
+!        use mydata_module
 
          implicit none
 

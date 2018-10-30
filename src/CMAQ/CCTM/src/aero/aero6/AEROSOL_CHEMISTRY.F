@@ -511,7 +511,7 @@ C *** compute only on first pass
         FIRSTIME = .FALSE.
 
         LOGDEV = INIT3()
-#ifndef _AQM_
+!#ifndef _AQM_
 C *** Get PM diagnostic file flag.
         PMDIAG = .TRUE.         ! default
         VARDESC = 'Flag for writing the aerosol diagnostic file'
@@ -528,12 +528,12 @@ C *** Get PM diagnostic file flag.
            XMSG = 'Environment variable not set ... Using default:'
            WRITE( LOGDEV, '(5X, A, I9)' ) XMSG
         END IF
-#endif
+!#endif
 C *** Get flag for average PM diagnostic file.
         APMDIAG = .FALSE.         ! default
-#ifdef _AQM_
-        call get_env (pmdiag, CTM_PMDIAG, .true.)
-#else
+!#ifdef _AQM_
+!        call get_env (pmdiag, CTM_PMDIAG, .true.)
+!#else
         VARDESC = 'Flag for writing the average aerosol diagnostic file'
         APMDIAG = ENVYN( CTM_APMDIAG, VARDESC, APMDIAG, STATUS )
 !       STATUS = 0
@@ -549,7 +549,7 @@ C *** Get flag for average PM diagnostic file.
            WRITE( LOGDEV, '(5X, A, I9)' ) XMSG
         END IF
 
-#endif
+!#endif
 
         CALL MAP_AERO()
         CALL MAP_PRECURSOR()

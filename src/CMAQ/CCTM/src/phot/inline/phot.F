@@ -488,10 +488,11 @@ C...modules
 #ifndef phot_extra_tstep
             CALL NEXTIME ( ODATE, OTIME, DTSTEP( 1 ) )  ! output timestamp ending time
 #endif
+#ifndef _AQM_
             IF ( IO_PE_INCLUSIVE ) CALL OPPHOT ( ODATE, OTIME, DTSTEP( 1 ) )
 
             CALL SUBST_BARRIER
-
+#endif
          END IF  ! photdiag
 
 !...set pointers to species O3 and NO2 in CGRID

@@ -1,5 +1,6 @@
 # SUBDIRS = io shr drv .
-SUBDIRS = io CMAQ shr drv .
+# SUBDIRS = io CMAQ shr drv .
+SUBDIRS = io shr CMAQ drv .
 
 cmaq_dir = $(builddir)/CMAQ
 cmaq_objects = \

@@ -2,7 +2,7 @@ module aqm_data_mod
 
   use aqm_rc_mod
   use aqm_types_mod
-  use ASX_DATA_MOD, only : GRID_Type, MET_Type
+! use ASX_DATA_MOD, only : GRID_Type, MET_Type
 
 ! use cmaq_shr_mod
 
@@ -12,8 +12,8 @@ module aqm_data_mod
     ! -- CMAQ workspace
 !   type(cmaq_vdiff_type) :: vdiff
     ! -- cmaq workspace
-    type(GRID_Type) :: Grid_Data
-    type(MET_Type)  :: Met_Data
+!   type(GRID_Type) :: Grid_Data
+!   type(MET_Type)  :: Met_Data
     real(AQM_KIND_R4), dimension(:,:,:,:), allocatable :: cgrid
   end type aqm_data_type
 

@@ -591,9 +591,9 @@ C Identify and remove multiple occurrences of aerosol deposition velocities
             END IF
 
 C Get diagnostic file flag.
-#ifdef _AQM_
-            call get_env (DEPV_DIAG, CTM_DEPV_FILE, .false.)
-#else
+!#ifdef _AQM_
+!            call get_env (DEPV_DIAG, CTM_DEPV_FILE, .false.)
+!#else
             DEPV_DIAG = .FALSE.         ! default
             VARDESC = 'Flag for writing the DEPV diagnostic file'
             DEPV_DIAG = ENVYN( CTM_DEPV_FILE, VARDESC, DEPV_DIAG, STATUS )
@@ -615,7 +615,7 @@ C Get diagnostic file flag.
                XMSG = 'Environment variable not set ... Using default:'
                WRITE( LOGDEV,'( 5X, A, I9 )' ) XMSG, JTIME
             END IF
-#endif
+!#endif
          END IF INIT_GAS_DV
 
          WRITE( LOGDEV,'( 5X, A / )' ) 'DEPV_INIT: completed INIT_GAS_DV block '

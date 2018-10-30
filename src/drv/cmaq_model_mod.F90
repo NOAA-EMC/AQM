@@ -71,7 +71,7 @@ contains
       end if
 
       ! -- initialize CMAQ's internal workspace
-      call cmaq_init(data % cgrid, config % run_aero, rc=localrc)
+      call cmaq_init(data % cgrid, rc=localrc)
 
       ! -- set CMAQ internal clock?
 
@@ -139,16 +139,6 @@ contains
       if (aqm_rc_check(localrc, msg="Failed to retrieve model domain on local DE", &
         file=__FILE__, line=__LINE__, rc=rc)) return
 
-      ! -- set array dimensions on this DE
-      CMAQ_NROWS = ie-is+1
-      CMAQ_NCOLS = je-js+1
-      CMAQ_NLAYS = ni
-
-      ! -- set pointers to meteorological data structures
-!     call cmaq_model_setpointers(data=data, rc=localrc)
-!     if (aqm_rc_check(localrc, msg="Failed to set pointers for CMAQ on local DE", &
-!       file=__FILE__, line=__LINE__, rc=rc)) return
-
       jdate = 0
       jtime = 0
       call cmaq_advance(data % cgrid, jdate, jtime, tstep, config % run_aero, rc=localrc)
@@ -158,26 +148,5 @@ contains
     end do
 
   end subroutine cmaq_model_advance
-
-
-  subroutine cmaq_model_setpointers(config, data, rc)
-    type(aqm_config_type), optional, pointer :: config
-    type(aqm_data_type),   optional, pointer :: data
-    integer,               optional, intent(out) :: rc
-
-    ! -- local variables
-
-    ! -- begin
-    if (present(rc)) rc = AQM_RC_SUCCESS
-
-    if (present(data)) then
-      ! -- vdiff
-!     vdiffp => data % vdiff
-      ! -- MET
-!     CMAQ_Met_Data  => data % Met_Data
-!     CMAQ_Grid_Data => data % Grid_Data
-    end if
-
-  end subroutine cmaq_model_setpointers
 
 end module cmaq_model_mod

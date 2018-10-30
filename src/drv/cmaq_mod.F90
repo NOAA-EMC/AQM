@@ -2,13 +2,9 @@ module cmaq_mod
 
   use aqm_rc_mod
   use aqm_types_mod
-! use aqm_const_mod,  only : cp, grvity, mwdry, mw_so2_aer, mw_so4_aer, &
-!                             p1000, rd, epsilc
-! use aqm_tracers_mod
 
-  use VGRD_DEFN, ONLY : CMAQ_NLAYS => NLAYS
-  use HGRD_DEFN, ONLY : CMAQ_NCOLS => NCOLS, &
-                        CMAQ_NROWS => NROWS
+  use HGRD_DEFN, ONLY : NCOLS, NROWS, MY_NCOLS, MY_NROWS
+  use VGRD_DEFN, ONLY : NLAYS
 
   use ASX_DATA_MOD, only : CMAQ_Grid_Data => Grid_Data, &
                            CMAQ_Met_Data  => Met_Data
@@ -22,12 +18,12 @@ module cmaq_mod
 
   private
 
+  public :: CMAQ_Grid_Data, CMAQ_Met_Data
+  public :: cmaq_logdev
+
   public :: cmaq_advance
   public :: cmaq_init
   public :: cmaq_species_read
-  public :: CMAQ_NCOLS, CMAQ_NROWS, CMAQ_NLAYS
-  public :: CMAQ_Grid_Data, CMAQ_Met_Data
-  public :: cmaq_logdev
 
 contains
 
@@ -53,10 +49,9 @@ contains
   end subroutine cmaq_species_read
 
 
-  subroutine cmaq_init(cgrid, run_aero, rc)
+  subroutine cmaq_init(cgrid, rc)
 
     real(AQM_KIND_R4), intent(inout) :: cgrid(:,:,:,:)
-    logical,           intent(in)    :: run_aero
     integer, optional, intent(out)   :: rc
 
     ! -- local variables
@@ -67,6 +62,15 @@ contains
 
     ! -- set CMAQ log unit
     cmaq_logdev = INIT3()
+
+    ! -- set domain information
+    ! -- local domain
+    NROWS = size(cgrid, 1)
+    NCOLS = size(cgrid, 2)
+    NLAYS = size(cgrid, 3)
+    ! -- local computational domain same as local domain
+    MY_NROWS = NROWS
+    MY_NCOLS = NCOLS
 
     ! -- set initial concentrations
     cgrid = cmin

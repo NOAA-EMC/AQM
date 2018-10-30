@@ -164,6 +164,8 @@ am_libCCTM_a_OBJECTS = $(AERO)/libCCTM_a-AERO_DATA.$(OBJEXT) \
 	$(VDIFF)/libCCTM_a-vdiffacmx.$(OBJEXT) \
 	$(VDIFF)/libCCTM_a-VDIFF_MAP.$(OBJEXT) \
 	$(VDIFF)/libCCTM_a-vdiffproc.$(OBJEXT) \
+	$(UTIL)/libCCTM_a-findex.$(OBJEXT) \
+	$(UTIL)/libCCTM_a-setup_logdev.$(OBJEXT) \
 	$(UTIL)/libCCTM_a-UTILIO_DEFN.$(OBJEXT)
 libCCTM_a_OBJECTS = $(am_libCCTM_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
@@ -389,8 +391,8 @@ libCCTM_a_SOURCES = $(AERO)/AERO_DATA.F $(AERO)/aero_depv.F \
 	$(PHOT)/twoway_rrtmg_aero_optics.F90 $(SPCS)/CGRID_SPCS.F \
 	$(VDIFF)/ASX_DATA_MOD.F $(VDIFF)/conv_cgrid.F $(VDIFF)/eddyx.F \
 	$(VDIFF)/matrix1.F $(VDIFF)/tri.F $(VDIFF)/vdiffacmx.F \
-	$(VDIFF)/VDIFF_MAP.F $(VDIFF)/vdiffproc.F \
-	$(UTIL)/UTILIO_DEFN.F
+	$(VDIFF)/VDIFF_MAP.F $(VDIFF)/vdiffproc.F $(UTIL)/findex.f \
+	$(UTIL)/setup_logdev.F $(UTIL)/UTILIO_DEFN.F
 
 # aero
 AERO = $(CCTM)/aero/aero6
@@ -695,6 +697,10 @@ $(UTIL)/$(am__dirstamp):
 $(UTIL)/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) $(UTIL)/$(DEPDIR)
 	@: > $(UTIL)/$(DEPDIR)/$(am__dirstamp)
+$(UTIL)/libCCTM_a-findex.$(OBJEXT): $(UTIL)/$(am__dirstamp) \
+	$(UTIL)/$(DEPDIR)/$(am__dirstamp)
+$(UTIL)/libCCTM_a-setup_logdev.$(OBJEXT): $(UTIL)/$(am__dirstamp) \
+	$(UTIL)/$(DEPDIR)/$(am__dirstamp)
 $(UTIL)/libCCTM_a-UTILIO_DEFN.$(OBJEXT): $(UTIL)/$(am__dirstamp) \
 	$(UTIL)/$(DEPDIR)/$(am__dirstamp)
 
@@ -1080,6 +1086,12 @@ $(VDIFF)/libCCTM_a-vdiffproc.o: $(VDIFF)/vdiffproc.F
 $(VDIFF)/libCCTM_a-vdiffproc.obj: $(VDIFF)/vdiffproc.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(VDIFF)/libCCTM_a-vdiffproc.obj `if test -f '$(VDIFF)/vdiffproc.F'; then $(CYGPATH_W) '$(VDIFF)/vdiffproc.F'; else $(CYGPATH_W) '$(srcdir)/$(VDIFF)/vdiffproc.F'; fi`
 
+$(UTIL)/libCCTM_a-setup_logdev.o: $(UTIL)/setup_logdev.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(UTIL)/libCCTM_a-setup_logdev.o `test -f '$(UTIL)/setup_logdev.F' || echo '$(srcdir)/'`$(UTIL)/setup_logdev.F
+
+$(UTIL)/libCCTM_a-setup_logdev.obj: $(UTIL)/setup_logdev.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(UTIL)/libCCTM_a-setup_logdev.obj `if test -f '$(UTIL)/setup_logdev.F'; then $(CYGPATH_W) '$(UTIL)/setup_logdev.F'; else $(CYGPATH_W) '$(srcdir)/$(UTIL)/setup_logdev.F'; fi`
+
 $(UTIL)/libCCTM_a-UTILIO_DEFN.o: $(UTIL)/UTILIO_DEFN.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(UTIL)/libCCTM_a-UTILIO_DEFN.o `test -f '$(UTIL)/UTILIO_DEFN.F' || echo '$(srcdir)/'`$(UTIL)/UTILIO_DEFN.F
 
@@ -1159,6 +1171,12 @@ $(PHOT)/libCCTM_a-o3totcol.o: $(PHOT)/o3totcol.f
 
 $(PHOT)/libCCTM_a-o3totcol.obj: $(PHOT)/o3totcol.f
 	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(PHOT)/libCCTM_a-o3totcol.obj `if test -f '$(PHOT)/o3totcol.f'; then $(CYGPATH_W) '$(PHOT)/o3totcol.f'; else $(CYGPATH_W) '$(srcdir)/$(PHOT)/o3totcol.f'; fi`
+
+$(UTIL)/libCCTM_a-findex.o: $(UTIL)/findex.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(UTIL)/libCCTM_a-findex.o `test -f '$(UTIL)/findex.f' || echo '$(srcdir)/'`$(UTIL)/findex.f
+
+$(UTIL)/libCCTM_a-findex.obj: $(UTIL)/findex.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(UTIL)/libCCTM_a-findex.obj `if test -f '$(UTIL)/findex.f'; then $(CYGPATH_W) '$(UTIL)/findex.f'; else $(CYGPATH_W) '$(srcdir)/$(UTIL)/findex.f'; fi`
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
@@ -1395,8 +1413,8 @@ clean-local: clean-modules
 
 # aero
 $(libAERO)AERO_DATA.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(libAERO)AEROMET_DATA.$(OBJEXT) \
-	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
-#	$(libUTILS)index1.$(OBJEXT)
+	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT) \
+	$(libUTIL)setup_logdev.$(OBJEXT)
 
 $(libAERO)aero_depv.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(libVDIFF)ASX_DATA_MOD.$(OBJEXT) \
 	$(libDEPV)LSM_MOD.$(OBJEXT) $(libAERO)AEROMET_DATA.$(OBJEXT) $(libAERO)AERO_DATA.$(OBJEXT) \
@@ -1413,8 +1431,7 @@ $(libAERO)AERO_EMIS.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(ICL)/const/CONS
 	$(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libAERO)PRECURSOR_DATA.$(OBJEXT) \
 	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) \
 	$(libGRID)GRID_CONF.$(OBJEXT) $(libAERO)AERO_DATA.$(OBJEXT) \
-	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
-#	$(libUTIL)UTILIO_DEFN.$(OBJEXT) $(libUTILS)index1.$(OBJEXT)
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT) $(libUTIL)setup_logdev.$(OBJEXT)
 
 $(libAERO)getpar.$(OBJEXT) : $(libAERO)AEROMET_DATA.$(OBJEXT) $(libAERO)AERO_DATA.$(OBJEXT) 
 
@@ -1422,12 +1439,12 @@ $(libAERO)AEROMET_DATA.$(OBJEXT) : $(ICL)/const/CONST.EXT
 
 $(libAERO)AEROSOL_CHEMISTRY.$(OBJEXT) : $(ICL)/const/CONST.EXT $(libAERO)SOA_DEFN.$(OBJEXT) \
 	$(libAERO)PRECURSOR_DATA.$(OBJEXT) $(libAERO)AEROMET_DATA.$(OBJEXT) $(libAERO)AERO_DATA.$(OBJEXT) \
-	$(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT) 
-#	$(libUTILS)index1.$(OBJEXT)
+	$(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT) \
+	$(libUTIL)setup_logdev.$(OBJEXT)
 
 $(libAERO)aero_subs.$(OBJEXT) : $(AERO)/isrpia.inc $(ICL)/const/CONST.EXT $(libAERO)AOD_DEFN.$(OBJEXT) \
 	$(libAERO)AEROMET_DATA.$(OBJEXT) $(libAERO)SOA_DEFN.$(OBJEXT) $(libAERO)PRECURSOR_DATA.$(OBJEXT) \
-	$(libAERO)AERO_DATA.$(OBJEXT) 
+	$(libAERO)AERO_DATA.$(OBJEXT) $(libUTIL)setup_logdev.$(OBJEXT)
 
 $(libAERO)AOD_DEFN.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(libVDIFF)ASX_DATA_MOD.$(OBJEXT) \
 	$(libAERO)AERO_DATA.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT) \
@@ -1437,15 +1454,14 @@ $(libAERO)isocom.$(OBJEXT) : $(AERO)/isrpia.inc
 $(libAERO)isofwd.$(OBJEXT) : $(AERO)/isrpia.inc
 $(libAERO)isorev.$(OBJEXT) : $(AERO)/isrpia.inc
 $(libAERO)PRECURSOR_DATA.$(OBJEXT) : $(libAERO)AEROMET_DATA.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
-	$(libAERO)AERO_DATA.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) 
-# $(libUTILS)index1.$(OBJEXT)
+	$(libAERO)AERO_DATA.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libUTIL)setup_logdev.$(OBJEXT)
 $(libAERO)SOA_DEFN.$(OBJEXT) : $(libSPCS)CGRID_SPCS.$(OBJEXT) $(libAERO)AEROMET_DATA.$(OBJEXT) \
-	$(libAERO)AERO_DATA.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) 
+	$(libAERO)AERO_DATA.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libUTIL)setup_logdev.$(OBJEXT)
 
 # cloud
 $(libCLOUD)concld_prop_acm.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(ICL)/const/CONST.EXT \
 	$(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libPHOT)PHOT_MET_DATA.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT) \
-	$(libGRID)VGRD_DEFN.$(OBJEXT)
+	$(libGRID)VGRD_DEFN.$(OBJEXT) $(libUTIL)setup_logdev.$(OBJEXT)
 $(libCLOUD)hlconst.$(OBJEXT) : $(libUTIL)UTILIO_DEFN.$(OBJEXT)
 
 # depv
@@ -1463,10 +1479,11 @@ $(libEMIS)EMIS_DEFN.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(ICL)/const/CONS
 	$(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libVDIFF)ASX_DATA_MOD.$(OBJEXT) \
 	$(libAERO)AERO_DATA.$(OBJEXT) $(libAERO)AERO_EMIS.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
 	$(libGRID)VGRD_DEFN.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT) 
-$(libEMIS)LUS_DEFN.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(libGRID)HGRD_DEFN.$(OBJEXT) 
+$(libEMIS)LUS_DEFN.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(libGRID)HGRD_DEFN.$(OBJEXT) \
+	$(libUTIL)setup_logdev.$(OBJEXT)
 $(libEMIS)SSEMIS.$(OBJEXT) :  $(ICL)/filenames/FILES_CTM.EXT $(libGRID)HGRD_DEFN.$(OBJEXT) \
 	$(libAERO)AERO_DATA.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
-	$(libAERO)AEROMET_DATA.$(OBJEXT) $(libVDIFF)ASX_DATA_MOD.$(OBJEXT)
+	$(libAERO)AEROMET_DATA.$(OBJEXT) $(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libUTIL)setup_logdev.$(OBJEXT)
 
 # gas
 $(libGAS)degrade_data.$(OBJEXT) : $(libGAS)DEGRADE_SETUP_TOX.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) 
@@ -1487,12 +1504,14 @@ $(libGAS)hrinit.$(OBJEXT) : $(ICL)/const/CONST.EXT $(libMECHS)RXNS_FUNC_MODULE.$
 	$(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libGAS)hrdata_mod.$(OBJEXT) 
 $(libGAS)hrprodloss.$(OBJEXT) : $(libGAS)hrdata_mod.$(OBJEXT) 
 $(libGAS)hrrates.$(OBJEXT) : $(libGAS)hrdata_mod.$(OBJEXT) 
-$(libGAS)hrsolver.$(OBJEXT) : $(libGAS)hrdata_mod.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) 
+$(libGAS)hrsolver.$(OBJEXT) : $(libGAS)hrdata_mod.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
 $(libGAS)init_degrade.$(OBJEXT) : $(libGAS)DEGRADE_SETUP_TOX.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) 
 
 # grid
-$(libGRID)GRID_CONF.$(OBJEXT) : $(libGRID)HGRD_DEFN.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT)
-$(libGRID)HGRD_DEFN.$(OBJEXT) : $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libGRID)GRID_CONF.$(OBJEXT) : $(libGRID)HGRD_DEFN.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT) \
+	$(libUTIL)setup_logdev.$(OBJEXT)
+$(libGRID)HGRD_DEFN.$(OBJEXT) : $(libUTIL)UTILIO_DEFN.$(OBJEXT) $(libUTIL)setup_logdev.$(OBJEXT)
 $(libGRID)VGRD_DEFN.$(OBJEXT) : $(libUTIL)UTILIO_DEFN.$(OBJEXT)
 $(libGRID)PCGRID_DEFN.$(OBJEXT) : $(libGRID)GRID_CONF.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
 	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
@@ -1507,8 +1526,8 @@ $(libPHOT)AERO_PHOTDATA.$(OBJEXT) : $(ICL)/const/CONST.EXT $(libPHOT)twoway_rrtm
 	$(libGRID)VGRD_DEFN.$(OBJEXT) $(libPHOT)CSQY_DATA.$(OBJEXT) $(libAERO)AEROMET_DATA.$(OBJEXT) \
 	$(libAERO)SOA_DEFN.$(OBJEXT) $(libAERO)AERO_DATA.$(OBJEXT) 
 $(libPHOT)CLOUD_OPTICS.$(OBJEXT) : $(libPHOT)CSQY_DATA.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT) 
-$(libPHOT)CSQY_DATA.$(OBJEXT) : $(libGRID)VGRD_DEFN.$(OBJEXT) $(libAERO)AERO_DATA.$(OBJEXT) \
-	$(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) 
+$(libPHOT)CSQY_DATA.$(OBJEXT) : $(libGRID)VGRD_DEFN.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
+	$(libAERO)AERO_DATA.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) 
 $(libPHOT)phot.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(libPHOT)SEAS_STRAT_O3_MIN.$(OBJEXT) \
 	$(libPHOT)PHOT_MET_DATA.$(OBJEXT) $(libPHOT)PHOTOLYSIS_ALBEDO.$(OBJEXT) $(libPHOT)AERO_PHOTDATA.$(OBJEXT) \
 	$(libPHOT)PHOT_MOD.$(OBJEXT) $(libAERO)AERO_DATA.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
@@ -1531,6 +1550,7 @@ $(libPHOT)twoway_rrtmg_aero_optics.$(OBJEXT) : $(libPHOT)complex_number_module.$
 $(libSPCS)CGRID_SPCS.$(OBJEXT) : $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
 
 # util
+$(libUTIL)setup_logdev.$(OBJEXT) : $(libUTIL)UTILIO_DEFN.$(OBJEXT)
 
 # vdiff
 $(libVDIFF)ASX_DATA_MOD.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(ICL)/const/CONST.EXT \
@@ -1544,7 +1564,8 @@ $(libVDIFF)tri.$(OBJEXT) : $(libSPCS)CGRID_SPCS.$(OBJEXT) $(libGRID)VGRD_DEFN.$(
 $(libVDIFF)vdiffacmx.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(libVDIFF)VDIFF_MAP.$(OBJEXT) \
 	$(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libDEPV)DEPV_DEFN.$(OBJEXT) \
 	$(libEMIS)EMIS_DEFN.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) 
-$(libVDIFF)VDIFF_MAP.$(OBJEXT) : $(ICL)/emctrl/EMISPRM.EXT $(libAERO)AERO_EMIS.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) 
+$(libVDIFF)VDIFF_MAP.$(OBJEXT) : $(ICL)/emctrl/EMISPRM.EXT $(libAERO)AERO_EMIS.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
+	$(libUTIL)findex.$(OBJEXT)
 $(libVDIFF)vdiffproc.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(libVDIFF)VDIFF_MAP.$(OBJEXT) \
 	$(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libDEPV)DEPV_DEFN.$(OBJEXT) \
 	$(libEMIS)EMIS_DEFN.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) 

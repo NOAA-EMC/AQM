@@ -347,9 +347,9 @@ C ------------------ begin body of AERO_DRIVER -------------------------
 #endif
          N_VIS_STEP = 0
 
-#ifndef _AQM_
+!#ifndef _AQM_
          END_TIME = ENVYN( AVG_FILE_ENDTIME, ' ', END_TIME, STATUS )
-#endif
+!#endif
 
 #ifdef twoway
 ! -- this is for twoway
@@ -364,10 +364,10 @@ C ------------------ begin body of AERO_DRIVER -------------------------
 #endif
 
 C *** Get aerosol diagnostic file flag.
-#ifdef _AQM_
+!#ifdef _AQM_
 !        call get_env (PMDIAG, CTM_PMDIAG, .true.)
-         PMDIAG = .true.
-#else
+!        PMDIAG = .true.
+!#else
          PMDIAG = .TRUE.         ! default
          VARDESC = 'Flag for writing the aerosol diagnostic file'
          PMDIAG = ENVYN( CTM_PMDIAG, VARDESC, PMDIAG, STATUS )
@@ -382,11 +382,11 @@ C *** Get aerosol diagnostic file flag.
             XMSG = 'Environment variable not set ... Using default:'
             WRITE( LOGDEV, '(5X, A, I9)' ) XMSG, JTIME
          END IF
-#endif
+!#endif
 
 C *** Get aerosol average diagnostic file flag.
          APMDIAG = .FALSE.         ! default
-#ifndef _AQM_
+!#ifndef _AQM_
          VARDESC = 'Flag for writing the aerosol diagnostic file'
          APMDIAG = ENVYN( CTM_APMDIAG, VARDESC, APMDIAG, STATUS )
          IF ( STATUS .NE. 0 ) WRITE( LOGDEV, '(5X, A)' ) VARDESC
@@ -400,11 +400,11 @@ C *** Get aerosol average diagnostic file flag.
             XMSG = 'Environment variable not set ... Using default:'
             WRITE( LOGDEV, '(5X, A, I9)' ) XMSG, JTIME
          END IF
-#endif
+!#endif
 
 C *** Get aerosol average diagnostic file flag.
          AVISDIAG = .FALSE.         ! default
-#ifndef _AQM_
+!#ifndef _AQM_
          VARDESC = 'Flag for writing the aerosol diagnostic file'
          AVISDIAG = ENVYN( CTM_AVISDIAG, VARDESC, AVISDIAG, STATUS )
          IF ( STATUS .NE. 0 ) WRITE( LOGDEV, '(5X, A)' ) VARDESC
@@ -418,7 +418,7 @@ C *** Get aerosol average diagnostic file flag.
             XMSG = 'Environment variable not set ... Using default:'
             WRITE( LOGDEV, '(5X, A, I9)' ) XMSG, JTIME
          END IF
-#endif
+!#endif
 
 C *** Get AOD diagnostic file flag.
          AOD = .FALSE.         ! default

@@ -328,7 +328,8 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 
 # SUBDIRS = io shr drv .
-SUBDIRS = io CMAQ shr drv .
+# SUBDIRS = io CMAQ shr drv .
+SUBDIRS = io shr CMAQ drv .
 cmaq_dir = $(builddir)/CMAQ
 cmaq_objects = \
 	$(cmaq_dir)/CCTM/src/aero/aero6/libCCTM_a-*.$(OBJEXT) \

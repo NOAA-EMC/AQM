@@ -1402,6 +1402,7 @@ C
 C-----------------------------------------------------------------------
 
       Use aeromet_data, only: f6dpi, f6pi
+      Use utilio_defn
 
       Implicit None
 

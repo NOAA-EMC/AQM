@@ -50,6 +50,7 @@ C....................................................................
          USE M3UTILIO
          INTEGER, EXTERNAL :: INDEX1, SEC2TIME, TIME2SEC, GETEFILE
          INTEGER, EXTERNAL :: SECSDIFF
+         LOGICAL, EXTERNAL :: ENVYN
 #else
 
 #ifdef parallel

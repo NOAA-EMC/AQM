@@ -94,8 +94,10 @@ am__v_AR_0 = @echo "  AR      " $@;
 am__v_AR_1 = 
 libioapi_a_AR = $(AR) $(ARFLAGS)
 libioapi_a_LIBADD =
-am_libioapi_a_OBJECTS = dt2str.$(OBJEXT) index1.$(OBJEXT) \
-	nextime.$(OBJEXT) sec2time.$(OBJEXT) time2sec.$(OBJEXT) \
+am_libioapi_a_OBJECTS = dt2str.$(OBJEXT) getefile.$(OBJEXT) \
+	index1.$(OBJEXT) junit.$(OBJEXT) hhmmss.$(OBJEXT) \
+	mmddyy.$(OBJEXT) nextime.$(OBJEXT) sec2time.$(OBJEXT) \
+	secsdiff.$(OBJEXT) time2sec.$(OBJEXT) upcase.$(OBJEXT) \
 	yr2day.$(OBJEXT) libioapi_a-m3utilio.$(OBJEXT)
 libioapi_a_OBJECTS = $(am_libioapi_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
@@ -287,7 +289,8 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 noinst_LIBRARIES = libioapi.a
-libioapi_a_SOURCES = dt2str.f index1.f nextime.F sec2time.f time2sec.f \
+libioapi_a_SOURCES = dt2str.f getefile.F index1.f junit.F hhmmss.f \
+	mmddyy.F nextime.F sec2time.f secsdiff.F time2sec.f upcase.f \
 	yr2day.F m3utilio.F90
 libioapi_a_FCFLAGS = $(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) $(ESMF_F90COMPILEFREECPP) $(ESMF_F90COMPILECPPFLAGS)
 all: all-am
@@ -573,7 +576,8 @@ clean-modules:
 
 clean-local: clean-modules
 
-dt2str.$(OBJEXT) : nextime.$(OBJEXT)
+dt2str.$(OBJEXT) : hhmmss.$(OBJEXT) mmddyy.$(OBJEXT) nextime.$(OBJEXT)
+getefile.$(OBJEXT) : libioapi_a-m3utilio.$(OBJEXT) junit.$(OBJEXT)
 nextime.$(OBJEXT) : time2sec.$(OBJEXT)
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

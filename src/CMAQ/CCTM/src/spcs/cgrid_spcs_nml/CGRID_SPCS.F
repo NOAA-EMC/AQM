@@ -217,6 +217,9 @@ c species table structures
             type ( surr2_type ) :: mc_surr2_init = surr2_type( ' ', 0 )
             type ( ctrl_type )  :: mc_ctrl_init  = ctrl_type ( ' ', 0 )
 
+#ifdef _AQM_
+            integer, external :: junit
+#endif
 c----------------------------------------------------------------------------------------
             logdev = init3 ()
             success = .true.
@@ -231,21 +234,15 @@ c from namelist files
             type_header = bl
             type_matrix = bl   ! array assignment
 
-#ifdef _AQM_
-            call get_env( eqname, gc_matrix, ' ' )
-#else
             call nameval( gc_matrix, eqname )
-#endif
 
             write( logdev,* ) ' '
             write( logdev,* ) '    GC Species Namelist: ', trim( eqname )
 
 !           open( file = 'gc_matrix.nml', unit = dev_gc_nml,
-#ifdef _AQM_
-            dev_gc_nml = 73
-#else
+
             dev_gc_nml = junit()
-#endif
+
             open( file = trim( eqname ), unit = dev_gc_nml,
      &            status = 'old', position = 'rewind' )
             read( nml = GC_nml, unit = dev_gc_nml ) 
@@ -447,21 +444,15 @@ c the surrogate and ctrl arrays active dimensions not known a priori
             type_header = bl
             type_matrix = bl   ! array assignment
 
-#ifdef _AQM_
-            call get_env( eqname, ae_matrix, ' ' )
-#else
             call nameval( ae_matrix, eqname )
-#endif
 
             write( logdev,* ) ' '
             write( logdev,* ) '    AE Species Namelist: ', trim( eqname )
 
 !           open( file = 'ae_matrix.nml', unit = dev_ae_nml,
-#ifdef _AQM_
-            dev_ae_nml = 74
-#else
+
             dev_ae_nml = junit()
-#endif
+
             open( file = trim( eqname ), unit = dev_ae_nml,
      &            status = 'old', position = 'rewind' )
             read( nml = AE_nml, unit = dev_ae_nml ) 
@@ -644,21 +635,15 @@ c the surrogate and ctrl arrays active dimensions not known a priori
             type_header = bl
             type_matrix = bl   ! array assignment
 
-#ifdef _AQM_
-            call get_env( eqname, nr_matrix, ' ' )
-#else
             call nameval( nr_matrix, eqname )
-#endif
 
             write( logdev,* ) ' '
             write( logdev,* ) '    NR Species Namelist: ', trim( eqname )
 
 !           open( file = 'nr_matrix.nml', unit = dev_nr_nml,
-#ifdef _AQM_
-            dev_nr_nml = 75
-#else
+
             dev_nr_nml = junit()
-#endif
+
             open( file = trim( eqname ), unit = dev_nr_nml,
      &            status = 'old', position = 'rewind' )
             read( nml = NR_nml, unit = dev_nr_nml ) 
@@ -850,21 +835,15 @@ c the surrogate and ctrl arrays active dimensions not known a priori
             type_header = bl
             type_matrix = bl   ! array assignment
 
-#ifdef _AQM_
-            call get_env( eqname, tr_matrix, ' ' )
-#else
             call nameval( tr_matrix, eqname )
-#endif
 
             write( logdev,* ) ' '
             write( logdev,* ) '    TR Species Namelist: ', trim( eqname )
 
 !           open( file = 'tr_matrix.nml', unit = dev_tr_nml,
-#ifdef _AQM_
-            dev_tr_nml = 76
-#else
+
             dev_tr_nml = junit()
-#endif
+
             open( file = trim( eqname ), unit = dev_tr_nml,
      &            status = 'old', position = 'rewind' )
             read( nml = TR_nml, unit = dev_tr_nml )

@@ -116,8 +116,8 @@ C-----------------------------------------------------------------------
 #endif
          USE UTILIO_DEFN         ! I/O API
          USE AERO_EMIS           ! inherits GRID_CONF
-#ifndef _AQM_
          USE AERO_DATA, ONLY: MAP_PMEMIS  ! access subroutine map_pmemis
+#ifndef _AQM_
          USE DEPV_DEFN, ONLY: ABFLUX ! ammonia bidi flag
 #endif
 
@@ -885,9 +885,9 @@ C and allowing the model to proceed.
          LOGDEV = INIT3()
          VARDESC    = "Let model proceed even if there are emission"
      &              //" surrogates that do not appear on any input file."
-#ifdef _AQM_
-         call get_env (EMISCHK, CTM_EMISCHK, EMISCHK)
-#else
+!#ifdef _AQM_
+!         call get_env (EMISCHK, CTM_EMISCHK, EMISCHK)
+!#else
          EMISCHK = ENVYN( CTM_EMISCHK, VARDESC, EMISCHK, STATUS )
          IF ( STATUS .NE. 0 ) WRITE( LOGDEV, '(5X, A)' ) VARDESC
          IF ( STATUS .EQ. 1 ) THEN
@@ -900,7 +900,7 @@ C and allowing the model to proceed.
             XMSG = 'Environment variable not set...Using default:'
             WRITE( LOGDEV, '(5X,A,I9)' ) XMSG, JTIME
          END IF
-#endif
+!#endif
 
 C Find Upper Bound on Number of Possible Species
          NBIOSPC = 0

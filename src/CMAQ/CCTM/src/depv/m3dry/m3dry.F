@@ -913,7 +913,7 @@ c        Iodide in sea-water based on SST  (mol /dm-3)
                   END IF
                END DO
             END IF  ! mosaic
-#endif
+
 C--------------------------------------------------------------------------
             IF ( abflux .And. l .Eq. l_NH3 ) THEN   ! Ammonia Bidirectional Flux
                cnh3  = cgridl1( n,c,r )
@@ -938,6 +938,7 @@ C--------------------------------------------------------------------------
                   cmp( 8,c,r ) = depvel_gas( n,c,r ) * cnh3
                END IF
             END IF   ! 'abflux'
+#endif
 
 C--------------------------------------------------------------------------
             IF ( sfc_hono ) THEN

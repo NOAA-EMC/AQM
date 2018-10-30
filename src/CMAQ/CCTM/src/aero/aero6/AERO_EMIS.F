@@ -467,11 +467,11 @@ C *** scaling to 0.0
            ! the pcVOC emissions
            ZERO_PCSOA = .FALSE.         ! default
            VARDESC = 'Flag for Ignoring the pcSOA species'
-#ifdef _AQM_
+!#ifdef _AQM_
 !          call get_env (ZERO_PCSOA, CTM_ZERO_PCSOA, ZERO_PCSOA)
-#else
+!#else
            ZERO_PCSOA = ENVYN( CTM_ZERO_PCSOA, VARDESC, ZERO_PCSOA, STATUS )
-#endif
+!#endif
                         
            V = INDEX1( 'PCVOC', N_GC_SPC, GC_SPC )
            IF ( V .LT. 1 ) THEN
@@ -692,7 +692,7 @@ C     already opened.
          END DO
 #endif
 C *** Get domain window info from input files
-#ifdef _AQM_
+#ifndef _AQM_
          CALL SUBHFILE ( EMIS_1, GXOFF, GYOFF,
      &                   STARTCOL, ENDCOL, STARTROW, ENDROW )
          CALL SUBHFILE ( MET_CRO_3D, GXOFF, GYOFF,

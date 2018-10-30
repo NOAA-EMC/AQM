@@ -95,6 +95,8 @@
       real, allocatable, save :: oz( :, :, : ) ! two timesteps for interpolation
 
       logical, save :: firsttime = .true.
+      real, external :: yr2day
+      character*24, external :: dt2str
 
 !----------------------------------------------------------------------
 

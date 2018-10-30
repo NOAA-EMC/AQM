@@ -43,6 +43,13 @@ c main CGRID table
 
       integer,                      save :: n_gc_spcd = 0
 
+#ifdef _AQM_
+#ifdef mpas
+      character( 16 ), allocatable, save :: all_spc( : )
+      integer,                      save :: n_all_spc = 0
+#endif
+#endif
+
 c Starting and ending index of gas chemistry species in CGRID
       integer,                      save :: gc_strt = 1
       integer,                      save :: gc_fini = 0
@@ -100,6 +107,11 @@ c control species
      &                                      gc_wdep_map( : ), ae_wdep_map( : ), nr_wdep_map( : ), tr_wdep_map( : ),
      &                                      gc_conc_map( : ), ae_conc_map( : ), nr_conc_map( : ), tr_conc_map( : )
 
+#ifdef _AQM_
+#ifdef mpas
+      integer, allocatable :: indx_mpas(:)
+#endif
+#endif
       type, public :: base_type
          private
          character( 16 ) :: name
@@ -128,7 +140,13 @@ c init routine to allocate the above allocatables
 c !! NO   and to populate the allocated arrays from the stnd gc_spc.ext  !!! NO
 
          function cgrid_spcs_init() result ( success )
+!#ifdef _AQM_
+!
+!            use RXNS_DATA
+!            use get_env_module
+!#else
             use UTILIO_DEFN
+!#endif
      
             implicit none
 
@@ -213,13 +231,21 @@ c from namelist files
             type_header = bl
             type_matrix = bl   ! array assignment
 
+#ifdef _AQM_
+            call get_env( eqname, gc_matrix, ' ' )
+#else
             call nameval( gc_matrix, eqname )
+#endif
 
             write( logdev,* ) ' '
             write( logdev,* ) '    GC Species Namelist: ', trim( eqname )
 
 !           open( file = 'gc_matrix.nml', unit = dev_gc_nml,
+#ifdef _AQM_
+            dev_gc_nml = 73
+#else
             dev_gc_nml = junit()
+#endif
             open( file = trim( eqname ), unit = dev_gc_nml,
      &            status = 'old', position = 'rewind' )
             read( nml = GC_nml, unit = dev_gc_nml ) 
@@ -269,6 +295,11 @@ c the surrogate and ctrl arrays active dimensions not known a priori
      &      gc_ddep( spc_dim ), gc_ddep_map( spc_dim ),
      &      gc_wdep( spc_dim ), gc_wdep_map( spc_dim ),
      &      gc_conc( spc_dim ), gc_conc_map( spc_dim ),
+#ifdef _AQM_
+#ifdef mpas
+     &      all_spc( spc_dim ),
+#endif
+#endif
      &      stat = ios )
 
             gc_spc = bl; gc_molwt = 0.0                        !  .
@@ -283,6 +314,11 @@ c the surrogate and ctrl arrays active dimensions not known a priori
             gc_wdep = bl; gc_wdep_map = 0                      !  .
             gc_conc = bl; gc_conc_map = 0                      !  .
 
+#ifdef _AQM_
+#ifdef mpas
+            all_spc = bl
+#endif
+#endif
             allocate ( mc_surr1( n_surr1 ),
      &                 mc_surr2( n_surr2 ),
      &                 mc_ctrl( n_ctrl ), stat = ios )
@@ -411,13 +447,21 @@ c the surrogate and ctrl arrays active dimensions not known a priori
             type_header = bl
             type_matrix = bl   ! array assignment
 
+#ifdef _AQM_
+            call get_env( eqname, ae_matrix, ' ' )
+#else
             call nameval( ae_matrix, eqname )
+#endif
 
             write( logdev,* ) ' '
             write( logdev,* ) '    AE Species Namelist: ', trim( eqname )
 
 !           open( file = 'ae_matrix.nml', unit = dev_ae_nml,
+#ifdef _AQM_
+            dev_ae_nml = 74
+#else
             dev_ae_nml = junit()
+#endif
             open( file = trim( eqname ), unit = dev_ae_nml,
      &            status = 'old', position = 'rewind' )
             read( nml = AE_nml, unit = dev_ae_nml ) 
@@ -584,7 +628,11 @@ c the surrogate and ctrl arrays active dimensions not known a priori
             n_ae_wdep = k3
             n_ae_conc = k4
 
+#ifdef _AQM_
+            ae_strt = gc_fini + 1
+#else
             ae_strt = gc_fini + 2
+#endif
             ae_fini = ae_strt + n_ae_spc - 1
 
             deallocate ( mc_surr1, mc_surr2, mc_ctrl, stat = ios )
@@ -596,13 +644,21 @@ c the surrogate and ctrl arrays active dimensions not known a priori
             type_header = bl
             type_matrix = bl   ! array assignment
 
+#ifdef _AQM_
+            call get_env( eqname, nr_matrix, ' ' )
+#else
             call nameval( nr_matrix, eqname )
+#endif
 
             write( logdev,* ) ' '
             write( logdev,* ) '    NR Species Namelist: ', trim( eqname )
 
 !           open( file = 'nr_matrix.nml', unit = dev_nr_nml,
+#ifdef _AQM_
+            dev_nr_nml = 75
+#else
             dev_nr_nml = junit()
+#endif
             open( file = trim( eqname ), unit = dev_nr_nml,
      &            status = 'old', position = 'rewind' )
             read( nml = NR_nml, unit = dev_nr_nml ) 
@@ -794,13 +850,21 @@ c the surrogate and ctrl arrays active dimensions not known a priori
             type_header = bl
             type_matrix = bl   ! array assignment
 
+#ifdef _AQM_
+            call get_env( eqname, tr_matrix, ' ' )
+#else
             call nameval( tr_matrix, eqname )
+#endif
 
             write( logdev,* ) ' '
             write( logdev,* ) '    TR Species Namelist: ', trim( eqname )
 
 !           open( file = 'tr_matrix.nml', unit = dev_tr_nml,
+#ifdef _AQM_
+            dev_tr_nml = 76
+#else
             dev_tr_nml = junit()
+#endif
             open( file = trim( eqname ), unit = dev_tr_nml,
      &            status = 'old', position = 'rewind' )
             read( nml = TR_nml, unit = dev_tr_nml )
@@ -997,6 +1061,31 @@ c the surrogate and ctrl arrays active dimensions not known a priori
 !           if ( tr_matrix_err ) success = .false.
 
             nspcsd = n_gc_spcd + n_ae_spc + n_nr_spc + n_tr_spc
+
+#ifdef _AQM_
+#ifdef mpas
+            n_all_spc = n_gc_spc + n_ae_spc + n_nr_spc + n_tr_spc
+            do i1 = 1, n_gc_spc
+               all_spc(i1) = gc_spc(i1)
+            end do
+            i1 = i1 - 1
+            do i2 = 1, n_ae_spc
+               all_spc(i1+i2) = ae_spc(i2)
+            end do
+            i1 = i1 + i2 - 1
+            do i3 = 1, n_nr_spc
+               all_spc(i1+i3) = nr_spc(i3)
+            end do
+            i1 = i1 + i3 - 1
+            do i4 = 1, n_tr_spc
+               all_spc(i1+i4) = nr_spc(i4)
+            end do
+#endif
+            close (dev_gc_nml)
+            close (dev_ae_nml)
+            close (dev_nr_nml)
+            close (dev_tr_nml)
+#endif
 
          return
 

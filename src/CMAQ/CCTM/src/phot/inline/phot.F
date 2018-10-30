@@ -130,13 +130,13 @@ C...modules
 !      USE STRATOS_O3_MINFRACS  ! annual minimum fraction of ozone column density above Pressure TOP
 !      USE SEAS_STRAT_O3_FRACS  ! monthly minimum fraction of ozone column density above Pressure TOP
       USE SEAS_STRAT_O3_MIN    ! monthly minimum fraction of ozone column density above Pressure TOP
-
+#ifndef _AQM_
 #ifdef parallel
       USE SE_MODULES           ! stenex (using SE_UTIL_MODULE)
 #else
       USE NOOP_MODULES         ! stenex (using NOOP_UTIL_MODULE)
 #endif
-
+#endif
       IMPLICIT NONE
 
 !...include files
@@ -342,6 +342,7 @@ C...modules
 !...Get photolysis rate diagnostic file flag
 
          PHOTDIAG = .FALSE.         ! default
+#ifndef _AQM_
          VARDESC= 'Flag for writing the photolysis rate diagnostic file'
          PHOTDIAG = ENVYN( CTM_PHOTDIAG, VARDESC, PHOTDIAG, ESTAT )
          IF ( ESTAT .NE. 0 ) WRITE( LOGDEV, '(5X, A)' ) VARDESC
@@ -368,7 +369,7 @@ C...modules
  
          PECOL_OFFSET = COLSD_PE( 1, MYPE+1 ) - 1
          PEROW_OFFSET = ROWSD_PE( 1, MYPE+1 ) - 1
-
+#endif
          CALL LOAD_CSQY_DATA( )
 
          CALL LOAD_OPTICS_DATA( )         
@@ -995,7 +996,7 @@ C...modules
 !...write diagnostic data to output file at the end of every output tstep
 
       IF ( JTIME_CHK ) THEN
-
+#ifndef _AQM_
          VARNM = 'COSZENS'
          IF ( .NOT. WRITE3( CTM_RJ_1, VARNM, ODATE, OTIME,
      &                     COSINE_ZENITH ) ) THEN
@@ -1235,7 +1236,7 @@ C...modules
                CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
             END IF
          END DO
-
+#endif
          WRITE( LOGDEV, '( /5X, 3( A, :, 1X ), I8, ":", I6.6 )' )
      &          'RJ and Optical Data written to', CTM_RJ_2,
      &          'for date and time', ODATE, OTIME

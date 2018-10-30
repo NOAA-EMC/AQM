@@ -639,6 +639,7 @@ C Local Variables:
       Logical ae6hg
       Logical dust_match
 
+
       If ( mapped ) Return
 
       logdev      = setup_logdev()
@@ -1006,7 +1007,8 @@ C compute aeromode_minNum and aeromode_minM2
          Write(logdev,99901) Trim( mechname )
              xmsg = 'The FATAL errors found in namelist used. Check '
      &         //  'the log of exiting processor if more details are needed.'
-         Call m3exit( pname, 0, 0, xmsg, xstat3 )
+!        Call m3exit( pname, 0, 0, xmsg, xstat3 )
+         Call m3exit( pname, 0, 0, xmsg )
       End If 
 
       mapped = .True.
@@ -1057,7 +1059,7 @@ C Call routine to map aerosol species array
 
 C Open the gridded emissions file, which contains gas, aerosol, and non-reactive
 C species
-
+#ifndef _AQM_
       If ( .Not. open3( emis_1, fsread3, pname ) ) Then
          xmsg1 = 'Could not open '// emis_1 // ' file'
          Call m3exit( pname, 0, 0, Trim( xmsg1 ), xstat1 )
@@ -1067,7 +1069,7 @@ C species
          xmsg1 = 'Could not get '// 'EMIS_1' // ' file description'
          Call m3exit( pname, 0, 0, Trim( xmsg1 ), xstat2 )
       End If
-
+#endif
 C Search emissions file for emission species names. Verify that their units
 C are the same and set pmem_units
 
@@ -1082,6 +1084,7 @@ C are the same and set pmem_units
 
       Do v = 1, n_aerospc
          If ( aerospc( v )%emis( 1:1 ) .Ne. ' ' ) Then
+#ifndef _AQM_
             indx = index1( aerospc( v )%emis, nvars3d, vname3d )
             If ( indx .Le. 0 ) Then
                xmsg1 = Trim( xmsg1 ) // crlf() // blank10
@@ -1089,6 +1092,7 @@ C are the same and set pmem_units
                found = .False.
                Cycle
             End If
+#endif
             n_emis_pm = n_emis_pm + 1
             pmem_map( n_emis_pm ) = v
             pmem_map_name (n_emis_pm ) = aerospc( v )%emis
@@ -1096,6 +1100,7 @@ C are the same and set pmem_units
             ! Add Non-Carbon Primary Organic Emissions Surrogate and Map
             ! it to the Carbon Primary Organic Emissions Surrogate
             If ( Index( mechname,"NVPOA") .EQ. 0 .AND. aerospc( v )%emis .EQ. 'POC' ) Then
+#ifndef _AQM_
               indx = index1( 'PNCOM', nvars3d, vname3d )
               If ( indx .Le. 0 ) Then
                  xmsg1 = Trim( xmsg1 ) // crlf() // blank10
@@ -1103,11 +1108,13 @@ C are the same and set pmem_units
                  found = .False.
                  Cycle
               End If
+#endif
               n_emis_pm = n_emis_pm + 1
               pmem_map( n_emis_pm ) = v
               pmem_map_name (n_emis_pm ) = 'PNCOM'
             End If  
 
+#ifndef _AQM_
 C Change UNITS to upper case
             units = units3d( indx )
             Call upcase( units )
@@ -1122,6 +1129,7 @@ C Check that all emissions units match
      &               // '  [' // Trim( units3d( indx ) ) // ']'
                match = .False.
             End If
+#endif
          End If
       End Do
 
@@ -1130,7 +1138,8 @@ C Check that all emissions units match
       End If
 
       If ( .Not. match ) Then
-         Call m3exit( pname, 0, 0, Trim( xmsg2 ), xstat2 )
+!        Call m3exit( pname, 0, 0, Trim( xmsg2 ), xstat2 )
+         Call m3exit( pname, 0, 0, Trim( xmsg2 ) )
       End If
 
 #ifdef verbose_aero
@@ -1267,7 +1276,8 @@ C Local variables:
 
       If ( .Not. mapped ) Then
          xmsg = 'CGRID Species has not been mapped'
-         Call m3exit( pname, 0, 0, xmsg, xstat3 )
+!        Call m3exit( pname, 0, 0, xmsg, xstat3 )
+         Call m3exit( pname, 0, 0, xmsg )
       End If
 
 C Copy aerospc_conc back to grid cell concentrations

@@ -444,15 +444,15 @@ module AQM
 !   end if
 
 !   ! -- read-in emission and background fields, setup internal parameters
-!   call aqm_model_config_init(rc=rc)
-!   if (aqm_rc_check(rc)) then
-!     call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, &
-!       msg="Failed to initialize model configuration", &
-!       line=__LINE__, &
-!       file=__FILE__, &
-!       rcToReturn=rc)
-!     return  ! bail out
-!   end if
+    call aqm_model_config_init(rc=rc)
+    if (aqm_rc_check(rc)) then
+      call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, &
+        msg="Failed to initialize model configuration", &
+        line=__LINE__, &
+        file=__FILE__, &
+        rcToReturn=rc)
+      return  ! bail out
+    end if
 
     ! -- initialize internal clock
     ! -- get clock information

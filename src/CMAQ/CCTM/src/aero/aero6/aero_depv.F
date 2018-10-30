@@ -87,7 +87,9 @@ C-----------------------------------------------------------------------
       USE UTILIO_DEFN      
       USE AERO_DATA           ! aero variable data
       USE AEROMET_DATA        ! Includes CONST.EXT
+#ifndef _AQM_
       USE Mosaic_Mod, Only: ADEPVJ  ! Shared mosaic variables
+#endif
       Use LSM_Mod, Only: N_LUFRAC
       USE ASX_DATA_MOD, Only: Met_Data
 
@@ -190,8 +192,13 @@ C Meteorological variables
           REAL, INTENT( IN ) :: PDENSAC( :,: )  ! average particle density in accumulation mode
           REAL, INTENT( IN ) :: PDENSCO( :,: )  ! average particle density in coarse mode
           REAL, INTENT( OUT ) :: VDEP( :,:,: ) ! deposition  velocity [ m/s ]
+#ifdef _AQM_
+          REAL, OPTIONAL, INTENT( OUT ) :: VDEPJ( :,:,:,: ) ! deposition  velocity [ m/s ] for each land use category
+          LOGICAL, OPTIONAL, INTENT( IN ) :: MOSAIC
+#else
           REAL, INTENT( OUT ) :: VDEPJ( :,:,:,: ) ! deposition  velocity [ m/s ] for each land use category
           LOGICAL, INTENT( IN ) :: MOSAIC
+#endif
         END SUBROUTINE GETDEP_V
       END INTERFACE
 
@@ -240,7 +247,7 @@ C  Allocate arrays
             XMSG = 'Failure allocating VDEP'
             CALL M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          END IF
-
+#ifndef _AQM_
             ALLOCATE ( VDEPJ( N_LUFRAC,NCOLS,NROWS,N_AE_DEP_SPC ), STAT = ALLOCSTAT )
             IF ( ALLOCSTAT .NE. 0 ) THEN
                XMSG = 'Failure allocating VDEPJ'
@@ -253,7 +260,7 @@ C  Allocate arrays
                CALL M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
             END IF
          END IF
-
+#endif
          ALLOCATE ( DEPV_SUR( N_AE_DEPV ), STAT = ALLOCSTAT )
          IF ( ALLOCSTAT .NE. 0 ) THEN
             XMSG = 'Failure allocating DEPV_SUR'
@@ -327,7 +334,11 @@ C *** get dry deposition velocities:
       CALL GETDEP_V ( XLM, AMU, DGATK, DGACC, DGCOR,
      &                XXLSGAT, XXLSGAC, XXLSGCO,
      &                PDENSAT, PDENSAC, PDENSCO,
+#ifdef _AQM_
+     &                VDEP )
+#else
      &                VDEP, VDEPJ, MOSAIC )
+#endif
 
 C Return dry deposition velocities for aerosols (first layer only).
 
@@ -342,7 +353,7 @@ C Return dry deposition velocities for aerosols (first layer only).
             END DO
          END DO
       END DO
-
+#ifndef _AQM_
       IF ( MOSAIC ) THEN
         DO R = 1, NROWS
            DO C = 1, NCOLS
@@ -358,7 +369,7 @@ C Return dry deposition velocities for aerosols (first layer only).
            END DO
         END DO
       END IF
-
+#endif
       RETURN
       END SUBROUTINE AERO_DEPV
 
@@ -417,12 +428,20 @@ C     average modal particle densities  [ kg/m**3 ]
       REAL, INTENT( IN ) :: PDENSCO( :,: )  ! average particle density in coarse mode
 
 C     Mosaic variables
+!#ifdef _AQM_
+!      LOGICAL, OPTIONAL, INTENT( IN ) :: MOSAIC
+!#else
       LOGICAL, INTENT( IN ) :: MOSAIC
+!#endif
 
 C *** output arguments
 
       REAL, INTENT( OUT ) :: VDEP( :,:,: ) ! deposition  velocity [ m/s ]
+!#ifdef _AQM_
+!      REAL, OPTIONAL, INTENT( OUT ) :: VDEPJ( :,:,:,: ) ! deposition  velocity [ m/s ] for each land use category
+!#else
       REAL, INTENT( OUT ) :: VDEPJ( :,:,:,: ) ! deposition  velocity [ m/s ] for each land use category
+!#endif
 
 C *** array indices hardcoded to match SUBROUTINE AERO_DEPV
       INTEGER, PARAMETER :: VDNATK = 1,  ! Aitken mode number
@@ -548,10 +567,11 @@ C Scalar variables for VARIABLE standard deviations.
 C-----------------------------------------------------------------------
 
       VDEP  = 0.0   ! array assignment
+#ifndef _AQM_
       IF ( MOSAIC ) THEN
          VDEPJ = 0.0   ! array assignment
       END IF
-
+#endif
       DO R = 1, SIZE( Met_Data%TEMP2, 2 )
          DO C = 1, SIZE( Met_Data%TEMP2, 1 )
 
@@ -768,7 +788,7 @@ C coarse mode
 
             VDEP( C,R,VDMCOR ) = VGHAT3C
      &             / ( 1.0 - EXP( -VGHAT3C * ( Met_Data%RA( C,R ) + RD3C ) ) )
-
+#ifndef _AQM_
 C Do mosaic calculations - essentially a repeat of the above, using the mosaic vars
             IF ( MOSAIC ) THEN
 
@@ -887,6 +907,7 @@ C coarse mode
                END DO ! n_lufrac
 
             END IF ! mosaic
+#endif
          END DO ! end loop on C
       END DO ! end loop on R
 

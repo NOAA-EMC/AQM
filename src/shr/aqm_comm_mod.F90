@@ -29,6 +29,8 @@ module aqm_comm_mod
 
 
   interface aqm_comm_bcast
+    module procedure aqm_comm_bcast_l0
+    module procedure aqm_comm_bcast_l1
     module procedure aqm_comm_bcast_i0
     module procedure aqm_comm_bcast_i1
     module procedure aqm_comm_bcast_r0
@@ -421,6 +423,55 @@ contains
   end subroutine aqm_comm_create_group
 
   ! -- broadcast
+
+  subroutine aqm_comm_bcast_l0(data, rootpe, comm, rc)
+    logical,           intent(inout) :: data
+    integer, optional, intent(in)    :: rootpe
+    integer, optional, intent(in)    :: comm
+    integer, optional, intent(out)   :: rc
+
+    ! -- local variables
+    integer :: localrc
+    logical :: buffer(1)
+
+    ! -- begin
+    if (present(rc)) rc = AQM_RC_SUCCESS
+    buffer(1) = data
+    call aqm_comm_bcast_l1(buffer, rootpe=rootpe, comm=comm, rc=localrc)
+    if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__, rc=rc)) return
+    data = buffer(1)
+
+  end subroutine aqm_comm_bcast_l0
+
+  subroutine aqm_comm_bcast_l1(buffer, count, rootpe, comm, rc)
+    logical,           intent(inout) :: buffer(:)
+    integer, optional, intent(in)    :: count
+    integer, optional, intent(in)    :: rootpe
+    integer, optional, intent(in)    :: comm
+    integer, optional, intent(out)   :: rc
+
+    ! -- local variables
+    integer :: localrc
+    integer :: localcomm, localcount, root
+
+    ! -- begin
+    if (present(rc)) rc = AQM_RC_SUCCESS
+
+    if (present(count)) then
+      if (count > size(buffer)) return
+      localcount = count
+    else
+      localcount = size(buffer)
+    end if
+    root = aqm_comm_rootpe
+    if (present(rootpe)) root = rootpe
+    localcomm = mpi_comm_aqm
+    if (present(comm)) localcomm = comm
+    call mpi_bcast(buffer, localcount, MPI_LOGICAL, root, localcomm, localrc)
+    if (aqm_rc_test((localrc /= MPI_SUCCESS), &
+      file=__FILE__, line=__LINE__, rc=rc)) return
+
+  end subroutine aqm_comm_bcast_l1
 
   subroutine aqm_comm_bcast_i0(data, rootpe, comm, rc)
     integer,           intent(inout) :: data

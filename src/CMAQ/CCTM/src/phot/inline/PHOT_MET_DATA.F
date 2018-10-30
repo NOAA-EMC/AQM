@@ -34,6 +34,11 @@ C:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 ! properties of ACM unresolved cloud
          LOGICAL           :: USE_ACM_CLOUD = .TRUE.
+#ifdef _AQM_
+         LOGICAL           :: USE_CUM_CLOUD = .TRUE.
+         LOGICAL           :: IND_ACM_CLOUD = .FALSE.
+         REAL, ALLOCATABLE :: CFRAC_3D_RES( :,:,: ) ! 3D fractional cloud coverage
+#endif
            
          REAL, ALLOCATABLE :: ACM_CFRAC( :,:,: )   ! total fractional cloud coverage
          REAL, ALLOCATABLE :: ACM_QC   ( :,:,: )   ! cloud water content [kg/kg]
@@ -59,6 +64,9 @@ C:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 ! public variables:
          PUBLIC :: QC, QR, QI, QS, QG,
      &             CFRAC_2D, CFRAC_3D, AVE_HYDROMETEORS,
+#ifdef _AQM_
+     &             USE_CUM_CLOUD, IND_ACM_CLOUD,
+#endif
      &             USE_ACM_CLOUD, ACM_CFRAC, ACM_QC, ACM_QR, ACM_QI, ACM_QG,
      &             ACM_CLOUDS, ACM_AVE_H2O,
      &             LAT, LON, HT, COSINE_ZENITH,
@@ -151,7 +159,7 @@ C:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
          LOGDEV = INIT3()     
 
 ! open GRID_CRO_3D file and read time independent grid variables
-        
+#ifndef _AQM_
          IF ( .NOT. OPEN3( GRID_CRO_2D, FSREAD3, PNAME ) ) THEN
             XMSG = 'Could not open '// GRID_CRO_2D // ' file'
             CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
@@ -159,7 +167,7 @@ C:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
          CALL SUBHFILE ( GRID_CRO_2D, GXOFF, GYOFF,
      &                  STRTCOLMC3, ENDCOLMC3, STRTROWMC3, ENDROWMC3 )
-     
+#endif
          ALLOCATE ( HT( NCOLS,NROWS ), STAT = ASTAT )
          IF ( ASTAT .NE. 0 ) THEN
             XMSG = 'Failure allocating HT'
@@ -177,7 +185,11 @@ C:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
             XMSG = 'Failure allocating SINLON'
             CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          END IF
-
+#ifdef _AQM_
+         HT = 1.0 !g3ddata
+         LON = 1.0 !g3ddata
+         LAT = 1.0 !g3ddata
+#else
          VARNM = 'HT'
          IF ( .NOT. INTERPX( GRID_CRO_2D, VARNM, PNAME,
      &                       STRTCOLMC3,ENDCOLMC3, STRTROWMC3,ENDROWMC3,
@@ -201,7 +213,7 @@ C:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
             XMSG = 'Could not read ' // TRIM(VARNM) // ' from ' // GRID_CRO_2D
             CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          END IF
-
+#endif
 ! set up variables for calculating cosine of solar zenith angle
 
          ALLOCATE ( SINLATS( NCOLS,NROWS ), STAT = ASTAT )
@@ -230,7 +242,7 @@ C:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
          END IF
 
 ! open MET_CRO_2D and set its offsets
-
+#ifndef _AQM_
          IF ( .NOT. OPEN3( MET_CRO_2D, FSREAD3, PNAME ) ) THEN
             XMSG = 'Could not open '// MET_CRO_2D // ' file'
             CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
@@ -238,7 +250,7 @@ C:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
          CALL SUBHFILE ( MET_CRO_2D, GXOFF, GYOFF,
      &                   STRTCOLMC2, ENDCOLMC2, STRTROWMC2, ENDROWMC2 )
-
+#endif
 
          ALLOCATE ( CFRAC( NCOLS,NROWS ), STAT = ASTAT )
          IF ( ASTAT .NE. 0 ) THEN
@@ -247,7 +259,7 @@ C:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
          END IF
 
 !...open MET_CRO_3D and set its offsets
-
+#ifndef _AQM_
          IF ( .NOT. OPEN3( MET_CRO_3D, FSREAD3, PNAME ) ) THEN
             XMSG = 'Could not open '// MET_CRO_3D // ' file'
             CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
@@ -262,7 +274,7 @@ C:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
             XMSG = 'Could not get ' // MET_CRO_3D //' file description'
             CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          END IF
-
+#endif
          ALLOCATE ( DENS( NCOLS,NROWS,NLAYS ), STAT = ASTAT )
          IF ( ASTAT .NE. 0 ) THEN
             XMSG = 'Failure allocating DENS'
@@ -322,7 +334,7 @@ C:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 ! test for which optional hydrometeors are available
 ! For WRF/MCIP: if GQ is available, all hydrometeors are available
 !               else if QI or QS is available, QC and QR are available
-
+#ifndef _AQM_
          VAR = INDEX1( 'QG', NVARS3D, VNAME3D )
          IF ( VAR .NE. 0 ) THEN   ! all hydrometeors are available
             QG_AVAIL = .TRUE.
@@ -364,7 +376,7 @@ C:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
      &              'Processing will continue with QI set to ZERO.  <<---<<'
             END IF
          END IF
-
+#endif
          ALLOCATE ( QG( NCOLS,NROWS,NLAYS ), STAT = ASTAT )
          IF ( ASTAT .NE. 0 ) THEN
             XMSG = 'Failure allocating QG'
@@ -390,7 +402,9 @@ C:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
             CALL INIT_ACM_CLOUD( 0, 0 )
             SET_ACM_ARRAYS = .FALSE.
          END IF
-
+#ifdef _AQM_
+         CFRAC_3D_AVAIL = .TRUE.
+#else
          VAR = INDEX1( 'CFRAC_3D', NVARS3D, VNAME3D )
          IF ( VAR .EQ. 0 ) THEN
             CFRAC_3D_AVAIL = .FALSE.
@@ -404,7 +418,7 @@ C:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
      &           'cloud fractions if possible.'
 
          END IF
-        
+#endif
          ALLOCATE ( CFRAC_3D( NCOLS,NROWS,NLAYS ), STAT = ASTAT )
          IF ( ASTAT .NE. 0 ) THEN
             XMSG = 'Failure allocating CFRAC_3D'
@@ -497,7 +511,27 @@ C:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
          LTIME = JTIME
 
 !...  Interpolate time dependent layered input variables
-
+#ifdef _AQM_
+         ZM = 1.0 !g3ddata(:,:,:,zh_ind)
+         ZFULL = 1.0 !g3ddata(:,:,:,zF_ind)
+         DENS = 1.0 !g3ddata(:,:,:,dens_ind)
+         TA = 1.0 !g3ddata(:,:,:,temp_ind)
+         PRES = 1.0 !g3ddata(:,:,:,pres_ind)
+         IF( USE_CUM_CLOUD )THEN
+             CFRAC(:,:) = 1.0 !g2ddata(:,:,cfrac2dr_ind)
+         END IF
+         QV = 1.0 !g3ddata(:,:,:,qv_ind)
+         QC = 1.0 !g3ddata(:,:,:,qc_ind)
+         QR = 1.0 !g3ddata(:,:,:,qr_ind)
+         IF ( QG_AVAIL ) THEN
+             QG = 1.0 !g3ddata(:,:,:,qg_ind)
+             QI = 1.0 !g3ddata(:,:,:,qi_ind)
+             QS = 1.0 !g3ddata(:,:,:,qs_ind)
+         ELSE IF ( QI_AVAIL ) THEN
+             QI = 1.0 !g3ddata(:,:,:,qi_ind)
+             QS = 1.0 !g3ddata(:,:,:,qs_ind)
+         END IF
+#else
          VARNM = 'ZH' ! midlayer height
          IF ( .NOT. INTERPX( MET_CRO_3D, VARNM, PNAME,
      &                       STRTCOLMC3,ENDCOLMC3, STRTROWMC3,ENDROWMC3,
@@ -632,7 +666,7 @@ C:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
             END IF
 
          END IF
-         
+#endif
 ! floor values of QC, QR, QI, QS, and QG to zero
 
          IF ( QG_AVAIL ) THEN
@@ -679,6 +713,9 @@ C:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
          END DO
 
          IF ( CFRAC_3D_AVAIL ) THEN  ! read from file
+#ifdef _AQM_
+            CFRAC_3D_RES = 1.0 ! g3ddata(:,:,:,cfrac3d_ind)
+#else
             VARNM = 'CFRAC_3D'
             IF ( .NOT. INTERPX( MET_CRO_3D, VARNM, PNAME,
      &                          STRTCOLMC3,ENDCOLMC3, STRTROWMC3,ENDROWMC3, 1,NLAYS,
@@ -686,13 +723,53 @@ C:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
               XMSG = 'Could not read CFRAC_3D from ' // MET_CRO_3D
               CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
             END IF
-
+#endif
          ELSE  ! diagnose CFRAC_3D from available data
 
             CALL CAL_CFRAC_3D()
 
          END IF
+#ifdef _AQM_
+         IF( USE_CUM_CLOUD )THEN
+! compute average water for resolved cloud
+            DO ROW = 1, MY_NROWS
+               DO COL = 1, MY_NCOLS
+                  SUM_WEIGHTS = 0.0
+                  AVE_HYDROMETEORS( COL,ROW ) = 0.0
+                  DO LAY = 1, NLAYS
+                     IF ( CFRAC_3D_RES( COL,ROW,LAY ) .LE. 0.0 ) CYCLE
+                     WEIGHT = DELTA_Z( COL,ROW,LAY )
+                     SUM_WEIGHTS = SUM_WEIGHTS + WEIGHT
 
+                     WATER = QC( COL,ROW,LAY ) + QR( COL,ROW,LAY ) + QI( COL,ROW,LAY )
+     &                     + QS( COL,ROW,LAY ) + QG( COL,ROW,LAY )
+
+                     AVE_HYDROMETEORS( COL,ROW ) = AVE_HYDROMETEORS( COL,ROW )
+     &                                        + DENS( COL,ROW,LAY ) * WATER * WEIGHT
+                  END DO
+                  IF ( SUM_WEIGHTS .LT. 1.0 )CYCLE
+                  AVE_HYDROMETEORS( COL,ROW ) = 1.0E+3 * AVE_HYDROMETEORS( COL,ROW ) / SUM_WEIGHTS
+               END DO
+            END DO
+!           ACM_QC     = g3ddata(:,:,:,qc_cu_ind)
+!           ACM_QI     = g3ddata(:,:,:,qi_cu_ind)
+!           ACM_CLOUDS = g2ddata(:,:,cfrac2dt_ind) - g2ddata(:,:,cfrac2dr_ind)
+!set CFRAC_2D and CFRAC_3D to sum of resolved and cumulus
+!           CFRAC_3D = g3ddata(:,:,:,cldfracwcu_ind)
+!           CFRAC_2D = g2ddata(:,:,cfrac2dt_ind)
+!           CFRAC    = g2ddata(:,:,cfrac2dr_ind)
+
+            ACM_QC     = 1.0
+            ACM_QI     = 1.0
+            ACM_CLOUDS = 0.5
+            CFRAC_3D = 1.0
+            CFRAC_2D = 1.0
+            CFRAC    = 1.0
+!add KF cumulus cloud water and ice to resolved cloud water and ice
+            QC = QC + ACM_QC
+            QI = QI + ACM_QI
+         ELSE ! compute average fraction and water for resolved cloud
+#endif
 ! compute averages for resolved cloud                
 
          DO ROW = 1, MY_NROWS
@@ -730,7 +807,11 @@ C:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
                END IF
             END DO
          END DO
-
+#ifdef _AQM_
+            CFRAC_3D = CFRAC_3D_RES
+            CFRAC    = CFRAC_2D
+         END IF
+#endif
          IF ( USE_ACM_CLOUD ) THEN ! compute averages for subgrid clouds                
             DO ROW = 1, MY_NROWS
                DO COL = 1, MY_NCOLS

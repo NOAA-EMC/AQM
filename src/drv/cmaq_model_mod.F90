@@ -7,8 +7,6 @@ module cmaq_model_mod
   use aqm_tracers_mod
   use cmaq_mod
 
-  use cmaq_shr_mod
-
   implicit none
 
   private
@@ -26,7 +24,7 @@ contains
     ! -- local variables
     integer :: localrc
     integer :: de, deCount
-    integer :: nspecies
+    integer :: numSpecies
     integer :: is, ie, js, je, ni, nl
     type(aqm_config_type), pointer :: config => null()
     type(aqm_data_type),   pointer :: data   => null()
@@ -41,28 +39,10 @@ contains
 
     if (deCount < 1) return
 
-    ! -- initialize species pointers for CMAQ internals
-!   call aqm_tracers_set(config, rc=localrc)
-!   if (aqm_rc_check(localrc, msg="Failed to set tracer pointers", &
-!     file=__FILE__, line=__LINE__, rc=rc)) return
-
-    ! -- print out model configuration
-    if (aqm_comm_isroot()) then
-      write(6,'(28("-"))')
-      write(6,'("CMAQ configuration:")')
-      write(6,'(28("-"))')
-      write(6,'("    aqm_opt         = ",i0)') config % aqm_opt
-      write(6,'("    aqm_in_opt      = ",i0)') config % aqm_in_opt
-      write(6,'("    dust_opt         = ",i0)') config % dust_opt
-      write(6,'("    dmsemis_opt      = ",i0)') config % dmsemis_opt
-      write(6,'("    seas_opt         = ",i0)') config % seas_opt
-      write(6,'("    biomass_burn_opt = ",i0)') config % biomass_burn_opt
-      write(6,'(28("-"))')
-    end if
-
     ! -- initialize CMAQ
-    !  * initialize species from namelists on DE 0
-    call cmaq_species_read(nspecies, rc=localrc)
+
+    ! -- initialize species from namelists on DE 0
+    call cmaq_species_read(numSpecies, rc=localrc)
     if (aqm_rc_check(localrc, msg="Failed to initialize CMAQ species", &
       file=__FILE__, line=__LINE__, rc=rc)) return
 
@@ -72,6 +52,10 @@ contains
       if (aqm_rc_check(localrc, msg="Failed to retrieve model on local DE", &
         file=__FILE__, line=__LINE__, rc=rc)) return
 
+      call aqm_model_set(de=de, config=config, numTracers=numSpecies, rc=localrc)
+      if (aqm_rc_check(localrc, msg="Failed to set number of model species on local DE", &
+        file=__FILE__, line=__LINE__, rc=rc)) return
+
       call aqm_model_domain_get(de=de, ids=is, ide=ie, jds=js, jde=je, ni=ni, nl=nl, &
         rc=localrc)
       if (aqm_rc_check(localrc, msg="Failed to retrieve model domain on local DE", &
@@ -79,7 +63,7 @@ contains
 
       ! -- allocate CMAQ internal workspace
       if (.not.allocated(data % cgrid)) then
-        allocate(data % cgrid(ie-is+1,je-js+1,ni,nspecies), stat=localrc)
+        allocate(data % cgrid(ie-is+1,je-js+1,ni,numSpecies), stat=localrc)
         if (aqm_rc_test((localrc /= 0), &
           msg="Failed to allocate CMAQ workspace on local DE", &
           file=__FILE__, line=__LINE__, rc=rc)) return
@@ -92,6 +76,25 @@ contains
       ! -- set CMAQ internal clock?
 
     end do
+
+    ! -- print out model configuration
+    if (aqm_comm_isroot()) then
+      write(cmaq_logdev,'(28("-"))')
+      write(cmaq_logdev,'("CMAQ configuration:")')
+      write(cmaq_logdev,'(28("-"))')
+      write(cmaq_logdev,'(2x,"ae_matrix_nml: ",a)') trim(config % ae_matrix_nml)
+      write(cmaq_logdev,'(2x,"gc_matrix_nml: ",a)') trim(config % gc_matrix_nml)
+      write(cmaq_logdev,'(2x,"nr_matrix_nml: ",a)') trim(config % nr_matrix_nml)
+      write(cmaq_logdev,'(2x,"tr_matrix_nml: ",a)') trim(config % tr_matrix_nml)
+      write(cmaq_logdev,'(2x,"csqy_data    : ",a)') trim(config % csqy_data)
+      write(cmaq_logdev,'(2x,"optics_data  : ",a)') trim(config % optics_data)
+      write(cmaq_logdev,'(2x,"ctm_depvfile : ",l7)') config % ctm_depvfile
+      write(cmaq_logdev,'(2x,"ctm_photodiag: ",l7)') config % ctm_photodiag
+      write(cmaq_logdev,'(2x,"ctm_pmdiag   : ",l7)') config % ctm_pmdiag
+      write(cmaq_logdev,'(2x,"run_aero     : ",l7)') config % run_aero
+      write(cmaq_logdev,'(2x,"N. species   : ",i0)') numSpecies
+      write(cmaq_logdev,'(28("-"))')
+    end if
 
   end subroutine cmaq_model_init
 
@@ -142,9 +145,9 @@ contains
       CMAQ_NLAYS = ni
 
       ! -- set pointers to meteorological data structures
-      call cmaq_model_setpointers(data=data, rc=localrc)
-      if (aqm_rc_check(localrc, msg="Failed to set pointers for CMAQ on local DE", &
-        file=__FILE__, line=__LINE__, rc=rc)) return
+!     call cmaq_model_setpointers(data=data, rc=localrc)
+!     if (aqm_rc_check(localrc, msg="Failed to set pointers for CMAQ on local DE", &
+!       file=__FILE__, line=__LINE__, rc=rc)) return
 
       jdate = 0
       jtime = 0
@@ -169,10 +172,10 @@ contains
 
     if (present(data)) then
       ! -- vdiff
-      vdiffp => data % vdiff
+!     vdiffp => data % vdiff
       ! -- MET
-      CMAQ_Met_Data  => data % Met_Data
-      CMAQ_Grid_Data => data % Grid_Data
+!     CMAQ_Met_Data  => data % Met_Data
+!     CMAQ_Grid_Data => data % Grid_Data
     end if
 
   end subroutine cmaq_model_setpointers

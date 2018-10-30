@@ -160,14 +160,21 @@ contains
     type(aqm_config_type), pointer :: config
 
     ! -- begin
-    if (present(rc)) rc = ESMF_SUCCESS
+    if (present(rc)) rc = ESMF_FAILURE
 
-    call cmaq_model_init(rc=localrc)
-    if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__)) then
-      call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, msg="Failed to initialize model", &
-        line=__LINE__, file=__FILE__, rcToReturn=rc)
-      return  ! bail out
+    call aqm_model_get(deCount=deCount, config=config, rc=localrc)
+    if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__)) return
+
+    if (deCount > 0) then
+      call cmaq_model_init(rc=localrc)
+      if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__)) then
+        call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, msg="Failed to initialize model", &
+          line=__LINE__, file=__FILE__, rcToReturn=rc)
+        return  ! bail out
+      end if
     end if
+
+    if (present(rc)) rc = ESMF_SUCCESS
 
   end subroutine aqm_comp_init
 

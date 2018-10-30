@@ -148,6 +148,23 @@ C Miscellaneous variables
       INTEGER, SAVE :: LOGDEV
       INTEGER, EXTERNAL :: SETUP_LOGDEV
 
+#ifdef _AQM_
+      INTEGER, PARAMETER :: pm_input_var_list_size = 53
+      CHARACTER(16), DIMENSION(pm_input_var_list_size), PARAMETER ::
+     &  pm_input_var_list =
+     &      (/ 'CO     ', 'NO     ', 'NO2    ', 'NH3    ', 'SO2    ',
+     &         'SULF   ', 'CH4    ', 'ALD2   ', 'ALDX   ', 'ETH    ',
+     &         'ETHA   ', 'ETOH   ', 'FORM   ', 'IOLE   ', 'ISOP   ',
+     &         'MEOH   ', 'NVOL   ', 'OLE    ', 'PAR    ', 'TERP   ',
+     &         'TOL    ', 'UNK    ', 'UNR    ', 'XYL    ', 'BENZENE',
+     &         'SESQ   ', 'CL2    ', 'HCL    ', 'HONO   ', 'HGNRVA ',
+     &         'PHGI   ', 'HGIIGAS', 'PMC    ', 'PEC    ', 'PMFINE ',
+     &         'PNO3   ', 'POC    ', 'PSO4   ', 'PCL    ', 'PNH4   ',
+     &         'PNA    ', 'PMG    ', 'PK     ', 'PCA    ', 'PNCOM  ',
+     &         'PFE    ', 'PAL    ', 'PSI    ', 'PMN    ', 'PH2O   ',
+     &         'PMOTHR ', 'PTI    ', 'PCL_B  ' /)
+#endif
+
       CONTAINS
 
 C-----------------------------------------------------------------------
@@ -219,8 +236,10 @@ C-----------------------------------------------------------------------
          USE GRID_CONF           ! horizontal & vertical domain configuration
          USE RXNS_DATA           ! chemical mechanism data
          USE CGRID_SPCS          ! CGRID mechanism species
+#ifndef _AQM_
          USE SSEMIS              ! sea-salt emissions
          USE DUST_EMIS           ! wind-blown dust emissions
+#endif
          USE AERO_DATA
          USE PRECURSOR_DATA
          USE UTILIO_DEFN
@@ -273,6 +292,7 @@ C *** Map data modules
          CALL MAP_PRECURSOR()
          CALL MAP_PMEMIS()
 
+#ifndef _AQM_
 C *** set up for sea-salt emission processing
          IF ( .NOT. SSEMIS_INIT( JDATE, JTIME, TSTEP ) ) THEN
             XMSG = 'Failure initializing sea-salt emission processing'
@@ -290,7 +310,7 @@ C *** set up for dust emission processing
                CALL M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT2 )
             END IF
          END IF
-
+#endif
          IF ( NEMIS_AE .GT. 0 ) THEN   ! all EMLAYS
             ALLOCATE ( VDEMIS_AE( NEMIS_AE,PM_EMLYRS,MY_NCOLS,MY_NROWS ),
      &                 STAT = STATUS )
@@ -447,8 +467,11 @@ C *** scaling to 0.0
            ! the pcVOC emissions
            ZERO_PCSOA = .FALSE.         ! default
            VARDESC = 'Flag for Ignoring the pcSOA species'
+#ifdef _AQM_
+!          call get_env (ZERO_PCSOA, CTM_ZERO_PCSOA, ZERO_PCSOA)
+#else
            ZERO_PCSOA = ENVYN( CTM_ZERO_PCSOA, VARDESC, ZERO_PCSOA, STATUS )
-
+#endif
                         
            V = INDEX1( 'PCVOC', N_GC_SPC, GC_SPC )
            IF ( V .LT. 1 ) THEN
@@ -541,7 +564,7 @@ C *** PVB: speciate PMC (from AERO_DATA)
          SPFC_ACL   = REAL( ACORSEM_ACL_FAC ) * AEROSPC( ACL_IDX )%EMIS_SPLIT( N )
          SPFC_AH2O  = REAL( ACORSEM_AH2O_FAC ) * AEROSPC( AH2O_IDX )%EMIS_SPLIT( N )
          SPFC_ACORS = REAL( ACORS_RENORM ) * AEROSPC( ACORS_IDX )%EMIS_SPLIT( N )
-
+#ifndef _AQM_
 C *** Map sea salt emission species
          SS_MAP = 0   ! array assignment
          DO S = 1, NSSSPC
@@ -585,7 +608,7 @@ C *** Map windblown dust emission species
                END DO
             END DO
          END IF
-
+#endif
 #ifdef Verbose1
          do s = 1, n_aerospc
             do n = 1, n_mode
@@ -615,6 +638,7 @@ C *** get index of SO4 emissions
 
 C *** Get length and width of each grid cell
 C     note: crude estimate is made for LAT/LONG coordinate systems
+#ifndef _AQM_
          IF ( GDTYP_GD .EQ. LATGRD3 ) THEN
             DX1 = DG2M * XCELL_GD ! in m
             DX2 = DG2M * YCELL_GD
@@ -624,12 +648,21 @@ C     note: crude estimate is made for LAT/LONG coordinate systems
             DX1 = XCELL_GD        ! in m
             DX2 = YCELL_GD        ! in m
          END IF
-
+#endif
 C *** Get height of grid cell in each layer in sigma coordinates
 C     Multiply by grid area [m2] to obtain grid volume
+#ifdef _AQM_
+         CELLAREA = 1.0
+#else
          CELLAREA = DX1 * DX2
+#endif
          DO L = 1, PM_EMLYRS
+#ifdef _AQM_
+!           CELLHGT( L ) = g3ddata(1,1,l,zf_ind)
+            CELLHGT( L ) = 1.0
+#else
             CELLHGT( L ) = X3FACE_GD( L ) - X3FACE_GD( L-1 )
+#endif
             CELLVOL( L ) = CELLHGT( L ) * CELLAREA
          END DO
 
@@ -637,7 +670,9 @@ C *** Get scaling factor for converting aerosol emissions from
 C     their input units to [ug/s] and then to [ug/m2/s] using layer-
 C     specific grid-cell volume.  Calling DESC3( EMIS_1 ) assumes EMIS_1
 C     already opened.
-
+#ifdef _AQM_
+            CONVEM_PM_MASS = MGPG                  ! (g/s) -> (ug/s)
+#else
          IF ( PMEM_UNITS .EQ. 'G/S' .OR.
      &        PMEM_UNITS .EQ. 'g/s' ) THEN
             CONVEM_PM_MASS = MGPG                  ! (g/s) -> (ug/s)
@@ -655,14 +690,14 @@ C     already opened.
          DO L = 1, PM_EMLYRS
             CONVEM_PM( L ) = CONVEM_PM_MASS / CELLVOL( L )
          END DO
-
+#endif
 C *** Get domain window info from input files
-
+#ifdef _AQM_
          CALL SUBHFILE ( EMIS_1, GXOFF, GYOFF,
      &                   STARTCOL, ENDCOL, STARTROW, ENDROW )
          CALL SUBHFILE ( MET_CRO_3D, GXOFF, GYOFF,
      &                   STRTCOLMC3, ENDCOLMC3, STRTROWMC3, ENDROWMC3 )
-
+#endif
 99901     FORMAT(/'FATAL: GC namelist used does not include species, ', A, 
      &         / 'Check this namelist contains the same information '
      &         / 'for ', A,' as the repository version of the GC namelist for '
@@ -692,13 +727,19 @@ C                         arrays EMBUFF and PMEMIS_PT have incorrect index value
 C ----------------------------------------------------------------------
          USE GRID_CONF           ! horizontal & vertical domain specifications
          USE CGRID_SPCS          ! CGRID mechanism species
+#ifndef _AQM_
          USE PT3D_DEFN, ONLY: PT3DEMIS, PMEMIS_PT ! from plume rise
          USE PTMAP, ONLY: N_SPC_PTPM, PTPM_MAP    ! defines emissions file(s) PM mapping
+#endif
          USE AERO_DATA
          USE PRECURSOR_DATA
+#ifndef _AQM_
          USE SSEMIS                               ! sea-salt emissions
+#endif
          USE UTILIO_DEFN
+#ifndef _AQM_
          USE DUST_EMIS                            ! windblown dust emissions
+#endif
          USE ASX_DATA_MOD, ONLY: MET_DATA
 
          INCLUDE SUBST_CONST     ! physical and mathematical constants
@@ -761,7 +802,7 @@ C ----------------------------------------------------------------------
 
 C *** Read aerosol emission rates from file and interpolate to the current
 C     time.  Store result in EMBUFF array.
-
+#ifndef _AQM_
          IF ( PT3DEMIS ) THEN   ! in-line plume rise
 
             EMBUFF = 0.0   ! array assignment
@@ -804,18 +845,41 @@ C     time.  Store result in EMBUFF array.
             END DO
 
          END IF
+#else
+!           tmin = mod(jtime, 10000) / 100
+!           tsec = mod(jtime, 100)
+!           q = real(tmin * 60 + tsec) / 3600
+!           p = 1.0 - q
+!           q_ind = my_emis_buffer_ind
+!           p_ind = mod(q_ind + 1, 2)
+
+            EMBUFF = 0.0   ! array assignment
+            EMTMP  = 0.0
+!           DO S = 1, N_EMIS_PM
+!              IDX = INDEX1( PMEM_MAP_NAME( S ), pm_input_var_list_size, pm_input_var_list )
+
+!              if (idx .gt. 0) then
+!                 EMBUFF( :,:,:,S ) =   my_emis_buffer(:,:,:,idx,p_ind) * p
+!    &                                + my_emis_buffer(:,:,:,idx,q_ind) * q
+!              end if
+
+!           END DO
+#endif
 
 C *** Read air density [kg/m3], atmospheric pressure [Pa], air temperature 
 C     [K], specific humidity [kg H2O / kg air], and 10m wind speed [m/s] 
 C     from meteorology file.  Interpolate to the current time.  Store results 
 C     in DENS, PRES, TA, QV, and WSPD10 arrays.
+#ifdef _AQM_
+!        DENS = g3ddata(:, :, :, dens_ind)
+         DENS = 1.0
+#else
          IF ( .NOT. INTERPX( MET_CRO_3D, 'DENS', PNAME,
      &                       STRTCOLMC3,ENDCOLMC3, STRTROWMC3,ENDROWMC3,
      &                       1,NLAYS, JDATE, JTIME, DENS ) ) THEN
             XMSG = 'Could not interpolate DENS from ' // MET_CRO_3D
             CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          END IF
-
 C *** Get sea salt emissions
          CALL GET_SSEMIS ( JDATE, JTIME, TSTEP, CELLVOL( 1 ), CELLHGT( 1 ) )
 
@@ -823,7 +887,7 @@ C *** Get sea salt emissions
 C *** Get dust emissions
             CALL GET_DUST_EMIS ( JDATE, JTIME, TSTEP, Met_data%RJACM( :,:,1 ), CELLHGT( 1 ) )
          END IF
-
+#endif
 C *** Loop over each grid cell in layer 1
 
          L = 1
@@ -838,6 +902,7 @@ C *** Store aerosol emission rates for this grid cell in a 1D array
 C *** Get grid cell values for sea salt emission rates
 C     Convert units of SSOUTM from [g/m3/s] to [ug/m3/s].
                CR_SSM = 0.0   ! array assignment
+#ifndef _AQM_
                DO N = 1, N_MODE
                   DO S = 1, N_AEROSPC
                      IF ( SS_MAP( S,N ) .NE. 0 )
@@ -860,7 +925,7 @@ C     Convert units of DUSTOUTM from [g//m3/s] to [ug/m3/s]
                      CR_DUSTS( N ) = DUSTOUTS( N,C,R )
                   END DO
                END IF
-
+#endif
 C *** Calculate scaling factor for converting mass emissions into [ug/m3/s]
 C     note: RJACM converts grid heights from sigma coordinates to meters
 C     Also calculate scaling factors for converting to molar-mixing-ratio units
@@ -954,7 +1019,7 @@ C *** Add sea salt to the total emissions of particle number and surface area
                   EM_NUM( N ) = EM_NUM( N ) + CR_SSN( N )
                   EM_SRF( N ) = EM_SRF( N ) + CR_SSS( N )
                END DO
-
+#ifndef _AQM_
                IF ( WB_DUST ) THEN
 
 C *** Add windblown dust mass emissions to mode- and species-specific
@@ -972,7 +1037,7 @@ C *** Add windblown dust to the total emissions of particle number and surface a
                   END DO
 
                END IF
-
+#endif
 C *** Convert emission rates into molar-mixing-ratio units, as required by
 C     the vertical diffusion routines.  Mass and number emissions are converted
 C     to [ppmv/s].  Note: EM_PART has units of [ug/m3/s] and mol(s)/mol(air) is

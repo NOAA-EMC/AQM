@@ -3,9 +3,8 @@ noinst_LIBRARIES = libdrv.a
 libdrv_a_SOURCES = cmaq_model_mod.F90 cmaq_mod.F90
 
 libdrv_a_FCFLAGS  = -I $(builddir)/../shr
-libdrv_a_FCFLAGS += -I $(builddir)/../CMAQ/CCTM/src
-libdrv_a_FCFLAGS += -I $(builddir)/../CMAQ/shr
-libdrv_a_FCFLAGS += -I $(builddir)/../CMAQ/util
+libdrv_a_FCFLAGS += -I $(builddir)/../CMAQ
+libdrv_a_FCFLAGS += -I $(builddir)/../io/ioapi
 
 libdrv_a_DEPENDENCIES = $(builddir)/../shr/libshr.a
 

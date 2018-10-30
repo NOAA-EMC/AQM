@@ -1124,6 +1124,15 @@ contains
 
   subroutine aqm_tracers_set(config, rc)
     type(aqm_config_type), pointer     :: config
+    integer, optional,      intent(out) :: rc
+    ! -- begin
+    if (present(rc)) rc = AQM_RC_SUCCESS
+    aqm_config    => config
+  end subroutine aqm_tracers_set
+
+#if 0
+  subroutine aqm_tracers_set(config, rc)
+    type(aqm_config_type), pointer     :: config
 !   type(aqm_config_type), intent(in)  :: config
     integer, optional,      intent(out) :: rc
 
@@ -1389,5 +1398,5 @@ contains
     p_xyl          = config % species % p_xyl
 
   end subroutine aqm_tracers_set
-
+#endif
 end module aqm_tracers_mod

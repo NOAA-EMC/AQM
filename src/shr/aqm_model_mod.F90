@@ -25,10 +25,6 @@ module aqm_model_mod
 
   private
 
-  public :: AQM_OPT_GOCART
-  public :: AQM_OPT_GOCART_RACM
-  public :: AQM_OPT_RACM_SOA_VBS
-
   public :: aqm_model_type
   ! -- also provide subtypes
   public :: aqm_clock_type
@@ -67,6 +63,14 @@ contains
     localDeCount = 1
     if (present(deCount)) localDeCount = deCount
 
+    ! -- AQM can only support up to 1 DE/PET
+    if (localDeCount > 1) then
+      call aqm_rc_set(AQM_RC_FAILURE, &
+        msg="AQM only supports up to 1 DE/PET.", &
+        file=__FILE__, line=__LINE__, rc=rc)
+      return
+    end if
+
     if (localDeCount > 0) then
       allocate(aqm_model(0:localDeCount-1), stat=localrc)
       if (aqm_rc_test((localrc /= 0), msg="Failure to create model", &
@@ -99,13 +103,13 @@ contains
       de = 0
       call aqm_data_destroy(aqm_model(de) % data, rc=localrc)
       if (associated(aqm_model(de) % config)) then
-        if (associated(aqm_model(de) % config % species)) then
-          deallocate(aqm_model(de) % config % species, stat=localrc)
-          if (aqm_rc_test((localrc /= 0), &
-            msg="Failure to allocate model species memory", &
-            file=__FILE__, line=__LINE__, rc=rc)) return
-          nullify(aqm_model(de) % config % species)
-        end if
+!       if (associated(aqm_model(de) % config % species)) then
+!         deallocate(aqm_model(de) % config % species, stat=localrc)
+!         if (aqm_rc_test((localrc /= 0), &
+!           msg="Failure to allocate model species memory", &
+!           file=__FILE__, line=__LINE__, rc=rc)) return
+!         nullify(aqm_model(de) % config % species)
+!       end if
         deallocate(aqm_model(de) % config, stat=localrc)
         if (aqm_rc_test((localrc /= 0), &
           msg="Failure to allocate model config memory", &
@@ -301,11 +305,11 @@ contains
       call aqm_config_read(model % config, rc=localrc)
       if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__, rc=rc)) return
       ! -- setup internal parameters based on input options
-      call aqm_config_control_init(model % config, rc=localrc)
-      if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__, rc=rc)) return
+!     call aqm_config_control_init(model % config, rc=localrc)
+!     if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__, rc=rc)) return
       ! -- setup internal indexes for aqmical species
-      call aqm_config_species_init(model % config, rc=localrc)
-      if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__, rc=rc)) return
+!     call aqm_config_species_init(model % config, rc=localrc)
+!     if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__, rc=rc)) return
       ! -- populate pointers on other local DEs
       do de = 1, deCount-1
         call aqm_model_set(de=de, config=model % config, rc=localrc)

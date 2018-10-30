@@ -81,14 +81,11 @@ AC_LANG_POP([Fortran])
 # Checks for library functions.
 
 AC_CONFIG_FILES([Makefile
-                 src/CMAQ/CCTM/Makefile
-                 src/CMAQ/CCTM/src/Makefile
                  src/CMAQ/Makefile
-                 src/CMAQ/UTIL/Makefile
-                 src/CMAQ/util/Makefile
-                 src/CMAQ/shr/Makefile
                  src/shr/Makefile
                  src/drv/Makefile
+                 src/io/Makefile
+                 src/io/ioapi/Makefile
                  src/Makefile])
 AC_OUTPUT
 

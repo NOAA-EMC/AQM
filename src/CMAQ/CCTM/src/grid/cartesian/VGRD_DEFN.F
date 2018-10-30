@@ -110,7 +110,22 @@ C This function is expected to be called only once - at startup
                FIRSTIME = .FALSE.
 !              LOGDEV = INIT3()
                SUCCESS = .TRUE.
+#ifdef _AQM_
+               NLAYS = 21
+               ALLOCATE ( VGLVS_GD( NLAYS + 1 ),
+     &                    X3FACE_GD( 0:NLAYS ), STAT = ALLOCSTAT )
+               IF ( ALLOCSTAT .NE. 0 ) THEN
+                  XMSG = 'Failure allocating VGLVS_GD, X3FACE_GD'
+                  CALL M3WARN ( 'VGRD_INIT', 0, 0, XMSG )
+                  SUCCESS = .FALSE.; RETURN
+                  END IF
+               VGLVS_GD = (/ 1.0, 0.995, 0.99, 0.985, 0.98, 0.97, 0.96,
+     &                     0.945, 0.93,  0.91, 0.89,  0.865, 0.84, 0.78,
+     &                       0.7,  0.6,  0.5,  0.4,  0.3, 0.2, 0.1, 0.0
+     &                     /)
+               X3FACE_GD = 1.0 - VGLVS_GD
 
+#else
 C get vert layer definition from LAYER_FILE
 
                IF ( .NOT. OPEN3( LAYER_FILE, FSREAD3, 'VGRD_INIT' ) ) THEN
@@ -151,7 +166,7 @@ C set layer layer thickenesses
                DO L = 0, NLAYS
                   X3FACE_GD( L ) = 1.0 - VGLVS_GD( L + 1 )
                   END DO
-
+#endif
             ELSE
             XMSG = 'Vertical layer structure already defined'
             CALL M3WARN ( 'VGRD_INIT', 0, 0, XMSG )

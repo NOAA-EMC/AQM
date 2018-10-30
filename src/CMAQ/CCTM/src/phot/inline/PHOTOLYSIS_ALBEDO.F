@@ -115,10 +115,12 @@ C...        Function sets up arrays and data needed to calculate surface albedos
 C           use in radiative transfer calculation for actinic fluxes
 
             USE UTILIO_DEFN       ! IOAPI declaratiion and utilities
+#ifndef _AQM_
 #ifdef parallel
             USE SE_MODULES            ! stenex (using SE_UTIL_MODULE)
 #else
             USE NOOP_MODULES          ! stenex (using NOOP_UTIL_MODULE)
+#endif
 #endif
             USE PHOT_MOD          ! photolysis in-line module
             USE PCGRID_DEFN       ! get cgrid
@@ -174,7 +176,7 @@ C...compute start time data and frequency of annual cycle considering leap year
             ELSE
                JYFREQ = 2.0 * PI / 365.0
             END IF
-
+#ifndef _AQM_
 C...Get met file offsets
 
             CALL SUBHFILE ( GRID_CRO_2D, GXOFF, GYOFF,
@@ -190,8 +192,9 @@ C...Get met file offsets
                SUCCESS = .FALSE.
                RETURN
             END IF
-
+#endif
             HAS_SEAICE  = .TRUE.
+#ifndef _AQM_
             VARNM = 'SEAICE'
             V = INDEX1( VARNM, NVARS3D, VNAME3D )
 
@@ -200,7 +203,7 @@ C...Get met file offsets
                XMSG = 'Could not find ' // VARNM // 'in ' // MET_CRO_2D
                WRITE(LOGDEV,'( A )')TRIM( PNAME ) // ' : ' // XMSG
             END IF
-
+#endif
             SELECT CASE( LSM_SCHEME )
                CASE( 'USGS24' )
                   NUMB_LANDUSE = NUMB_LANDUSE_USGS  ! 24
@@ -307,6 +310,7 @@ C...Get met file offsets
 
                N_WATER_CLASSES = 0
                DO V = 1, NUMB_LANDUSE
+#ifndef _AQM_
                   WRITE( LU_INDEX, '(I2.2)' ) V
                   VARNM = 'LUFRAC_' // LU_INDEX
                   IF ( .NOT. INTERPX( GRID_CRO_2D, VARNM, PNAME,
@@ -318,14 +322,19 @@ C...Get met file offsets
                      SUCCESS = .FALSE.
                      RETURN
                   END IF
+#endif
                   IF ( ALBMAP_TO_REF( V ) .EQ. INDEX_OCEAN_REF ) THEN
                       N_WATER_CLASSES = N_WATER_CLASSES + 1
                   END IF
+#ifdef _AQM_
+                  FRACTION_LANDUSE( V,:,: ) = 0.1 ! lufrac_data(V,:,:)
+#else
                   DO ROW = 1, MY_NROWS
                      DO COL = 1, MY_NCOLS
                         FRACTION_LANDUSE( V,COL,ROW ) = BUFFER( COL,ROW )
                      END DO
                   END DO
+#endif
                END DO
                N_LAND_CLASSES = NUMB_LANDUSE - N_WATER_CLASSES
                
@@ -354,6 +363,7 @@ C...Get met file offsets
      &              // ' calculation.'
                WRITE(LOGDEV,'( A )')TRIM( PNAME ) // ' : ' // XMSG
                VARNM = 'LWMASK'
+#ifndef _AQM_
                IF ( .NOT. INTERPX( GRID_CRO_2D, VARNM, PNAME,
      &                             STRTCOLGC2,ENDCOLGC2, STRTROWGC2,ENDROWGC2,
      &                             1,1, 0000000, 000000, BUFFER ) ) THEN
@@ -363,6 +373,8 @@ C...Get met file offsets
                   SUCCESS = .FALSE.
                   RETURN
                END IF
+#endif
+               BUFFER = 1.0 ! g2ddata(:,:,lwmask_ind)
                DO ROW = 1, MY_NROWS
                   DO COL = 1, MY_NCOLS
                      IF ( BUFFER( COL,ROW ) .LT. 0.5 ) THEN
@@ -617,10 +629,12 @@ C    latitudes and longitudes
 
             USE UTILIO_DEFN       ! IOAPI declaratiion and utilities
             USE PHOT_MOD          ! photolysis in-line module
+#ifndef _AQM_
 #ifdef parallel
             USE SE_MODULES        ! stenex (using SE_UTIL_MODULE)
 #else
             USE NOOP_MODULES      ! stenex (using NOOP_UTIL_MODULE)
+#endif
 #endif
             USE PCGRID_DEFN       ! get cgrid
 
@@ -669,6 +683,14 @@ C local:
             INTEGER                     :: V, N, MODE
             INTEGER                     :: ALLOCSTAT
 
+#ifdef _AQM_
+            SNOCOV = 0.1 ! g2ddata(:,:,snocov_ind)
+            IF ( HAS_SEAICE ) THEN
+              SEAICE = 0.1 ! g2ddata(:,:,seaice_ind)
+            ELSE
+              TEMPG = 1.0 ! g2ddata(:,:,tempg_ind)
+            END IF
+#else
 C...Read & Interpolate SNOCOV
 
             VARNM = 'SNOCOV'
@@ -700,7 +722,7 @@ C...Read & Interpolate SNOCOV
                END IF
 
             END IF
-
+#endif
 C...Calculate current hour in GMT and julian day
 
             CURRENT_HOUR = REAL( STRTHR, 4 )

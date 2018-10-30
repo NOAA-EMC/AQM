@@ -21,6 +21,38 @@ contains
 
   subroutine aqm_backgd_init(rc)
     integer, optional, intent(out) :: rc
+    ! -- begin
+    if (present(rc)) rc = AQM_RC_SUCCESS
+  end subroutine aqm_backgd_init
+
+  subroutine aqm_backgd_read(rc)
+    integer, optional, intent(out) :: rc
+    ! -- begin
+    if (present(rc)) rc = AQM_RC_SUCCESS
+  end subroutine aqm_backgd_read
+
+  subroutine aqm_backgd_write(rc)
+    integer, optional, intent(out) :: rc
+    ! -- begin
+    if (present(rc)) rc = AQM_RC_SUCCESS
+  end subroutine aqm_backgd_write
+
+  subroutine aqm_output_init(rc)
+    integer, optional, intent(out) :: rc
+    ! -- begin
+    if (present(rc)) rc = AQM_RC_SUCCESS
+  end subroutine aqm_output_init
+
+  subroutine aqm_output_write(rc)
+    integer, optional, intent(out) :: rc
+    ! -- begin
+    if (present(rc)) rc = AQM_RC_SUCCESS
+  end subroutine aqm_output_write
+
+
+#if 0
+  subroutine aqm_backgd_init(rc)
+    integer, optional, intent(out) :: rc
 
     ! -- local variables
     integer :: localrc
@@ -1459,5 +1491,5 @@ contains
     end if
 
   end subroutine aqm_output_write
-
+#endif
 end module aqm_iodata_mod

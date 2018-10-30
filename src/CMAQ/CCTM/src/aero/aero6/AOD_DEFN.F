@@ -80,10 +80,11 @@ C Arguments:
          if ( ios .ne. 0 ) then
             xmsg = '*** ERROR allocating conc_cr, zh_cr, ta_cr, pres_cr, qv_cr,'
      &           // ' or ext_cr, or ext_cr'
-            call m3warn ( pname, sdate3d, stime3d, xmsg )
+!           call m3warn ( pname, sdate3d, stime3d, xmsg )
+            call m3warn ( pname, jdate, jtime, xmsg )
             success = .false.; return
          end if
-
+#ifndef _AQM_
          ftype3d = grdded3
          sdate3d = jdate
          stime3d = jtime
@@ -130,7 +131,7 @@ c Open the diagnostic file
                success = .false.; return
             end if
          end if
-
+#endif
          return
       end function aod_init
 

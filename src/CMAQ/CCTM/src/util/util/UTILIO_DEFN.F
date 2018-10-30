@@ -46,6 +46,12 @@ C....................................................................
 
       MODULE UTILIO_DEFN
 
+#ifdef _AQM_
+         USE M3UTILIO
+         INTEGER, EXTERNAL :: INDEX1, SEC2TIME, TIME2SEC, GETEFILE
+         INTEGER, EXTERNAL :: SECSDIFF
+#else
+
 #ifdef parallel
 
          USE M3UTILIO, EXCLUDE_INTERPB => INTERP3,
@@ -69,6 +75,7 @@ C....................................................................
 #endif
 #else
          USE M3UTILIO, INTERPB => INTERP3
+#endif
 #endif
 
       END MODULE UTILIO_DEFN

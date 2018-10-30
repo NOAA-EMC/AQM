@@ -190,8 +190,10 @@ C *** visibility variables
       INTEGER, PARAMETER :: IBEXT1 = 2 ! extinction [ 1/km ] (Mie)
       INTEGER, PARAMETER :: IDCVW2 = 3 ! visual range in deciview (Reconst)
       INTEGER, PARAMETER :: IBEXT2 = 4 ! extinction [ 1/km ] (Reconst)
+#ifndef _AQM_
       REAL VIS_SPC( NCOLS,NROWS,N_AE_VIS_SPC )  ! Visual range information
       REAL, ALLOCATABLE, SAVE :: AVIS_SPC( :,:,: ) ! average Visual range information
+#endif
 
 C *** aerosol size distribution variables
 !     REAL DIAM_SPC( NCOLS,NROWS,NLAYS,39 )
@@ -288,7 +290,7 @@ C                            pp 601-609, April, 1996.
 C *** End Statement Function  ********
 
       logical, save :: now = .true.
-
+#ifndef _AQM_
       INTERFACE
          SUBROUTINE GET_ENVLIST ( ENV_VAR, NVARS, VAL_LIST )
             CHARACTER( * ),  INTENT ( IN )  :: ENV_VAR
@@ -296,7 +298,7 @@ C *** End Statement Function  ********
             CHARACTER( 16 ), INTENT ( OUT ) :: VAL_LIST( : )
          END SUBROUTINE GET_ENVLIST
       END INTERFACE
-
+#endif
 #ifdef twoway
       INTERFACE
         SUBROUTINE FEEDBACK_WRITE (C, R, L, CGRID_DATA, O3_VALUE, JDATE, JTIME)
@@ -317,27 +319,37 @@ C ------------------ begin body of AERO_DRIVER -------------------------
          ELSE
             NUM_PMDIAG_SPC = 39
          END IF
-
+#ifndef _AQM_
          CALL GET_ENVLIST ( APMDIAG_BLEV_ELEV, N, V_LIST )
          IF ( N .EQ. 0 ) THEN
             A_NLAYS = NLAYS
          ELSE
            READ( V_LIST( 2 ), '( I4 )' ) A_NLAYS
          END IF
-
+#endif
          ALLOCATE (   PMDIAG_SPC( NCOLS,NROWS,NLAYS,NUM_PMDIAG_SPC ),
+#ifndef _AQM_
      &              A_PMDIAG_SPC( NCOLS,NROWS,A_NLAYS,NUM_PMDIAG_SPC ),
+#endif
      &              TEMP_DATA( NUM_PMDIAG_SPC ), 
+#ifndef _AQM_
      &              AVIS_SPC( NCOLS,NROWS,N_AE_VIS_SPC ),
+#endif
      &              STAT=ALLOCSTAT)
 
+#ifndef _AQM_
          A_PMDIAG_SPC  = 0.0
+#endif
          N_APMDIAG_STEP = 0
 
+#ifndef _AQM_
          AVIS_SPC = 0.0
+#endif
          N_VIS_STEP = 0
 
+#ifndef _AQM_
          END_TIME = ENVYN( AVG_FILE_ENDTIME, ' ', END_TIME, STATUS )
+#endif
 
 #ifdef twoway
 ! -- this is for twoway
@@ -352,6 +364,10 @@ C ------------------ begin body of AERO_DRIVER -------------------------
 #endif
 
 C *** Get aerosol diagnostic file flag.
+#ifdef _AQM_
+!        call get_env (PMDIAG, CTM_PMDIAG, .true.)
+         PMDIAG = .true.
+#else
          PMDIAG = .TRUE.         ! default
          VARDESC = 'Flag for writing the aerosol diagnostic file'
          PMDIAG = ENVYN( CTM_PMDIAG, VARDESC, PMDIAG, STATUS )
@@ -366,9 +382,11 @@ C *** Get aerosol diagnostic file flag.
             XMSG = 'Environment variable not set ... Using default:'
             WRITE( LOGDEV, '(5X, A, I9)' ) XMSG, JTIME
          END IF
+#endif
 
 C *** Get aerosol average diagnostic file flag.
          APMDIAG = .FALSE.         ! default
+#ifndef _AQM_
          VARDESC = 'Flag for writing the aerosol diagnostic file'
          APMDIAG = ENVYN( CTM_APMDIAG, VARDESC, APMDIAG, STATUS )
          IF ( STATUS .NE. 0 ) WRITE( LOGDEV, '(5X, A)' ) VARDESC
@@ -382,9 +400,11 @@ C *** Get aerosol average diagnostic file flag.
             XMSG = 'Environment variable not set ... Using default:'
             WRITE( LOGDEV, '(5X, A, I9)' ) XMSG, JTIME
          END IF
+#endif
 
 C *** Get aerosol average diagnostic file flag.
          AVISDIAG = .FALSE.         ! default
+#ifndef _AQM_
          VARDESC = 'Flag for writing the aerosol diagnostic file'
          AVISDIAG = ENVYN( CTM_AVISDIAG, VARDESC, AVISDIAG, STATUS )
          IF ( STATUS .NE. 0 ) WRITE( LOGDEV, '(5X, A)' ) VARDESC
@@ -398,9 +418,11 @@ C *** Get aerosol average diagnostic file flag.
             XMSG = 'Environment variable not set ... Using default:'
             WRITE( LOGDEV, '(5X, A, I9)' ) XMSG, JTIME
          END IF
+#endif
 
 C *** Get AOD diagnostic file flag.
          AOD = .FALSE.         ! default
+#ifndef _AQM_
          VARDESC = 'Flag for writing the IMPROVE network AOD diagnostic file'
          AOD = ENVYN( CTM_AOD, VARDESC, AOD, STATUS )
          IF ( STATUS .NE. 0 ) WRITE( LOGDEV, '(5X, A)' ) VARDESC
@@ -450,7 +472,7 @@ C *** Set up for AOD processing
 C *** Get domain decomp info from the MET_CRO_3D file
          CALL SUBHFILE ( MET_CRO_3D, GXOFF, GYOFF,
      &                   STRTCOLMC3, ENDCOLMC3, STRTROWMC3, ENDROWMC3 )
-
+#endif
 #ifdef twoway
          CMAQ_WRF_FEEDBACK = ENVYN( 'CMAQ_WRF_FEEDBACK', ' ', .FALSE., STATUS )
          IF ( STATUS .EQ. 1 ) THEN
@@ -477,7 +499,16 @@ C *** Set floating point synchronization time step:
       DT = FLOAT( MSTEP ) ! set time step in seconds
 
 C *** Get Meteorological Variables
-
+#ifdef _AQM_
+!     PRES = g3ddata(:,:,:,pres_ind)
+!     TA   = g3ddata(:,:,:,temp_ind)
+!     QV   = g3ddata(:,:,:,qv_ind  )
+!     DENS = g3ddata(:,:,:,dens_ind)
+      PRES = 1.0
+      TA   = 1.0
+      QV   = 1.0
+      DENS = 1.0
+#else
 C *** pressure [Pa]
       VNAME = 'PRES'
       IF ( .NOT. INTERPX( MET_CRO_3D, VNAME, PNAME,
@@ -513,7 +544,7 @@ C *** air density [kg/m3]
          XMSG = 'Could not interpolate '// TRIM( VNAME ) // ' from MET_CRO_3D '
          CALL M3EXIT ( PNAME, MDATE, MTIME, XMSG, XSTAT1 )
       END IF
-
+#endif
 #ifdef twoway
 ! call FEEDBACK_WRITE when JTIME is mulitple of WRF time step
       IF ( CMAQ_WRF_FEEDBACK ) THEN
@@ -529,7 +560,9 @@ C --------------------- Begin loops over grid cells --------------------------
 
 C *** initialize conc arrays
 
+#ifndef _AQM_
       N_APMDIAG_STEP = N_APMDIAG_STEP + 1
+#endif
       N_VIS_STEP = N_VIS_STEP + 1 
 
       DO L = 1, NLAYS
@@ -606,7 +639,7 @@ C *** Calculate volume fraction of each mode for measurement applications
 
 C *** Write aerosol extinction coefficients and deciviews to visibility
 C     diagnostic array (lowest vertical layer only)
-
+#ifndef _AQM_
                IF ( L .EQ. 1 ) THEN
                   IF ( WRITETIME .OR. AVISDIAG) THEN
                      CALL GETVISBY( BLKDCV1, BLKEXT1, BLKDCV2, BLKEXT2 )
@@ -624,7 +657,7 @@ C     diagnostic array (lowest vertical layer only)
                      VIS_SPC( C,R,IBEXT2 ) = BLKEXT2  ! Reconstructed aero extinction [1/km]
                   END IF
                END IF
-
+#endif
                IF ( PMDIAG .OR. APMDIAG ) THEN
                   TEMP_DATA(  7 ) = AEROMODE_DIAM( 1 ) * 1.0E6  ! wet i-mode diam.
                   TEMP_DATA(  8 ) = AEROMODE_DIAM( 2 ) * 1.0E6  ! wet j-mode diam.
@@ -685,6 +718,7 @@ C     EXCEPT!  nonvolatile SOA is part of dry aerosol (Oct 2007 --PVB)
                   TEMP_DATA( 19 ) = AIRRH                ! relative humidity
                END IF
 
+#ifndef _AQM_
 C *** Accumulate wet diameters, 2nd, and 3rd moments to average aerosol diagnostic array
                IF ( APMDIAG .AND. L .LE. A_NLAYS ) THEN
                   DO V = 1, NUM_PMDIAG_SPC
@@ -696,6 +730,9 @@ C *** Accumulate wet diameters, 2nd, and 3rd moments to average aerosol diagnost
 
 C *** Write dry aerosol distribution parameters to aerosol diagnostic array
                IF ( WRITETIME .AND. PMDIAG ) PMDIAG_SPC( C,R,L,: ) = TEMP_DATA
+#else
+               IF ( WRITETIME .AND. PMDIAG ) PMDIAG_SPC( L,C,R,: ) = TEMP_DATA
+#endif
 
 #ifdef twoway
                IF ( CMAQ_WRF_FEEDBACK ) THEN
@@ -728,6 +765,7 @@ C *** If last call this hour, write visibility information.
          WSTEP = 0
          WRITETIME = .FALSE.
 
+#ifndef _AQM_
 #ifdef parallel_io
          IF ( FIRST_CTM_VIS_1 ) THEN
             FIRST_CTM_VIS_1 = .FALSE.
@@ -772,10 +810,10 @@ C *** If last call this hour, write visibility information.
          WRITE( LOGDEV, '( /5X, 3( A, :, 1X ), I8, ":", I6.6 )' )
      &                  'Timestep written to', CTM_VIS_1,
      &                  'for date and time', MDATE, MTIME
-
+#endif
 C *** Write data to the aerosol diagnostic file.
          IF ( PMDIAG ) THEN
-
+#ifndef _AQM_
             IF ( .NOT. WRITE3( CTM_PMDIAG_1, ALLVAR3,
      &                         MDATE, MTIME, PMDIAG_SPC ) ) THEN
                XMSG = 'Could not write ' // CTM_PMDIAG_1 // ' file'
@@ -785,9 +823,27 @@ C *** Write data to the aerosol diagnostic file.
             WRITE( LOGDEV, '( /5X, 3( A, :, 1X ), I8, ":", I6.6 )' )
      &                     'Timestep written to', CTM_PMDIAG_1,
      &                     'for date and time', MDATE, MTIME
+#else
+#if 0
+            call setfile (CTM_PMDIAG_1)
 
+            call julian_to_calendar (mdate, year, month, day)
+            hour = mtime / 10000
+            minute = mod(mtime, 10000) / 100
+
+            WRITE (TIME_STAMP, '(i4, 4(a1, i2.2), a3)')
+     $             year, '-', month, '-', day, '_', hour, ':', minute, ':00'
+
+        write (logdev, *) ' ==d== pmdiag c ', TIME_STAMP
+
+            do v = 1, mio_file_data(mio_cfile)%nvars
+               VNAME = mio_file_data(mio_cfile)%var_name(v)
+               call fwrite (CTM_PMDIAG_1, VNAME, real(PMDIAG_SPC(1,:,1,v), 4), TIME_STAMP)
+            end do
+#endif
+#endif
          END IF
-     
+#ifndef _AQM_
 C *** Write data to the AOD diagnostic file.
          IF ( AOD ) THEN
 
@@ -808,7 +864,6 @@ C *** Write data to the AOD diagnostic file.
                CALL NEXTIME ( MDATE, MTIME, -TSTEP(1) )
             END IF
          END IF
-
 C *** Write data to the average aerosol diagnostic file.
          IF ( APMDIAG ) THEN
 
@@ -848,7 +903,7 @@ C *** Write data to the average visibility diagnostic file.
          WRITE( LOGDEV, '( /5X, 3( A, :, 1X ), I8, ":", I6.6 )' )
      &                  'Timestep written to', CTM_AVIS_1,
      &                  'for date and time', MDATE, MTIME
-
+#endif
       END IF   ! WRITETIME
 
       RETURN

@@ -4727,7 +4727,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 # Checks for library functions.
 
-ac_config_files="$ac_config_files Makefile src/CMAQ/CCTM/Makefile src/CMAQ/CCTM/src/Makefile src/CMAQ/Makefile src/CMAQ/UTIL/Makefile src/CMAQ/util/Makefile src/CMAQ/shr/Makefile src/shr/Makefile src/drv/Makefile src/Makefile"
+ac_config_files="$ac_config_files Makefile src/CMAQ/Makefile src/shr/Makefile src/drv/Makefile src/io/Makefile src/io/ioapi/Makefile src/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -5472,14 +5472,11 @@ do
   case $ac_config_target in
     "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
-    "src/CMAQ/CCTM/Makefile") CONFIG_FILES="$CONFIG_FILES src/CMAQ/CCTM/Makefile" ;;
-    "src/CMAQ/CCTM/src/Makefile") CONFIG_FILES="$CONFIG_FILES src/CMAQ/CCTM/src/Makefile" ;;
     "src/CMAQ/Makefile") CONFIG_FILES="$CONFIG_FILES src/CMAQ/Makefile" ;;
-    "src/CMAQ/UTIL/Makefile") CONFIG_FILES="$CONFIG_FILES src/CMAQ/UTIL/Makefile" ;;
-    "src/CMAQ/util/Makefile") CONFIG_FILES="$CONFIG_FILES src/CMAQ/util/Makefile" ;;
-    "src/CMAQ/shr/Makefile") CONFIG_FILES="$CONFIG_FILES src/CMAQ/shr/Makefile" ;;
     "src/shr/Makefile") CONFIG_FILES="$CONFIG_FILES src/shr/Makefile" ;;
     "src/drv/Makefile") CONFIG_FILES="$CONFIG_FILES src/drv/Makefile" ;;
+    "src/io/Makefile") CONFIG_FILES="$CONFIG_FILES src/io/Makefile" ;;
+    "src/io/ioapi/Makefile") CONFIG_FILES="$CONFIG_FILES src/io/ioapi/Makefile" ;;
     "src/Makefile") CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;

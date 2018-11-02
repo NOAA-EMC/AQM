@@ -326,9 +326,6 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-
-# SUBDIRS = io shr drv .
-# SUBDIRS = io CMAQ shr drv .
 SUBDIRS = io shr CMAQ drv .
 cmaq_dir = $(builddir)/CMAQ
 cmaq_objects = \
@@ -342,8 +339,7 @@ cmaq_objects = \
 	$(cmaq_dir)/CCTM/src/phot/inline/libCCTM_a-*.$(OBJEXT) \
 	$(cmaq_dir)/CCTM/src/spcs/cgrid_spcs_nml/libCCTM_a-*.$(OBJEXT) \
 	$(cmaq_dir)/CCTM/src/util/util/libCCTM_a-*.$(OBJEXT) \
-	$(cmaq_dir)/CCTM/src/vdiff/acm2/libCCTM_a-*.$(OBJEXT) \
-	$(cmaq_dir)/UTIL/inline_phot_preproc/src/libCCTM_a-*.$(OBJEXT)
+	$(cmaq_dir)/CCTM/src/vdiff/acm2/libCCTM_a-*.$(OBJEXT)
 
 lib_LIBRARIES = libaqm.a
 libaqm_a_SOURCES = aqm_cap.F90 aqm_comp_mod.F90

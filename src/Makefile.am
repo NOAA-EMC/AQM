@@ -1,5 +1,3 @@
-# SUBDIRS = io shr drv .
-# SUBDIRS = io CMAQ shr drv .
 SUBDIRS = io shr CMAQ drv .
 
 cmaq_dir = $(builddir)/CMAQ
@@ -14,8 +12,7 @@ cmaq_objects = \
 	$(cmaq_dir)/CCTM/src/phot/inline/libCCTM_a-*.$(OBJEXT) \
 	$(cmaq_dir)/CCTM/src/spcs/cgrid_spcs_nml/libCCTM_a-*.$(OBJEXT) \
 	$(cmaq_dir)/CCTM/src/util/util/libCCTM_a-*.$(OBJEXT) \
-	$(cmaq_dir)/CCTM/src/vdiff/acm2/libCCTM_a-*.$(OBJEXT) \
-	$(cmaq_dir)/UTIL/inline_phot_preproc/src/libCCTM_a-*.$(OBJEXT)
+	$(cmaq_dir)/CCTM/src/vdiff/acm2/libCCTM_a-*.$(OBJEXT)
 
 include $(ESMFMKFILE)
 

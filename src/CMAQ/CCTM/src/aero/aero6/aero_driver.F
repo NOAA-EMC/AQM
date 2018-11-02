@@ -499,16 +499,7 @@ C *** Set floating point synchronization time step:
       DT = FLOAT( MSTEP ) ! set time step in seconds
 
 C *** Get Meteorological Variables
-#ifdef _AQM_
-!     PRES = g3ddata(:,:,:,pres_ind)
-!     TA   = g3ddata(:,:,:,temp_ind)
-!     QV   = g3ddata(:,:,:,qv_ind  )
-!     DENS = g3ddata(:,:,:,dens_ind)
-      PRES = 1.0
-      TA   = 1.0
-      QV   = 1.0
-      DENS = 1.0
-#else
+
 C *** pressure [Pa]
       VNAME = 'PRES'
       IF ( .NOT. INTERPX( MET_CRO_3D, VNAME, PNAME,
@@ -544,7 +535,7 @@ C *** air density [kg/m3]
          XMSG = 'Could not interpolate '// TRIM( VNAME ) // ' from MET_CRO_3D '
          CALL M3EXIT ( PNAME, MDATE, MTIME, XMSG, XSTAT1 )
       END IF
-#endif
+
 #ifdef twoway
 ! call FEEDBACK_WRITE when JTIME is mulitple of WRF time step
       IF ( CMAQ_WRF_FEEDBACK ) THEN

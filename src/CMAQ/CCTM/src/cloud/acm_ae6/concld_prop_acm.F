@@ -112,6 +112,9 @@ C-----------------------------------------------------------------------
       USE HGRD_DEFN, ONLY : NCOLS, NROWS, MYPE
 
 !     use mio_module
+#ifdef _AQM_
+      USE UTILIO_DEFN, ONLY : INTERPX, M3EXIT, XSTAT1
+#endif
 
       USE PHOT_MET_DATA, ONLY: IND_ACM_CLOUD, CLEAR_ACM_CLOUD, CAPTURE_ACM_CLOUD
       USE ASX_DATA_MOD,  ONLY: GRID_DATA
@@ -424,22 +427,21 @@ C...  the met timestep in hours
 
 C...get horizontal domain window from met data
 
-!        CALL SUBHFILE ( MET_CRO_2D, GXOFF, GYOFF,
-!     &                  STRTCOLMC2, ENDCOLMC2, STRTROWMC2, ENDROWMC2 )
+        CALL SUBHFILE ( MET_CRO_2D, GXOFF, GYOFF,
+     &                  STRTCOLMC2, ENDCOLMC2, STRTROWMC2, ENDROWMC2 )
 
-!        CALL SUBHFILE ( MET_CRO_3D, GXOFF, GYOFF,
-!     &                  STRTCOLMC3, ENDCOLMC3, STRTROWMC3, ENDROWMC3 )
+        CALL SUBHFILE ( MET_CRO_3D, GXOFF, GYOFF,
+     &                  STRTCOLMC3, ENDCOLMC3, STRTROWMC3, ENDROWMC3 )
 
 C...check convective precipitation on met files to determine if WRF used
 C...  a convective parameterization
 
-!        IF ( .NOT. INTERPX( MET_CRO_2D, RC_NAME, PNAME,
-!     &                      STRTCOLMC2,ENDCOLMC2, STRTROWMC2,ENDROWMC2, 1,1,
-!     &                      SDATE, STIME, RC ) ) THEN
-!          XMSG = 'Could not read ' // TRIM( RC_NAME ) // ' from ' // MET_CRO_2D
-!          CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
-!        END IF
-         RC = 1.0 ! g2ddata(:, :, rainc_ind)
+        IF ( .NOT. INTERPX( MET_CRO_2D, RC_NAME, PNAME,
+     &                      STRTCOLMC2,ENDCOLMC2, STRTROWMC2,ENDROWMC2, 1,1,
+     &                      SDATE, STIME, RC ) ) THEN
+          XMSG = 'Could not read ' // TRIM( RC_NAME ) // ' from ' // MET_CRO_2D
+          CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+        END IF
          
 C...in coordination with MCIPv4.0, negative values will be loaded into the RC
 C...  field if a convective parameterization was not used in the WRF simulation
@@ -529,54 +531,49 @@ C...  Interpolate time dependent layered input variables
 C...  (reading those variables for which it is necessary)
 
 C...  Get ambient temperature (K)
-!      VARNM = 'TA'
-!      IF ( .NOT. INTERPX( MET_CRO_3D, VARNM, PNAME,
-!     &                    STRTCOLMC3,ENDCOLMC3, STRTROWMC3,ENDROWMC3, 1,NLAYS,
-!     &                    MDATE, MTIME, TA ) ) THEN
-!        XMSG = 'Could not read TA from' // MET_CRO_3D
-!        CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
-!      END IF
-       TA = 1.0 ! g3ddata(:,:,:,temp_ind)
+      VARNM = 'TA'
+      IF ( .NOT. INTERPX( MET_CRO_3D, VARNM, PNAME,
+     &                    STRTCOLMC3,ENDCOLMC3, STRTROWMC3,ENDROWMC3, 1,NLAYS,
+     &                    MDATE, MTIME, TA ) ) THEN
+        XMSG = 'Could not read TA from' // MET_CRO_3D
+        CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+      END IF
 
 C...Get specific humidity (kg H2O / kg air)
-!      VARNM = 'QV'
-!      IF ( .NOT. INTERPX( MET_CRO_3D, VARNM, PNAME,
-!     &                    STRTCOLMC3,ENDCOLMC3, STRTROWMC3,ENDROWMC3, 1,NLAYS,
-!     &                    MDATE, MTIME, QV ) ) THEN
-!        XMSG = 'Could not read QV from ' // MET_CRO_3D
-!       CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
-!      END IF
-       QV = 1.0 ! g3ddata(:,:,:,qv_ind)
+      VARNM = 'QV'
+      IF ( .NOT. INTERPX( MET_CRO_3D, VARNM, PNAME,
+     &                    STRTCOLMC3,ENDCOLMC3, STRTROWMC3,ENDROWMC3, 1,NLAYS,
+     &                    MDATE, MTIME, QV ) ) THEN
+        XMSG = 'Could not read QV from ' // MET_CRO_3D
+       CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+      END IF
 
 C...Get level heights / layer faces (m)
-!      VARNM = 'ZF'
-!      IF ( .NOT. INTERPX( MET_CRO_3D, VARNM, PNAME,
-!     &                    STRTCOLMC3,ENDCOLMC3, STRTROWMC3,ENDROWMC3, 1,NLAYS,
-!     &                    MDATE, MTIME, ZF ) ) THEN
-!        XMSG = 'Could not read ZF from ' // MET_CRO_3D
-!        CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
-!      END IF
-       ZF = 1.0 ! g3ddata(:,:,:,zF_ind)
+      VARNM = 'ZF'
+      IF ( .NOT. INTERPX( MET_CRO_3D, VARNM, PNAME,
+     &                    STRTCOLMC3,ENDCOLMC3, STRTROWMC3,ENDROWMC3, 1,NLAYS,
+     &                    MDATE, MTIME, ZF ) ) THEN
+        XMSG = 'Could not read ZF from ' // MET_CRO_3D
+        CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+      END IF
 
 C...Get mid-layer heights (m)
-!      VARNM = 'ZH'
-!      IF ( .NOT. INTERPX( MET_CRO_3D, VARNM, PNAME,
-!     &                    STRTCOLMC3,ENDCOLMC3, STRTROWMC3,ENDROWMC3, 1,NLAYS,
-!     &                    MDATE, MTIME, ZH ) ) THEN
-!        XMSG = 'Could not read ZH from ' // MET_CRO_3D
-!        CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
-!      END IF
-       ZH = 1.0 ! g3ddata(:,:,:,zh_ind)
+      VARNM = 'ZH'
+      IF ( .NOT. INTERPX( MET_CRO_3D, VARNM, PNAME,
+     &                    STRTCOLMC3,ENDCOLMC3, STRTROWMC3,ENDROWMC3, 1,NLAYS,
+     &                    MDATE, MTIME, ZH ) ) THEN
+        XMSG = 'Could not read ZH from ' // MET_CRO_3D
+        CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+      END IF
 
 C...Get pressure (Pa)
-!      VARNM = 'PRES'
-!      IF ( .NOT. INTERPX( MET_CRO_3D, VARNM, PNAME,
-!     &                    STRTCOLMC3,ENDCOLMC3, STRTROWMC3,ENDROWMC3, 1,NLAYS,
-!     &                    MDATE, MTIME, PRES ) ) THEN
-!        XMSG = 'Could not read PRES from ' // MET_CRO_3D
-!        CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
-!      END IF
-       PRES = 1.0 ! g3ddata(:,:,:,pres_ind)
+      VARNM = 'PRES'
+      IF ( .NOT. INTERPX( MET_CRO_3D, VARNM, PNAME,
+     &                    STRTCOLMC3,ENDCOLMC3, STRTROWMC3,ENDROWMC3, 1,NLAYS,
+     &                    MDATE, MTIME, PRES ) ) THEN
+        XMSG = 'Could not read PRES from ' // MET_CRO_3D
+        CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+      END IF
 
 C...compute layer thicknesses (m)
       DO ROW = 1, NROWS
@@ -589,14 +586,13 @@ C...compute layer thicknesses (m)
       END DO
 
 C...Get PBL height (m)
-!     VARNM = 'PBL'
-!      IF ( .NOT. INTERPX( MET_CRO_2D, VARNM, PNAME,
-!     &                    STRTCOLMC2,ENDCOLMC2, STRTROWMC2,ENDROWMC2, 1,1,
-!     &                    MDATE, MTIME, PBL ) ) THEN
-!        XMSG = 'Could not read PBL from ' // MET_CRO_2D
-!        CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
-!      END IF
-       PBL = 1.0 ! g2ddata(:,:,pbl_ind)                          ! added -jp1
+      VARNM = 'PBL'
+      IF ( .NOT. INTERPX( MET_CRO_2D, VARNM, PNAME,
+     &                    STRTCOLMC2,ENDCOLMC2, STRTROWMC2,ENDROWMC2, 1,1,
+     &                    MDATE, MTIME, PBL ) ) THEN
+        XMSG = 'Could not read PBL from ' // MET_CRO_2D
+        CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+      END IF
 
 C...advance the MDATE and MTIME to the next time on the met file
 C...  to get ready to read the precipitation amounts.
@@ -613,13 +609,12 @@ C...  on the input file are amounts within the metfiles timestep.
 
 C...Get convective precipitation amount (cm)
 
-!      IF ( .NOT. INTERPX( MET_CRO_2D, RC_NAME, PNAME,
-!     &                    STRTCOLMC2,ENDCOLMC2, STRTROWMC2,ENDROWMC2, 1,1,
-!     &                    MDATE, MTIME, RC ) ) THEN
-!        XMSG = 'Could not read ' // TRIM( RC_NAME ) // ' from ' // MET_CRO_2D
-!        CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
-!      END IF
-       RC = 1.0 ! g2ddata(:, :, rainc_ind)
+      IF ( .NOT. INTERPX( MET_CRO_2D, RC_NAME, PNAME,
+     &                    STRTCOLMC2,ENDCOLMC2, STRTROWMC2,ENDROWMC2, 1,1,
+     &                    MDATE, MTIME, RC ) ) THEN
+        XMSG = 'Could not read ' // TRIM( RC_NAME ) // ' from ' // MET_CRO_2D
+        CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+      END IF
        
 C...Convert the rainfall rate into mm/hr, then set a flag noting the
 C...  presence of raining clouds if the rainfall is above the specified

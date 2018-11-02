@@ -363,7 +363,6 @@ C...Get met file offsets
      &              // ' calculation.'
                WRITE(LOGDEV,'( A )')TRIM( PNAME ) // ' : ' // XMSG
                VARNM = 'LWMASK'
-#ifndef _AQM_
                IF ( .NOT. INTERPX( GRID_CRO_2D, VARNM, PNAME,
      &                             STRTCOLGC2,ENDCOLGC2, STRTROWGC2,ENDROWGC2,
      &                             1,1, 0000000, 000000, BUFFER ) ) THEN
@@ -373,8 +372,6 @@ C...Get met file offsets
                   SUCCESS = .FALSE.
                   RETURN
                END IF
-#endif
-               BUFFER = 1.0 ! g2ddata(:,:,lwmask_ind)
                DO ROW = 1, MY_NROWS
                   DO COL = 1, MY_NCOLS
                      IF ( BUFFER( COL,ROW ) .LT. 0.5 ) THEN
@@ -683,14 +680,6 @@ C local:
             INTEGER                     :: V, N, MODE
             INTEGER                     :: ALLOCSTAT
 
-#ifdef _AQM_
-            SNOCOV = 0.1 ! g2ddata(:,:,snocov_ind)
-            IF ( HAS_SEAICE ) THEN
-              SEAICE = 0.1 ! g2ddata(:,:,seaice_ind)
-            ELSE
-              TEMPG = 1.0 ! g2ddata(:,:,tempg_ind)
-            END IF
-#else
 C...Read & Interpolate SNOCOV
 
             VARNM = 'SNOCOV'
@@ -722,7 +711,7 @@ C...Read & Interpolate SNOCOV
                END IF
 
             END IF
-#endif
+
 C...Calculate current hour in GMT and julian day
 
             CURRENT_HOUR = REAL( STRTHR, 4 )

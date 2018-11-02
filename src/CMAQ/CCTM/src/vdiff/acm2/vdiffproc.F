@@ -190,11 +190,9 @@ C Local Variables
             INTEGER,        INTENT( IN )  :: JDATE, JTIME
             REAL, POINTER :: CGRID( :,:,:,: )
          END SUBROUTINE REV_CGRID
-#ifndef _AQM_
          SUBROUTINE EDDYX ( EDDYV )
             REAL,           INTENT( OUT ) :: EDDYV( :,:,: )
          END SUBROUTINE EDDYX
-#endif
          SUBROUTINE VDIFFACMX( dtsec, seddy, ddep, icmp, ddepj, ddepj_fst, cngrd )
             REAL, INTENT( IN )    :: dtsec
             REAL, INTENT( INOUT ) :: seddy( :,:,: )
@@ -359,7 +357,7 @@ C Calculate the changes in the layer J-,K-mode aerosol concentrations
 C read & interpolate emissions data => VDEMIS from EMIS_DEFN module
       CALL GET_EMIS ( MDATE, MTIME, TSTEP, CONVPA, CGRID )
 #ifdef _AQM_
-      EDDYV = 1.0 ! g3ddata(:,:,:,eddy_ind)
+      CALL EDDYX ( EDDYV )
       DO R = 1, MY_NROWS
          DO C = 1, MY_NCOLS
             DO L = 1, NLAYS

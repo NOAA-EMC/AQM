@@ -870,16 +870,13 @@ C *** Read air density [kg/m3], atmospheric pressure [Pa], air temperature
 C     [K], specific humidity [kg H2O / kg air], and 10m wind speed [m/s] 
 C     from meteorology file.  Interpolate to the current time.  Store results 
 C     in DENS, PRES, TA, QV, and WSPD10 arrays.
-#ifdef _AQM_
-!        DENS = g3ddata(:, :, :, dens_ind)
-         DENS = 1.0
-#else
          IF ( .NOT. INTERPX( MET_CRO_3D, 'DENS', PNAME,
      &                       STRTCOLMC3,ENDCOLMC3, STRTROWMC3,ENDROWMC3,
      &                       1,NLAYS, JDATE, JTIME, DENS ) ) THEN
             XMSG = 'Could not interpolate DENS from ' // MET_CRO_3D
             CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          END IF
+#ifndef _AQM_
 C *** Get sea salt emissions
          CALL GET_SSEMIS ( JDATE, JTIME, TSTEP, CELLVOL( 1 ), CELLHGT( 1 ) )
 

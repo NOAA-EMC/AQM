@@ -126,21 +126,17 @@ C #/m**3 (number density), and m**2/m**3 (surface area) species
             END DO
 
          END IF
-#ifndef _AQM_
          CALL SUBHFILE ( MET_CRO_3D, GXOFF, GYOFF,
      &                   STRTCOLMC3, ENDCOLMC3, STRTROWMC3, ENDROWMC3 )
-#endif
       END IF          !  if Firstime
-#ifndef _AQM_
+
       IF ( .NOT. INTERPX( MET_CRO_3D, 'DENS', PNAME,
      &                    STRTCOLMC3,ENDCOLMC3, STRTROWMC3,ENDROWMC3, 1,NLAYS,
      &                    JDATE, JTIME, DENS ) ) THEN
          XMSG = 'Could not interpolate DENS from ' // MET_CRO_3D
          CALL M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1)
       END IF
-#else
-      DENS = 1.0 ! g3ddata(:,:,:,dens_ind)
-#endif
+
 C Convert non-molar mixing ratio species and re-order CGRID
 
 C Gas - no conversion
@@ -266,16 +262,14 @@ C:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
       ENTRY REV_CGRID ( CNGRD, JDATE, JTIME, CGRID )
 
 C Revert non-molar mixing ratio species and re-order CGRID
-#ifndef _AQM_
+
       IF ( .NOT. INTERPX( MET_CRO_3D, 'DENS', PNAME,
      &                    STRTCOLMC3,ENDCOLMC3, STRTROWMC3,ENDROWMC3, 1,NLAYS,
      &                    JDATE, JTIME, DENS ) ) THEN
          XMSG = 'Could not interpolate DENS from ' // MET_CRO_3D
          CALL M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1)
       END IF
-#else
-      DENS = 1.0 ! g3ddata(:,:,:,dens_ind)
-#endif
+
 C Gas - no conversion
 
       NSPCS = N_GC_SPC

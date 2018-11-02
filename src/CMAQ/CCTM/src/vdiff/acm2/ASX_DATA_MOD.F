@@ -87,25 +87,19 @@ C-------------------------------------------------------------------------------
          Real,    Allocatable :: DENS1    ( :,: )  ! layer 1 air density
          Real,    Allocatable :: PRSFC    ( :,: )  ! surface pressure [Pa]
          Real,    Allocatable :: Q2       ( :,: )  ! 2 meter water vapor mixing ratio [kg/kg]
-!#ifndef _AQM_
          Real,    Allocatable :: QSS_GRND ( :,: )  ! ground saturation water vapor mixing ratio [kg/kg]
-!#endif
          Real,    Allocatable :: RH       ( :,: )  ! relative humidity [ratio]
          Real,    Allocatable :: RA       ( :,: )  ! aerodynamic resistnace [s/m]
          Real,    Allocatable :: RS       ( :,: )  ! stomatal resistnace [s/m]
-#ifndef _AQM_
          Real,    Allocatable :: RC       ( :,: )  ! convective precipitation [cm]
          Real,    Allocatable :: RN       ( :,: )  ! non-convective precipitation [mc]
-#endif
          Real,    Allocatable :: RGRND    ( :,: )  ! Solar radiation at the ground [W/m**2]
          Real,    Allocatable :: HFX      ( :,: )  ! Sensible heat flux [W/m**2]
          Real,    Allocatable :: LH       ( :,: )  ! Latent heat flux [W/m**2]
          Real,    Allocatable :: SNOCOV   ( :,: )  ! Snow cover [1=yes, 0=no]
          Real,    Allocatable :: TEMP2    ( :,: )  ! two meter temperature [K]
          Real,    Allocatable :: TEMPG    ( :,: )  ! skin temperature [K]
-#ifndef _AQM_
          Real,    Allocatable :: TSEASFC  ( :,: )  ! SST [K]
-#endif
          Real,    Allocatable :: USTAR    ( :,: )  ! surface friction velocity [m/s]
          Real,    Allocatable :: VEG      ( :,: )  ! fractional vegetation coverage [ratio]
          Real,    Allocatable :: LAI      ( :,: )  ! grid cell leaf area index [m**2/m**2]
@@ -116,11 +110,9 @@ C-------------------------------------------------------------------------------
          Real,    Allocatable :: WSTAR    ( :,: )  ! convective velocity scale [m/s]
          Real,    Allocatable :: Z0       ( :,: )  ! roughness length [m]
          Real,    Allocatable :: SOIM1    ( :,: )  ! 1 cm soil moisture [m**3/m**3]
-!#ifndef _AQM_
          Real,    Allocatable :: SOIM2    ( :,: )  ! 1 m soil moisture  [m**3/m**3]
          Real,    Allocatable :: SOIT1    ( :,: )  ! 1 cm soil temperature [K]
          Real,    Allocatable :: SOIT2    ( :,: )  ! 1 m soil temperature [K]
-!#endif
          Real,    Allocatable :: SEAICE   ( :,: )  ! Sea ice coverage [%]
          Real,    Allocatable :: MOL      ( :,: )  ! Monin-Obukhov length [m]
          Real,    Allocatable :: MOLI     ( :,: )  ! inverse of Monin-Obukhov length [m]
@@ -484,25 +476,19 @@ C-----------------------------------------------------------------------
      &             Met_Data%DENS1    ( NCOLS,NROWS ),
      &             Met_Data%PRSFC    ( NCOLS,NROWS ),
      &             Met_Data%Q2       ( NCOLS,NROWS ),
-!#ifndef _AQM_
      &             Met_Data%QSS_GRND ( NCOLS,NROWS ),
-!#endif
      &             Met_Data%RH       ( NCOLS,NROWS ),
      &             Met_Data%RA       ( NCOLS,NROWS ),
      &             Met_Data%RS       ( NCOLS,NROWS ),
-#ifndef _AQM_
      &             Met_Data%RC       ( NCOLS,NROWS ),
      &             Met_Data%RN       ( NCOLS,NROWS ),
-#endif
      &             Met_Data%RGRND    ( NCOLS,NROWS ),
      &             Met_Data%HFX      ( NCOLS,NROWS ),
      &             Met_Data%LH       ( NCOLS,NROWS ),
      &             Met_Data%SNOCOV   ( NCOLS,NROWS ),
      &             Met_Data%TEMP2    ( NCOLS,NROWS ),
      &             Met_Data%TEMPG    ( NCOLS,NROWS ),
-#ifndef _AQM_
      &             Met_Data%TSEASFC  ( NCOLS,NROWS ),
-#endif
      &             Met_Data%USTAR    ( NCOLS,NROWS ),
      &             Met_Data%VEG      ( NCOLS,NROWS ),
      &             Met_Data%LAI      ( NCOLS,NROWS ),
@@ -782,25 +768,6 @@ C-----------------------------------------------------------------------
             Write( LOGDEV,'(/5X, A, /)' ) XMSG
          End If
 
-#ifdef _AQM_
-!        Do C = 1, NCOLS
-!           Do L = 1, NLAYS
-!              Grid_Data%RDX3M( C,1,L ) = 1.0 / g3ddata(C,1,L,zf_ind)
-!              Grid_Data%RDX3M( C,1,L ) = 1.0
-!           End Do
-!        End Do
-         Grid_Data%RMSFX4 = 1.0
-!        Grid_Data%LON = g2ddata(:,:,lon_ind)
-!        Grid_Data%LAT = g2ddata(:,:,lat_ind)
-!        Grid_Data%LWMASK = g2ddata(:,:,lwmask_ind)
-!        Grid_Data%OCEAN = g2ddata(:,:,open_ind)
-!        Grid_Data%SZONE = g2ddata(:,:,szone_ind)
-         Grid_Data%LON = 1.0
-         Grid_Data%LAT = 1.0
-         Grid_Data%LWMASK = 1.0
-         Grid_Data%OCEAN = 1.0
-         Grid_Data%SZONE = 1.0
-#else
 !> Open the met files
 
          Call SUBHFILE ( GRID_CRO_2D, GXOFF, GYOFF,
@@ -814,6 +781,7 @@ C-----------------------------------------------------------------------
          CALL SUBHFILE ( OCEAN_1, GXOFF, GYOFF,
      &                   STRTCOL_O1, ENDCOL_O1, STRTROW_O1, ENDROW_O1 )
 !> Get sigma coordinate variables
+#ifndef _AQM_
          X3M => BUFF1D
          Do L = 1, NLAYS
             Grid_Data%DX3F( L )  = X3FACE_GD( L ) - X3FACE_GD( L-1 )
@@ -840,7 +808,7 @@ C-----------------------------------------------------------------------
          Grid_Data%RMSFX4 = 1.0 / ( MSFX2**2 )
 !> nullify pointer
          Nullify( MSFX2 )
-
+#endif
          VNAME = 'LON'
          If ( .Not. INTERPX( GRID_CRO_2D, VNAME, PNAME,
      &                       STRTCOLGC2,ENDCOLGC2, STRTROWGC2,ENDROWGC2, 1,1,
@@ -884,7 +852,7 @@ C-----------------------------------------------------------------------
 
          Grid_Data%SLTYP = NINT( SOILCAT )
          Nullify( SOILCAT )
-
+#ifndef _AQM_
          If ( ABFLUX .Or. MOSAIC ) Then
             Do l = 1, n_lufrac
                Write( vname,'( "LUFRAC_",I2.2 )' ) l
@@ -904,7 +872,7 @@ C-----------------------------------------------------------------------
                Grid_Data%BSLP( C,R ) = BSLP( Grid_Data%SLTYP( C,R ) )
             End Forall
         End If
-
+#endif
 !> Read fractional seawater and surf-zone coverage from the OCEAN file.
 !> Store results in the OCEAN and SZONE arrays.
          IF ( .NOT. OPEN3( OCEAN_1, FSREAD3, PNAME ) ) THEN
@@ -930,7 +898,7 @@ C-----------------------------------------------------------------------
          End If
          
          MET_INITIALIZED = .true.
-#endif
+
          Return
          End Subroutine INIT_MET
 
@@ -958,11 +926,11 @@ C-----------------------------------------------------------------------
 #endif
 #endif
          Implicit None
-#ifndef _AQM_
          Include SUBST_FILES_ID  ! file name parameters
+#ifndef _AQM_
          Include SUBST_PE_COMM   ! PE communication displacement and direction
-         Include SUBST_CONST     ! constants
 #endif
+         Include SUBST_CONST     ! constants
 C Arguments:
 
          Integer, Intent( IN ) :: JDATE, JTIME, TSTEP      ! internal simulation date&time
@@ -1000,68 +968,6 @@ C Local variables:
 C-----------------------------------------------------------------------
 C Interpolate file input variables and format for output
 C-------------------------------- MET_CRO_3D --------------------------------
-#ifdef _AQM_
-!        Met_Data%ZH = g3ddata(:,:,:,zh_ind)
-!        Met_Data%PRES = g3ddata(:,:,:,pres_ind)
-!        Met_Data%ZF = g3ddata(:,:,:,zf_ind)
-!        Met_Data%DENS = g3ddata(:,:,:,dens_ind)
-         Met_Data%ZH = 1.0
-         Met_Data%PRES = 1.0
-         Met_Data%ZF = 1.0
-         Met_Data%DENS = 1.0
-         Met_Data%DENS1 = Met_Data%DENS( :,:,1 )
-         Met_Data%RJACM = 1.0
-         Met_Data%RJACM = 1.0 / Met_Data%RJACM
-         Met_Data%RJACF = 1.0
-         Met_Data%RJACF = 1.0 / Met_Data%RJACF
-!        Met_Data%RRHOJ = g3ddata(:,:,:,densa_j_ind)
-         Met_Data%RRHOJ = 1.0
-         Met_Data%RRHOJ = 1.0 / Met_Data%RRHOJ
-!        Met_Data%Ta = g3ddata(:,:,:,temp_ind)
-!        Met_Data%QV = g3ddata(:,:,:,qv_ind)
-!        Met_Data%QC = g3ddata(:,:,:,qc_ind)
-         Met_Data%Ta = 1.0
-         Met_Data%QV = 1.0
-         Met_Data%QC = 1.0
-!        Met_Data%LAI = g2ddata(:,:,lai_ind)
-!        Met_Data%VEG = g2ddata(:,:,vegpx_ind)
-!        Met_Data%Z0  = g2ddata(:,:,znt_ind)
-!        Met_Data%SOIM1 = smois_data
-         Met_Data%LAI = 1.0
-         Met_Data%VEG = 1.0
-         Met_Data%Z0  = 1.0
-         Met_Data%SOIM1 = 1.0
-!        Met_Data%SEAICE = g2ddata(:,:,seaice_ind)
-!        Met_Data%PRSFC = g2ddata(:,:,prsfc_ind)
-!        Met_Data%SNOCOV = g2ddata(:,:,snocov_ind)
-         Met_Data%SEAICE = 1.0
-         Met_Data%PRSFC = 1.0
-         Met_Data%SNOCOV = 1.0
-         Where( Met_Data%SNOCOV .Lt. 0.0 )
-            Met_Data%SNOCOV = 0.0
-         End Where
-!        Met_Data%TEMP2 = g2ddata(:,:,temp2_ind)
-!        Met_Data%TEMPG = g2ddata(:,:,tempg_ind)
-!        Met_Data%USTAR = g2ddata(:,:,ustar_ind)
-!        Met_Data%HFX = g2ddata(:,:,hfx_ind)
-!        Met_Data%LH = g2ddata(:,:,lh_ind)
-!        Met_Data%PBL = g2ddata(:,:,pbl_ind)
-!        Met_Data%WR = g2ddata(:,:,canwat_ind)
-!        Met_Data%Ra = g2ddata(:,:,ra_ind)
-!        Met_Data%RS = g2ddata(:,:,rs_ind)
-!        Met_Data%Q2 = g2ddata(:,:,q2_ind)
-         Met_Data%TEMP2 = 1.0
-         Met_Data%TEMPG = 1.0
-         Met_Data%USTAR = 1.0
-         Met_Data%HFX = 1.0
-         Met_Data%LH = 1.0
-         Met_Data%PBL = 1.0
-         Met_Data%WR = 1.0
-         Met_Data%Ra = 1.0
-         Met_Data%RS = 1.0
-         Met_Data%Q2 = 1.0
-         Met_Data%RGRND = 1.0
-#else
       
          VNAME = 'ZH'
          If ( .Not. INTERPX( MET_CRO_3D, VNAME, PNAME,
@@ -1272,7 +1178,7 @@ C met vars
             XMSG = MSG1 // TRIM( VNAME ) // ' from ' // MET_CRO_2D
             Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          End If
-
+#ifndef _AQM_
          VNAME = 'WSPD10'
          If ( .Not. INTERPX( MET_CRO_2D, VNAME, PNAME,
      &                       STRTCOLMC2,ENDCOLMC2, STRTROWMC2,ENDROWMC2, 1,1,
@@ -1280,7 +1186,7 @@ C met vars
             XMSG = MSG1 // TRIM( VNAME ) // ' from ' // MET_CRO_2D
             Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          End If
-
+#endif
          VNAME = 'HFX'
          If ( .Not. INTERPX( MET_CRO_2D, VNAME, PNAME,
      &                       STRTCOLMC2,ENDCOLMC2, STRTROWMC2,ENDROWMC2, 1,1,
@@ -1414,7 +1320,6 @@ C Met_cro_2D variables that have recently changed due to MCIP or WRF/CMAQ
             Met_Data%Q2 = Met_Data%QV( :,:,1 )
          End If
          
-#endif
          Es_Grnd => BUFF2D
          Where( Met_Data%TEMPG .Lt. stdtemp )
             Es_Grnd = vp0 *Exp( 22.514 - ( 6.15e3 / Met_Data%TEMPG ) )
@@ -1423,7 +1328,6 @@ C Met_cro_2D variables that have recently changed due to MCIP or WRF/CMAQ
          End Where
          Met_Data%QSS_GRND = Es_Grnd * 0.622 / ( Met_Data%PRSFC - Es_Grnd )
          Nullify( Es_Grnd )
-!#endif
          Es_Air => BUFF2D
          Where( Met_Data%TEMP2 .Lt. stdtemp )
             Es_Air = vp0 *Exp( 22.514 - ( 6.15e3 / Met_Data%TEMP2 ) )
@@ -1439,7 +1343,6 @@ C Met_cro_2D variables that have recently changed due to MCIP or WRF/CMAQ
          Nullify( Es_Air )
 
 C-------------------------------- MET_DOT_3D --------------------------------
-#ifndef _AQM_
          If ( .Not. INTERPX( MET_DOT_3D, vname_uc, PNAME,
      &                       STRTCOLMD3,ENDCOLMD3, STRTROWMD3,ENDROWMD3, 1,NLAYS,
      &                       JDATE, JTIME, Met_Data%UWIND ) ) Then
@@ -1454,6 +1357,7 @@ C-------------------------------- MET_DOT_3D --------------------------------
             Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT 1 )
          End If
 
+#ifndef _AQM_
 C get ghost values for wind fields in case of free trop.
          CALL SUBST_COMM ( Met_Data%UWIND, DSPL_N0_E1_S0_W0, DRCN_E )
          CALL SUBST_COMM ( Met_Data%VWIND, DSPL_N1_E0_S0_W0, DRCN_N )
@@ -1487,7 +1391,7 @@ C-------------------------------- Calculated Variables -------------------------
 C------  Updating MOL, then WSTAR, MOLI, HOL 
          DO R = 1, MY_NROWS
             DO C = 1, MY_NCOLS
-#ifndef _AQM_
+#ifdef _AQM_
  !             CPAIR    = 1004.67 * ( 1.0 + 0.84 * Met_Data%QV( C,R,1 ) )   ! J/(K KG)
                CPAIR    = CPD * ( 1.0 + 0.84 * Met_Data%QV( C,R,1 ) )   ! J/(K KG)
                TMPFX    = Met_Data%HFX( C,R ) / ( CPAIR * Met_Data%DENS( C,R,1 ) )

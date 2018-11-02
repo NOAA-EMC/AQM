@@ -159,7 +159,7 @@ C:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
          LOGDEV = INIT3()     
 
 ! open GRID_CRO_3D file and read time independent grid variables
-#ifndef _AQM_
+
          IF ( .NOT. OPEN3( GRID_CRO_2D, FSREAD3, PNAME ) ) THEN
             XMSG = 'Could not open '// GRID_CRO_2D // ' file'
             CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
@@ -167,7 +167,7 @@ C:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
          CALL SUBHFILE ( GRID_CRO_2D, GXOFF, GYOFF,
      &                  STRTCOLMC3, ENDCOLMC3, STRTROWMC3, ENDROWMC3 )
-#endif
+
          ALLOCATE ( HT( NCOLS,NROWS ), STAT = ASTAT )
          IF ( ASTAT .NE. 0 ) THEN
             XMSG = 'Failure allocating HT'
@@ -185,11 +185,7 @@ C:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
             XMSG = 'Failure allocating SINLON'
             CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          END IF
-#ifdef _AQM_
-         HT = 1.0 !g3ddata
-         LON = 1.0 !g3ddata
-         LAT = 1.0 !g3ddata
-#else
+
          VARNM = 'HT'
          IF ( .NOT. INTERPX( GRID_CRO_2D, VARNM, PNAME,
      &                       STRTCOLMC3,ENDCOLMC3, STRTROWMC3,ENDROWMC3,
@@ -213,7 +209,7 @@ C:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
             XMSG = 'Could not read ' // TRIM(VARNM) // ' from ' // GRID_CRO_2D
             CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          END IF
-#endif
+
 ! set up variables for calculating cosine of solar zenith angle
 
          ALLOCATE ( SINLATS( NCOLS,NROWS ), STAT = ASTAT )
@@ -511,27 +507,7 @@ C:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
          LTIME = JTIME
 
 !...  Interpolate time dependent layered input variables
-#ifdef _AQM_
-         ZM = 1.0 !g3ddata(:,:,:,zh_ind)
-         ZFULL = 1.0 !g3ddata(:,:,:,zF_ind)
-         DENS = 1.0 !g3ddata(:,:,:,dens_ind)
-         TA = 1.0 !g3ddata(:,:,:,temp_ind)
-         PRES = 1.0 !g3ddata(:,:,:,pres_ind)
-         IF( USE_CUM_CLOUD )THEN
-             CFRAC(:,:) = 1.0 !g2ddata(:,:,cfrac2dr_ind)
-         END IF
-         QV = 1.0 !g3ddata(:,:,:,qv_ind)
-         QC = 1.0 !g3ddata(:,:,:,qc_ind)
-         QR = 1.0 !g3ddata(:,:,:,qr_ind)
-         IF ( QG_AVAIL ) THEN
-             QG = 1.0 !g3ddata(:,:,:,qg_ind)
-             QI = 1.0 !g3ddata(:,:,:,qi_ind)
-             QS = 1.0 !g3ddata(:,:,:,qs_ind)
-         ELSE IF ( QI_AVAIL ) THEN
-             QI = 1.0 !g3ddata(:,:,:,qi_ind)
-             QS = 1.0 !g3ddata(:,:,:,qs_ind)
-         END IF
-#else
+
          VARNM = 'ZH' ! midlayer height
          IF ( .NOT. INTERPX( MET_CRO_3D, VARNM, PNAME,
      &                       STRTCOLMC3,ENDCOLMC3, STRTROWMC3,ENDROWMC3,
@@ -666,7 +642,7 @@ C:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
             END IF
 
          END IF
-#endif
+
 ! floor values of QC, QR, QI, QS, and QG to zero
 
          IF ( QG_AVAIL ) THEN

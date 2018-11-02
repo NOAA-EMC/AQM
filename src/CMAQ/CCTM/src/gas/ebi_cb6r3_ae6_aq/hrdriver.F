@@ -268,10 +268,7 @@ C Define processor offsets
 C.. Get fractional seawater coverage from the OCEAN file.
 
          ALLOCATE( OPEN_ZONE( NCOLS, NROWS ), SURF_ZONE( NCOLS, NROWS ) )
-#ifdef _AQM_
-         OPEN_ZONE = 0.5 !g2ddata(:,:,open_ind)
-         SURF_ZONE = 0.5 !g2ddata(:,:,surf_ind)
-#else
+
          CALL SUBHFILE ( OCEAN_1, GXOFF, GYOFF,
      &                   STRTCOLMC3,ENDCOLMC3, STRTROWMC3,ENDROWMC3 )
 
@@ -292,7 +289,6 @@ C.. Get fractional surf-zone coverage from the OCEAN file.
             MSG = 'Could not read SURF from ' // OCEAN_1
             CALL M3EXIT ( PNAME, JDATE, JTIME, MSG, XSTAT1 )
          END IF
-#endif
 
          ALLOCATE( LAND_ZONE( NCOLS, NROWS ) )
          DO R = 1, NROWS
@@ -307,13 +303,11 @@ C.. Get fractional surf-zone coverage from the OCEAN file.
 
          DEALLOCATE( OPEN_ZONE, SURF_ZONE )
 
-#ifndef _AQM_
          CALL SUBHFILE ( MET_CRO_3D, GXOFF, GYOFF,
      &                   STRTCOLMC2, ENDCOLMC2, STRTROWMC2, ENDROWMC2 )
 
          CALL SUBHFILE ( MET_CRO_3D, GXOFF, GYOFF,
      &                   STRTCOLMC3, ENDCOLMC3, STRTROWMC3, ENDROWMC3 )
-#endif
          ALLOCATE( DENS( NCOLS, NROWS, NLAYS ), PRES( NCOLS, NROWS, NLAYS ),
      &             QV  ( NCOLS, NROWS, NLAYS ), TA  ( NCOLS, NROWS, NLAYS ),
      &             RJ  ( NCOLS, NROWS, NLAYS, NPHOTAB ),
@@ -349,13 +343,6 @@ C.. Compute number of time step loops and step size for EBI solver
 
       N_INR_STEPS = 1
 
-#ifdef _AQM_
-      SEAICE = 0.5 !g2ddata(:,:,seaice_ind)
-      TA = 1.0 !g3ddata(:,:,:,temp_ind)
-      QV = 1.0 !g3ddata(:,:,:,qv_ind)
-      DENS = 1.0 !g3ddata(:,:,:,dens_ind)
-      PRES = 1.0 !g3ddata(:,:,:,pres_ind)
-#else
 C.. Get fractional seaice coverage from the METCRO2D file.
 
       VNAME = 'SEAICE'
@@ -402,7 +389,7 @@ C.. Get pressure in Pascals
          MSG = 'Could not read PRES from MET_CRO_3D'
          CALL M3EXIT ( PNAME, JDATE, JTIME, MSG, XSTAT1 )
       END IF
-#endif
+
 C.. Get photolysis rates in 1/min
       CALL PHOT ( MIDDATE, MIDTIME, JDATE, JTIME, TSTEP, RJ )
 C.. Get Heteorogeneous rates and Update Aerosol Distribution Properties

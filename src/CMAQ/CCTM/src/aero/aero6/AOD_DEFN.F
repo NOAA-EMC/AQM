@@ -146,6 +146,9 @@ C         AERO_DATA.F. Moments are wet after extract_aero
          use aero_data          
          use asx_data_mod     ! meteorology data, includes SUBST_CONST
          use utilio_defn
+#ifdef _AQM_
+         use grid_conf
+#endif
 
          implicit none
 

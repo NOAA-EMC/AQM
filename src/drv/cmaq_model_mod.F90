@@ -99,14 +99,14 @@ contains
   end subroutine cmaq_model_init
 
 
-  subroutine cmaq_model_advance(rc)
+  subroutine cmaq_model_advance(jdate, jtime, tstep, rc)
+    integer,           intent(in)  :: jdate, jtime, tstep(3)
     integer, optional, intent(out) :: rc
 
     ! -- local variables
     integer :: localrc
     integer :: de, deCount
     integer :: advanceCount, julday, mm, tz
-    integer :: jdate, jtime, tstep(3)
     integer :: is, ie, js, je, ni, nl
     real(AQM_KIND_R8) :: dts
     real(AQM_KIND_R8), dimension(:,:), pointer :: lat, lon
@@ -134,13 +134,6 @@ contains
       if (aqm_rc_check(localrc, msg="Failed to retrieve model on local DE", &
         file=__FILE__, line=__LINE__, rc=rc)) return
 
-      call aqm_model_domain_get(de=de, ids=is, ide=ie, jds=js, jde=je, ni=ni, nl=nl, &
-        lon=lon, lat=lat, rc=localrc)
-      if (aqm_rc_check(localrc, msg="Failed to retrieve model domain on local DE", &
-        file=__FILE__, line=__LINE__, rc=rc)) return
-
-      jdate = 0
-      jtime = 0
       call cmaq_advance(data % cgrid, jdate, jtime, tstep, config % run_aero, rc=localrc)
       if (aqm_rc_check(localrc, msg="Failed to advance CMAQ on local DE", &
         file=__FILE__, line=__LINE__, rc=rc)) return

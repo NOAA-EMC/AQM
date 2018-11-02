@@ -187,6 +187,7 @@ contains
     ! -- local variables
     integer                 :: deCount
     integer                 :: julday, yy, mm, dd, h, m, s
+    integer                 :: jdate, jtime, tstep(3)
     integer(ESMF_KIND_I8)   :: advanceCount
     real(ESMF_KIND_R8)      :: dts
     character(len=AQM_MAXSTR) :: tStamp
@@ -228,11 +229,16 @@ contains
       file=__FILE__)) &
       return  ! bail out
 
-    call ESMF_TimeIntervalGet(timeStep, s_r8=dts, rc=rc)
+    call ESMF_TimeIntervalGet(timeStep, h=h, m=m, s=s, s_r8=dts, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
+
+    ! -- set model internal timestep
+    tstep( 1 ) = 0
+    tstep( 2 ) = h * 100000 + m * 100 + s
+    tstep( 3 ) = tstep( 2 )
 
     call ESMF_TimeGet(currTime, yy=yy, mm=mm, dd=dd, h=h, m=m, s=s, &
       dayOfYear=julday, timeString=tStamp, rc=rc)
@@ -241,15 +247,11 @@ contains
       file=__FILE__)) &
       return  ! bail out
 
-    call aqm_model_clock_set(julday=julday, yy=yy, mm=mm, dd=dd, h=h, m=m, s=s, dts=dts, &
-      advanceCount=int(advanceCount), rc=rc)
-    if (aqm_rc_check(rc)) then
-      call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, msg="Failed to set model's internal clock", &
-        line=__LINE__, file=__FILE__, rcToReturn=rc)
-      return  ! bail out
-    end if
+    ! -- set model internal date and time
+    jdate = yy * 1000 + julday
+    jtime = h * 100000 + m * 100 + s
 
-    call cmaq_model_advance(rc=rc)
+    call cmaq_model_advance(jdate, jtime, tstep, rc=rc)
     if (aqm_rc_check(rc, file=__FILE__, line=__LINE__)) then
       call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, msg="Failed to advance model", &
         line=__LINE__, file=__FILE__, rcToReturn=rc)

@@ -51,6 +51,25 @@ C....................................................................
          INTEGER, EXTERNAL :: INDEX1, SEC2TIME, TIME2SEC, GETEFILE
          INTEGER, EXTERNAL :: SECSDIFF
          LOGICAL, EXTERNAL :: ENVYN
+
+         INTERFACE INTERPX
+           logical function interpx_2d( fname, vname, pname,
+     &       col0, col1, row0, row1, lay0, lay1, jdate, jtime, buffer )
+             character(len=*), intent(in)  :: fname, vname, pname
+             integer,          intent(in)  :: col0, col1, row0, row1
+             integer,          intent(in)  :: lay0, lay1
+             integer,          intent(in)  :: jdate, jtime
+             real,             intent(out) :: buffer(:,:)
+           end function interpx_2d
+           logical function interpx_3d( fname, vname, pname,
+     &       col0, col1, row0, row1, lay0, lay1, jdate, jtime, buffer )
+             character(len=*), intent(in)  :: fname, vname, pname
+             integer,          intent(in)  :: col0, col1, row0, row1
+             integer,          intent(in)  :: lay0, lay1
+             real,             intent(out) :: buffer(:,:,:)
+           end function interpx_3d
+
+         END INTERFACE INTERPX
 #else
 
 #ifdef parallel

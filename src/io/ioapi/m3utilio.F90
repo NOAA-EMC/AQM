@@ -5,18 +5,27 @@ module m3utilio
   implicit none
 
   integer, parameter :: default_logdev = 6
+  integer, parameter :: fsread3 = 0
   integer :: xstat1, xstat2, xstat3
 
   private
 
-  public :: init3, m3exit, m3mesg, m3parag, m3warn
+  public :: init3, m3exit, m3mesg, m3parag, m3warn, open3
   public :: xstat1, xstat2, xstat3
+  public :: fsread3
 
 contains
 
   integer function init3()
     init3 = default_logdev
   end function init3
+
+  LOGICAL FUNCTION  OPEN3( FNAME, FSTATUS, PGNAME )
+    CHARACTER(LEN=*), INTENT(IN) :: FNAME
+    INTEGER,          INTENT(IN) :: FSTATUS
+    CHARACTER(LEN=*), INTENT(IN) :: PGNAME
+    OPEN3 = .TRUE.
+  END FUNCTION  OPEN3
 
   subroutine m3exit( caller, jdate, jtime, msgtxt, xstat )
     character(len=*),  intent(in) :: caller

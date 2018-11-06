@@ -664,6 +664,11 @@ C-----------------------------------------------------------------------
          CONVPA = 1.0
          P0     = 100000.0
          MINKZ = .False.   ! Don't have Purb yet
+         vname_rc = 'RC'
+         vname_rn = 'RN'
+         vname_uc = 'UWIND'
+         vname_vc = 'VWIND'
+         CSTAGUV  = .FALSE.
 #else
          If ( .Not. desc3( met_cro_2d ) ) Then
             xmsg = 'Could not get ' // MET_CRO_2D // ' file description'

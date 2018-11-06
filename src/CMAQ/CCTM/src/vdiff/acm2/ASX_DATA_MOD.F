@@ -499,9 +499,7 @@ C-----------------------------------------------------------------------
      &             Met_Data%WSTAR    ( NCOLS,NROWS ),
      &             Met_Data%Z0       ( NCOLS,NROWS ),
      &             Met_Data%SOIM1    ( NCOLS,NROWS ),
-#ifndef _AQM_
      &             Met_Data%SOIT1    ( NCOLS,NROWS ),
-#endif
      &             Met_Data%SEAICE   ( NCOLS,NROWS ),
      &             Met_Data%MOL      ( NCOLS,NROWS ),
      &             Met_Data%MOLI     ( NCOLS,NROWS ),

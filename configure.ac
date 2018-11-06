@@ -65,12 +65,23 @@ AC_PROG_F77($FC)
 AC_LANG_PUSH([Fortran])
 ac_ext=F90
 AX_COMPILER_VENDOR
-AS_IF([test "x$ax_cv_fc_compiler_vendor" = "xintel"],
-  [CCTM_FCFLAGS="-free -override-limits"
-   CCTM_FFLAGS="-fixed -132 -override-limits"
-   AC_SUBST([CCTM_FCFLAGS])
-   AC_SUBST([CCTM_FFLAGS])])
 AC_LANG_POP([Fortran])
+case "x$ax_cv_fc_compiler_vendor" in
+  "xintel")
+     CCTM_FCFLAGS="-free -override-limits"
+     CCTM_FFLAGS="-fixed -132 -override-limits"
+     ;;
+  "xgnu")
+     CCTM_FCFLAGS="-ffree-line-length-none"
+     CCTM_FFLAGS="-ffixed-line-length-132"
+     ;;
+  *)
+     CCTM_FCFLAGS=
+     CCTM_FFLAGS=
+     ;;
+esac
+AC_SUBST([CCTM_FCFLAGS])
+AC_SUBST([CCTM_FFLAGS])
 
 # Checks for libraries.
 

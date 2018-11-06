@@ -4706,17 +4706,27 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_fc_compiler_vendor" >&5
 $as_echo "$ax_cv_fc_compiler_vendor" >&6; }
 
-if test "x$ax_cv_fc_compiler_vendor" = "xintel"; then :
-  CCTM_FCFLAGS="-free -override-limits"
-   CCTM_FFLAGS="-fixed -132 -override-limits"
-
-
-fi
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+case "x$ax_cv_fc_compiler_vendor" in
+  "xintel")
+     CCTM_FCFLAGS="-free -override-limits"
+     CCTM_FFLAGS="-fixed -132 -override-limits"
+     ;;
+  "xgnu")
+     CCTM_FCFLAGS="-ffree-line-length-none"
+     CCTM_FFLAGS="-ffixed-line-length-132"
+     ;;
+  *)
+     CCTM_FCFLAGS=
+     CCTM_FFLAGS=
+     ;;
+esac
+
 
 
 # Checks for libraries.

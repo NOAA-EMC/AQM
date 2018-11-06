@@ -65,8 +65,8 @@ contains
 
     ! -- set domain information
     ! -- local domain
-    NROWS = size(cgrid, 1)
-    NCOLS = size(cgrid, 2)
+    NCOLS = size(cgrid, 1)
+    NROWS = size(cgrid, 2)
     NLAYS = size(cgrid, 3)
     ! -- local computational domain same as local domain
     MY_NROWS = NROWS

@@ -262,9 +262,11 @@ c..If emissions processing requested stop
          OPEN( UNIT=ISTFL, FILE='iterstat.dat' )
          WRITE( ISTFL, 94020 )
 #endif
+#ifndef _AQM_
 C Define processor offsets
          PECOL_OFFSET = COLSD_PE( 1, MYPE+1 ) - 1
          PEROW_OFFSET = ROWSD_PE( 1, MYPE+1 ) - 1
+#endif
 C.. Get fractional seawater coverage from the OCEAN file.
 
          ALLOCATE( OPEN_ZONE( NCOLS, NROWS ), SURF_ZONE( NCOLS, NROWS ) )
@@ -459,9 +461,9 @@ c..Call EBI solver
                N_EBI_IT = 0
 
 #ifdef _AQM_
-               CALL HRSOLVER( JDATE, JTIME, (C+PECOL_OFFSET), (R+PEROW_OFFSET), L )
-#else
                CALL HRSOLVER( JDATE, JTIME, C, R, L )
+#else
+               CALL HRSOLVER( JDATE, JTIME, (C+PECOL_OFFSET), (R+PEROW_OFFSET), L )
 #endif
 
 #ifdef hrstats

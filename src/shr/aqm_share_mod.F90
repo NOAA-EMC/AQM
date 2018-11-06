@@ -279,8 +279,8 @@ SUBROUTINE SUBHFILE ( FNAME, GXOFF, GYOFF, &
     file=__FILE__, line=__LINE__)) return
 
   STRTCOL = 1
-   ENDCOL = je - js + 1
+   ENDCOL = ie - is + 1
   STRTROW = 1
-   ENDROW = ie - is + 1
+   ENDROW = je - js + 1
 
 END SUBROUTINE SUBHFILE

@@ -63,7 +63,7 @@ contains
 
       ! -- allocate CMAQ internal workspace
       if (.not.allocated(data % cgrid)) then
-        allocate(data % cgrid(ie-is+1,je-js+1,ni,numSpecies), stat=localrc)
+        allocate(data % cgrid(ie-is+1,je-js+1,nl,numSpecies), stat=localrc)
         if (aqm_rc_test((localrc /= 0), &
           msg="Failed to allocate CMAQ workspace on local DE", &
           file=__FILE__, line=__LINE__, rc=rc)) return
@@ -106,25 +106,21 @@ contains
     ! -- local variables
     integer :: localrc
     integer :: de, deCount
-    integer :: advanceCount, julday, mm, tz
-    integer :: is, ie, js, je, ni, nl
-    real(AQM_KIND_R8) :: dts
-    real(AQM_KIND_R8), dimension(:,:), pointer :: lat, lon
     type(aqm_config_type), pointer :: config => null()
     type(aqm_data_type),   pointer :: data   => null()
+
+    integer, save :: advanceCount = 0
 
     ! -- begin
     if (present(rc)) rc = AQM_RC_SUCCESS
 
-    call aqm_model_get(deCount=deCount, rc=localrc)
+    call aqm_model_get(deCount=deCount, config=config, rc=localrc)
     if (aqm_rc_check(localrc, msg="Failed to retrieve model", &
       file=__FILE__, line=__LINE__, rc=rc)) return
 
     if (deCount < 1) return
 
-    call aqm_model_clock_get(advanceCount=advanceCount, dts=dts, mm=mm, tz=tz, julday=julday, rc=localrc)
-    if (aqm_rc_check(localrc, msg="Failed to retrieve model clock on local DE", &
-      file=__FILE__, line=__LINE__, rc=rc)) return
+    print *,'cmaq_model_advance: count = ',advanceCount
 
     ! -- CMAQ time steps start from 1, while model time steps start from 0
     advanceCount = advanceCount + 1

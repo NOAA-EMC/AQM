@@ -113,6 +113,8 @@ logical function interpx_2d( fname, vname, pname, &
         file=__FILE__, line=__LINE__)) return
 
       select case (trim(vname))
+        case ('HT')
+          ! -- placeholder for FV3 surface height (m)
         case ('LAT')
           buffer = lat
         case ('LON')

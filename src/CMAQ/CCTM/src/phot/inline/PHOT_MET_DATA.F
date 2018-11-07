@@ -238,7 +238,7 @@ C:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
          END IF
 
 ! open MET_CRO_2D and set its offsets
-#ifndef _AQM_
+
          IF ( .NOT. OPEN3( MET_CRO_2D, FSREAD3, PNAME ) ) THEN
             XMSG = 'Could not open '// MET_CRO_2D // ' file'
             CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
@@ -246,7 +246,7 @@ C:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
          CALL SUBHFILE ( MET_CRO_2D, GXOFF, GYOFF,
      &                   STRTCOLMC2, ENDCOLMC2, STRTROWMC2, ENDROWMC2 )
-#endif
+
 
          ALLOCATE ( CFRAC( NCOLS,NROWS ), STAT = ASTAT )
          IF ( ASTAT .NE. 0 ) THEN
@@ -255,7 +255,7 @@ C:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
          END IF
 
 !...open MET_CRO_3D and set its offsets
-#ifndef _AQM_
+
          IF ( .NOT. OPEN3( MET_CRO_3D, FSREAD3, PNAME ) ) THEN
             XMSG = 'Could not open '// MET_CRO_3D // ' file'
             CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
@@ -270,7 +270,7 @@ C:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
             XMSG = 'Could not get ' // MET_CRO_3D //' file description'
             CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          END IF
-#endif
+
          ALLOCATE ( DENS( NCOLS,NROWS,NLAYS ), STAT = ASTAT )
          IF ( ASTAT .NE. 0 ) THEN
             XMSG = 'Failure allocating DENS'

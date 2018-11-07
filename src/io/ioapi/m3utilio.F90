@@ -10,11 +10,16 @@ module m3utilio
 
   private
 
-  public :: init3, m3exit, m3mesg, m3parag, m3warn, open3
+  public :: desc3, init3, m3exit, m3mesg, m3parag, m3warn, open3
   public :: xstat1, xstat2, xstat3
   public :: fsread3
 
 contains
+
+  LOGICAL FUNCTION DESC3( FNAME )
+    CHARACTER(LEN=*), INTENT(IN) :: FNAME
+    DESC3 = .TRUE.
+  END FUNCTION DESC3
 
   integer function init3()
     init3 = default_logdev

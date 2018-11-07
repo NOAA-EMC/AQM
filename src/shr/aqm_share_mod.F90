@@ -66,6 +66,10 @@ subroutine nameval(name, eqname)
       eqname = config % nr_matrix_nml
     case ('tr_matrix_nml')
       eqname = config % tr_matrix_nml
+    case ('CSQY_DATA')
+      eqname = config % csqy_data
+    case ('OPTICS_DATA')
+      eqname = config % optics_data
     case default
       ! -- nothing to do
   end select

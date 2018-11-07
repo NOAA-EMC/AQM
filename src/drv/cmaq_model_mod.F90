@@ -27,7 +27,6 @@ contains
     integer :: numSpecies
     integer :: is, ie, js, je, ni, nl
     type(aqm_config_type), pointer :: config => null()
-    type(aqm_data_type),   pointer :: data   => null()
 
     ! -- begin
     if (present(rc)) rc = AQM_RC_SUCCESS
@@ -40,42 +39,30 @@ contains
     if (deCount < 1) return
 
     ! -- initialize CMAQ
+    ! -- NOTE: CMAQ can only run on 1DE/PET domain decomposition (DE 0)
 
     ! -- initialize species from namelists on DE 0
     call cmaq_species_read(numSpecies, rc=localrc)
     if (aqm_rc_check(localrc, msg="Failed to initialize CMAQ species", &
       file=__FILE__, line=__LINE__, rc=rc)) return
 
-    do de = 0, deCount-1
+    call aqm_model_set(config=config, numTracers=numSpecies, rc=localrc)
+    if (aqm_rc_check(localrc, msg="Failed to set number of model species on local DE", &
+      file=__FILE__, line=__LINE__, rc=rc)) return
 
-      call aqm_model_get(de=de, config=config, data=data, rc=localrc)
-      if (aqm_rc_check(localrc, msg="Failed to retrieve model on local DE", &
-        file=__FILE__, line=__LINE__, rc=rc)) return
+    ! -- set domain size
+    call aqm_model_domain_get(ids=is, ide=ie, jds=js, jde=je, nl=nl, rc=localrc)
+    if (aqm_rc_check(localrc, msg="Failed to retrieve model domain on local DE", &
+      file=__FILE__, line=__LINE__, rc=rc)) return
 
-      call aqm_model_set(de=de, config=config, numTracers=numSpecies, rc=localrc)
-      if (aqm_rc_check(localrc, msg="Failed to set number of model species on local DE", &
-        file=__FILE__, line=__LINE__, rc=rc)) return
+    NCOLS = ie - is + 1
+    NROWS = je - js + 1
+    NLAYS = nl
 
-      call aqm_model_domain_get(de=de, ids=is, ide=ie, jds=js, jde=je, ni=ni, nl=nl, &
-        rc=localrc)
-      if (aqm_rc_check(localrc, msg="Failed to retrieve model domain on local DE", &
-        file=__FILE__, line=__LINE__, rc=rc)) return
-
-      ! -- allocate CMAQ internal workspace
-      if (.not.allocated(data % cgrid)) then
-        allocate(data % cgrid(ie-is+1,je-js+1,nl,numSpecies), stat=localrc)
-        if (aqm_rc_test((localrc /= 0), &
-          msg="Failed to allocate CMAQ workspace on local DE", &
-          file=__FILE__, line=__LINE__, rc=rc)) return
-        data % cgrid = 0._AQM_KIND_R4
-      end if
-
-      ! -- initialize CMAQ's internal workspace
-      call cmaq_init(data % cgrid, rc=localrc)
-
-      ! -- set CMAQ internal clock?
-
-    end do
+    ! -- initialize CMAQ's internal workspace
+    call cmaq_init(rc=localrc)
+    if (aqm_rc_check(localrc, msg="Failed to initialize CMAQ", &
+      file=__FILE__, line=__LINE__, rc=rc)) return
 
     ! -- print out model configuration
     if (aqm_comm_isroot()) then
@@ -107,7 +94,6 @@ contains
     integer :: localrc
     integer :: de, deCount
     type(aqm_config_type), pointer :: config => null()
-    type(aqm_data_type),   pointer :: data   => null()
 
     integer, save :: advanceCount = 0
 
@@ -125,16 +111,11 @@ contains
     ! -- CMAQ time steps start from 1, while model time steps start from 0
     advanceCount = advanceCount + 1
 
-    do de = 0, deCount-1
-      call aqm_model_get(de=de, data=data, rc=localrc)
-      if (aqm_rc_check(localrc, msg="Failed to retrieve model on local DE", &
-        file=__FILE__, line=__LINE__, rc=rc)) return
-
-      call cmaq_advance(data % cgrid, jdate, jtime, tstep, config % run_aero, rc=localrc)
-      if (aqm_rc_check(localrc, msg="Failed to advance CMAQ on local DE", &
-        file=__FILE__, line=__LINE__, rc=rc)) return
-
-    end do
+    ! -- run CMAQ
+    ! -- NOTE: CMAQ can only run on 1DE/PET domain decomposition (DE 0)
+    call cmaq_advance(jdate, jtime, tstep, config % run_aero, rc=localrc)
+    if (aqm_rc_check(localrc, msg="Failed to advance CMAQ on local DE", &
+      file=__FILE__, line=__LINE__, rc=rc)) return
 
   end subroutine cmaq_model_advance
 

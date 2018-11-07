@@ -3,6 +3,7 @@ module cmaq_mod
   use aqm_rc_mod
   use aqm_types_mod
 
+  use PCGRID_DEFN
   use HGRD_DEFN, ONLY : NCOLS, NROWS, MY_NCOLS, MY_NROWS
   use VGRD_DEFN, ONLY : NLAYS
 
@@ -10,16 +11,20 @@ module cmaq_mod
                            CMAQ_Met_Data  => Met_Data
 
   use cgrid_spcs,  only : cgrid_spcs_init, nspcsd
+
   use UTILIO_DEFN, only : INIT3
 
   implicit none
 
   integer :: cmaq_logdev
 
+  real, pointer :: CGRID(:,:,:,:) => null()
+
   private
 
   public :: CMAQ_Grid_Data, CMAQ_Met_Data
   public :: cmaq_logdev
+  public :: NCOLS, NROWS, NLAYS
 
   public :: cmaq_advance
   public :: cmaq_init
@@ -38,7 +43,6 @@ contains
     ! -- read from namelist CGRID gas chem, aerosol, non-reactive, 
     ! -- and tracer species definitions
     ! -- This is done only on DE 0 and shared with other DEs on this PET
-
     nspecies = 0
     if (aqm_rc_test(.not.cgrid_spcs_init(), &
       msg="cmaq_init: Error in CGRID_SPCS:CGRID_SPCS_INIT", &
@@ -48,14 +52,12 @@ contains
 
   end subroutine cmaq_species_read
 
+  subroutine cmaq_init(rc)
 
-  subroutine cmaq_init(cgrid, rc)
-
-    real(AQM_KIND_R4), intent(inout) :: cgrid(:,:,:,:)
     integer, optional, intent(out)   :: rc
 
     ! -- local variables
-    real(AQM_KIND_R4), parameter :: cmin = 1.0E-30
+    real, parameter :: CMIN = 1.0E-30
 
     ! -- begin
     if (present(rc)) rc = AQM_RC_SUCCESS
@@ -63,30 +65,25 @@ contains
     ! -- set CMAQ log unit
     cmaq_logdev = INIT3()
 
-    ! -- set domain information
-    ! -- local domain
-    NCOLS = size(cgrid, 1)
-    NROWS = size(cgrid, 2)
-    NLAYS = size(cgrid, 3)
     ! -- local computational domain same as local domain
     MY_NROWS = NROWS
     MY_NCOLS = NCOLS
 
-    ! -- set initial concentrations
-    cgrid = cmin
+    ! -- Initialize PCGRID
+    if (aqm_rc_test(.not.pcgrid_init(), &
+      msg="cmaq_init: Failure defining horizontal domain", &
+      file=__FILE__, line=__LINE__, rc=rc)) return
 
-    ! -- initialize processes
-    ! -- ... see driver.F
-!   CALL VDIFF ( CGRID, JDATE, JTIME, TSTEP, INIT=.TRUE. )
+    CGRID => PCGRID   ! required for PinG
 
-    ! -- initialize met data
-  ! call INIT_MET( JDATE, JTIME )
-    
+   ! -- Initialize conc field: Copy IC's to CONC file as step 0
+   ! -- Convention: the input file concentration units are always ppmV.
+   CGRID = CMIN
+
   end subroutine cmaq_init
 
-  subroutine cmaq_advance(cgrid, jdate, jtime, tstep, run_aero, rc)
+  subroutine cmaq_advance(jdate, jtime, tstep, run_aero, rc)
 
-    real(AQM_KIND_R4), intent(inout) :: cgrid(:,:,:,:)
     integer,           intent(in)    :: jdate, jtime, tstep(3)
     logical,           intent(in)    :: run_aero
     integer, optional, intent(out)   :: rc
@@ -119,21 +116,15 @@ contains
 
     ! -- advance all physical and chemical processes on a grid
     CALL VDIFF ( CGRID, JDATE, JTIME, TSTEP )
-!   if (aqm_rc_test((cmaq_rc /= CMAQ_RC_SUCCESS), &
-!     msg=CMAQ_XMSG, file=__FILE__, line=__LINE__, rc=rc)) return
     
     SDATE = JDATE
     STIME = JTIME
     CALL NEXTIME ( SDATE, STIME, TSTEP( 2 ) )
 
     CALL CHEM ( CGRID, JDATE, JTIME, TSTEP )
-!   if (aqm_rc_test((cmaq_rc /= CMAQ_RC_SUCCESS), &
-!     msg=CMAQ_XMSG, file=__FILE__, line=__LINE__, rc=rc)) return
 
     if (run_aero) then
       CALL AERO ( CGRID, JDATE, JTIME, TSTEP )
-!     if (aqm_rc_test((cmaq_rc /= CMAQ_RC_SUCCESS), &
-!       msg=CMAQ_XMSG, file=__FILE__, line=__LINE__, rc=rc)) return
     end if
 
     CALL NEXTIME ( JDATE, JTIME, TSTEP( 2 ) )

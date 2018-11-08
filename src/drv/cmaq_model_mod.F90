@@ -75,6 +75,7 @@ contains
       write(cmaq_logdev,'(2x,"tr_matrix_nml: ",a)') trim(config % tr_matrix_nml)
       write(cmaq_logdev,'(2x,"csqy_data    : ",a)') trim(config % csqy_data)
       write(cmaq_logdev,'(2x,"optics_data  : ",a)') trim(config % optics_data)
+      write(cmaq_logdev,'(2x,"omi          : ",a)') trim(config % omi)
       write(cmaq_logdev,'(2x,"ctm_depvfile : ",l7)') config % ctm_depvfile
       write(cmaq_logdev,'(2x,"ctm_photodiag: ",l7)') config % ctm_photodiag
       write(cmaq_logdev,'(2x,"ctm_pmdiag   : ",l7)') config % ctm_pmdiag

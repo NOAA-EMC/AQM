@@ -17,6 +17,7 @@ module aqm_config_mod
     character(len=AQM_MAXSTR) :: tr_matrix_nml = ""
     character(len=AQM_MAXSTR) :: csqy_data     = ""
     character(len=AQM_MAXSTR) :: optics_data   = ""
+    character(len=AQM_MAXSTR) :: omi           = ""
     logical                   :: ctm_photodiag = .false.
     logical                   :: ctm_pmdiag    = .false.
     logical                   :: ctm_depvfile  = .false.
@@ -41,7 +42,7 @@ contains
 
     integer                :: localrc, iostat
     logical                :: lbuffer(4)
-    character(AQM_MAXSTR)  :: sbuffer(6)
+    character(AQM_MAXSTR)  :: sbuffer(7)
 
     ! -- variables in input namelist
     character(len=AQM_MAXSTR) :: ae_matrix_nml
@@ -50,6 +51,7 @@ contains
     character(len=AQM_MAXSTR) :: tr_matrix_nml
     character(len=AQM_MAXSTR) :: csqy_data
     character(len=AQM_MAXSTR) :: optics_data
+    character(len=AQM_MAXSTR) :: omi
     logical                   :: ctm_photodiag
     logical                   :: ctm_pmdiag
     logical                   :: ctm_depvfile
@@ -62,6 +64,7 @@ contains
       tr_matrix_nml, &
       csqy_data,     &
       optics_data,   &
+      omi,           &
       ctm_photodiag, &
       ctm_pmdiag,    &
       ctm_depvfile,  &
@@ -77,6 +80,7 @@ contains
     tr_matrix_nml = ""
     csqy_data     = ""
     optics_data   = ""
+    omi           = ""
     ctm_photodiag = .false.
     ctm_pmdiag    = .false.
     ctm_depvfile  = .false.
@@ -108,7 +112,8 @@ contains
       nr_matrix_nml, &
       tr_matrix_nml, &
       csqy_data,     &
-      optics_data    &
+      optics_data,   &
+      omi            &
     /)
     ! -- broadcast string variable
     call aqm_comm_bcast(sbuffer, rc=localrc)
@@ -121,6 +126,7 @@ contains
     config % tr_matrix_nml = sbuffer(4)
     config % csqy_data     = sbuffer(5)
     config % optics_data   = sbuffer(6)
+    config % omi           = sbuffer(7)
 
     ! -- pack logicals into buffer
     lbuffer = (/ &

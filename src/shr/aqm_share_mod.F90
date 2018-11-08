@@ -70,6 +70,8 @@ subroutine nameval(name, eqname)
       eqname = config % csqy_data
     case ('OPTICS_DATA')
       eqname = config % optics_data
+    case ('OMI')
+      eqname = config % omi
     case default
       ! -- nothing to do
   end select

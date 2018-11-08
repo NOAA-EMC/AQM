@@ -400,6 +400,12 @@ C:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
          END IF
 #ifdef _AQM_
          CFRAC_3D_AVAIL = .TRUE.
+         ALLOCATE ( CFRAC_3D_RES( NCOLS,NROWS,NLAYS ), STAT = ASTAT )
+         IF ( ASTAT .NE. 0 ) THEN
+            XMSG = 'Failure allocating CFRAC_3D_RES'
+            CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+         END IF
+         CFRAC_3D_RES = 0.0
 #else
          VAR = INDEX1( 'CFRAC_3D', NVARS3D, VNAME3D )
          IF ( VAR .EQ. 0 ) THEN
@@ -689,9 +695,6 @@ C:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
          END DO
 
          IF ( CFRAC_3D_AVAIL ) THEN  ! read from file
-#ifdef _AQM_
-            CFRAC_3D_RES = 1.0 ! g3ddata(:,:,:,cfrac3d_ind)
-#else
             VARNM = 'CFRAC_3D'
             IF ( .NOT. INTERPX( MET_CRO_3D, VARNM, PNAME,
      &                          STRTCOLMC3,ENDCOLMC3, STRTROWMC3,ENDROWMC3, 1,NLAYS,
@@ -699,7 +702,7 @@ C:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
               XMSG = 'Could not read CFRAC_3D from ' // MET_CRO_3D
               CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
             END IF
-#endif
+
          ELSE  ! diagnose CFRAC_3D from available data
 
             CALL CAL_CFRAC_3D()
@@ -734,16 +737,16 @@ C:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !           CFRAC_3D = g3ddata(:,:,:,cldfracwcu_ind)
 !           CFRAC_2D = g2ddata(:,:,cfrac2dt_ind)
 !           CFRAC    = g2ddata(:,:,cfrac2dr_ind)
-
-            ACM_QC     = 1.0
-            ACM_QI     = 1.0
-            ACM_CLOUDS = 0.5
-            CFRAC_3D = 1.0
-            CFRAC_2D = 1.0
-            CFRAC    = 1.0
+! NOTE: This part below needs to be revised
+            ACM_QC     = 0.1
+            ACM_QI     = 0.1
+            ACM_CLOUDS = 0.1
+            CFRAC_3D = 0.1
+            CFRAC_2D = 0.1
+            CFRAC    = 0.1
 !add KF cumulus cloud water and ice to resolved cloud water and ice
-            QC = QC + ACM_QC
-            QI = QI + ACM_QI
+!           QC = QC + ACM_QC
+!           QI = QI + ACM_QI
          ELSE ! compute average fraction and water for resolved cloud
 #endif
 ! compute averages for resolved cloud                

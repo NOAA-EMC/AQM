@@ -49,11 +49,6 @@
       real, intent( in )    :: longitude  ! longitude of point on earth's surface
       real, intent( inout ) :: ozone      ! total column ozone [DU]
 
-! parameters
-
-      integer, parameter :: nlat = 17 ! or 19
-      integer, parameter :: nlon = 17
-
 ! local variables
 
       character( 16 ), save :: tmfile = 'OMI'
@@ -69,6 +64,8 @@
       integer :: ios
       integer :: nrecs
       integer :: jyear
+      integer :: nlat
+      integer :: nlon
 
       integer, save :: logdev           ! output log unit number
       integer, save :: nt
@@ -94,6 +91,8 @@
       real, allocatable, save :: lon( : )
       real, allocatable, save :: oz( :, :, : ) ! two timesteps for interpolation
 
+      character( 8 ) :: label
+
       logical, save :: firsttime = .true.
       real, external :: yr2day
       character*24, external :: dt2str
@@ -104,6 +103,18 @@
       
         firsttime = .false.
         logdev = init3()
+
+        tmunit = getefile( tmfile, .true., .true., pname )
+
+        if ( tmunit .lt. 0 ) then
+          xmsg = 'Error opening ' // tmfile
+          call m3exit ( pname, jdate, 0, xmsg, xstat1 )
+        end if
+
+        ! read nlat, nlon
+        rewind( tmunit )
+        read( tmunit, * ) label, nlat
+        read( tmunit, * ) label, nlon
 
         allocate ( lat( nlat ), stat = allocstat )
         if ( allocstat .ne. 0 ) then
@@ -116,22 +127,10 @@
           xmsg = 'Failure allocating lon'
           call m3exit ( pname, jdate, 0, xmsg, xstat1 )
         end if
-        
-! Assign values to array of longitudes: lon
-        x2 = 360.0 / real( nlon - 1 )
-        do ilon = 1, nlon
-          lon( ilon ) = -180.0 + x2 * real( ilon - 1 )
-        end do
 
-        tmunit = getefile( tmfile, .true., .true., pname )
-
-        if ( tmunit .lt. 0 ) then
-          xmsg = 'Error opening ' // tmfile
-          call m3exit ( pname, jdate, 0, xmsg, xstat1 )
-        end if
+        read( tmunit, * ) label, label, lon ! read in longitudes
 
         nrecs = 0
-        read( tmunit, * ) ! skip header record
         do
           read( tmunit, *, iostat=ios )
           if ( ios .ne. 0 ) exit
@@ -152,7 +151,10 @@
         end if
 
         rewind( tmunit )
-        read( tmunit, * )
+        ! skip header records
+        do it = 1, 3
+          read( tmunit, * )
+        end do
 
 ! When adding x lines of data to OMI.dat, increase upper limit by x
 ! Note: ilat(1) => North to South in degrees
@@ -283,7 +285,10 @@
 ! Determine the corresponding bounding ozone values for all lats and lons
 
         rewind( tmunit )
-        read( tmunit,* )
+        ! skip header records
+        do it = 1, 3
+          read( tmunit, * )
+        end do
    
         do i = 1, it-1
           do ilat = 1, nlat

@@ -29,6 +29,8 @@ module cmaq_mod
   public :: cmaq_advance
   public :: cmaq_init
   public :: cmaq_species_read
+  public :: cmaq_export
+  public :: cmaq_import
 
 contains
 
@@ -131,5 +133,29 @@ contains
     WRITE( cmaq_logdev,'(/ 5X, A, I8, I7.6)' ) NMSG, JDATE, JTIME
 
   end subroutine cmaq_advance
+
+  subroutine cmaq_import(tracers, start_index, rc)
+    real(AQM_KIND_R8), intent(in)  :: tracers(:,:,:,:)
+    integer,           intent(in)  :: start_index
+    integer, optional, intent(out) :: rc
+
+    ! -- begin
+    if (present(rc)) rc = AQM_RC_SUCCESS
+
+    CGRID = tracers(:,:,:, start_index:start_index + nspcsd - 1)
+
+  end subroutine cmaq_import
+
+  subroutine cmaq_export(tracers, start_index, rc)
+    real(AQM_KIND_R8), intent(out) :: tracers(:,:,:,:)
+    integer,           intent(in)  :: start_index
+    integer, optional, intent(out) :: rc
+
+    ! -- begin
+    if (present(rc)) rc = AQM_RC_SUCCESS
+
+    tracers(:,:,:, start_index:start_index + nspcsd - 1) = CGRID
+
+  end subroutine cmaq_export
 
 end module cmaq_mod

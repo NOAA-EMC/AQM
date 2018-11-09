@@ -94,14 +94,16 @@ contains
     ! -- local variables
     integer :: localrc
     integer :: de, deCount
-    type(aqm_config_type), pointer :: config => null()
+    type(aqm_config_type), pointer :: config   => null()
+    type(aqm_state_type),  pointer :: stateIn  => null()
+    type(aqm_state_type),  pointer :: stateOut => null()
 
     integer, save :: advanceCount = 0
 
     ! -- begin
     if (present(rc)) rc = AQM_RC_SUCCESS
 
-    call aqm_model_get(deCount=deCount, config=config, rc=localrc)
+    call aqm_model_get(deCount=deCount, rc=localrc)
     if (aqm_rc_check(localrc, msg="Failed to retrieve model", &
       file=__FILE__, line=__LINE__, rc=rc)) return
 
@@ -114,9 +116,22 @@ contains
 
     ! -- run CMAQ
     ! -- NOTE: CMAQ can only run on 1DE/PET domain decomposition (DE 0)
+    call aqm_model_get(config=config, &
+      stateIn=stateIn, stateOut=stateOut, rc=localrc)
+    if (aqm_rc_check(localrc, msg="Failed to retrieve model", &
+      file=__FILE__, line=__LINE__, rc=rc)) return
+
+    ! -- import advected species mixing ratios
+    if (advanceCount > 1) &
+      call cmaq_import(stateIn % tr3d, config % spcs_start_index)
+
+    ! -- advance model
     call cmaq_advance(jdate, jtime, tstep, config % run_aero, rc=localrc)
     if (aqm_rc_check(localrc, msg="Failed to advance CMAQ on local DE", &
       file=__FILE__, line=__LINE__, rc=rc)) return
+
+    ! -- export updated species mixing ratios
+    call cmaq_export(stateOut % tr3d, config % spcs_start_index)
 
   end subroutine cmaq_model_advance
 

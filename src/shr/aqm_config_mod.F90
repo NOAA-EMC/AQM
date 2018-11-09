@@ -22,6 +22,7 @@ module aqm_config_mod
     logical                   :: ctm_pmdiag    = .false.
     logical                   :: ctm_depvfile  = .false.
     logical                   :: run_aero      = .false.
+    integer                   :: spcs_start_index = 4
   end type aqm_config_type
 
   private

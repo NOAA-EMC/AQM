@@ -24,7 +24,6 @@ module aqm_config_mod
     logical                   :: ctm_pmdiag    = .false.
     logical                   :: ctm_depvfile  = .false.
     logical                   :: run_aero      = .false.
-    integer                   :: spcs_start_index = 0
     type(aqm_species_type), pointer :: species => null()
   end type aqm_config_type
 
@@ -33,7 +32,7 @@ module aqm_config_mod
   public :: aqm_config_type
 
   public :: aqm_config_read
-  public :: aqm_config_control_init
+  public :: aqm_config_species_init
 
 contains
 
@@ -137,8 +136,11 @@ contains
     config % omi           = sbuffer(7)
 
     ! -- broadcast integer variable
-    call aqm_comm_bcast(config % atm_mp, rc=localrc)
+    call aqm_comm_bcast(atm_mp, rc=localrc)
     if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__, rc=rc)) return
+
+    ! -- set integer values to config
+    config % atm_mp = atm_mp
 
     ! -- pack logicals into buffer
     lbuffer = (/ &
@@ -159,15 +161,24 @@ contains
 
   end subroutine aqm_config_read
 
-  subroutine aqm_config_control_init(config, rc)
+  subroutine aqm_config_species_init(config, rc)
 
     type(aqm_config_type), intent(inout) :: config
     integer, optional,     intent(out)   :: rc
 
     ! -- local variables
+    integer :: localrc
 
     ! -- begin
     if (present(rc)) rc = AQM_RC_SUCCESS
+
+    ! -- allocate memory for data type
+    if (.not.associated(config % species)) then
+      allocate(config % species, stat=localrc)
+      if (aqm_rc_test((localrc /= 0), &
+        msg="Failed to allocate species data container", &
+        file=__FILE__, line=__LINE__, rc=rc)) return
+    end if
 
     ! -- set start tracer index depending on microphysics scheme
     ! -- used in the coupled atmospheric model
@@ -194,6 +205,6 @@ contains
           file=__FILE__, line=__LINE__, rc=rc)
     end select
 
-  end subroutine aqm_config_control_init
+  end subroutine aqm_config_species_init
 
 end module aqm_config_mod

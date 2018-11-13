@@ -304,8 +304,8 @@ contains
       ! -- read in namelist options
       call aqm_config_read(model % config, rc=localrc)
       if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__, rc=rc)) return
-      ! -- setup internal parameters based on input options
-      call aqm_config_control_init(model % config, rc=localrc)
+      ! -- setup internal species pointers
+      call aqm_config_species_init(model % config, rc=localrc)
       if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__, rc=rc)) return
       ! -- populate pointers on other local DEs
       do de = 1, deCount-1

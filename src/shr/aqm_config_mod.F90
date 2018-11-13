@@ -1,8 +1,9 @@
 module aqm_config_mod
 
   use aqm_rc_mod
-  use aqm_types_mod, only : AQM_MAXSTR
-  use aqm_comm_mod,  only : aqm_comm_bcast, aqm_comm_isroot
+  use aqm_types_mod,   only : AQM_MAXSTR
+  use aqm_species_mod, only : aqm_species_type
+  use aqm_comm_mod,    only : aqm_comm_bcast, aqm_comm_isroot
 
   implicit none
 
@@ -18,11 +19,13 @@ module aqm_config_mod
     character(len=AQM_MAXSTR) :: csqy_data     = ""
     character(len=AQM_MAXSTR) :: optics_data   = ""
     character(len=AQM_MAXSTR) :: omi           = ""
+    integer                   :: atm_mp        = 0
     logical                   :: ctm_photodiag = .false.
     logical                   :: ctm_pmdiag    = .false.
     logical                   :: ctm_depvfile  = .false.
     logical                   :: run_aero      = .false.
-    integer                   :: spcs_start_index = 4
+    integer                   :: spcs_start_index = 0
+    type(aqm_species_type), pointer :: species => null()
   end type aqm_config_type
 
   private
@@ -30,6 +33,7 @@ module aqm_config_mod
   public :: aqm_config_type
 
   public :: aqm_config_read
+  public :: aqm_config_control_init
 
 contains
 
@@ -53,6 +57,7 @@ contains
     character(len=AQM_MAXSTR) :: csqy_data
     character(len=AQM_MAXSTR) :: optics_data
     character(len=AQM_MAXSTR) :: omi
+    integer                   :: atm_mp
     logical                   :: ctm_photodiag
     logical                   :: ctm_pmdiag
     logical                   :: ctm_depvfile
@@ -66,6 +71,7 @@ contains
       csqy_data,     &
       optics_data,   &
       omi,           &
+      atm_mp,        &
       ctm_photodiag, &
       ctm_pmdiag,    &
       ctm_depvfile,  &
@@ -82,6 +88,7 @@ contains
     csqy_data     = ""
     optics_data   = ""
     omi           = ""
+    atm_mp        = 0
     ctm_photodiag = .false.
     ctm_pmdiag    = .false.
     ctm_depvfile  = .false.
@@ -129,6 +136,10 @@ contains
     config % optics_data   = sbuffer(6)
     config % omi           = sbuffer(7)
 
+    ! -- broadcast integer variable
+    call aqm_comm_bcast(config % atm_mp, rc=localrc)
+    if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__, rc=rc)) return
+
     ! -- pack logicals into buffer
     lbuffer = (/ &
       ctm_photodiag, &
@@ -136,16 +147,53 @@ contains
       ctm_depvfile,  &
       run_aero       &
     /)
-    ! -- broadcast string variable
+    ! -- broadcast logical variable
     call aqm_comm_bcast(lbuffer, rc=localrc)
     if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__, rc=rc)) return
 
-    ! -- set string values to config
+    ! -- set logical values to config
     config % ctm_photodiag = lbuffer(1)
     config % ctm_pmdiag    = lbuffer(2)
     config % ctm_depvfile  = lbuffer(3)
     config % run_aero      = lbuffer(4)
 
   end subroutine aqm_config_read
+
+  subroutine aqm_config_control_init(config, rc)
+
+    type(aqm_config_type), intent(inout) :: config
+    integer, optional,     intent(out)   :: rc
+
+    ! -- local variables
+
+    ! -- begin
+    if (present(rc)) rc = AQM_RC_SUCCESS
+
+    ! -- set start tracer index depending on microphysics scheme
+    ! -- used in the coupled atmospheric model
+    config % spcs_start_index = 0
+
+    select case (config % atm_mp)
+      case (11)
+        config % spcs_start_index = 8
+        ! -- set hydrometeors pointers
+        config % species % p_atm_qv = 1
+        config % species % p_atm_qc = 2
+        config % species % p_atm_qr = 3
+        config % species % p_atm_qi = 4
+        config % species % p_atm_qs = 5
+        config % species % p_atm_qg = 6
+      case (99)
+        config % spcs_start_index = 4
+        ! -- set hydrometeors pointers
+        config % species % p_atm_qv = 1
+        config % species % p_atm_qc = 2
+      case default
+        call aqm_rc_set(AQM_RC_FAILURE, &
+          msg="atm_mp option can only be 11 (GFDL) or 99 (Zhao/Carr/Sundqvist).", &
+          file=__FILE__, line=__LINE__, rc=rc)
+    end select
+
+  end subroutine aqm_config_control_init
 
 end module aqm_config_mod

@@ -18,7 +18,7 @@ clean-local: clean-modules
 libshr_a-aqm_clock_mod.$(OBJEXT): libshr_a-aqm_rc_mod.$(OBJEXT) libshr_a-aqm_types_mod.$(OBJEXT)
 libshr_a-aqm_comm_mod.$(OBJEXT): libshr_a-aqm_rc_mod.$(OBJEXT) libshr_a-aqm_types_mod.$(OBJEXT)
 libshr_a-aqm_config_mod.$(OBJEXT): libshr_a-aqm_comm_mod.$(OBJEXT) libshr_a-aqm_rc_mod.$(OBJEXT) \
-	libshr_a-aqm_types_mod.$(OBJEXT)
+	libshr_a-aqm_species_mod.$(OBJEXT) libshr_a-aqm_types_mod.$(OBJEXT)
 libshr_a-aqm_const_mod.$(OBJEXT): libshr_a-aqm_types_mod.$(OBJEXT)
 libshr_a-aqm_data_mod.$(OBJEXT): libshr_a-aqm_rc_mod.$(OBJEXT) libshr_a-aqm_types_mod.$(OBJEXT)
 libshr_a-aqm_domain_mod.$(OBJEXT): libshr_a-aqm_types_mod.$(OBJEXT)

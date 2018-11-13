@@ -305,11 +305,8 @@ contains
       call aqm_config_read(model % config, rc=localrc)
       if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__, rc=rc)) return
       ! -- setup internal parameters based on input options
-!     call aqm_config_control_init(model % config, rc=localrc)
-!     if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__, rc=rc)) return
-      ! -- setup internal indexes for aqmical species
-!     call aqm_config_species_init(model % config, rc=localrc)
-!     if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__, rc=rc)) return
+      call aqm_config_control_init(model % config, rc=localrc)
+      if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__, rc=rc)) return
       ! -- populate pointers on other local DEs
       do de = 1, deCount-1
         call aqm_model_set(de=de, config=model % config, rc=localrc)

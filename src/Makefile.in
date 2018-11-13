@@ -338,6 +338,7 @@ cmaq_objects = \
 	$(cmaq_dir)/CCTM/src/MECHS/cb6r3_ae6_aq/libCCTM_a-*.$(OBJEXT) \
 	$(cmaq_dir)/CCTM/src/phot/inline/libCCTM_a-*.$(OBJEXT) \
 	$(cmaq_dir)/CCTM/src/spcs/cgrid_spcs_nml/libCCTM_a-*.$(OBJEXT) \
+	$(cmaq_dir)/CCTM/src/STENEX/noop/libCCTM_a-*.$(OBJEXT) \
 	$(cmaq_dir)/CCTM/src/util/util/libCCTM_a-*.$(OBJEXT) \
 	$(cmaq_dir)/CCTM/src/vdiff/acm2/libCCTM_a-*.$(OBJEXT)
 

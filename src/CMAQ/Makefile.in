@@ -156,6 +156,20 @@ am_libCCTM_a_OBJECTS = $(AERO)/libCCTM_a-AERO_DATA.$(OBJEXT) \
 	$(PHOT)/libCCTM_a-SEAS_STRAT_O3_MIN.$(OBJEXT) \
 	$(PHOT)/libCCTM_a-twoway_rrtmg_aero_optics.$(OBJEXT) \
 	$(SPCS)/libCCTM_a-CGRID_SPCS.$(OBJEXT) \
+	$(STENEX)/libCCTM_a-noop_comm_module.$(OBJEXT) \
+	$(STENEX)/libCCTM_a-noop_data_copy_module.$(OBJEXT) \
+	$(STENEX)/libCCTM_a-noop_gather_module.$(OBJEXT) \
+	$(STENEX)/libCCTM_a-noop_global_max_module.$(OBJEXT) \
+	$(STENEX)/libCCTM_a-noop_global_min_module.$(OBJEXT) \
+	$(STENEX)/libCCTM_a-noop_global_sum_module.$(OBJEXT) \
+	$(STENEX)/libCCTM_a-noop_init_module.$(OBJEXT) \
+	$(STENEX)/libCCTM_a-noop_modules.$(OBJEXT) \
+	$(STENEX)/libCCTM_a-noop_slice_module.$(OBJEXT) \
+	$(STENEX)/libCCTM_a-noop_term_module.$(OBJEXT) \
+	$(STENEX)/libCCTM_a-noop_util_module.$(OBJEXT) \
+	$(UTIL)/libCCTM_a-findex.$(OBJEXT) \
+	$(UTIL)/libCCTM_a-setup_logdev.$(OBJEXT) \
+	$(UTIL)/libCCTM_a-UTILIO_DEFN.$(OBJEXT) \
 	$(VDIFF)/libCCTM_a-ASX_DATA_MOD.$(OBJEXT) \
 	$(VDIFF)/libCCTM_a-conv_cgrid.$(OBJEXT) \
 	$(VDIFF)/libCCTM_a-eddyx.$(OBJEXT) \
@@ -163,10 +177,7 @@ am_libCCTM_a_OBJECTS = $(AERO)/libCCTM_a-AERO_DATA.$(OBJEXT) \
 	$(VDIFF)/libCCTM_a-tri.$(OBJEXT) \
 	$(VDIFF)/libCCTM_a-vdiffacmx.$(OBJEXT) \
 	$(VDIFF)/libCCTM_a-VDIFF_MAP.$(OBJEXT) \
-	$(VDIFF)/libCCTM_a-vdiffproc.$(OBJEXT) \
-	$(UTIL)/libCCTM_a-findex.$(OBJEXT) \
-	$(UTIL)/libCCTM_a-setup_logdev.$(OBJEXT) \
-	$(UTIL)/libCCTM_a-UTILIO_DEFN.$(OBJEXT)
+	$(VDIFF)/libCCTM_a-vdiffproc.$(OBJEXT)
 libCCTM_a_OBJECTS = $(am_libCCTM_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -389,10 +400,18 @@ libCCTM_a_SOURCES = $(AERO)/AERO_DATA.F $(AERO)/aero_depv.F \
 	$(PHOT)/PHOTOLYSIS_ALBEDO.F $(PHOT)/PHOT_OPTICS.dat \
 	$(PHOT)/SEAS_STRAT_O3_MIN.F \
 	$(PHOT)/twoway_rrtmg_aero_optics.F90 $(SPCS)/CGRID_SPCS.F \
+	$(STENEX)/noop_comm_module.f $(STENEX)/noop_data_copy_module.f \
+	$(STENEX)/noop_gather_module.f \
+	$(STENEX)/noop_global_max_module.f \
+	$(STENEX)/noop_global_min_module.f \
+	$(STENEX)/noop_global_sum_module.f \
+	$(STENEX)/noop_init_module.f $(STENEX)/noop_modules.f \
+	$(STENEX)/noop_slice_module.f $(STENEX)/noop_term_module.f \
+	$(STENEX)/noop_util_module.f $(UTIL)/findex.f \
+	$(UTIL)/setup_logdev.F $(UTIL)/UTILIO_DEFN.F \
 	$(VDIFF)/ASX_DATA_MOD.F $(VDIFF)/conv_cgrid.F $(VDIFF)/eddyx.F \
 	$(VDIFF)/matrix1.F $(VDIFF)/tri.F $(VDIFF)/vdiffacmx.F \
-	$(VDIFF)/VDIFF_MAP.F $(VDIFF)/vdiffproc.F $(UTIL)/findex.f \
-	$(UTIL)/setup_logdev.F $(UTIL)/UTILIO_DEFN.F
+	$(VDIFF)/VDIFF_MAP.F $(VDIFF)/vdiffproc.F
 
 # aero
 AERO = $(CCTM)/aero/aero6
@@ -435,25 +454,23 @@ libPHOT = $(PHOT)/$(libCCTM)-
 SPCS = $(CCTM)/spcs/cgrid_spcs_nml
 libSPCS = $(SPCS)/$(libCCTM)-
 
-# vdiff
-VDIFF = $(CCTM)/vdiff/acm2
-libVDIFF = $(VDIFF)/$(libCCTM)-
+# STENEX
+STENEX = $(CCTM)/STENEX/noop
+libSTENEX = $(STENEX)/$(libCCTM)-
 
 # util
 UTIL = $(CCTM)/util/util
 libUTIL = $(UTIL)/$(libCCTM)-
 
-# UTIL
-UTILS = $(srcdir)/UTIL/chemmech/src
-libUTILS = $(UTILS)/$(libCCTM)-
-# 	$(UTILS)/index1.f
-
-#
+# vdiff
+VDIFF = $(CCTM)/vdiff/acm2
+libVDIFF = $(VDIFF)/$(libCCTM)-
 libCCTM_a_CPPFLAGS = -DSUBST_FILES_ID=\"FILES_CTM.EXT\" \
 	-DSUBST_CONST=\"CONST.EXT\" -DSUBST_EMISPRM=\"EMISPRM.EXT\" \
-	-Dparallel -Dmpas -D_AQM_
+	-DSUBST_PE_COMM=\"PE_COMM.EXT\" -DSUBST_COMM=NOOP_COMM -Dmpas \
+	-D_AQM_
 libCCTM_a_FFLAGS = $(CCTM_FFLAGS) -I $(ICL)/filenames -I $(ICL)/const \
-	-I $(ICL)/emctrl -I $(builddir)/../io/ioapi
+	-I $(ICL)/emctrl -I$(ICL)/mpi -I $(builddir)/../io/ioapi
 libCCTM_a_FCFLAGS = $(CCTM_FCFLAGS) -I $(builddir)/../../util -I \
 	$(builddir)/../io/ioapi
 all: all-am
@@ -669,6 +686,46 @@ $(SPCS)/$(DEPDIR)/$(am__dirstamp):
 	@: > $(SPCS)/$(DEPDIR)/$(am__dirstamp)
 $(SPCS)/libCCTM_a-CGRID_SPCS.$(OBJEXT): $(SPCS)/$(am__dirstamp) \
 	$(SPCS)/$(DEPDIR)/$(am__dirstamp)
+$(STENEX)/$(am__dirstamp):
+	@$(MKDIR_P) $(STENEX)
+	@: > $(STENEX)/$(am__dirstamp)
+$(STENEX)/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) $(STENEX)/$(DEPDIR)
+	@: > $(STENEX)/$(DEPDIR)/$(am__dirstamp)
+$(STENEX)/libCCTM_a-noop_comm_module.$(OBJEXT):  \
+	$(STENEX)/$(am__dirstamp) $(STENEX)/$(DEPDIR)/$(am__dirstamp)
+$(STENEX)/libCCTM_a-noop_data_copy_module.$(OBJEXT):  \
+	$(STENEX)/$(am__dirstamp) $(STENEX)/$(DEPDIR)/$(am__dirstamp)
+$(STENEX)/libCCTM_a-noop_gather_module.$(OBJEXT):  \
+	$(STENEX)/$(am__dirstamp) $(STENEX)/$(DEPDIR)/$(am__dirstamp)
+$(STENEX)/libCCTM_a-noop_global_max_module.$(OBJEXT):  \
+	$(STENEX)/$(am__dirstamp) $(STENEX)/$(DEPDIR)/$(am__dirstamp)
+$(STENEX)/libCCTM_a-noop_global_min_module.$(OBJEXT):  \
+	$(STENEX)/$(am__dirstamp) $(STENEX)/$(DEPDIR)/$(am__dirstamp)
+$(STENEX)/libCCTM_a-noop_global_sum_module.$(OBJEXT):  \
+	$(STENEX)/$(am__dirstamp) $(STENEX)/$(DEPDIR)/$(am__dirstamp)
+$(STENEX)/libCCTM_a-noop_init_module.$(OBJEXT):  \
+	$(STENEX)/$(am__dirstamp) $(STENEX)/$(DEPDIR)/$(am__dirstamp)
+$(STENEX)/libCCTM_a-noop_modules.$(OBJEXT): $(STENEX)/$(am__dirstamp) \
+	$(STENEX)/$(DEPDIR)/$(am__dirstamp)
+$(STENEX)/libCCTM_a-noop_slice_module.$(OBJEXT):  \
+	$(STENEX)/$(am__dirstamp) $(STENEX)/$(DEPDIR)/$(am__dirstamp)
+$(STENEX)/libCCTM_a-noop_term_module.$(OBJEXT):  \
+	$(STENEX)/$(am__dirstamp) $(STENEX)/$(DEPDIR)/$(am__dirstamp)
+$(STENEX)/libCCTM_a-noop_util_module.$(OBJEXT):  \
+	$(STENEX)/$(am__dirstamp) $(STENEX)/$(DEPDIR)/$(am__dirstamp)
+$(UTIL)/$(am__dirstamp):
+	@$(MKDIR_P) $(UTIL)
+	@: > $(UTIL)/$(am__dirstamp)
+$(UTIL)/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) $(UTIL)/$(DEPDIR)
+	@: > $(UTIL)/$(DEPDIR)/$(am__dirstamp)
+$(UTIL)/libCCTM_a-findex.$(OBJEXT): $(UTIL)/$(am__dirstamp) \
+	$(UTIL)/$(DEPDIR)/$(am__dirstamp)
+$(UTIL)/libCCTM_a-setup_logdev.$(OBJEXT): $(UTIL)/$(am__dirstamp) \
+	$(UTIL)/$(DEPDIR)/$(am__dirstamp)
+$(UTIL)/libCCTM_a-UTILIO_DEFN.$(OBJEXT): $(UTIL)/$(am__dirstamp) \
+	$(UTIL)/$(DEPDIR)/$(am__dirstamp)
 $(VDIFF)/$(am__dirstamp):
 	@$(MKDIR_P) $(VDIFF)
 	@: > $(VDIFF)/$(am__dirstamp)
@@ -691,18 +748,6 @@ $(VDIFF)/libCCTM_a-VDIFF_MAP.$(OBJEXT): $(VDIFF)/$(am__dirstamp) \
 	$(VDIFF)/$(DEPDIR)/$(am__dirstamp)
 $(VDIFF)/libCCTM_a-vdiffproc.$(OBJEXT): $(VDIFF)/$(am__dirstamp) \
 	$(VDIFF)/$(DEPDIR)/$(am__dirstamp)
-$(UTIL)/$(am__dirstamp):
-	@$(MKDIR_P) $(UTIL)
-	@: > $(UTIL)/$(am__dirstamp)
-$(UTIL)/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) $(UTIL)/$(DEPDIR)
-	@: > $(UTIL)/$(DEPDIR)/$(am__dirstamp)
-$(UTIL)/libCCTM_a-findex.$(OBJEXT): $(UTIL)/$(am__dirstamp) \
-	$(UTIL)/$(DEPDIR)/$(am__dirstamp)
-$(UTIL)/libCCTM_a-setup_logdev.$(OBJEXT): $(UTIL)/$(am__dirstamp) \
-	$(UTIL)/$(DEPDIR)/$(am__dirstamp)
-$(UTIL)/libCCTM_a-UTILIO_DEFN.$(OBJEXT): $(UTIL)/$(am__dirstamp) \
-	$(UTIL)/$(DEPDIR)/$(am__dirstamp)
 
 libCCTM.a: $(libCCTM_a_OBJECTS) $(libCCTM_a_DEPENDENCIES) $(EXTRA_libCCTM_a_DEPENDENCIES) 
 	$(AM_V_at)-rm -f libCCTM.a
@@ -720,6 +765,7 @@ mostlyclean-compile:
 	-rm -f $(MECHS)/*.$(OBJEXT)
 	-rm -f $(PHOT)/*.$(OBJEXT)
 	-rm -f $(SPCS)/*.$(OBJEXT)
+	-rm -f $(STENEX)/*.$(OBJEXT)
 	-rm -f $(UTIL)/*.$(OBJEXT)
 	-rm -f $(VDIFF)/*.$(OBJEXT)
 
@@ -1038,6 +1084,18 @@ $(SPCS)/libCCTM_a-CGRID_SPCS.o: $(SPCS)/CGRID_SPCS.F
 $(SPCS)/libCCTM_a-CGRID_SPCS.obj: $(SPCS)/CGRID_SPCS.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(SPCS)/libCCTM_a-CGRID_SPCS.obj `if test -f '$(SPCS)/CGRID_SPCS.F'; then $(CYGPATH_W) '$(SPCS)/CGRID_SPCS.F'; else $(CYGPATH_W) '$(srcdir)/$(SPCS)/CGRID_SPCS.F'; fi`
 
+$(UTIL)/libCCTM_a-setup_logdev.o: $(UTIL)/setup_logdev.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(UTIL)/libCCTM_a-setup_logdev.o `test -f '$(UTIL)/setup_logdev.F' || echo '$(srcdir)/'`$(UTIL)/setup_logdev.F
+
+$(UTIL)/libCCTM_a-setup_logdev.obj: $(UTIL)/setup_logdev.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(UTIL)/libCCTM_a-setup_logdev.obj `if test -f '$(UTIL)/setup_logdev.F'; then $(CYGPATH_W) '$(UTIL)/setup_logdev.F'; else $(CYGPATH_W) '$(srcdir)/$(UTIL)/setup_logdev.F'; fi`
+
+$(UTIL)/libCCTM_a-UTILIO_DEFN.o: $(UTIL)/UTILIO_DEFN.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(UTIL)/libCCTM_a-UTILIO_DEFN.o `test -f '$(UTIL)/UTILIO_DEFN.F' || echo '$(srcdir)/'`$(UTIL)/UTILIO_DEFN.F
+
+$(UTIL)/libCCTM_a-UTILIO_DEFN.obj: $(UTIL)/UTILIO_DEFN.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(UTIL)/libCCTM_a-UTILIO_DEFN.obj `if test -f '$(UTIL)/UTILIO_DEFN.F'; then $(CYGPATH_W) '$(UTIL)/UTILIO_DEFN.F'; else $(CYGPATH_W) '$(srcdir)/$(UTIL)/UTILIO_DEFN.F'; fi`
+
 $(VDIFF)/libCCTM_a-ASX_DATA_MOD.o: $(VDIFF)/ASX_DATA_MOD.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(VDIFF)/libCCTM_a-ASX_DATA_MOD.o `test -f '$(VDIFF)/ASX_DATA_MOD.F' || echo '$(srcdir)/'`$(VDIFF)/ASX_DATA_MOD.F
 
@@ -1085,18 +1143,6 @@ $(VDIFF)/libCCTM_a-vdiffproc.o: $(VDIFF)/vdiffproc.F
 
 $(VDIFF)/libCCTM_a-vdiffproc.obj: $(VDIFF)/vdiffproc.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(VDIFF)/libCCTM_a-vdiffproc.obj `if test -f '$(VDIFF)/vdiffproc.F'; then $(CYGPATH_W) '$(VDIFF)/vdiffproc.F'; else $(CYGPATH_W) '$(srcdir)/$(VDIFF)/vdiffproc.F'; fi`
-
-$(UTIL)/libCCTM_a-setup_logdev.o: $(UTIL)/setup_logdev.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(UTIL)/libCCTM_a-setup_logdev.o `test -f '$(UTIL)/setup_logdev.F' || echo '$(srcdir)/'`$(UTIL)/setup_logdev.F
-
-$(UTIL)/libCCTM_a-setup_logdev.obj: $(UTIL)/setup_logdev.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(UTIL)/libCCTM_a-setup_logdev.obj `if test -f '$(UTIL)/setup_logdev.F'; then $(CYGPATH_W) '$(UTIL)/setup_logdev.F'; else $(CYGPATH_W) '$(srcdir)/$(UTIL)/setup_logdev.F'; fi`
-
-$(UTIL)/libCCTM_a-UTILIO_DEFN.o: $(UTIL)/UTILIO_DEFN.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(UTIL)/libCCTM_a-UTILIO_DEFN.o `test -f '$(UTIL)/UTILIO_DEFN.F' || echo '$(srcdir)/'`$(UTIL)/UTILIO_DEFN.F
-
-$(UTIL)/libCCTM_a-UTILIO_DEFN.obj: $(UTIL)/UTILIO_DEFN.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(UTIL)/libCCTM_a-UTILIO_DEFN.obj `if test -f '$(UTIL)/UTILIO_DEFN.F'; then $(CYGPATH_W) '$(UTIL)/UTILIO_DEFN.F'; else $(CYGPATH_W) '$(srcdir)/$(UTIL)/UTILIO_DEFN.F'; fi`
 .F.f:
 	$(F77COMPILE) -F $<
 
@@ -1171,6 +1217,72 @@ $(PHOT)/libCCTM_a-o3totcol.o: $(PHOT)/o3totcol.f
 
 $(PHOT)/libCCTM_a-o3totcol.obj: $(PHOT)/o3totcol.f
 	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(PHOT)/libCCTM_a-o3totcol.obj `if test -f '$(PHOT)/o3totcol.f'; then $(CYGPATH_W) '$(PHOT)/o3totcol.f'; else $(CYGPATH_W) '$(srcdir)/$(PHOT)/o3totcol.f'; fi`
+
+$(STENEX)/libCCTM_a-noop_comm_module.o: $(STENEX)/noop_comm_module.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(STENEX)/libCCTM_a-noop_comm_module.o `test -f '$(STENEX)/noop_comm_module.f' || echo '$(srcdir)/'`$(STENEX)/noop_comm_module.f
+
+$(STENEX)/libCCTM_a-noop_comm_module.obj: $(STENEX)/noop_comm_module.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(STENEX)/libCCTM_a-noop_comm_module.obj `if test -f '$(STENEX)/noop_comm_module.f'; then $(CYGPATH_W) '$(STENEX)/noop_comm_module.f'; else $(CYGPATH_W) '$(srcdir)/$(STENEX)/noop_comm_module.f'; fi`
+
+$(STENEX)/libCCTM_a-noop_data_copy_module.o: $(STENEX)/noop_data_copy_module.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(STENEX)/libCCTM_a-noop_data_copy_module.o `test -f '$(STENEX)/noop_data_copy_module.f' || echo '$(srcdir)/'`$(STENEX)/noop_data_copy_module.f
+
+$(STENEX)/libCCTM_a-noop_data_copy_module.obj: $(STENEX)/noop_data_copy_module.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(STENEX)/libCCTM_a-noop_data_copy_module.obj `if test -f '$(STENEX)/noop_data_copy_module.f'; then $(CYGPATH_W) '$(STENEX)/noop_data_copy_module.f'; else $(CYGPATH_W) '$(srcdir)/$(STENEX)/noop_data_copy_module.f'; fi`
+
+$(STENEX)/libCCTM_a-noop_gather_module.o: $(STENEX)/noop_gather_module.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(STENEX)/libCCTM_a-noop_gather_module.o `test -f '$(STENEX)/noop_gather_module.f' || echo '$(srcdir)/'`$(STENEX)/noop_gather_module.f
+
+$(STENEX)/libCCTM_a-noop_gather_module.obj: $(STENEX)/noop_gather_module.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(STENEX)/libCCTM_a-noop_gather_module.obj `if test -f '$(STENEX)/noop_gather_module.f'; then $(CYGPATH_W) '$(STENEX)/noop_gather_module.f'; else $(CYGPATH_W) '$(srcdir)/$(STENEX)/noop_gather_module.f'; fi`
+
+$(STENEX)/libCCTM_a-noop_global_max_module.o: $(STENEX)/noop_global_max_module.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(STENEX)/libCCTM_a-noop_global_max_module.o `test -f '$(STENEX)/noop_global_max_module.f' || echo '$(srcdir)/'`$(STENEX)/noop_global_max_module.f
+
+$(STENEX)/libCCTM_a-noop_global_max_module.obj: $(STENEX)/noop_global_max_module.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(STENEX)/libCCTM_a-noop_global_max_module.obj `if test -f '$(STENEX)/noop_global_max_module.f'; then $(CYGPATH_W) '$(STENEX)/noop_global_max_module.f'; else $(CYGPATH_W) '$(srcdir)/$(STENEX)/noop_global_max_module.f'; fi`
+
+$(STENEX)/libCCTM_a-noop_global_min_module.o: $(STENEX)/noop_global_min_module.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(STENEX)/libCCTM_a-noop_global_min_module.o `test -f '$(STENEX)/noop_global_min_module.f' || echo '$(srcdir)/'`$(STENEX)/noop_global_min_module.f
+
+$(STENEX)/libCCTM_a-noop_global_min_module.obj: $(STENEX)/noop_global_min_module.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(STENEX)/libCCTM_a-noop_global_min_module.obj `if test -f '$(STENEX)/noop_global_min_module.f'; then $(CYGPATH_W) '$(STENEX)/noop_global_min_module.f'; else $(CYGPATH_W) '$(srcdir)/$(STENEX)/noop_global_min_module.f'; fi`
+
+$(STENEX)/libCCTM_a-noop_global_sum_module.o: $(STENEX)/noop_global_sum_module.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(STENEX)/libCCTM_a-noop_global_sum_module.o `test -f '$(STENEX)/noop_global_sum_module.f' || echo '$(srcdir)/'`$(STENEX)/noop_global_sum_module.f
+
+$(STENEX)/libCCTM_a-noop_global_sum_module.obj: $(STENEX)/noop_global_sum_module.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(STENEX)/libCCTM_a-noop_global_sum_module.obj `if test -f '$(STENEX)/noop_global_sum_module.f'; then $(CYGPATH_W) '$(STENEX)/noop_global_sum_module.f'; else $(CYGPATH_W) '$(srcdir)/$(STENEX)/noop_global_sum_module.f'; fi`
+
+$(STENEX)/libCCTM_a-noop_init_module.o: $(STENEX)/noop_init_module.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(STENEX)/libCCTM_a-noop_init_module.o `test -f '$(STENEX)/noop_init_module.f' || echo '$(srcdir)/'`$(STENEX)/noop_init_module.f
+
+$(STENEX)/libCCTM_a-noop_init_module.obj: $(STENEX)/noop_init_module.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(STENEX)/libCCTM_a-noop_init_module.obj `if test -f '$(STENEX)/noop_init_module.f'; then $(CYGPATH_W) '$(STENEX)/noop_init_module.f'; else $(CYGPATH_W) '$(srcdir)/$(STENEX)/noop_init_module.f'; fi`
+
+$(STENEX)/libCCTM_a-noop_modules.o: $(STENEX)/noop_modules.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(STENEX)/libCCTM_a-noop_modules.o `test -f '$(STENEX)/noop_modules.f' || echo '$(srcdir)/'`$(STENEX)/noop_modules.f
+
+$(STENEX)/libCCTM_a-noop_modules.obj: $(STENEX)/noop_modules.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(STENEX)/libCCTM_a-noop_modules.obj `if test -f '$(STENEX)/noop_modules.f'; then $(CYGPATH_W) '$(STENEX)/noop_modules.f'; else $(CYGPATH_W) '$(srcdir)/$(STENEX)/noop_modules.f'; fi`
+
+$(STENEX)/libCCTM_a-noop_slice_module.o: $(STENEX)/noop_slice_module.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(STENEX)/libCCTM_a-noop_slice_module.o `test -f '$(STENEX)/noop_slice_module.f' || echo '$(srcdir)/'`$(STENEX)/noop_slice_module.f
+
+$(STENEX)/libCCTM_a-noop_slice_module.obj: $(STENEX)/noop_slice_module.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(STENEX)/libCCTM_a-noop_slice_module.obj `if test -f '$(STENEX)/noop_slice_module.f'; then $(CYGPATH_W) '$(STENEX)/noop_slice_module.f'; else $(CYGPATH_W) '$(srcdir)/$(STENEX)/noop_slice_module.f'; fi`
+
+$(STENEX)/libCCTM_a-noop_term_module.o: $(STENEX)/noop_term_module.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(STENEX)/libCCTM_a-noop_term_module.o `test -f '$(STENEX)/noop_term_module.f' || echo '$(srcdir)/'`$(STENEX)/noop_term_module.f
+
+$(STENEX)/libCCTM_a-noop_term_module.obj: $(STENEX)/noop_term_module.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(STENEX)/libCCTM_a-noop_term_module.obj `if test -f '$(STENEX)/noop_term_module.f'; then $(CYGPATH_W) '$(STENEX)/noop_term_module.f'; else $(CYGPATH_W) '$(srcdir)/$(STENEX)/noop_term_module.f'; fi`
+
+$(STENEX)/libCCTM_a-noop_util_module.o: $(STENEX)/noop_util_module.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(STENEX)/libCCTM_a-noop_util_module.o `test -f '$(STENEX)/noop_util_module.f' || echo '$(srcdir)/'`$(STENEX)/noop_util_module.f
+
+$(STENEX)/libCCTM_a-noop_util_module.obj: $(STENEX)/noop_util_module.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(STENEX)/libCCTM_a-noop_util_module.obj `if test -f '$(STENEX)/noop_util_module.f'; then $(CYGPATH_W) '$(STENEX)/noop_util_module.f'; else $(CYGPATH_W) '$(srcdir)/$(STENEX)/noop_util_module.f'; fi`
 
 $(UTIL)/libCCTM_a-findex.o: $(UTIL)/findex.f
 	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(UTIL)/libCCTM_a-findex.o `test -f '$(UTIL)/findex.f' || echo '$(srcdir)/'`$(UTIL)/findex.f
@@ -1308,6 +1420,8 @@ distclean-generic:
 	-test -z "$(PHOT)/$(am__dirstamp)" || rm -f $(PHOT)/$(am__dirstamp)
 	-test -z "$(SPCS)/$(DEPDIR)/$(am__dirstamp)" || rm -f $(SPCS)/$(DEPDIR)/$(am__dirstamp)
 	-test -z "$(SPCS)/$(am__dirstamp)" || rm -f $(SPCS)/$(am__dirstamp)
+	-test -z "$(STENEX)/$(DEPDIR)/$(am__dirstamp)" || rm -f $(STENEX)/$(DEPDIR)/$(am__dirstamp)
+	-test -z "$(STENEX)/$(am__dirstamp)" || rm -f $(STENEX)/$(am__dirstamp)
 	-test -z "$(UTIL)/$(DEPDIR)/$(am__dirstamp)" || rm -f $(UTIL)/$(DEPDIR)/$(am__dirstamp)
 	-test -z "$(UTIL)/$(am__dirstamp)" || rm -f $(UTIL)/$(am__dirstamp)
 	-test -z "$(VDIFF)/$(DEPDIR)/$(am__dirstamp)" || rm -f $(VDIFF)/$(DEPDIR)/$(am__dirstamp)
@@ -1549,12 +1663,25 @@ $(libPHOT)twoway_rrtmg_aero_optics.$(OBJEXT) : $(libPHOT)complex_number_module.$
 # spcs
 $(libSPCS)CGRID_SPCS.$(OBJEXT) : $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
 
+# STENEX
+$(libSTENEX)noop_modules.$(OBJEXT) : $(libSTENEX)noop_comm_module.$(OBJEXT) \
+	$(libSTENEX)noop_data_copy_module.$(OBJEXT) \
+	$(libSTENEX)noop_gather_module.$(OBJEXT) \
+	$(libSTENEX)noop_global_max_module.$(OBJEXT) \
+	$(libSTENEX)noop_global_min_module.$(OBJEXT) \
+	$(libSTENEX)noop_global_sum_module.$(OBJEXT) \
+	$(libSTENEX)noop_init_module.$(OBJEXT) \
+	$(libSTENEX)noop_slice_module.$(OBJEXT) \
+	$(libSTENEX)noop_term_module.$(OBJEXT) \
+	$(libSTENEX)noop_util_module.$(OBJEXT)
+
 # util
 $(libUTIL)setup_logdev.$(OBJEXT) : $(libUTIL)UTILIO_DEFN.$(OBJEXT)
 
 # vdiff
 $(libVDIFF)ASX_DATA_MOD.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(ICL)/const/CONST.EXT \
-	$(libDEPV)DEPVVARS.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) $(libDEPV)LSM_MOD.$(OBJEXT)
+	$(libDEPV)DEPVVARS.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) $(libDEPV)LSM_MOD.$(OBJEXT) \
+	$(libSTENEX)noop_modules.$(OBJEXT)
 $(libVDIFF)conv_cgrid.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(ICL)/const/CONST.EXT \
 	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT) \
 	$(libGRID)GRID_CONF.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)

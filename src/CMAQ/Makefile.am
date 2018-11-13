@@ -124,6 +124,30 @@ libSPCS = $(SPCS)/$(libCCTM)-
 libCCTM_a_SOURCES += \
 	$(SPCS)/CGRID_SPCS.F
 
+# STENEX
+STENEX = $(CCTM)/STENEX/noop
+libSTENEX = $(STENEX)/$(libCCTM)-
+libCCTM_a_SOURCES += \
+	$(STENEX)/noop_comm_module.f \
+	$(STENEX)/noop_data_copy_module.f \
+	$(STENEX)/noop_gather_module.f \
+	$(STENEX)/noop_global_max_module.f \
+	$(STENEX)/noop_global_min_module.f \
+	$(STENEX)/noop_global_sum_module.f \
+	$(STENEX)/noop_init_module.f \
+	$(STENEX)/noop_modules.f \
+	$(STENEX)/noop_slice_module.f \
+	$(STENEX)/noop_term_module.f \
+	$(STENEX)/noop_util_module.f
+
+# util
+UTIL = $(CCTM)/util/util
+libUTIL = $(UTIL)/$(libCCTM)-
+libCCTM_a_SOURCES += \
+	$(UTIL)/findex.f \
+	$(UTIL)/setup_logdev.F \
+	$(UTIL)/UTILIO_DEFN.F
+
 # vdiff
 VDIFF = $(CCTM)/vdiff/acm2
 libVDIFF = $(VDIFF)/$(libCCTM)-
@@ -137,28 +161,17 @@ libCCTM_a_SOURCES += \
 	$(VDIFF)/VDIFF_MAP.F \
 	$(VDIFF)/vdiffproc.F
 
-# util
-UTIL = $(CCTM)/util/util
-libUTIL = $(UTIL)/$(libCCTM)-
-libCCTM_a_SOURCES += \
-	$(UTIL)/findex.f \
-	$(UTIL)/setup_logdev.F \
-	$(UTIL)/UTILIO_DEFN.F
 
-# UTIL
-UTILS = $(srcdir)/UTIL/chemmech/src
-libUTILS = $(UTILS)/$(libCCTM)-
-# 	$(UTILS)/index1.f
-
-#
 libCCTM_a_CPPFLAGS  = -DSUBST_FILES_ID=\"FILES_CTM.EXT\"
 libCCTM_a_CPPFLAGS += -DSUBST_CONST=\"CONST.EXT\"
 libCCTM_a_CPPFLAGS += -DSUBST_EMISPRM=\"EMISPRM.EXT\"
-libCCTM_a_CPPFLAGS += -Dparallel -Dmpas -D_AQM_
+libCCTM_a_CPPFLAGS += -DSUBST_PE_COMM=\"PE_COMM.EXT\"
+libCCTM_a_CPPFLAGS += -DSUBST_COMM=NOOP_COMM
+libCCTM_a_CPPFLAGS += -Dmpas -D_AQM_
 
 libCCTM_a_FFLAGS = $(CCTM_FFLAGS)
 libCCTM_a_FFLAGS += \
-	-I $(ICL)/filenames -I $(ICL)/const -I $(ICL)/emctrl \
+	-I $(ICL)/filenames -I $(ICL)/const -I $(ICL)/emctrl -I$(ICL)/mpi \
 	-I $(builddir)/../io/ioapi
 
 libCCTM_a_FCFLAGS  = $(CCTM_FCFLAGS)
@@ -315,12 +328,25 @@ $(libPHOT)twoway_rrtmg_aero_optics.$(OBJEXT) : $(libPHOT)complex_number_module.$
 # spcs
 $(libSPCS)CGRID_SPCS.$(OBJEXT) : $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
 
+# STENEX
+$(libSTENEX)noop_modules.$(OBJEXT) : $(libSTENEX)noop_comm_module.$(OBJEXT) \
+	$(libSTENEX)noop_data_copy_module.$(OBJEXT) \
+	$(libSTENEX)noop_gather_module.$(OBJEXT) \
+	$(libSTENEX)noop_global_max_module.$(OBJEXT) \
+	$(libSTENEX)noop_global_min_module.$(OBJEXT) \
+	$(libSTENEX)noop_global_sum_module.$(OBJEXT) \
+	$(libSTENEX)noop_init_module.$(OBJEXT) \
+	$(libSTENEX)noop_slice_module.$(OBJEXT) \
+	$(libSTENEX)noop_term_module.$(OBJEXT) \
+	$(libSTENEX)noop_util_module.$(OBJEXT)
+
 # util
 $(libUTIL)setup_logdev.$(OBJEXT) : $(libUTIL)UTILIO_DEFN.$(OBJEXT)
 
 # vdiff
 $(libVDIFF)ASX_DATA_MOD.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(ICL)/const/CONST.EXT \
-	$(libDEPV)DEPVVARS.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) $(libDEPV)LSM_MOD.$(OBJEXT)
+	$(libDEPV)DEPVVARS.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) $(libDEPV)LSM_MOD.$(OBJEXT) \
+	$(libSTENEX)noop_modules.$(OBJEXT)
 $(libVDIFF)conv_cgrid.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(ICL)/const/CONST.EXT \
 	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT) \
 	$(libGRID)GRID_CONF.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)

@@ -116,17 +116,15 @@ logical function interpx_2d( fname, vname, pname, &
 
       select case (trim(vname))
         case ('HT')
-          ! -- placeholder for FV3 surface height (m)
+          buffer = stateIn % ht
         case ('LAT')
           buffer = lat
         case ('LON')
           buffer = lon
           where(buffer > 180.) buffer = buffer - 360.
         case ('LWMASK')
-          buffer = stateIn % slmsk2d
+          buffer = stateIn % slmsk
         case ('PURB')
-        case ('SLTYP')
-          buffer = stateIn % stype2d
         case default
           return
       end select
@@ -139,23 +137,47 @@ logical function interpx_2d( fname, vname, pname, &
 
       select case (trim(vname))
         case ("HFX")
-          buffer = stateIn % hf2d
+          buffer = stateIn % hfx
+        case ("LH")
+          buffer = stateIn % lh
         case ("PRSFC")
-          buffer = stateIn % pr3d(:,:,1) ! TDB
+          buffer = stateIn % psfc
         case ("PBL")
-          buffer = stateIn % pb2d
+          buffer = stateIn % hpbl
+        case ("Q2")
+          buffer = stateIn % q2m
         case ("RC")
-          buffer = 100. * stateIn % rc2d
+          buffer = 100. * stateIn % rainc
         case ("RGRND")
-          buffer = stateIn % rsds
+          buffer = stateIn % rgrnd
         case ("RN")
-          buffer = max(0., 100. * (stateIn % rn2d - stateIn % rc2d))
+          buffer = max(0., 100. * (stateIn % rain - stateIn % rainc))
+        case ("SEAICE")
+          buffer = stateIn % fice
+        case ("SLTYP")
+          buffer = stateIn % stype
+        case ("SOIM1")
+          buffer = stateIn % smois(:,:,1)
+        case ("SOIM2")
+          buffer = stateIn % smois(:,:,2)
+        case ("SOIT1")
+          buffer = stateIn % stemp(:,:,1)
+        case ("SOIT2")
+          buffer = stateIn % stemp(:,:,2)
         case ("TEMPG")
-          buffer = stateIn % ts2d
+          buffer = stateIn % tsfc
+        case ("TEMP2")
+          buffer = stateIn % t2m
         case ("USTAR")
-          buffer = stateIn % us2d
+          buffer = stateIn % ustar
+        case ("VEG")
+          buffer = stateIn % vfrac
+        case ("WR")
+          buffer = stateIn % wr
+        case ("WSPD10")
+          buffer = sqrt(stateIn % u10m * stateIn % u10m + stateIn % v10m * stateIn % v10m)
         case ("ZRUF")
-          buffer = 0.01 * stateIn % zorl2d
+          buffer = 0.01 * stateIn % zorl
         case default
       !   return
       end select
@@ -201,6 +223,7 @@ logical function interpx_3d( fname, vname, pname, &
 
   ! -- local variables
   integer :: localrc
+  integer :: nx, ny
   type(aqm_state_type), pointer :: stateIn
   logical, parameter :: debug = .true.
 
@@ -217,31 +240,54 @@ logical function interpx_3d( fname, vname, pname, &
         file=__FILE__, line=__LINE__)) return
 
       select case (trim(vname))
+        case ("JACOBF")
+          buffer = 1.0
+        case ("JACOBM")
+          buffer = 1.0
         case ("DENS")
-          buffer = stateIn % tk3d * ( 1.0 + 0.608 * stateIn % tr3d(:,:,:,1) )
-          buffer = stateIn % prl3d / ( 287.0586 * buffer )
+          buffer = stateIn % temp * ( 1.0 + 0.608 * stateIn % tr(:,:,:,1) )
+          buffer = stateIn % prl / ( 287.0586 * buffer )
+        case ("DENSA_J")
+          buffer = 1.0
         case ("PRES")
-          buffer = stateIn % prl3d
+          buffer = stateIn % prl
+        case ("PV")
+          buffer = 1.0
         case ("QV")
-          buffer = stateIn % tr3d(:,:,:,1)
+          buffer = stateIn % tr(:,:,:,1)
         case ("QC")
-          buffer = stateIn % tr3d(:,:,:,2)
-        case ("TA")
-          buffer = stateIn % tk3d
-        case ("WWIND")
-          buffer = stateIn % tk3d * ( 1.0 + 0.608 * stateIn % tr3d(:,:,:,1) )
-          buffer = stateIn % prl3d / ( 287.0586 * buffer )
-          buffer = -stateIn % ws3d / ( 9.81 * buffer )
+          buffer = stateIn % tr(:,:,:,2)
+!       case ("QR")
+!       case ("QI")
+!       case ("QS")
+!       case ("QG")
         case ("ZF")
-          buffer = max(0., stateIn % phl3d / 9.81)
+          buffer = max(0., stateIn % phil / 9.81)
         case ("ZH")
-          buffer = max(0., stateIn % ph3d(:,:,1:size(buffer,3)) / 9.81)
+          buffer = max(0., stateIn % phii(:,:,1:size(buffer,3)) / 9.81)
+        case ("TA")
+          buffer = stateIn % temp
         case default
       !   return
       end select
 
     case ("MET_DOT_3D")
-      ! all null
+      call aqm_model_get(stateIn=stateIn, rc=localrc)
+      if (aqm_rc_check(localrc, msg="Failure to retrive model input state", &
+        file=__FILE__, line=__LINE__)) return
+
+      select case (trim(vname))
+        case ("UWINDC")
+          ! u-wind is on C grid, while imported wind component are on A grid
+          ! this needs to be fixed
+          nx = size(stateIn % uwind, dim=1)
+          ny = size(stateIn % uwind, dim=2)
+          buffer(1:nx,1:ny,:) = stateIn % uwind
+        case ("VWINDC")
+          nx = size(stateIn % vwind, dim=1)
+          ny = size(stateIn % vwind, dim=2)
+          buffer(1:nx,1:ny,:) = stateIn % vwind
+      end select
 
     case default
       return

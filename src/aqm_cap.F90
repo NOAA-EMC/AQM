@@ -12,34 +12,41 @@ module AQM
   implicit none
 
   ! -- import fields
-  integer, parameter :: importFieldCount = 25
+  integer, parameter :: importFieldCount = 32
   character(len=*), dimension(importFieldCount), parameter :: &
     importFieldNames = (/ &
-      "inst_pres_interface                  ", &
-      "inst_pres_levels                     ", &
-      "inst_geop_interface                  ", &
-      "inst_geop_levels                     ", &
-      "inst_temp_levels                     ", &
-      "inst_zonal_wind_levels               ", &
-      "inst_merid_wind_levels               ", &
-      "inst_omega_levels                    ", &
-      "inst_tracer_mass_frac                ", &
-      "soil_type                            ", &
-      "inst_pbl_height                      ", &
-      "surface_cell_area                    ", &
-      "inst_convective_rainfall_amount      ", &
-      "inst_exchange_coefficient_heat_levels", &
-      "inst_friction_velocity               ", &
-      "inst_rainfall_amount                 ", &
-      "inst_soil_moisture_content           ", &
-      "inst_down_sw_flx                     ", &
-      "inst_land_sea_mask                   ", &
-      "inst_temp_height_surface             ", &
-      "inst_up_sensi_heat_flx               ", &
-      "inst_lwe_snow_thickness              ", &
-      "vegetation_type                      ", &
-      "inst_vegetation_area_frac            ", &
-      "inst_surface_roughness               "  &
+      "canopy_moisture_storage                  ", &
+      "height                                   ", &
+      "inst_cloud_frac_levels                   ", &
+      "inst_convective_rainfall_amount          ", &
+      "inst_friction_velocity                   ", &
+      "inst_geop_interface                      ", &
+      "inst_geop_levels                         ", &
+      "inst_land_sea_mask                       ", &
+      "inst_laten_heat_flx                      ", &
+      "inst_merid_wind_levels                   ", &
+      "inst_net_sw_flx                          ", &
+      "inst_pbl_height                          ", &
+      "inst_pres_height_surface                 ", &
+      "inst_pres_levels                         ", &
+      "inst_rainfall_amount                     ", &
+      "inst_sensi_heat_flx                      ", &
+      "inst_soil_moisture_content               ", &
+      "inst_surface_roughness                   ", &
+      "inst_spec_humid_height2m                 ", &
+      "inst_temp_height2m                       ", &
+      "inst_temp_height_surface                 ", &
+      "inst_temp_levels                         ", &
+      "inst_tracer_mass_frac                    ", &
+      "inst_u_wind_height10m                    ", &
+      "inst_vegetation_area_frac                ", &
+      "inst_v_wind_height10m                    ", &
+      "inst_zonal_wind_levels                   ", &
+      "sea_ice_area_fraction                    ", &
+      "soil_type                                ", &
+      "surface_cell_area                        ", &
+      "surface_snow_area_fraction               ", &
+      "temperature_of_soil_layer                "  &
     /)
   ! -- export fields
   integer, parameter :: exportFieldCount = 1

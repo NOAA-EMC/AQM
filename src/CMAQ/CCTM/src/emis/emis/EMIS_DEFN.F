@@ -485,11 +485,11 @@ C  loads."
             DO R = 1, MY_NROWS
                DO C = 1, MY_NCOLS
                   DO L = 1, EMLYRS
-#ifdef _AQM_
-                     CNVTC = CNVTI * Grid_Data%RDX3F( C,R,L ) * Met_Data%RRHOJ( C,R,L )
-#else
+!#ifdef _AQM_
+!                     CNVTC = CNVTI * Grid_Data%RDX3F( C,R,L ) * Met_Data%RRHOJ( C,R,L )
+!#else
                      CNVTC = CNVTI * Grid_Data%RDX3F( L ) * Met_Data%RRHOJ( C,R,L )
-#endif
+!#endif
                      VDEMIS( V,L,C,R ) = VDEMIS( V,L,C,R )
      &                                 + CNVTC * BUFF( C,R,L )
                   END DO
@@ -720,11 +720,11 @@ C                                       vvvvvvv - emis surrogate names
             DO R = 1, MY_NROWS
                DO C = 1, MY_NCOLS
                   DO L = 1, EMLYRS
-#ifdef _AQM_
-                     CNVTC = CNVTI * Grid_Data%RDX3F( C, R, L ) * Met_Data%RRHOJ( C,R,L )
-#else
+!#ifdef _AQM_
+!                     CNVTC = CNVTI * Grid_Data%RDX3F( C, R, L ) * Met_Data%RRHOJ( C,R,L )
+!#else
                      CNVTC = CNVTI * Grid_Data%RDX3F( L ) * Met_Data%RRHOJ( C,R,L )
-#endif
+!#endif
                      VDEMIS( V,L,C,R ) = VDEMIS( V,L,C,R )
      &                                 + CNVTC * BUFF( C,R,L )
                   END DO
@@ -760,11 +760,11 @@ C                                               vvvvvvv - emis surrogate names
                DO R = 1, MY_NROWS
                   DO C = 1, MY_NCOLS
                      DO L = 1, EMLYRS
-#ifdef _AQM_
-                        CNVTC = CNVTI * Grid_Data%RDX3F( C, R, L ) * Met_Data%RRHOJ( C,R,L )
-#else
+!#ifdef _AQM_
+!                        CNVTC = CNVTI * Grid_Data%RDX3F( C, R, L ) * Met_Data%RRHOJ( C,R,L )
+!#else
                         CNVTC = CNVTI * Grid_Data%RDX3F( L ) * Met_Data%RRHOJ( C,R,L )
-#endif
+!#endif
                         VDEMIS( V,L,C,R ) = CNVTC * BUFF( C,R,L )
                      END DO
                   END DO

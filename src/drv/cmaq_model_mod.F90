@@ -123,7 +123,7 @@ contains
 
     ! -- import advected species mixing ratios
     if (advanceCount > 1) &
-      call cmaq_import(stateIn % tr, config % spcs_start_index)
+      call cmaq_import(stateIn % tr, config % species % p_aqm_beg)
 
     ! -- advance model
     call cmaq_advance(jdate, jtime, tstep, config % run_aero, rc=localrc)
@@ -131,7 +131,7 @@ contains
       file=__FILE__, line=__LINE__, rc=rc)) return
 
     ! -- export updated species mixing ratios
-    call cmaq_export(stateOut % tr, config % spcs_start_index)
+    call cmaq_export(stateOut % tr, config % species % p_aqm_beg)
 
   end subroutine cmaq_model_advance
 

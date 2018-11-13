@@ -171,11 +171,11 @@ contains
 
     ! -- set start tracer index depending on microphysics scheme
     ! -- used in the coupled atmospheric model
-    config % spcs_start_index = 0
+    config % species % p_aqm_beg = 0
 
     select case (config % atm_mp)
       case (11)
-        config % spcs_start_index = 8
+        config % species % p_aqm_beg = 8
         ! -- set hydrometeors pointers
         config % species % p_atm_qv = 1
         config % species % p_atm_qc = 2
@@ -184,7 +184,7 @@ contains
         config % species % p_atm_qs = 5
         config % species % p_atm_qg = 6
       case (99)
-        config % spcs_start_index = 4
+        config % species % p_aqm_beg = 4
         ! -- set hydrometeors pointers
         config % species % p_atm_qv = 1
         config % species % p_atm_qc = 2

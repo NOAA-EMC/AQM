@@ -211,7 +211,7 @@ end function interpx_2d
 logical function interpx_3d( fname, vname, pname, &
   col0, col1, row0, row1, lay0, lay1, jdate, jtime, buffer )
 
-  use aqm_model_mod, only : aqm_state_type, aqm_model_get
+  use aqm_model_mod, only : aqm_config_type, aqm_state_type, aqm_model_get
   use aqm_rc_mod,    only : aqm_rc_check
 
   implicit none
@@ -224,7 +224,8 @@ logical function interpx_3d( fname, vname, pname, &
   ! -- local variables
   integer :: localrc
   integer :: nx, ny
-  type(aqm_state_type), pointer :: stateIn
+  type(aqm_config_type), pointer :: config  => null()
+  type(aqm_state_type),  pointer :: stateIn => null()
   logical, parameter :: debug = .true.
 
   ! -- begin
@@ -235,7 +236,7 @@ logical function interpx_3d( fname, vname, pname, &
 
     case ("MET_CRO_3D")
 
-      call aqm_model_get(stateIn=stateIn, rc=localrc)
+      call aqm_model_get(config=config, stateIn=stateIn, rc=localrc)
       if (aqm_rc_check(localrc, msg="Failure to retrive model input state", &
         file=__FILE__, line=__LINE__)) return
 
@@ -245,7 +246,8 @@ logical function interpx_3d( fname, vname, pname, &
         case ("JACOBM")
           buffer = 1.0
         case ("DENS")
-          buffer = stateIn % temp * ( 1.0 + 0.608 * stateIn % tr(:,:,:,1) )
+          buffer = stateIn % temp &
+                 * ( 1.0 + 0.608 * stateIn % tr(:,:,:,config % species % p_atm_qv) )
           buffer = stateIn % prl / ( 287.0586 * buffer )
         case ("DENSA_J")
           buffer = 1.0
@@ -254,13 +256,21 @@ logical function interpx_3d( fname, vname, pname, &
         case ("PV")
           buffer = 1.0
         case ("QV")
-          buffer = stateIn % tr(:,:,:,1)
+          buffer = stateIn % tr(:,:,:,config % species % p_atm_qv)
         case ("QC")
-          buffer = stateIn % tr(:,:,:,2)
-!       case ("QR")
-!       case ("QI")
-!       case ("QS")
-!       case ("QG")
+          buffer = stateIn % tr(:,:,:,config % species % p_atm_qc)
+        case ("QR")
+          if (config % species % p_atm_qr > 0) &
+            buffer = stateIn % tr(:,:,:,config % species % p_atm_qr)
+        case ("QI")
+          if (config % species % p_atm_qi > 0) &
+            buffer = stateIn % tr(:,:,:,config % species % p_atm_qi)
+        case ("QS")
+          if (config % species % p_atm_qs > 0) &
+            buffer = stateIn % tr(:,:,:,config % species % p_atm_qs)
+        case ("QG")
+          if (config % species % p_atm_qg > 0) &
+            buffer = stateIn % tr(:,:,:,config % species % p_atm_qg)
         case ("ZF")
           buffer = max(0., stateIn % phil / 9.81)
         case ("ZH")

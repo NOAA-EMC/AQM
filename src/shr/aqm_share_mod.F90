@@ -228,6 +228,11 @@ logical function interpx_3d( fname, vname, pname, &
   type(aqm_state_type),  pointer :: stateIn => null()
   logical, parameter :: debug = .true.
 
+  ! -- constants
+  include SUBST_CONST
+
+  real, parameter :: EPS1 = RWVAP/RDGAS - 1.
+
   ! -- begin
   interpx_3d = .false.
   buffer = 0.
@@ -247,8 +252,8 @@ logical function interpx_3d( fname, vname, pname, &
           buffer = 1.0
         case ("DENS")
           buffer = stateIn % temp &
-                 * ( 1.0 + 0.608 * stateIn % tr(:,:,:,config % species % p_atm_qv) )
-          buffer = stateIn % prl / ( 287.0586 * buffer )
+                 * ( 1.0 + EPS1 * stateIn % tr(:,:,:,config % species % p_atm_qv) )
+          buffer = stateIn % prl / ( RDGAS * buffer )
         case ("DENSA_J")
           buffer = 1.0
         case ("PRES")
@@ -272,9 +277,9 @@ logical function interpx_3d( fname, vname, pname, &
           if (config % species % p_atm_qg > 0) &
             buffer = stateIn % tr(:,:,:,config % species % p_atm_qg)
         case ("ZF")
-          buffer = max(0., stateIn % phil / 9.81)
+          buffer = max(0., stateIn % phil / GRAV)
         case ("ZH")
-          buffer = max(0., stateIn % phii(:,:,1:size(buffer,3)) / 9.81)
+          buffer = max(0., stateIn % phii(:,:,1:size(buffer,3)) / GRAV)
         case ("TA")
           buffer = stateIn % temp
         case default

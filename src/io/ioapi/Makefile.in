@@ -94,11 +94,13 @@ am__v_AR_0 = @echo "  AR      " $@;
 am__v_AR_1 = 
 libioapi_a_AR = $(AR) $(ARFLAGS)
 libioapi_a_LIBADD =
-am_libioapi_a_OBJECTS = dt2str.$(OBJEXT) getefile.$(OBJEXT) \
-	index1.$(OBJEXT) junit.$(OBJEXT) hhmmss.$(OBJEXT) \
-	mmddyy.$(OBJEXT) nextime.$(OBJEXT) sec2time.$(OBJEXT) \
-	secsdiff.$(OBJEXT) time2sec.$(OBJEXT) upcase.$(OBJEXT) \
-	yr2day.$(OBJEXT) libioapi_a-m3utilio.$(OBJEXT)
+am_libioapi_a_OBJECTS = libioapi_a-dt2str.$(OBJEXT) \
+	libioapi_a-getefile.$(OBJEXT) libioapi_a-index1.$(OBJEXT) \
+	libioapi_a-junit.$(OBJEXT) libioapi_a-hhmmss.$(OBJEXT) \
+	libioapi_a-mmddyy.$(OBJEXT) libioapi_a-nextime.$(OBJEXT) \
+	libioapi_a-sec2time.$(OBJEXT) libioapi_a-secsdiff.$(OBJEXT) \
+	libioapi_a-time2sec.$(OBJEXT) libioapi_a-upcase.$(OBJEXT) \
+	libioapi_a-yr2day.$(OBJEXT) libioapi_a-m3utilio.$(OBJEXT)
 libioapi_a_OBJECTS = $(am_libioapi_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -113,6 +115,10 @@ am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
 am__v_at_0 = @
 am__v_at_1 = 
 DEFAULT_INCLUDES = -I.@am__isrc@
+AM_V_lt = $(am__v_lt_@AM_V@)
+am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
+am__v_lt_0 = --silent
+am__v_lt_1 = 
 PPF77COMPILE = $(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_FFLAGS) $(FFLAGS)
 AM_V_PPF77 = $(am__v_PPF77_@AM_V@)
@@ -126,10 +132,6 @@ AM_V_F77LD = $(am__v_F77LD_@AM_V@)
 am__v_F77LD_ = $(am__v_F77LD_@AM_DEFAULT_V@)
 am__v_F77LD_0 = @echo "  F77LD   " $@;
 am__v_F77LD_1 = 
-AM_V_lt = $(am__v_lt_@AM_V@)
-am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
-am__v_lt_0 = --silent
-am__v_lt_1 = 
 PPFCCOMPILE = $(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_FCFLAGS) $(FCFLAGS)
 AM_V_PPFC = $(am__v_PPFC_@AM_V@)
@@ -292,7 +294,11 @@ noinst_LIBRARIES = libioapi.a
 libioapi_a_SOURCES = dt2str.f getefile.F index1.f junit.F hhmmss.f \
 	mmddyy.F nextime.F sec2time.f secsdiff.F time2sec.f upcase.f \
 	yr2day.F m3utilio.F90
-libioapi_a_FCFLAGS = $(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) $(ESMF_F90COMPILEFREECPP) $(ESMF_F90COMPILECPPFLAGS)
+libioapi_a_FFLAGS = $(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) $(ESMF_F90COMPILEFREECPP) $(ESMF_F90COMPILECPPFLAGS)
+libioapi_a_FCFLAGS = $(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) \
+	$(ESMF_F90COMPILEFREECPP) $(ESMF_F90COMPILECPPFLAGS) \
+	-DSUBST_FILES_ID=\"FILES_CTM.EXT\" -I \
+	$(srcdir)/../../CMAQ/CCTM/src/ICL/fixed/filenames
 all: all-am
 
 .SUFFIXES:
@@ -347,6 +353,42 @@ distclean-compile:
 
 .F.obj:
 	$(AM_V_PPF77)$(PPF77COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+
+libioapi_a-getefile.o: getefile.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-getefile.o `test -f 'getefile.F' || echo '$(srcdir)/'`getefile.F
+
+libioapi_a-getefile.obj: getefile.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-getefile.obj `if test -f 'getefile.F'; then $(CYGPATH_W) 'getefile.F'; else $(CYGPATH_W) '$(srcdir)/getefile.F'; fi`
+
+libioapi_a-junit.o: junit.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-junit.o `test -f 'junit.F' || echo '$(srcdir)/'`junit.F
+
+libioapi_a-junit.obj: junit.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-junit.obj `if test -f 'junit.F'; then $(CYGPATH_W) 'junit.F'; else $(CYGPATH_W) '$(srcdir)/junit.F'; fi`
+
+libioapi_a-mmddyy.o: mmddyy.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-mmddyy.o `test -f 'mmddyy.F' || echo '$(srcdir)/'`mmddyy.F
+
+libioapi_a-mmddyy.obj: mmddyy.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-mmddyy.obj `if test -f 'mmddyy.F'; then $(CYGPATH_W) 'mmddyy.F'; else $(CYGPATH_W) '$(srcdir)/mmddyy.F'; fi`
+
+libioapi_a-nextime.o: nextime.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-nextime.o `test -f 'nextime.F' || echo '$(srcdir)/'`nextime.F
+
+libioapi_a-nextime.obj: nextime.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-nextime.obj `if test -f 'nextime.F'; then $(CYGPATH_W) 'nextime.F'; else $(CYGPATH_W) '$(srcdir)/nextime.F'; fi`
+
+libioapi_a-secsdiff.o: secsdiff.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-secsdiff.o `test -f 'secsdiff.F' || echo '$(srcdir)/'`secsdiff.F
+
+libioapi_a-secsdiff.obj: secsdiff.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-secsdiff.obj `if test -f 'secsdiff.F'; then $(CYGPATH_W) 'secsdiff.F'; else $(CYGPATH_W) '$(srcdir)/secsdiff.F'; fi`
+
+libioapi_a-yr2day.o: yr2day.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-yr2day.o `test -f 'yr2day.F' || echo '$(srcdir)/'`yr2day.F
+
+libioapi_a-yr2day.obj: yr2day.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-yr2day.obj `if test -f 'yr2day.F'; then $(CYGPATH_W) 'yr2day.F'; else $(CYGPATH_W) '$(srcdir)/yr2day.F'; fi`
 .F.f:
 	$(F77COMPILE) -F $<
 
@@ -367,6 +409,42 @@ libioapi_a-m3utilio.obj: m3utilio.F90
 
 .f.obj:
 	$(AM_V_F77)$(F77COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+
+libioapi_a-dt2str.o: dt2str.f
+	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-dt2str.o `test -f 'dt2str.f' || echo '$(srcdir)/'`dt2str.f
+
+libioapi_a-dt2str.obj: dt2str.f
+	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-dt2str.obj `if test -f 'dt2str.f'; then $(CYGPATH_W) 'dt2str.f'; else $(CYGPATH_W) '$(srcdir)/dt2str.f'; fi`
+
+libioapi_a-index1.o: index1.f
+	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-index1.o `test -f 'index1.f' || echo '$(srcdir)/'`index1.f
+
+libioapi_a-index1.obj: index1.f
+	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-index1.obj `if test -f 'index1.f'; then $(CYGPATH_W) 'index1.f'; else $(CYGPATH_W) '$(srcdir)/index1.f'; fi`
+
+libioapi_a-hhmmss.o: hhmmss.f
+	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-hhmmss.o `test -f 'hhmmss.f' || echo '$(srcdir)/'`hhmmss.f
+
+libioapi_a-hhmmss.obj: hhmmss.f
+	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-hhmmss.obj `if test -f 'hhmmss.f'; then $(CYGPATH_W) 'hhmmss.f'; else $(CYGPATH_W) '$(srcdir)/hhmmss.f'; fi`
+
+libioapi_a-sec2time.o: sec2time.f
+	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-sec2time.o `test -f 'sec2time.f' || echo '$(srcdir)/'`sec2time.f
+
+libioapi_a-sec2time.obj: sec2time.f
+	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-sec2time.obj `if test -f 'sec2time.f'; then $(CYGPATH_W) 'sec2time.f'; else $(CYGPATH_W) '$(srcdir)/sec2time.f'; fi`
+
+libioapi_a-time2sec.o: time2sec.f
+	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-time2sec.o `test -f 'time2sec.f' || echo '$(srcdir)/'`time2sec.f
+
+libioapi_a-time2sec.obj: time2sec.f
+	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-time2sec.obj `if test -f 'time2sec.f'; then $(CYGPATH_W) 'time2sec.f'; else $(CYGPATH_W) '$(srcdir)/time2sec.f'; fi`
+
+libioapi_a-upcase.o: upcase.f
+	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-upcase.o `test -f 'upcase.f' || echo '$(srcdir)/'`upcase.f
+
+libioapi_a-upcase.obj: upcase.f
+	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-upcase.obj `if test -f 'upcase.f'; then $(CYGPATH_W) 'upcase.f'; else $(CYGPATH_W) '$(srcdir)/upcase.f'; fi`
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
@@ -576,9 +654,10 @@ clean-modules:
 
 clean-local: clean-modules
 
-dt2str.$(OBJEXT) : hhmmss.$(OBJEXT) mmddyy.$(OBJEXT) nextime.$(OBJEXT)
-getefile.$(OBJEXT) : libioapi_a-m3utilio.$(OBJEXT) junit.$(OBJEXT)
-nextime.$(OBJEXT) : time2sec.$(OBJEXT)
+libioapi_a-dt2str.$(OBJEXT) : libioapi_a-hhmmss.$(OBJEXT) libioapi_a-mmddyy.$(OBJEXT) libioapi_a-nextime.$(OBJEXT)
+libioapi_a-getefile.$(OBJEXT) : libioapi_a-m3utilio.$(OBJEXT) libioapi_a-junit.$(OBJEXT)
+libioapi_a-m3utilio.$(OBJEXT) : $(srcdir)/../../CMAQ/CCTM/src/ICL/fixed/filenames/FILES_CTM.EXT
+libioapi_a-nextime.$(OBJEXT) : libioapi_a-time2sec.$(OBJEXT)
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

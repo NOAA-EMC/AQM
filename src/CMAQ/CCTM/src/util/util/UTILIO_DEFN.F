@@ -46,32 +46,6 @@ C....................................................................
 
       MODULE UTILIO_DEFN
 
-#ifdef _AQM_
-         USE M3UTILIO
-         INTEGER, EXTERNAL :: INDEX1, SEC2TIME, TIME2SEC, GETEFILE
-         INTEGER, EXTERNAL :: SECSDIFF
-         LOGICAL, EXTERNAL :: ENVYN
-
-         INTERFACE INTERPX
-           logical function interpx_2d( fname, vname, pname,
-     &       col0, col1, row0, row1, lay0, lay1, jdate, jtime, buffer )
-             character(len=*), intent(in)  :: fname, vname, pname
-             integer,          intent(in)  :: col0, col1, row0, row1
-             integer,          intent(in)  :: lay0, lay1
-             integer,          intent(in)  :: jdate, jtime
-             real,             intent(out) :: buffer(:,:)
-           end function interpx_2d
-           logical function interpx_3d( fname, vname, pname,
-     &       col0, col1, row0, row1, lay0, lay1, jdate, jtime, buffer )
-             character(len=*), intent(in)  :: fname, vname, pname
-             integer,          intent(in)  :: col0, col1, row0, row1
-             integer,          intent(in)  :: lay0, lay1
-             real,             intent(out) :: buffer(:,:,:)
-           end function interpx_3d
-
-         END INTERFACE INTERPX
-#else
-
 #ifdef parallel
 
          USE M3UTILIO, EXCLUDE_INTERPB => INTERP3,
@@ -95,7 +69,6 @@ C....................................................................
 #endif
 #else
          USE M3UTILIO, INTERPB => INTERP3
-#endif
 #endif
 
       END MODULE UTILIO_DEFN

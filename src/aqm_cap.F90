@@ -12,13 +12,14 @@ module AQM
   implicit none
 
   ! -- import fields
-  integer, parameter :: importFieldCount = 33
+  integer, parameter :: importFieldCount = 34
   character(len=*), dimension(importFieldCount), parameter :: &
     importFieldNames = (/ &
       "canopy_moisture_storage                  ", &
       "height                                   ", &
       "inst_cloud_frac_levels                   ", &
       "inst_convective_rainfall_amount          ", &
+      "inst_exchange_coefficient_heat_levels    ", &
       "inst_friction_velocity                   ", &
       "inst_geop_interface                      ", &
       "inst_geop_levels                         ", &

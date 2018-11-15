@@ -428,6 +428,12 @@ contains
               line=__LINE__, &
               file=__FILE__)) &
               return  ! bail
+          case ("inst_exchange_coefficient_heat_levels")
+            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % dkt, rc=rc)
+            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+              line=__LINE__, &
+              file=__FILE__)) &
+              return  ! bail
           case ("inst_friction_velocity")
             call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % ustar, rc=rc)
             if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &

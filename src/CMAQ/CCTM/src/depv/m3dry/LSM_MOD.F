@@ -323,10 +323,7 @@ C-------------------------------------------------------------------------------
          INTEGER      :: GXOFF, GYOFF            ! global origin offset from file
          INTEGER      :: STRTCOLGC2, ENDCOLGC2, STRTROWGC2, ENDROWGC2
          INTEGER l                             
-
-#ifdef _AQM_
-         LAND_SCHEME = 'MODIS'
-#else
+                                               
          LAND_SCHEME = 'UNKNOWN'               
          CALL SUBHFILE ( GRID_CRO_2D, GXOFF, GYOFF,
      &                   STRTCOLGC2, ENDCOLGC2, STRTROWGC2, ENDROWGC2 )
@@ -357,7 +354,6 @@ C-------------------------------------------------------------------------------
             END IF                             
          END DO                                
 #endif                                         
-#endif
 !       Write( *,* ) 'Land use scheme is ', TRIM(LAND_SCHEME) 
                                                
          SELECT CASE( LAND_SCHEME )            

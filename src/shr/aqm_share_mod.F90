@@ -138,6 +138,8 @@ logical function interpx_2d( fname, vname, pname, &
       select case (trim(vname))
         case ("HFX")
           buffer = stateIn % hfx
+        case ("LAI")
+          buffer = stateIn % xlai
         case ("LH")
           buffer = stateIn % lh
         case ("PRSFC")

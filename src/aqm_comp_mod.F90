@@ -570,6 +570,12 @@ contains
               line=__LINE__, &
               file=__FILE__)) &
               return  ! bail
+          case ("leaf_area_index")
+            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % xlai, rc=rc)
+            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+              line=__LINE__, &
+              file=__FILE__)) &
+              return  ! bail
           case ("sea_ice_area_fraction")
             call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % fice, rc=rc)
             if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &

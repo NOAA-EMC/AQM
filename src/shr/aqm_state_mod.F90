@@ -27,6 +27,7 @@ module aqm_state_mod
     real(AQM_KIND_R8), dimension(:,:),     pointer :: v10m     => null()
     real(AQM_KIND_R8), dimension(:,:),     pointer :: vfrac    => null()
     real(AQM_KIND_R8), dimension(:,:),     pointer :: wr       => null()
+    real(AQM_KIND_R8), dimension(:,:),     pointer :: xlai     => null()
     real(AQM_KIND_R8), dimension(:,:),     pointer :: zorl     => null()
 
     real(AQM_KIND_R8), dimension(:,:,:),   pointer :: cldfl    => null()

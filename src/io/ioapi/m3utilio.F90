@@ -67,6 +67,7 @@ contains
     NVARS3D = 0
     VNAME3D = ""
     UNITS3D = ""
+    VDESC3D = ""
 
     IF      ( TRIM( FNAME ) .EQ. TRIM( GRID_DOT_2D ) ) THEN
       NVARS3D = 1
@@ -87,6 +88,7 @@ contains
          '(M/M)**2        ', 'M               ',            &
          '-               ', 'PERCENT         ',            &
          'CATEGORY        '                      /)
+      VDESC3D( NVARS3D ) = 'MODIS           '
 
     ELSE IF ( TRIM( FNAME ) .EQ. TRIM( MET_CRO_2D ) ) THEN
       NVARS3D = 32

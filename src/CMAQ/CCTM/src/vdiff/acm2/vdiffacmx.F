@@ -317,7 +317,7 @@ C conjoin ACM & EDDY ---------------------------------------------------
      &         WRITE( LOGDEV,1015 ) LCBL, MBAR, FNL, SEDDY( 1,C,R ), Met_Data%HOL( C,R )
 1015           FORMAT( ' LCBL, MBAR, FNL, SEDDY1, HOL:', I3, 1X, 4(1PE13.5) )
 
-#ifdef _AQN_
+#ifdef _AQM_
             DO L = 2, LCBL
 #else
             DO L = 1, LCBL - 1

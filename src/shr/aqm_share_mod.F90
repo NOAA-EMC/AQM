@@ -263,21 +263,21 @@ logical function interpx_3d( fname, vname, pname, &
         case ("PV")
           buffer = 1.0
         case ("QV")
-          buffer = stateIn % tr(:,:,:,config % species % p_atm_qv)
+          buffer = max(0., stateIn % tr(:,:,:,config % species % p_atm_qv))
         case ("QC")
-          buffer = stateIn % tr(:,:,:,config % species % p_atm_qc)
+          buffer = max(0., stateIn % tr(:,:,:,config % species % p_atm_qc))
         case ("QR")
           if (config % species % p_atm_qr > 0) &
-            buffer = stateIn % tr(:,:,:,config % species % p_atm_qr)
+            buffer = max(0., stateIn % tr(:,:,:,config % species % p_atm_qr))
         case ("QI")
           if (config % species % p_atm_qi > 0) &
-            buffer = stateIn % tr(:,:,:,config % species % p_atm_qi)
+            buffer = max(0., stateIn % tr(:,:,:,config % species % p_atm_qi))
         case ("QS")
           if (config % species % p_atm_qs > 0) &
-            buffer = stateIn % tr(:,:,:,config % species % p_atm_qs)
+            buffer = max(0., stateIn % tr(:,:,:,config % species % p_atm_qs))
         case ("QG")
           if (config % species % p_atm_qg > 0) &
-            buffer = stateIn % tr(:,:,:,config % species % p_atm_qg)
+            buffer = max(0., stateIn % tr(:,:,:,config % species % p_atm_qg))
         case ("ZF")
           buffer = max(0., stateIn % phil / GRAV)
         case ("ZH")

@@ -173,7 +173,6 @@ am_libCCTM_a_OBJECTS = $(AERO)/libCCTM_a-AERO_DATA.$(OBJEXT) \
 	$(UTIL)/libCCTM_a-UTILIO_DEFN.$(OBJEXT) \
 	$(VDIFF)/libCCTM_a-ASX_DATA_MOD.$(OBJEXT) \
 	$(VDIFF)/libCCTM_a-conv_cgrid.$(OBJEXT) \
-	$(VDIFF)/libCCTM_a-eddyx.$(OBJEXT) \
 	$(VDIFF)/libCCTM_a-matrix1.$(OBJEXT) \
 	$(VDIFF)/libCCTM_a-tri.$(OBJEXT) \
 	$(VDIFF)/libCCTM_a-vdiffacmx.$(OBJEXT) \
@@ -410,7 +409,7 @@ libCCTM_a_SOURCES = $(AERO)/AERO_DATA.F $(AERO)/aero_depv.F \
 	$(STENEX)/noop_slice_module.f $(STENEX)/noop_term_module.f \
 	$(STENEX)/noop_util_module.f $(UTIL)/findex.f \
 	$(UTIL)/setup_logdev.F $(UTIL)/UTILIO_DEFN.F \
-	$(VDIFF)/ASX_DATA_MOD.F $(VDIFF)/conv_cgrid.F $(VDIFF)/eddyx.F \
+	$(VDIFF)/ASX_DATA_MOD.F $(VDIFF)/conv_cgrid.F \
 	$(VDIFF)/matrix1.F $(VDIFF)/tri.F $(VDIFF)/vdiffacmx.F \
 	$(VDIFF)/VDIFF_MAP.F $(VDIFF)/vdiffproc.F
 
@@ -739,8 +738,6 @@ $(VDIFF)/$(DEPDIR)/$(am__dirstamp):
 $(VDIFF)/libCCTM_a-ASX_DATA_MOD.$(OBJEXT): $(VDIFF)/$(am__dirstamp) \
 	$(VDIFF)/$(DEPDIR)/$(am__dirstamp)
 $(VDIFF)/libCCTM_a-conv_cgrid.$(OBJEXT): $(VDIFF)/$(am__dirstamp) \
-	$(VDIFF)/$(DEPDIR)/$(am__dirstamp)
-$(VDIFF)/libCCTM_a-eddyx.$(OBJEXT): $(VDIFF)/$(am__dirstamp) \
 	$(VDIFF)/$(DEPDIR)/$(am__dirstamp)
 $(VDIFF)/libCCTM_a-matrix1.$(OBJEXT): $(VDIFF)/$(am__dirstamp) \
 	$(VDIFF)/$(DEPDIR)/$(am__dirstamp)
@@ -1117,12 +1114,6 @@ $(VDIFF)/libCCTM_a-conv_cgrid.o: $(VDIFF)/conv_cgrid.F
 
 $(VDIFF)/libCCTM_a-conv_cgrid.obj: $(VDIFF)/conv_cgrid.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(VDIFF)/libCCTM_a-conv_cgrid.obj `if test -f '$(VDIFF)/conv_cgrid.F'; then $(CYGPATH_W) '$(VDIFF)/conv_cgrid.F'; else $(CYGPATH_W) '$(srcdir)/$(VDIFF)/conv_cgrid.F'; fi`
-
-$(VDIFF)/libCCTM_a-eddyx.o: $(VDIFF)/eddyx.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(VDIFF)/libCCTM_a-eddyx.o `test -f '$(VDIFF)/eddyx.F' || echo '$(srcdir)/'`$(VDIFF)/eddyx.F
-
-$(VDIFF)/libCCTM_a-eddyx.obj: $(VDIFF)/eddyx.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(VDIFF)/libCCTM_a-eddyx.obj `if test -f '$(VDIFF)/eddyx.F'; then $(CYGPATH_W) '$(VDIFF)/eddyx.F'; else $(CYGPATH_W) '$(srcdir)/$(VDIFF)/eddyx.F'; fi`
 
 $(VDIFF)/libCCTM_a-matrix1.o: $(VDIFF)/matrix1.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(VDIFF)/libCCTM_a-matrix1.o `test -f '$(VDIFF)/matrix1.F' || echo '$(srcdir)/'`$(VDIFF)/matrix1.F
@@ -1697,8 +1688,6 @@ $(libVDIFF)ASX_DATA_MOD.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(ICL)/const/
 $(libVDIFF)conv_cgrid.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(ICL)/const/CONST.EXT \
 	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT) \
 	$(libGRID)GRID_CONF.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
-$(libVDIFF)eddyx.$(OBJEXT) : $(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT) \
-	$(libGRID)GRID_CONF.$(OBJEXT)
 $(libVDIFF)matrix1.$(OBJEXT) : $(libSPCS)CGRID_SPCS.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT) 
 $(libVDIFF)tri.$(OBJEXT) : $(libSPCS)CGRID_SPCS.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT) 
 $(libVDIFF)vdiffacmx.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(libVDIFF)VDIFF_MAP.$(OBJEXT) \

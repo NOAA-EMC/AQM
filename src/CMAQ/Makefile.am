@@ -155,7 +155,6 @@ libVDIFF = $(VDIFF)/$(libCCTM)-
 libCCTM_a_SOURCES += \
 	$(VDIFF)/ASX_DATA_MOD.F \
 	$(VDIFF)/conv_cgrid.F \
-	$(VDIFF)/eddyx.F \
 	$(VDIFF)/matrix1.F \
 	$(VDIFF)/tri.F \
 	$(VDIFF)/vdiffacmx.F \
@@ -354,8 +353,6 @@ $(libVDIFF)ASX_DATA_MOD.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(ICL)/const/
 $(libVDIFF)conv_cgrid.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(ICL)/const/CONST.EXT \
 	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT) \
 	$(libGRID)GRID_CONF.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
-$(libVDIFF)eddyx.$(OBJEXT) : $(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT) \
-	$(libGRID)GRID_CONF.$(OBJEXT)
 $(libVDIFF)matrix1.$(OBJEXT) : $(libSPCS)CGRID_SPCS.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT) 
 $(libVDIFF)tri.$(OBJEXT) : $(libSPCS)CGRID_SPCS.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT) 
 $(libVDIFF)vdiffacmx.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(libVDIFF)VDIFF_MAP.$(OBJEXT) \

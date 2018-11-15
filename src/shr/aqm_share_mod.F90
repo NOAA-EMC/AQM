@@ -355,3 +355,26 @@ SUBROUTINE SUBHFILE ( FNAME, GXOFF, GYOFF, &
    ENDROW = je - js + 1
 
 END SUBROUTINE SUBHFILE
+
+SUBROUTINE EDDYX ( EDDYV )
+
+  use aqm_model_mod, only : aqm_state_type, aqm_model_get
+  use aqm_rc_mod,    only : aqm_rc_check
+
+  IMPLICIT NONE
+
+  ! -- arguments
+  REAL, INTENT( OUT ) :: EDDYV ( :,:,: ) ! eddy diffusivity (m**2/s)
+
+  ! -- local variables
+  integer :: localrc
+  type(aqm_state_type), pointer :: stateIn => null()
+
+  ! -- begin
+  call aqm_model_get(stateIn=stateIn, rc=localrc)
+  if (aqm_rc_check(localrc, msg="Failure to retrive model input state", &
+        file=__FILE__, line=__LINE__)) return
+
+  EDDYV = stateIn % dkt
+
+END SUBROUTINE EDDYX

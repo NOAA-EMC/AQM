@@ -64,8 +64,8 @@
       integer :: ios
       integer :: nrecs
       integer :: jyear
-      integer :: nlat
-      integer :: nlon
+      integer, save :: nlat
+      integer, save :: nlon
 
       integer, save :: logdev           ! output log unit number
       integer, save :: nt

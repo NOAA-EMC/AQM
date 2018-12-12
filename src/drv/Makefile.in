@@ -257,6 +257,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 noinst_LIBRARIES = libdrv.a
 libdrv_a_SOURCES = cmaq_model_mod.F90 cmaq_mod.F90
+libdrv_a_CPPFLAGS = -Dverbose_driver
 libdrv_a_FCFLAGS = -I $(builddir)/../shr -I $(builddir)/../CMAQ -I \
 	$(builddir)/../io/ioapi
 libdrv_a_DEPENDENCIES = $(builddir)/../shr/libshr.a
@@ -316,16 +317,16 @@ distclean-compile:
 	$(AM_V_PPFC)$(PPFCCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
 libdrv_a-cmaq_model_mod.o: cmaq_model_mod.F90
-	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libdrv_a_FCFLAGS) $(FCFLAGS) -c -o libdrv_a-cmaq_model_mod.o `test -f 'cmaq_model_mod.F90' || echo '$(srcdir)/'`cmaq_model_mod.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libdrv_a_CPPFLAGS) $(CPPFLAGS) $(libdrv_a_FCFLAGS) $(FCFLAGS) -c -o libdrv_a-cmaq_model_mod.o `test -f 'cmaq_model_mod.F90' || echo '$(srcdir)/'`cmaq_model_mod.F90
 
 libdrv_a-cmaq_model_mod.obj: cmaq_model_mod.F90
-	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libdrv_a_FCFLAGS) $(FCFLAGS) -c -o libdrv_a-cmaq_model_mod.obj `if test -f 'cmaq_model_mod.F90'; then $(CYGPATH_W) 'cmaq_model_mod.F90'; else $(CYGPATH_W) '$(srcdir)/cmaq_model_mod.F90'; fi`
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libdrv_a_CPPFLAGS) $(CPPFLAGS) $(libdrv_a_FCFLAGS) $(FCFLAGS) -c -o libdrv_a-cmaq_model_mod.obj `if test -f 'cmaq_model_mod.F90'; then $(CYGPATH_W) 'cmaq_model_mod.F90'; else $(CYGPATH_W) '$(srcdir)/cmaq_model_mod.F90'; fi`
 
 libdrv_a-cmaq_mod.o: cmaq_mod.F90
-	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libdrv_a_FCFLAGS) $(FCFLAGS) -c -o libdrv_a-cmaq_mod.o `test -f 'cmaq_mod.F90' || echo '$(srcdir)/'`cmaq_mod.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libdrv_a_CPPFLAGS) $(CPPFLAGS) $(libdrv_a_FCFLAGS) $(FCFLAGS) -c -o libdrv_a-cmaq_mod.o `test -f 'cmaq_mod.F90' || echo '$(srcdir)/'`cmaq_mod.F90
 
 libdrv_a-cmaq_mod.obj: cmaq_mod.F90
-	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libdrv_a_FCFLAGS) $(FCFLAGS) -c -o libdrv_a-cmaq_mod.obj `if test -f 'cmaq_mod.F90'; then $(CYGPATH_W) 'cmaq_mod.F90'; else $(CYGPATH_W) '$(srcdir)/cmaq_mod.F90'; fi`
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libdrv_a_CPPFLAGS) $(CPPFLAGS) $(libdrv_a_FCFLAGS) $(FCFLAGS) -c -o libdrv_a-cmaq_mod.obj `if test -f 'cmaq_mod.F90'; then $(CYGPATH_W) 'cmaq_mod.F90'; else $(CYGPATH_W) '$(srcdir)/cmaq_mod.F90'; fi`
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique

@@ -3,16 +3,13 @@ module cmaq_mod
   use aqm_rc_mod
   use aqm_types_mod
 
+  use PAGRD_DEFN
+  USE PA_DEFN, Only: LIPR, LIRR
   use PCGRID_DEFN
-  use HGRD_DEFN, ONLY : NCOLS, NROWS, MY_NCOLS, MY_NROWS
-  use VGRD_DEFN, ONLY : NLAYS
-
-  use ASX_DATA_MOD, only : CMAQ_Grid_Data => Grid_Data, &
-                           CMAQ_Met_Data  => Met_Data
 
   use cgrid_spcs,  only : cgrid_spcs_init, nspcsd
 
-  use UTILIO_DEFN, only : INIT3
+  use UTILIO_DEFN, only : INIT3, MXVARS3
 
   implicit none
 
@@ -22,9 +19,7 @@ module cmaq_mod
 
   private
 
-  public :: CMAQ_Grid_Data, CMAQ_Met_Data
   public :: cmaq_logdev
-  public :: NCOLS, NROWS, NLAYS
 
   public :: cmaq_advance
   public :: cmaq_init
@@ -50,6 +45,10 @@ contains
       msg="cmaq_init: Error in CGRID_SPCS:CGRID_SPCS_INIT", &
       file=__FILE__, line=__LINE__, rc=rc)) return
 
+    if (aqm_rc_test(( nspcsd > mxvars3 ), &
+      msg="cmaq_init: Number of species exceeds MXVARS3", &
+      file=__FILE__, line=__LINE__, rc=rc)) return
+
     nspecies = nspcsd
 
   end subroutine cmaq_species_read
@@ -59,6 +58,7 @@ contains
     integer, optional, intent(out)   :: rc
 
     ! -- local variables
+    integer :: mype, nprocs
     real, parameter :: CMIN = 1.0E-30
 
     ! -- begin
@@ -67,20 +67,47 @@ contains
     ! -- set CMAQ log unit
     cmaq_logdev = INIT3()
 
-    ! -- local computational domain same as local domain
-    MY_NROWS = NROWS
-    MY_NCOLS = NCOLS
+    ! -- set up horizontal domain and define vertical layer structure
+    mype   = 0
+    nprocs = 1
+    if (aqm_rc_test(.not.grid_init( nprocs, mype ), &
+      msg="cmaq_init: Failure defining horizontal domain", &
+      file=__FILE__, line=__LINE__, rc=rc)) return
+
+#ifdef verbose_driver
+    write( cmaq_logdev,* ) ' MYPE -> NPROCS:   ', mype, nprocs
+    write( cmaq_logdev,* ) ' MYPE -> NPCOL:    ', mype, npcol
+    write( cmaq_logdev,* ) ' MYPE -> NPROW:    ', mype, nprow
+    write( cmaq_logdev,* ) ' MYPE -> GL_NCOLS: ', mype, gl_ncols
+    write( cmaq_logdev,* ) ' MYPE -> GL_NROWS: ', mype, gl_nrows
+    write( cmaq_logdev,* ) ' MYPE -> NLAYS:    ', mype, nlays
+    write( cmaq_logdev,* ) ' MYPE -> NSPCS:    ', mype, nspcsd
+#endif
+
+    ! -- set I/O flag
+    IO_PE_INCLUSIVE = ( MYPE .EQ. 0 )
+
+    ! -- Generate the process analysis data: load PA_DEFN module
+!   CALL PA_DATAGEN( )
+
+    ! -- Set up horizontal domain and calculate processor-to-subdomain maps for
+    ! -- process analysis, if required
+    IF ( LIPR .OR. LIRR ) THEN
+      IF (aqm_rc_test( .NOT. PAGRD_INIT( NPROCS, MYPE ),      &
+        msg = 'cmaq_init: *** Failure defining PA domain configuration', &
+        FILE=__FILE__, LINE=__LINE__, rc=rc)) RETURN
+    END IF
 
     ! -- Initialize PCGRID
     if (aqm_rc_test(.not.pcgrid_init(), &
       msg="cmaq_init: Failure defining horizontal domain", &
       file=__FILE__, line=__LINE__, rc=rc)) return
 
-    CGRID => PCGRID   ! required for PinG
+    CGRID => PCGRID( 1:MY_NCOLS,1:MY_NROWS,:,: )   ! required for PinG
 
-   ! -- Initialize conc field: Copy IC's to CONC file as step 0
-   ! -- Convention: the input file concentration units are always ppmV.
-   CGRID = CMIN
+    ! -- Initialize conc field: Copy IC's to CONC file as step 0
+    ! -- Convention: the input file concentration units are always ppmV.
+    CGRID = CMIN
 
   end subroutine cmaq_init
 
@@ -143,6 +170,8 @@ contains
     if (present(rc)) rc = AQM_RC_SUCCESS
 
     CGRID = tracers(:,:,:, start_index:start_index + nspcsd - 1)
+    write(cmaq_logdev,'("cmaq_import: cgrid - min/max ",2i8,2g16.6)') &
+      start_index,start_index + nspcsd - 1, minval(CGRID), maxval(CGRID)
 
   end subroutine cmaq_import
 
@@ -155,6 +184,8 @@ contains
     if (present(rc)) rc = AQM_RC_SUCCESS
 
     tracers(:,:,:, start_index:start_index + nspcsd - 1) = CGRID
+    write(cmaq_logdev,'("cmaq_export: cgrid - min/max ",2i8,2g16.6)') &
+      start_index,start_index + nspcsd - 1, minval(CGRID), maxval(CGRID)
 
   end subroutine cmaq_export
 

@@ -55,10 +55,6 @@ contains
     if (aqm_rc_check(localrc, msg="Failed to retrieve model domain on local DE", &
       file=__FILE__, line=__LINE__, rc=rc)) return
 
-    NCOLS = ie - is + 1
-    NROWS = je - js + 1
-    NLAYS = nl
-
     ! -- initialize CMAQ's internal workspace
     call cmaq_init(rc=localrc)
     if (aqm_rc_check(localrc, msg="Failed to initialize CMAQ", &

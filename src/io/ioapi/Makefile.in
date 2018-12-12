@@ -94,13 +94,23 @@ am__v_AR_0 = @echo "  AR      " $@;
 am__v_AR_1 = 
 libioapi_a_AR = $(AR) $(ARFLAGS)
 libioapi_a_LIBADD =
-am_libioapi_a_OBJECTS = libioapi_a-dt2str.$(OBJEXT) \
+am_libioapi_a_OBJECTS = libioapi_a-crlf.$(OBJEXT) \
+	libioapi_a-currec.$(OBJEXT) libioapi_a-currstep.$(OBJEXT) \
+	libioapi_a-dt2str.$(OBJEXT) libioapi_a-findc.$(OBJEXT) \
 	libioapi_a-getefile.$(OBJEXT) libioapi_a-index1.$(OBJEXT) \
-	libioapi_a-junit.$(OBJEXT) libioapi_a-hhmmss.$(OBJEXT) \
-	libioapi_a-mmddyy.$(OBJEXT) libioapi_a-nextime.$(OBJEXT) \
-	libioapi_a-sec2time.$(OBJEXT) libioapi_a-secsdiff.$(OBJEXT) \
+	libioapi_a-julian.$(OBJEXT) libioapi_a-junit.$(OBJEXT) \
+	libioapi_a-hhmmss.$(OBJEXT) libioapi_a-mmddyy.$(OBJEXT) \
+	libioapi_a-nextime.$(OBJEXT) libioapi_a-poly.$(OBJEXT) \
+	libioapi_a-promptffile.$(OBJEXT) \
+	libioapi_a-promptmfile.$(OBJEXT) libioapi_a-sec2time.$(OBJEXT) \
+	libioapi_a-secsdiff.$(OBJEXT) libioapi_a-setlam.$(OBJEXT) \
+	libioapi_a-sortic.$(OBJEXT) libioapi_a-str2real.$(OBJEXT) \
 	libioapi_a-time2sec.$(OBJEXT) libioapi_a-upcase.$(OBJEXT) \
-	libioapi_a-yr2day.$(OBJEXT) libioapi_a-m3utilio.$(OBJEXT)
+	libioapi_a-wkday.$(OBJEXT) libioapi_a-yr2day.$(OBJEXT) \
+	libioapi_a-m3exit.$(OBJEXT) libioapi_a-m3mesg.$(OBJEXT) \
+	libioapi_a-m3msg2.$(OBJEXT) libioapi_a-m3warn.$(OBJEXT) \
+	libioapi_a-m3utilio.$(OBJEXT) libioapi_a-read3.$(OBJEXT) \
+	libioapi_a-write3.$(OBJEXT)
 libioapi_a_OBJECTS = $(am_libioapi_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -291,9 +301,13 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 noinst_LIBRARIES = libioapi.a
-libioapi_a_SOURCES = dt2str.f getefile.F index1.f junit.F hhmmss.f \
-	mmddyy.F nextime.F sec2time.f secsdiff.F time2sec.f upcase.f \
-	yr2day.F m3utilio.F90
+# libioapi_a_SOURCES += m3exit.F90 m3warn.F90 m3utilio.F90 read3.F write3.F xtract3.F90
+libioapi_a_SOURCES = FDESC3.EXT PARMS3.EXT crlf.F currec.f currstep.f \
+	dt2str.f findc.f getefile.F index1.f julian.F junit.F hhmmss.f \
+	mmddyy.F nextime.F poly.f promptffile.f promptmfile.f \
+	sec2time.f secsdiff.F setlam.f sortic.f str2real.f time2sec.f \
+	upcase.f wkday.F yr2day.F m3exit.F90 m3mesg.F90 m3msg2.F90 \
+	m3warn.F90 m3utilio.F90 read3.F write3.F
 libioapi_a_FFLAGS = $(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) $(ESMF_F90COMPILEFREECPP) $(ESMF_F90COMPILECPPFLAGS)
 libioapi_a_FCFLAGS = $(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) \
 	$(ESMF_F90COMPILEFREECPP) $(ESMF_F90COMPILECPPFLAGS) \
@@ -354,11 +368,23 @@ distclean-compile:
 .F.obj:
 	$(AM_V_PPF77)$(PPF77COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
+libioapi_a-crlf.o: crlf.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-crlf.o `test -f 'crlf.F' || echo '$(srcdir)/'`crlf.F
+
+libioapi_a-crlf.obj: crlf.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-crlf.obj `if test -f 'crlf.F'; then $(CYGPATH_W) 'crlf.F'; else $(CYGPATH_W) '$(srcdir)/crlf.F'; fi`
+
 libioapi_a-getefile.o: getefile.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-getefile.o `test -f 'getefile.F' || echo '$(srcdir)/'`getefile.F
 
 libioapi_a-getefile.obj: getefile.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-getefile.obj `if test -f 'getefile.F'; then $(CYGPATH_W) 'getefile.F'; else $(CYGPATH_W) '$(srcdir)/getefile.F'; fi`
+
+libioapi_a-julian.o: julian.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-julian.o `test -f 'julian.F' || echo '$(srcdir)/'`julian.F
+
+libioapi_a-julian.obj: julian.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-julian.obj `if test -f 'julian.F'; then $(CYGPATH_W) 'julian.F'; else $(CYGPATH_W) '$(srcdir)/julian.F'; fi`
 
 libioapi_a-junit.o: junit.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-junit.o `test -f 'junit.F' || echo '$(srcdir)/'`junit.F
@@ -384,11 +410,29 @@ libioapi_a-secsdiff.o: secsdiff.F
 libioapi_a-secsdiff.obj: secsdiff.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-secsdiff.obj `if test -f 'secsdiff.F'; then $(CYGPATH_W) 'secsdiff.F'; else $(CYGPATH_W) '$(srcdir)/secsdiff.F'; fi`
 
+libioapi_a-wkday.o: wkday.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-wkday.o `test -f 'wkday.F' || echo '$(srcdir)/'`wkday.F
+
+libioapi_a-wkday.obj: wkday.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-wkday.obj `if test -f 'wkday.F'; then $(CYGPATH_W) 'wkday.F'; else $(CYGPATH_W) '$(srcdir)/wkday.F'; fi`
+
 libioapi_a-yr2day.o: yr2day.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-yr2day.o `test -f 'yr2day.F' || echo '$(srcdir)/'`yr2day.F
 
 libioapi_a-yr2day.obj: yr2day.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-yr2day.obj `if test -f 'yr2day.F'; then $(CYGPATH_W) 'yr2day.F'; else $(CYGPATH_W) '$(srcdir)/yr2day.F'; fi`
+
+libioapi_a-read3.o: read3.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-read3.o `test -f 'read3.F' || echo '$(srcdir)/'`read3.F
+
+libioapi_a-read3.obj: read3.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-read3.obj `if test -f 'read3.F'; then $(CYGPATH_W) 'read3.F'; else $(CYGPATH_W) '$(srcdir)/read3.F'; fi`
+
+libioapi_a-write3.o: write3.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-write3.o `test -f 'write3.F' || echo '$(srcdir)/'`write3.F
+
+libioapi_a-write3.obj: write3.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-write3.obj `if test -f 'write3.F'; then $(CYGPATH_W) 'write3.F'; else $(CYGPATH_W) '$(srcdir)/write3.F'; fi`
 .F.f:
 	$(F77COMPILE) -F $<
 
@@ -397,6 +441,30 @@ libioapi_a-yr2day.obj: yr2day.F
 
 .F90.obj:
 	$(AM_V_PPFC)$(PPFCCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+
+libioapi_a-m3exit.o: m3exit.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FCFLAGS) $(FCFLAGS) -c -o libioapi_a-m3exit.o `test -f 'm3exit.F90' || echo '$(srcdir)/'`m3exit.F90
+
+libioapi_a-m3exit.obj: m3exit.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FCFLAGS) $(FCFLAGS) -c -o libioapi_a-m3exit.obj `if test -f 'm3exit.F90'; then $(CYGPATH_W) 'm3exit.F90'; else $(CYGPATH_W) '$(srcdir)/m3exit.F90'; fi`
+
+libioapi_a-m3mesg.o: m3mesg.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FCFLAGS) $(FCFLAGS) -c -o libioapi_a-m3mesg.o `test -f 'm3mesg.F90' || echo '$(srcdir)/'`m3mesg.F90
+
+libioapi_a-m3mesg.obj: m3mesg.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FCFLAGS) $(FCFLAGS) -c -o libioapi_a-m3mesg.obj `if test -f 'm3mesg.F90'; then $(CYGPATH_W) 'm3mesg.F90'; else $(CYGPATH_W) '$(srcdir)/m3mesg.F90'; fi`
+
+libioapi_a-m3msg2.o: m3msg2.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FCFLAGS) $(FCFLAGS) -c -o libioapi_a-m3msg2.o `test -f 'm3msg2.F90' || echo '$(srcdir)/'`m3msg2.F90
+
+libioapi_a-m3msg2.obj: m3msg2.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FCFLAGS) $(FCFLAGS) -c -o libioapi_a-m3msg2.obj `if test -f 'm3msg2.F90'; then $(CYGPATH_W) 'm3msg2.F90'; else $(CYGPATH_W) '$(srcdir)/m3msg2.F90'; fi`
+
+libioapi_a-m3warn.o: m3warn.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FCFLAGS) $(FCFLAGS) -c -o libioapi_a-m3warn.o `test -f 'm3warn.F90' || echo '$(srcdir)/'`m3warn.F90
+
+libioapi_a-m3warn.obj: m3warn.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FCFLAGS) $(FCFLAGS) -c -o libioapi_a-m3warn.obj `if test -f 'm3warn.F90'; then $(CYGPATH_W) 'm3warn.F90'; else $(CYGPATH_W) '$(srcdir)/m3warn.F90'; fi`
 
 libioapi_a-m3utilio.o: m3utilio.F90
 	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FCFLAGS) $(FCFLAGS) -c -o libioapi_a-m3utilio.o `test -f 'm3utilio.F90' || echo '$(srcdir)/'`m3utilio.F90
@@ -410,11 +478,29 @@ libioapi_a-m3utilio.obj: m3utilio.F90
 .f.obj:
 	$(AM_V_F77)$(F77COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
+libioapi_a-currec.o: currec.f
+	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-currec.o `test -f 'currec.f' || echo '$(srcdir)/'`currec.f
+
+libioapi_a-currec.obj: currec.f
+	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-currec.obj `if test -f 'currec.f'; then $(CYGPATH_W) 'currec.f'; else $(CYGPATH_W) '$(srcdir)/currec.f'; fi`
+
+libioapi_a-currstep.o: currstep.f
+	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-currstep.o `test -f 'currstep.f' || echo '$(srcdir)/'`currstep.f
+
+libioapi_a-currstep.obj: currstep.f
+	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-currstep.obj `if test -f 'currstep.f'; then $(CYGPATH_W) 'currstep.f'; else $(CYGPATH_W) '$(srcdir)/currstep.f'; fi`
+
 libioapi_a-dt2str.o: dt2str.f
 	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-dt2str.o `test -f 'dt2str.f' || echo '$(srcdir)/'`dt2str.f
 
 libioapi_a-dt2str.obj: dt2str.f
 	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-dt2str.obj `if test -f 'dt2str.f'; then $(CYGPATH_W) 'dt2str.f'; else $(CYGPATH_W) '$(srcdir)/dt2str.f'; fi`
+
+libioapi_a-findc.o: findc.f
+	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-findc.o `test -f 'findc.f' || echo '$(srcdir)/'`findc.f
+
+libioapi_a-findc.obj: findc.f
+	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-findc.obj `if test -f 'findc.f'; then $(CYGPATH_W) 'findc.f'; else $(CYGPATH_W) '$(srcdir)/findc.f'; fi`
 
 libioapi_a-index1.o: index1.f
 	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-index1.o `test -f 'index1.f' || echo '$(srcdir)/'`index1.f
@@ -428,11 +514,47 @@ libioapi_a-hhmmss.o: hhmmss.f
 libioapi_a-hhmmss.obj: hhmmss.f
 	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-hhmmss.obj `if test -f 'hhmmss.f'; then $(CYGPATH_W) 'hhmmss.f'; else $(CYGPATH_W) '$(srcdir)/hhmmss.f'; fi`
 
+libioapi_a-poly.o: poly.f
+	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-poly.o `test -f 'poly.f' || echo '$(srcdir)/'`poly.f
+
+libioapi_a-poly.obj: poly.f
+	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-poly.obj `if test -f 'poly.f'; then $(CYGPATH_W) 'poly.f'; else $(CYGPATH_W) '$(srcdir)/poly.f'; fi`
+
+libioapi_a-promptffile.o: promptffile.f
+	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-promptffile.o `test -f 'promptffile.f' || echo '$(srcdir)/'`promptffile.f
+
+libioapi_a-promptffile.obj: promptffile.f
+	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-promptffile.obj `if test -f 'promptffile.f'; then $(CYGPATH_W) 'promptffile.f'; else $(CYGPATH_W) '$(srcdir)/promptffile.f'; fi`
+
+libioapi_a-promptmfile.o: promptmfile.f
+	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-promptmfile.o `test -f 'promptmfile.f' || echo '$(srcdir)/'`promptmfile.f
+
+libioapi_a-promptmfile.obj: promptmfile.f
+	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-promptmfile.obj `if test -f 'promptmfile.f'; then $(CYGPATH_W) 'promptmfile.f'; else $(CYGPATH_W) '$(srcdir)/promptmfile.f'; fi`
+
 libioapi_a-sec2time.o: sec2time.f
 	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-sec2time.o `test -f 'sec2time.f' || echo '$(srcdir)/'`sec2time.f
 
 libioapi_a-sec2time.obj: sec2time.f
 	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-sec2time.obj `if test -f 'sec2time.f'; then $(CYGPATH_W) 'sec2time.f'; else $(CYGPATH_W) '$(srcdir)/sec2time.f'; fi`
+
+libioapi_a-setlam.o: setlam.f
+	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-setlam.o `test -f 'setlam.f' || echo '$(srcdir)/'`setlam.f
+
+libioapi_a-setlam.obj: setlam.f
+	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-setlam.obj `if test -f 'setlam.f'; then $(CYGPATH_W) 'setlam.f'; else $(CYGPATH_W) '$(srcdir)/setlam.f'; fi`
+
+libioapi_a-sortic.o: sortic.f
+	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-sortic.o `test -f 'sortic.f' || echo '$(srcdir)/'`sortic.f
+
+libioapi_a-sortic.obj: sortic.f
+	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-sortic.obj `if test -f 'sortic.f'; then $(CYGPATH_W) 'sortic.f'; else $(CYGPATH_W) '$(srcdir)/sortic.f'; fi`
+
+libioapi_a-str2real.o: str2real.f
+	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-str2real.o `test -f 'str2real.f' || echo '$(srcdir)/'`str2real.f
+
+libioapi_a-str2real.obj: str2real.f
+	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-str2real.obj `if test -f 'str2real.f'; then $(CYGPATH_W) 'str2real.f'; else $(CYGPATH_W) '$(srcdir)/str2real.f'; fi`
 
 libioapi_a-time2sec.o: time2sec.f
 	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-time2sec.o `test -f 'time2sec.f' || echo '$(srcdir)/'`time2sec.f
@@ -654,6 +776,8 @@ clean-modules:
 
 clean-local: clean-modules
 
+libioapi_a-currec.$(OBJEXT) : libioapi_a-nextime.$(OBJEXT)
+libioapi_a-currstep.$(OBJEXT) : libioapi_a-currec.$(OBJEXT)
 libioapi_a-dt2str.$(OBJEXT) : libioapi_a-hhmmss.$(OBJEXT) libioapi_a-mmddyy.$(OBJEXT) libioapi_a-nextime.$(OBJEXT)
 libioapi_a-getefile.$(OBJEXT) : libioapi_a-m3utilio.$(OBJEXT) libioapi_a-junit.$(OBJEXT)
 libioapi_a-m3utilio.$(OBJEXT) : $(srcdir)/../../CMAQ/CCTM/src/ICL/fixed/filenames/FILES_CTM.EXT

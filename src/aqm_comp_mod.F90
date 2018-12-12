@@ -13,7 +13,7 @@ module aqm_comp_mod
 
   implicit none
 
-  public 
+  public
 
 contains
 
@@ -157,12 +157,11 @@ contains
     ! -- local variables
     integer :: localrc
     integer :: de, deCount
-    type(aqm_config_type), pointer :: config
 
     ! -- begin
     if (present(rc)) rc = ESMF_FAILURE
 
-    call aqm_model_get(deCount=deCount, config=config, rc=localrc)
+    call aqm_model_get(deCount=deCount, rc=localrc)
     if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__)) return
 
     if (deCount > 0) then
@@ -193,13 +192,12 @@ contains
     character(len=AQM_MAXSTR) :: tStamp
     type(ESMF_Time)         :: currTime
     type(ESMF_TimeInterval) :: timeStep
-    type(aqm_config_type), pointer :: config
 
     ! -- begin
     rc = ESMF_SUCCESS
 
     ! -- check if model is active on this PET, bail out if not
-    call aqm_model_get(deCount=deCount, config=config, rc=rc)
+    call aqm_model_get(deCount=deCount, rc=rc)
     if (aqm_rc_check(rc, file=__FILE__, line=__LINE__)) then
       call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, msg="Failed to get model info", &
         line=__LINE__, file=__FILE__, rcToReturn=rc)
@@ -237,7 +235,7 @@ contains
 
     ! -- set model internal timestep
     tstep( 1 ) = 0
-    tstep( 2 ) = h * 100000 + m * 100 + s
+    tstep( 2 ) = h * 10000 + m * 100 + s
     tstep( 3 ) = tstep( 2 )
 
     call ESMF_TimeGet(currTime, yy=yy, mm=mm, dd=dd, h=h, m=m, s=s, &
@@ -249,7 +247,7 @@ contains
 
     ! -- set model internal date and time
     jdate = yy * 1000 + julday
-    jtime = h * 100000 + m * 100 + s
+    jtime = h * 10000 + m * 100 + s
 
     call cmaq_model_advance(jdate, jtime, tstep, rc=rc)
     if (aqm_rc_check(rc, file=__FILE__, line=__LINE__)) then
@@ -412,6 +410,18 @@ contains
               return  ! bail
           case ("height")
             call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % ht, rc=rc)
+            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+              line=__LINE__, &
+              file=__FILE__)) &
+              return  ! bail
+          case ("inst_aerodynamic_conductance")
+            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % cmm, rc=rc)
+            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+              line=__LINE__, &
+              file=__FILE__)) &
+              return  ! bail
+          case ("inst_canopy_resistance")
+            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % rc, rc=rc)
             if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
               line=__LINE__, &
               file=__FILE__)) &

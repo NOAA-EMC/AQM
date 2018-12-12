@@ -12,11 +12,13 @@ module AQM
   implicit none
 
   ! -- import fields
-  integer, parameter :: importFieldCount = 34
+  integer, parameter :: importFieldCount = 36
   character(len=*), dimension(importFieldCount), parameter :: &
     importFieldNames = (/ &
       "canopy_moisture_storage                  ", &
       "height                                   ", &
+      "inst_aerodynamic_conductance             ", &
+      "inst_canopy_resistance                   ", &
       "inst_cloud_frac_levels                   ", &
       "inst_convective_rainfall_amount          ", &
       "inst_exchange_coefficient_heat_levels    ", &
@@ -282,9 +284,8 @@ module AQM
       file=__FILE__)) &
       return  ! bail out
 
-    ! get coordinates from Grid object
-    ! assume all fields on same grid
-    ! use first field 
+    ! -- get coordinates from Grid object
+    ! -- assume all fields on same grid and use first field
     call ESMF_StateGet(importState, field=field, &
       itemName=trim(importFieldNames(1)), rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -448,18 +449,7 @@ module AQM
       file=__FILE__)) &
       return  ! bail out
 
-!   ! -- allocate arrays for tracer output
-!   call aqm_output_init(rc=rc)
-!   if (aqm_rc_check(rc)) then
-!     call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, &
-!       msg="Failed to allocate output arrays", &
-!       line=__LINE__, &
-!       file=__FILE__, &
-!       rcToReturn=rc)
-!     return  ! bail out
-!   end if
-
-    ! indicate that data initialization is complete (breaking out of init-loop)
+    ! -- indicate that data initialization is complete (breaking out of init-loop)
     call NUOPC_CompAttributeSet(model, &
       name="InitializeDataComplete", value="true", rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &

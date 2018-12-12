@@ -3,6 +3,7 @@ SUBDIRS = io shr CMAQ drv .
 cmaq_dir = $(builddir)/CMAQ
 cmaq_objects = \
 	$(cmaq_dir)/CCTM/src/aero/aero6/libCCTM_a-*.$(OBJEXT) \
+	$(cmaq_dir)/CCTM/src/biog/beis3/libCCTM_a-*.$(OBJEXT) \
 	$(cmaq_dir)/CCTM/src/cloud/acm_ae6/libCCTM_a-*.$(OBJEXT) \
 	$(cmaq_dir)/CCTM/src/depv/m3dry/libCCTM_a-*.$(OBJEXT) \
 	$(cmaq_dir)/CCTM/src/emis/emis/libCCTM_a-*.$(OBJEXT) \
@@ -10,6 +11,8 @@ cmaq_objects = \
 	$(cmaq_dir)/CCTM/src/grid/cartesian/libCCTM_a-*.$(OBJEXT) \
 	$(cmaq_dir)/CCTM/src/MECHS/cb6r3_ae6_aq/libCCTM_a-*.$(OBJEXT) \
 	$(cmaq_dir)/CCTM/src/phot/inline/libCCTM_a-*.$(OBJEXT) \
+	$(cmaq_dir)/CCTM/src/plrise/smoke/libCCTM_a-*.$(OBJEXT) \
+	$(cmaq_dir)/CCTM/src/procan/pa/libCCTM_a-*.$(OBJEXT) \
 	$(cmaq_dir)/CCTM/src/spcs/cgrid_spcs_nml/libCCTM_a-*.$(OBJEXT) \
 	$(cmaq_dir)/CCTM/src/STENEX/noop/libCCTM_a-*.$(OBJEXT) \
 	$(cmaq_dir)/CCTM/src/util/util/libCCTM_a-*.$(OBJEXT) \

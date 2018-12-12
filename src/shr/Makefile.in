@@ -104,7 +104,7 @@ am_libshr_a_OBJECTS = libshr_a-aqm_clock_mod.$(OBJEXT) \
 	libshr_a-aqm_iodata_mod.$(OBJEXT) \
 	libshr_a-aqm_iolayout_mod.$(OBJEXT) \
 	libshr_a-aqm_model_mod.$(OBJEXT) libshr_a-aqm_rc_mod.$(OBJEXT) \
-	libshr_a-aqm_share_mod.$(OBJEXT) \
+	libshr_a-aqm_methods.$(OBJEXT) \
 	libshr_a-aqm_species_mod.$(OBJEXT) \
 	libshr_a-aqm_state_mod.$(OBJEXT) \
 	libshr_a-aqm_tracers_mod.$(OBJEXT) \
@@ -272,12 +272,13 @@ top_srcdir = @top_srcdir@
 noinst_LIBRARIES = libshr.a
 libshr_a_SOURCES = aqm_clock_mod.F90 aqm_comm_mod.F90 aqm_config_mod.F90 aqm_const_mod.F90 \
 	aqm_data_mod.F90 aqm_domain_mod.F90 aqm_io_mod.F90 aqm_iodata_mod.F90 aqm_iolayout_mod.F90 \
-	aqm_model_mod.F90 aqm_rc_mod.F90 aqm_share_mod.F90 aqm_species_mod.F90 \
+	aqm_model_mod.F90 aqm_rc_mod.F90 aqm_methods.F90 aqm_species_mod.F90 \
 	aqm_state_mod.F90 aqm_tracers_mod.F90 aqm_types_mod.F90 aqm_vars_mod.F90
 
-libshr_a_CPPFLAGS = -DSUBST_CONST=\"CONST.EXT\"
+libshr_a_CPPFLAGS = -DSUBST_CONST=\"CONST.EXT\" -DSUBST_FILES_ID=\"FILES_CTM.EXT\"
 libshr_a_FCFLAGS = -I $(builddir)/../io/ioapi -I $(builddir)/../CMAQ \
-	-I $(builddir)/../CMAQ/CCTM/src/ICL/fixed/const
+	-I $(srcdir)/../CMAQ/CCTM/src/ICL/fixed/const -I \
+	$(srcdir)/../CMAQ/CCTM/src/ICL/fixed/filenames
 all: all-am
 
 .SUFFIXES:
@@ -399,11 +400,11 @@ libshr_a-aqm_rc_mod.o: aqm_rc_mod.F90
 libshr_a-aqm_rc_mod.obj: aqm_rc_mod.F90
 	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libshr_a_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_rc_mod.obj `if test -f 'aqm_rc_mod.F90'; then $(CYGPATH_W) 'aqm_rc_mod.F90'; else $(CYGPATH_W) '$(srcdir)/aqm_rc_mod.F90'; fi`
 
-libshr_a-aqm_share_mod.o: aqm_share_mod.F90
-	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libshr_a_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_share_mod.o `test -f 'aqm_share_mod.F90' || echo '$(srcdir)/'`aqm_share_mod.F90
+libshr_a-aqm_methods.o: aqm_methods.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libshr_a_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_methods.o `test -f 'aqm_methods.F90' || echo '$(srcdir)/'`aqm_methods.F90
 
-libshr_a-aqm_share_mod.obj: aqm_share_mod.F90
-	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libshr_a_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_share_mod.obj `if test -f 'aqm_share_mod.F90'; then $(CYGPATH_W) 'aqm_share_mod.F90'; else $(CYGPATH_W) '$(srcdir)/aqm_share_mod.F90'; fi`
+libshr_a-aqm_methods.obj: aqm_methods.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libshr_a_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_methods.obj `if test -f 'aqm_methods.F90'; then $(CYGPATH_W) 'aqm_methods.F90'; else $(CYGPATH_W) '$(srcdir)/aqm_methods.F90'; fi`
 
 libshr_a-aqm_species_mod.o: aqm_species_mod.F90
 	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libshr_a_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_species_mod.o `test -f 'aqm_species_mod.F90' || echo '$(srcdir)/'`aqm_species_mod.F90
@@ -658,7 +659,7 @@ libshr_a-aqm_model_mod.$(OBJEXT): libshr_a-aqm_clock_mod.$(OBJEXT) libshr_a-aqm_
 	libshr_a-aqm_config_mod.$(OBJEXT) libshr_a-aqm_data_mod.$(OBJEXT) libshr_a-aqm_domain_mod.$(OBJEXT) \
 	libshr_a-aqm_iolayout_mod.$(OBJEXT) libshr_a-aqm_rc_mod.$(OBJEXT) libshr_a-aqm_species_mod.$(OBJEXT) \
 	libshr_a-aqm_state_mod.$(OBJEXT) libshr_a-aqm_types_mod.$(OBJEXT)
-libshr_a-aqm_share_mod.$(OBJEXT): libshr_a-aqm_model_mod.$(OBJEXT)
+libshr_a-aqm_methods.$(OBJEXT): libshr_a-aqm_model_mod.$(OBJEXT)
 libshr_a-aqm_state_mod.$(OBJEXT): libshr_a-aqm_types_mod.$(OBJEXT)
 libshr_a-aqm_tracers_mod.$(OBJEXT): libshr_a-aqm_rc_mod.$(OBJEXT) libshr_a-aqm_config_mod.$(OBJEXT)
 

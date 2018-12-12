@@ -70,9 +70,7 @@ C**********************************************************************
       USE AEROSOL_CHEMISTRY
       USE RXNS_FUNCTION
       USE HRDATA
-#ifndef _AQM_
       USE PA_DEFN, Only: LIRR   ! Process Anaylsis control and data variable
-#endif
       USE DEGRADE_SETUP_TOX, ONLY : N_REACT, RXTANT_MAP
 
       IMPLICIT NONE
@@ -213,12 +211,12 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
          ELSE
            L_AQ_VRSN = .FALSE.
          END IF
-#ifndef _AQM_
+
          IF( LIRR ) THEN
             MSG = 'IRR Analysis not allowed with EBI solver'
             CALL M3EXIT( PNAME, JDATE, JTIME, MSG, XSTAT1 )
          END IF
-#endif
+
          MODEL_SPECIES = NSPCSD    ! WTH: find number of model species
 
 ! Determine whether DEGRADE rountines are needed.
@@ -262,11 +260,11 @@ c..If emissions processing requested stop
          OPEN( UNIT=ISTFL, FILE='iterstat.dat' )
          WRITE( ISTFL, 94020 )
 #endif
-#ifndef _AQM_
 C Define processor offsets
+
          PECOL_OFFSET = COLSD_PE( 1, MYPE+1 ) - 1
          PEROW_OFFSET = ROWSD_PE( 1, MYPE+1 ) - 1
-#endif
+
 C.. Get fractional seawater coverage from the OCEAN file.
 
          ALLOCATE( OPEN_ZONE( NCOLS, NROWS ), SURF_ZONE( NCOLS, NROWS ) )
@@ -305,11 +303,13 @@ C.. Get fractional surf-zone coverage from the OCEAN file.
 
          DEALLOCATE( OPEN_ZONE, SURF_ZONE )
 
+
          CALL SUBHFILE ( MET_CRO_3D, GXOFF, GYOFF,
      &                   STRTCOLMC2, ENDCOLMC2, STRTROWMC2, ENDROWMC2 )
 
          CALL SUBHFILE ( MET_CRO_3D, GXOFF, GYOFF,
      &                   STRTCOLMC3, ENDCOLMC3, STRTROWMC3, ENDROWMC3 )
+
          ALLOCATE( DENS( NCOLS, NROWS, NLAYS ), PRES( NCOLS, NROWS, NLAYS ),
      &             QV  ( NCOLS, NROWS, NLAYS ), TA  ( NCOLS, NROWS, NLAYS ),
      &             RJ  ( NCOLS, NROWS, NLAYS, NPHOTAB ),
@@ -344,6 +344,7 @@ C.. Compute number of time step loops and step size for EBI solver
       END IF
 
       N_INR_STEPS = 1
+
 
 C.. Get fractional seaice coverage from the METCRO2D file.
 
@@ -460,11 +461,7 @@ c..Get rate constants
 c..Call EBI solver
                N_EBI_IT = 0
 
-#ifdef _AQM_
-               CALL HRSOLVER( JDATE, JTIME, C, R, L )
-#else
                CALL HRSOLVER( JDATE, JTIME, (C+PECOL_OFFSET), (R+PEROW_OFFSET), L )
-#endif
 
 #ifdef hrstats
                MXEBI  = MAX( MXEBI, N_EBI_IT )

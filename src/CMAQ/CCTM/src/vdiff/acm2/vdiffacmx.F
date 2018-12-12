@@ -55,13 +55,9 @@ C-----------------------------------------------------------------------
       USE ASX_DATA_MOD
       USE VDIFF_MAP
       USE UTILIO_DEFN
-#ifndef _AQM_
       USE BIDI_MOD
-#endif
       USE LSM_MOD, ONLY: N_LUFRAC
-#ifndef _AQM_
       USE VDIFF_DIAG, NLPCR => NLPCR_MEAN
-#endif
 
       IMPLICIT NONE
 
@@ -96,15 +92,11 @@ C Local Variables:
       LOGICAL, SAVE :: FIRSTIME = .TRUE.
 
       REAL, ALLOCATABLE, SAVE :: DD_FAC     ( : )   ! combined subexpression
-!#ifndef _AQM_
       REAL, ALLOCATABLE, SAVE :: DD_FACJ    ( :,: ) ! combined subexpression for mosaic
       REAL, ALLOCATABLE, SAVE :: DD_FACJ_FST( :,: ) ! combined subexpression for mosaic
-!#endif
       REAL, ALLOCATABLE, SAVE :: DDBF       ( : )   ! secondary DDEP
-!#ifndef _AQM_
       REAL, ALLOCATABLE, SAVE :: DDBFJ      ( :,: ) ! secondary DDEP for mosaic
       REAL, ALLOCATABLE, SAVE :: DDBFJ_FST  ( :,: ) ! secondary DDEP for mosaic
-!#endif
       REAl, ALLOCATABLE, SAVE :: CMPF       ( : )   ! intermediate CMP
       REAL, ALLOCATABLE, SAVE :: CONC       ( :,: ) ! secondary CGRID expression
       REAL, ALLOCATABLE, SAVE :: EMIS       ( :,: ) ! emissions subexpression
@@ -133,11 +125,10 @@ C ACM Local Variables
       REAL     :: LFAC3( NLAYS )                ! intermediate factor for eddy
       REAL     :: LFAC4( NLAYS )                ! intermediate factor for eddy
       REAL, ALLOCATABLE, SAVE :: DEPVCR     ( : )   ! dep vel in one cell
-!#ifndef _AQM_
       REAL, ALLOCATABLE, SAVE :: DEPVJCR    ( :,: ) ! dep vel in one cell for each landuse
                                                     ! category
       REAL, ALLOCATABLE, SAVE :: DEPVJCR_FST( :,: ) ! dep vel (stomatal uptake only) in
-!#endif
+                                                    ! one cell for each landuse category
       REAL, ALLOCATABLE, SAVE :: EFAC1 ( : )
       REAL, ALLOCATABLE, SAVE :: EFAC2 ( : )
       REAL, ALLOCATABLE, SAVE :: POL   ( : )    ! prodn/lossrate = PLDV/DEPV
@@ -154,11 +145,7 @@ C ACM Local Variables
       INTEGER     ASTAT
       INTEGER     C, R, L, S, V, I, J           ! loop induction variables
       INTEGER     MDATE, MTIME                  ! internal simulation date&time
-#ifdef _AQM_
-      REAL     :: DZH   ( NLAYS )               ! ZF(L) - ZF(L-1)
-      REAL     :: DZHI  ( NLAYS )               ! 1/DZH
-      REAL     :: DZFI  ( NLAYS )               ! ZH(L+1) - ZH(L)
-#endif
+
       LOGICAL, SAVE :: XMOSAIC = .FALSE., XFST = .FALSE.
 
       INTERFACE
@@ -264,27 +251,13 @@ C ------------------------------------------- Row, Col LOOPS -----------
 
       DO 345 R = 1, MY_NROWS
       DO 344 C = 1, MY_NCOLS
-         DZH(1)  =  Met_Data%ZF( C,R,1 )
-         DZHI(1) =  1./DZH(1)
-         DO L = 2, NLAYS
-            DZH(L)  =  Met_Data%ZF( C,R,L ) - Met_Data%ZF( C,R,L-1 )
-            DZHI(L) =  1./DZH(L)
-         ENDDO
-         DO L = 1, NLAYS - 1
-            DZFI(L) = 1. / ( Met_Data%ZH( C,R,L+1 ) - Met_Data%ZH( C,R,L) )
-         ENDDO
-         DZFI(NLAYS) = DZFI(NLAYS-1)
 
 C for ACM time step
          DTLIM = DTSEC
 
 C dt = .75 dzf*dzh / Kz
          DO L = 1, NLAYS - 1
-#ifdef _AQM_
-            DTLIM = MIN( DTLIM, 0.75 / ( SEDDY( L,C,R ) * DZHI( L ) * DZFI( L ) ))
-#else
             DTLIM = MIN( DTLIM, 0.75 / ( SEDDY( L,C,R ) * Grid_Data%RDX3F( L ) ) )
-#endif
          END DO
          MBARKS = 0.0   ! array assignment
          MDWN = 0.0     ! array assignment
@@ -296,11 +269,7 @@ C conjoin ACM & EDDY ---------------------------------------------------
 
          IF ( Met_Data%CONVCT( C,R ) ) THEN   ! Do ACM for this column
             LCBL = Met_Data%LPBL( C,R )
-#ifdef _AQM_
-            MEDDY = SEDDY( 1,C,R ) / ( Met_Data%PBL( C,R ) - Met_Data%ZF(C,R,1) )
-#else
             MEDDY = SEDDY( 1,C,R ) / ( Met_Data%XPBL( C,R ) - X3FACE_GD( 1 ) )
-#endif
             FNL = 1.0 / ( 1.0 + ( ( KARMAN / ( -Met_Data%HOL( C,R ) ) ) ** 0.3333 )
      &                / ( 0.72 * KARMAN ) )
             MBAR = MEDDY * FNL
@@ -317,33 +286,16 @@ C conjoin ACM & EDDY ---------------------------------------------------
      &         WRITE( LOGDEV,1015 ) LCBL, MBAR, FNL, SEDDY( 1,C,R ), Met_Data%HOL( C,R )
 1015           FORMAT( ' LCBL, MBAR, FNL, SEDDY1, HOL:', I3, 1X, 4(1PE13.5) )
 
-#ifdef _AQM_
-            DO L = 2, LCBL
-#else
             DO L = 1, LCBL - 1
-#endif
                SEDDY( L,C,R ) = ( 1.0 - FNL ) * SEDDY( L,C,R  )
                MBARKS( L ) = MBAR
-#ifdef _AQM_
-               MDWN( L ) = MBAR * ( Met_Data%PBL( C,R ) - Met_Data%ZF(C,R,L-1)) * DZHI(L)
-#else
                MDWN( L ) = MBAR * ( Met_Data%XPBL( C,R ) - X3FACE_GD( L-1 ) ) * Grid_Data%RDX3F( L )
-#endif
             END DO
-#ifdef _AQM_
-            MBARKS( 1 ) = MBAR
-            MBARKS( LCBL ) = MDWN( LCBL )
-#else
             MBARKS( LCBL ) = MBAR * ( Met_Data%XPBL( C,R ) - X3FACE_GD( LCBL-1 ) ) * Grid_Data%RDX3F( LCBL )
             MDWN( LCBL ) = MBARKS( LCBL )
-#endif
 
 C Modify Timestep for ACM
-#ifdef _AQM_
-            RZ     = (Met_Data%ZF(C,R,LCBL) - Met_Data%ZF(C,R,1)) * DZHI(1)
-#else
             RZ     = ( X3FACE_GD( LCBL ) - X3FACE_GD( 1 ) ) * Grid_Data%RDX3F( 1 )
-#endif
             DTACM  = 1.0 / ( MBAR * RZ )
             DTLIM  = MIN( 0.75 * DTACM, DTLIM )
          ELSE
@@ -353,9 +305,7 @@ C Modify Timestep for ACM
 C-----------------------------------------------------------------------
 
          NLP = INT( DTSEC / DTLIM + 0.99 )
-#ifndef _AQM_
          IF ( VDIFFDIAG ) NLPCR( C,R ) = REAL( NLP )
-#endif
          DTS = DTSEC / REAL( NLP )
          DTDENS1 = DTS * Met_Data%DENS1( C,R )
          DFACP = THETA * DTS
@@ -381,15 +331,9 @@ C-----------------------------------------------------------------------
          END DO
 
          DO L = 1, NLAYS
-#ifdef _AQM_
-            DFSP( L ) = DFACP * DZHI( L )
-            DFSQ( L ) = DFACQ * DZHI( L )
-            EDDY( L ) = SEDDY( L,C,R )
-#else
             DFSP( L ) = DFACP * Grid_Data%RDX3F( L )
             DFSQ( L ) = DFACQ * Grid_Data%RDX3F( L )
-            EDDY( L ) = SEDDY( L,C,R ) * DZFI( L )
-#endif
+            EDDY( L ) = SEDDY( L,C,R )
          END DO
 
          RP = DFACP * Met_Data%RDEPVHT( C,R )
@@ -420,28 +364,15 @@ C These don`t change in the NLP sub-time step loop:---------------------
          END DO
          IF ( Met_Data%CONVCT( C,R ) ) THEN
             L = 1
-#ifdef _AQM_
-            DELP = Met_Data%PBL( C,R ) - Met_Data%ZF( C,R,L )
-#else
             DELP = Met_Data%XPBL( C,R ) - X3FACE_GD( L )
-#endif
             BB1( L ) = 1.0 + DELP * DFSP( L ) * MBARKS( L )
             LFAC1( L ) = DFSQ( L ) * DELP * MBARKS( L )
-#ifdef _AQM_
-            LFAC2( L ) = DFSQ( L ) * MDWN( L+1 ) * DZH( L+1 )
-#else
             LFAC2( L ) = DFSQ( L ) * MDWN( L+1 ) * Grid_Data%DX3F( L+1 )
-#endif
             DO L = 2, LCBL
                AA ( L ) = -DFACP * MBARKS( L )
                BB1( L ) = 1.0 + DFACP * MDWN( L )
-#ifdef _AQM_
-               EE1( L ) = -DFSP( L-1 ) * DZH( L ) * MDWN( L )
-               MFAC( L ) = DZH( L+1 ) * DZHI( L ) * MDWN( L+1 )
-#else
                EE1( L ) = -DFSP( L-1 ) * Grid_Data%DX3F( L ) * MDWN( L )
                MFAC( L ) = Grid_Data%DX3F( L+1 ) * Grid_Data%RDX3F( L ) * MDWN( L+1 )
-#endif
             END DO
          END IF
 

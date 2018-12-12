@@ -663,11 +663,7 @@ C...begin read
                     LMGLY_ADJ = IPHOT
               CASE(  'MGLY_ABS' )
                     LMGLY_ABS = IPHOT
-#ifdef _AQM_
-              CASE( 'ACETONE', 'CH3COCH3_RACM2' )
-#else
               CASE( 'ACETONE', 'CH3COCH3_RACM2', 'ACET_IUPAC10' )
-#endif
                     IF( NWL .EQ. NWL_ACETONE_FJX ) LACETONE  = IPHOT
               CASE( 'HCHOR_06', 'HCHO_R_SAPRC99', 'HCHO_RAD_RACM2', 'FORM_R_IUPAC10', 'HCHO_R_MCMv32' )
                     LHCHOR_06 = IPHOT

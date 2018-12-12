@@ -150,34 +150,27 @@ C-------------------------------------------------------------------------------
       USE DEPVVARS
       USE VGRD_DEFN      ! to get VGTYP_GD
       USE UTILIO_DEFN
-#ifndef _AQM_
 #ifdef parallel
       USE SE_MODULES     ! stenex (using SE_COMM_MODULE)
 #else
       USE NOOP_MODULES   ! stenex (using NOOP_COMM_MODULE)
 #endif     
       Use ABFlux_Mod     ! bidi NH3 exchange routines
-#endif
       Use LSM_Mod        ! land surface model variables needed for mosaic and bidi
-#ifndef _AQM_
       Use Mosaic_Mod     ! contains mosaic routines
-#endif
       Use ASX_DATA_MOD   ! contains CONSTANTS include
-#ifndef _AQM_
       Use BIDI_MOD, only:HGBIDI    ! contains CONSTANTS include
       Use HGSIM
 #ifdef twoway
       USE twoway_data_module, only : num_land_cat
-#endif
 #endif
 
       IMPLICIT NONE
 C Includes:
 
       INCLUDE SUBST_FILES_ID  ! file name parameters
-#ifndef _AQM_
       INCLUDE SUBST_PE_COMM   ! PE communication displacement and direction
-#endif
+
 C Arguments:
 
       INTEGER,     INTENT( IN )  :: jdate
@@ -337,7 +330,7 @@ C For Mosaic with Ammonia bi-directional flux
                scc_pr_23( l ) = 0.0
             END IF
          END DO
-#ifndef _AQM_
+
          IF ( .NOT. desc3( met_cro_2d ) ) THEN
             xmsg = 'Could not get  met_cro_2d  file description'
             CALL m3exit( pname, jdate, jtime, xmsg, xstat2 )
@@ -349,7 +342,7 @@ C For Mosaic with Ammonia bi-directional flux
          IF ( abflux ) THEN
             CALL Init_ABFlux( jdate, jtime )
          END IF
-#endif
+
          IF ( .NOT. ALLOCATED ( delta ) ) THEN
             ALLOCATE ( delta( my_ncols,my_nrows ) )
             delta( :,: ) = 0.0
@@ -420,7 +413,6 @@ C-------------------------------------------------------------------------------
 
       depvel_gas( :,:,: ) = 0.0  ! initialize for this time period
       pvd       ( :,:,: ) = 0.0  !     "       "    "    "    "
-#ifndef _AQM_
       cmp       ( :,:,: ) = 0.0  !     "       "    "    "    " JOB
 
       IF ( mosaic .OR. abflux ) THEN
@@ -481,7 +473,7 @@ C------------------------------------------------------------------------------
                CALL m3exit( pname, jdate, jtime, xmsg, xstat1 )
          END SELECT
       End If
-#endif
+
       DO r = 1, my_nrows
       DO c = 1, my_ncols
 
@@ -507,7 +499,7 @@ C------------------------------------------------------------------------------
          IF ( ( NINT(GRID_DATA%LWMASK( c,r )) .NE. 0 ) .AND. ( vegcr .GT. 0.0 ) ) THEN  ! land
 
             IF ( .NOT. ifwr ) THEN  ! approx canopy wetness - dew from Wesely
-#ifndef _AQM_
+
             ! canopy is wet if > trace precip. or moist with light winds
 
                IF ( ( MET_DATA%RN( c,r ) + MET_DATA%RC( c,r ) .GT. 0.025 ) .OR.
@@ -553,7 +545,7 @@ C------------------------------------------------------------------------------
                       MOSAIC_DATA%delta(c,r,j) = delta(c,r)
                   END DO
                END IF
-#endif
+
             ELSE  ! Already have canopy wetness explicitly from met model
 
                wrmax = 0.2e-3 * vegcr * laicr   ! [m]
@@ -616,15 +608,12 @@ C------------------------------------------------------------------------------
 
                IF ( l .EQ. l_HG ) THEN  ! elemental mercury gas
 ! calculate and save Henry's constant for use in HGSIM
-#ifdef _AQM_
-                     rsurf = 1.0e30
-#else
+
                   IF( HGBIDI ) THEN 
                      awhg = hlconst( subname( l ), tw, effective, hplus_h2o )* 0.08205 * tw
                   ELSE
                      rsurf = 1.0e30
                   END IF
-#endif
                ELSE   ! any species other than elemental mercury gas
 
          ! Use CMAQ function for calculating the effective Henry's Law
@@ -673,7 +662,7 @@ c        Iodide in sea-water based on SST  (mol /dm-3)
                   END IF
 
                   rsurf = rgw
-#ifndef _AQM_
+
                   IF ( mosaic ) THEN
                      DO j = 1, n_lufrac
                         IF ( lufraccr( j ) .GT. 0.0 ) THEN
@@ -681,7 +670,6 @@ c        Iodide in sea-water based on SST  (mol /dm-3)
                         END IF
                      END DO
                   END IF ! mosaic
-#endif
                END IF ! Hg
 
             ELSE   ! land
@@ -827,7 +815,7 @@ c        Iodide in sea-water based on SST  (mol /dm-3)
      &             + real( ifsnow ) * ( (1.0 - xm) / rsnow + xm / (rsndiff + rgw) )
 
                rsurf = 1.0 / rci
-#ifndef _AQM_
+
                IF ( mosaic ) THEN
                   DO j = 1, n_lufrac
                      IF ( lufraccr( j ) .GT. 0.0 ) THEN
@@ -865,7 +853,7 @@ c        Iodide in sea-water based on SST  (mol /dm-3)
                      END IF
                   END DO
                END IF ! mosaic
-#endif
+
             END IF   ! land or water cell
 
          ! Compute dry deposition velocity.
@@ -874,7 +862,7 @@ c        Iodide in sea-water based on SST  (mol /dm-3)
             rac = MET_DATA%RA( c,r ) + rbc
 
             depvel_gas( n,c,r ) = 1.0 / ( rsurf + rac )
-#ifndef _AQM_
+
             IF ( mosaic ) THEN
                DO j = 1, n_lufrac
                   IF ( lufraccr( j ) .GT. 0.0 ) THEN
@@ -913,7 +901,6 @@ c        Iodide in sea-water based on SST  (mol /dm-3)
                   END IF
                END DO
             END IF  ! mosaic
-
 C--------------------------------------------------------------------------
             IF ( abflux .And. l .Eq. l_NH3 ) THEN   ! Ammonia Bidirectional Flux
                cnh3  = cgridl1( n,c,r )
@@ -938,7 +925,6 @@ C--------------------------------------------------------------------------
                   cmp( 8,c,r ) = depvel_gas( n,c,r ) * cnh3
                END IF
             END IF   ! 'abflux'
-#endif
 
 C--------------------------------------------------------------------------
             IF ( sfc_hono ) THEN
@@ -1004,7 +990,7 @@ C Calculate production (pvd) for HONO; unit = ppm * m/s
 C--------------------------------------------------------------------------
 C Bidirectional mercury flux section
 C--------------------------------------------------------------------------
-#ifndef _AQM_
+
             IF ( HGBIDI .AND.  l .EQ. l_HG ) THEN
 
                chg  = cgridl1( n_HG,c,r )
@@ -1030,14 +1016,14 @@ C************* Call the Hg air surface exchange subroutine *********************
                END IF ! water
 
             END IF ! 'HG'
-#endif
+
                ! Check for negative values or NaN's
 
             IF ( depvel_gas( n,c,r ) .LT. 0.0 .OR.
      &           depvel_gas( n,c,r ) .NE. depvel_gas( n,c,r ) ) GO TO 999            
 
          END DO ddloop  ! (l = 1, n_spc_m3dry)
-#ifndef _AQM_
+
          IF ( HGBIDI .AND. NINT( GRID_DATA%LWMASK( c,r ) ) .EQ. 0 .AND. ( vegcr .EQ. 0.0 )) THEN ! water
 
             chgIIgas = cgridl1( n_HGII,c,r )
@@ -1049,7 +1035,7 @@ C************* Call the Hg air surface exchange subroutine *********************
             pvd( n_Hg,c,r ) = dpvd
 
          END IF ! water
-#endif
+
       END DO   ! c
       END DO   ! r
 

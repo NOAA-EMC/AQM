@@ -87,14 +87,13 @@ C-----------------------------------------------------------------------
       USE ASX_DATA_MOD
       USE VDIFF_MAP
       USE UTILIO_DEFN
-#ifndef _AQM_
       USE BIDI_MOD
       USE HGSIM
       USE LSM_MOD, Only: n_lufrac
       USE SEDIMENTATION
       USE VDIFF_DIAG
       USE PA_DEFN, Only: LIPR ! Process Anaylsis control and data variables
-#endif
+
       IMPLICIT NONE
 
       INCLUDE SUBST_FILES_ID  ! file name parameters
@@ -127,22 +126,19 @@ C Local Variables:
       INTEGER  STATUS                           ! ENV... status
 
       REAL          :: FCJACMF( NCOLS,NROWS,NLAYS )  ! 1/ mid-full layer vert Jac factor
-#ifndef _AQM_
       REAL             LRDX3M                        ! loop local RDX3M( L )
       REAL             FCMSF                         ! loop local RMSFX4( C,R )
-#endif
+
       REAL, ALLOCATABLE, SAVE :: CNGRD( :,:,:,: )    ! cgrid aero in mixing ratio
       REAL, ALLOCATABLE, SAVE :: DDEP     ( :,:,: )   ! ddep accumulator
       REAL, ALLOCATABLE, SAVE :: ICMP     ( :,:,: )   ! component flux accumlator 
-#ifndef _AQM_
       REAL, ALLOCATABLE, SAVE :: DDEPJ    ( :,:,:,: ) ! ddep for mosaic
       REAL, ALLOCATABLE, SAVE :: DDEPJ_FST( :,:,:,: ) ! ddep for stomtal/cuticular pathway
-#endif
+
       REAL     :: WRDD( NCOLS,NROWS )                 ! ddep write buffer
-#ifndef _AQM_
       REAL     :: WRDDJ( NCOLS,NROWS,N_LUFRAC+1 )     ! mosaic ddep write buffer
       REAL     :: WRDDJ_FST( NCOLS,NROWS,N_LUFRAC+1 ) ! mosaic stomatal flux write buffer
-#endif
+
       REAL, ALLOCATABLE, SAVE :: DDEP_PA  ( :,:,: )   ! ddep for process analysis
       REAL, ALLOCATABLE, SAVE :: EMIS_PA( :,:,:,: )   ! emis for process analysis
 
@@ -161,12 +157,8 @@ C Local Variables
       INTEGER     ASTAT
       INTEGER     C, R, L, S, V, I, J, OFF      ! loop induction variables
       INTEGER     MDATE, MTIME, MSTEP           ! internal simulation date&time
-#ifdef _AQM_
-      LOGICAL     :: HGBIDI = .FALSE.
-#endif
 
       INTERFACE
-#ifndef _AQM_
          SUBROUTINE PA_UPDATE_EMIS ( PNAME, VDEMIS, JDATE, JTIME, TSTEP )
             CHARACTER( * ), INTENT( IN )  :: PNAME
             REAL,           INTENT( IN )  :: VDEMIS( :,:,:,: )
@@ -179,7 +171,6 @@ C Local Variables
             INTEGER,        INTENT( IN )  :: JDATE, JTIME
             INTEGER,        INTENT( IN )  :: TSTEP( 3 )
          END SUBROUTINE PA_UPDATE_DDEP
-#endif
          SUBROUTINE CONV_CGRID ( CGRID, JDATE, JTIME, CNGRD )
             REAL, POINTER :: CGRID( :,:,:,: )
             INTEGER,        INTENT( IN )  :: JDATE, JTIME
@@ -224,14 +215,13 @@ C create global maps
 
 C Initialize the met data
          CALL INIT_MET( JDATE, JTIME, MOSAIC, ABFLUX, HGBIDI )
-#ifndef _AQM_
+
         IF ( HGBIDI ) THEN ! Initialize HGSIM module
            CALL INIT_HGSIM(JDATE, JTIME)
         END IF
-#endif
+
 C Get gravitational settling (sedi) flag.
          GRAV_SETL = .TRUE.         ! default
-#ifndef _AQM_
          VARDESC = 'Using J-,K-mode aerosols gravitational settling'
          GRAV_SETL = ENVYN( AERO_GRAV_SETL, VARDESC, GRAV_SETL, STATUS )
          IF ( STATUS .EQ. 0 ) WRITE( LOGDEV, '(5X, A)' ) VARDESC
@@ -255,7 +245,7 @@ C Open vdiff diagnostics file (ioapi header from cgrd)
                CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
             END IF
          END IF
-#endif
+
 C Allocate and initialize dry deposition array
 
          ALLOCATE ( DDEP( N_SPC_DEPV,NCOLS,NROWS ), STAT = ASTAT )
@@ -276,7 +266,7 @@ C Allocate and initialize dry deposition array
             XMSG = 'Failure initializing emissions module'
             CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          END IF
-#ifndef _AQM_
+
 C Set up for process analysis
          IF ( LIPR ) THEN
             ALLOCATE ( EMIS_PA( NCOLS,NROWS,EMLAYS,N_SPC_EMIS+1 ), STAT = ASTAT )
@@ -290,7 +280,7 @@ C Set up for process analysis
                CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
             END IF
          END IF
-#endif
+
 C Set up for grav. settling
          IF ( GRAV_SETL ) THEN
             ALLOCATE ( VSED_AE( N_AE_SPC,NLAYS,NCOLS,NROWS ), STAT = ASTAT )
@@ -308,7 +298,7 @@ C Set up for grav. settling
             CALL M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          END IF
          CNGRD = 0.0   ! array assignment
-#ifndef _AQM_
+ 
          IF ( MOSAIC ) THEN
             ALLOCATE ( DDEPJ( N_LUFRAC,N_SPC_DEPV,NCOLS,NROWS ), STAT = ASTAT )
             IF ( ASTAT .NE. 0 ) THEN
@@ -329,7 +319,7 @@ C Set up for grav. settling
      &            CALL OPDDEP_FST ( JDATE, JTIME, TSTEP( 1 ), N_SPC_DDEP )
             END IF   ! if Fst
          END IF   ! if Mosaic
-#endif
+
       END IF   !  if Firstime
 
       MDATE = JDATE
@@ -346,30 +336,17 @@ C read & interpolate met data
 
 C read & interpolate deposition velocities
       CALL GET_DEPV ( MDATE, MTIME, TSTEP, CGRID )      
-#ifndef _AQM_
+
       IF ( GRAV_SETL ) THEN
 C Get gravitational settling velocity for the vsed aero species:
 C AERO_SEDV assumes that every aero species is dry deposited and is diffused (trns)
 C Calculate the changes in the layer J-,K-mode aerosol concentrations
          CALL SEDI( MDATE, MTIME, DTSEC, VSED_AE, CGRID, CNGRD )
       END IF
-#endif
+
 C read & interpolate emissions data => VDEMIS from EMIS_DEFN module
       CALL GET_EMIS ( MDATE, MTIME, TSTEP, CONVPA, CGRID )
-#ifdef _AQM_
-      CALL EDDYX ( EDDYV )
-      DO R = 1, MY_NROWS
-         DO C = 1, MY_NCOLS
-            DO L = 1, NLAYS
-               SEDDY( L,C,R ) = EDDYV( C,R,L )
-            END DO
-         END DO
-      END DO
-      IF ( WSTEP .EQ. 0 ) THEN
-         DDEP = 0.0                      ! array assignment
-         ICMP = 0.0                      ! array assignment
-      END IF
-#else
+
       IF ( LIPR ) THEN
          DO S = 1, N_SPC_EMIS+1
             DO L = 1, EMLAYS
@@ -412,13 +389,9 @@ C EDDYV returned = Kz, where Kz is in m**2/sec
             IF ( FST ) DDEPJ_FST = 0.0   ! array assignment
          END IF
       END IF
-#endif
+
 C Calculate the change in concentration and dry dep from vertical diffusion and vsed
 C Note: cngrd is the argument keyword (from the INTERFACE); CNGRD is the actual argument
-#ifdef _AQM_
-         CALL VDIFFACMX( DTSEC, SEDDY, DDEP, ICMP,
-     &                   cngrd = CNGRD )
-#else
       IF ( .NOT. MOSAIC ) THEN
          CALL VDIFFACMX( DTSEC, SEDDY, DDEP, ICMP,
      &                   cngrd = CNGRD )
@@ -451,7 +424,7 @@ C Note: cngrd is the argument keyword (from the INTERFACE); CNGRD is the actual 
             END DO
          END IF
       END IF
-#endif
+
 C Revert non-molar mixing ratio species and re-order CGRID
       CALL REV_CGRID ( CNGRD, MDATE, MTIME, CGRID )
 
@@ -463,7 +436,7 @@ C If last call this hour:  write accumulated depositions:
          MTIME = JTIME
          CALL NEXTIME( MDATE, MTIME, TSTEP( 2 ) )
          WSTEP = 0
-#ifndef _AQM_
+
 #ifdef parallel_io
          IF ( WRITE_FIRSTIME ) THEN
             WRITE_FIRSTIME = .FALSE.
@@ -707,7 +680,7 @@ C re-set dry deposition array to zero
             DDEPJ = 0.0   ! array assignment
             IF ( FST ) DDEPJ_FST = 0.0   ! array assignment
          END IF
-#endif
+
       END IF
 
       RETURN

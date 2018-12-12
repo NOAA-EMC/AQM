@@ -80,11 +80,10 @@ C Arguments:
          if ( ios .ne. 0 ) then
             xmsg = '*** ERROR allocating conc_cr, zh_cr, ta_cr, pres_cr, qv_cr,'
      &           // ' or ext_cr, or ext_cr'
-!           call m3warn ( pname, sdate3d, stime3d, xmsg )
-            call m3warn ( pname, jdate, jtime, xmsg )
+            call m3warn ( pname, sdate3d, stime3d, xmsg )
             success = .false.; return
          end if
-#ifndef _AQM_
+
          ftype3d = grdded3
          sdate3d = jdate
          stime3d = jtime
@@ -131,7 +130,7 @@ c Open the diagnostic file
                success = .false.; return
             end if
          end if
-#endif
+
          return
       end function aod_init
 
@@ -146,9 +145,6 @@ C         AERO_DATA.F. Moments are wet after extract_aero
          use aero_data          
          use asx_data_mod     ! meteorology data, includes SUBST_CONST
          use utilio_defn
-#ifdef _AQM_
-         use grid_conf
-#endif
 
          implicit none
 

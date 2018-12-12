@@ -142,7 +142,6 @@ C-------------------------------------------------------------------------------
       Type :: GRID_Type
 !> Grid infomation:
 !> Vertical information
-!         Real,    Allocatable :: RDX3F  ( :,:,: )    ! reciprocal sigma layer thickness ! EMIS_DEFN.F, sedi.F, vdiffacmx.F, vdiffproc.F
          Real,    Allocatable :: DX3F   ( : )     ! sigma layer surface thickness ! vdiffacmx.F
          Real,    Allocatable :: RDX3F  ( : )     ! reciprocal sigma layer thickness ! EMIS_DEFN.F, sedi.F, vdiffacmx.F, vdiffproc.F
          Real,    Allocatable :: RDX3M  ( : )     ! reciprocal sigma midlayer thickness ! vdiffproc.F
@@ -251,8 +250,8 @@ C Land use information:
       Real,    Save :: CONVPA             ! Pressure conversion factor file units to Pa
       Logical, Save :: MINKZ     
       Logical, Save :: CSTAGUV            ! Winds are available with C stagger?
-!      Logical, Save :: ifwr     = .true.
       Logical, Save :: ifwr     = .false.
+
       Public        :: INIT_MET
 
       Logical, Private, Save :: ifsst    = .false.
@@ -410,6 +409,7 @@ C Arguments:
          Logical, Intent( IN ) :: MOSAIC
          Logical, Intent( IN ) :: ABFLUX
          Logical, Intent( IN ) :: HGBIDI
+
 C File variables:
          Real, Pointer    :: MSFX2   ( :,: )
          Real, Pointer    :: SOILCAT ( :,: )
@@ -430,7 +430,9 @@ C for INTERPX
 C-----------------------------------------------------------------------
 
          LOGDEV = INIT3()
+
          If( MET_INITIALIZED )Return
+
 !> Allocate buffers
          ALLOCATE ( BUFF1D( NLAYS ),
      &              BUFF2D( NCOLS,NROWS ),
@@ -608,8 +610,9 @@ C-----------------------------------------------------------------------
             ChemMos_Data%LU_Type = cat_lu
             ChemMos_Data%SubName = subname
          End If
-!#endif
+
 !> ccccccccccccccccccccc enable backward compatiblity ccccccccccccccccccccc
+
          If ( .Not. desc3( met_cro_2d ) ) Then
             xmsg = 'Could not get ' // MET_CRO_2D // ' file description'
             Call m3exit( pname, JDATE, JTIME, xmsg, xstat2 )
@@ -707,13 +710,14 @@ C-----------------------------------------------------------------------
                XMSG = 'Environment variable not set ... Using default:'
                Write( LOGDEV,'(5X, A)' ) XMSG
          End Select
+
          If ( .Not. MINKZ ) Then
             XMSG = 'This run uses Kz0UT, *NOT* KZMIN in subroutine edyintb.'
             Write( LOGDEV,'(/5X, A, /)' ) XMSG
          End If
 
 !> Open the met files
-
+        
          Call SUBHFILE ( GRID_CRO_2D, GXOFF, GYOFF,
      &                   STRTCOLGC2, ENDCOLGC2, STRTROWGC2, ENDROWGC2 )
          Call SUBHFILE ( MET_CRO_2D, GXOFF, GYOFF,
@@ -725,7 +729,6 @@ C-----------------------------------------------------------------------
          CALL SUBHFILE ( OCEAN_1, GXOFF, GYOFF,
      &                   STRTCOL_O1, ENDCOL_O1, STRTROW_O1, ENDROW_O1 )
 !> Get sigma coordinate variables
-#ifndef _AQM_
          X3M => BUFF1D
          Do L = 1, NLAYS
             Grid_Data%DX3F( L )  = X3FACE_GD( L ) - X3FACE_GD( L-1 )
@@ -738,6 +741,7 @@ C-----------------------------------------------------------------------
          Grid_Data%RDX3M( NLAYS ) = 0.0
 !> nullify pointer
          Nullify( X3M )
+
 !> reciprical of msfx2**2
 !> assign MSFX2
          MSFX2 => BUFF2D
@@ -752,7 +756,7 @@ C-----------------------------------------------------------------------
          Grid_Data%RMSFX4 = 1.0 / ( MSFX2**2 )
 !> nullify pointer
          Nullify( MSFX2 )
-#endif
+
          VNAME = 'LON'
          If ( .Not. INTERPX( GRID_CRO_2D, VNAME, PNAME,
      &                       STRTCOLGC2,ENDCOLGC2, STRTROWGC2,ENDROWGC2, 1,1,
@@ -816,6 +820,7 @@ C-----------------------------------------------------------------------
                Grid_Data%BSLP( C,R ) = BSLP( Grid_Data%SLTYP( C,R ) )
             End Forall
         End If
+
 !> Read fractional seawater and surf-zone coverage from the OCEAN file.
 !> Store results in the OCEAN and SZONE arrays.
          IF ( .NOT. OPEN3( OCEAN_1, FSREAD3, PNAME ) ) THEN
@@ -866,10 +871,13 @@ C-----------------------------------------------------------------------
 #else
          USE NOOP_MODULES    ! stenex (using NOOP_COMM_MODULE)
 #endif
+
          Implicit None
+ 
          Include SUBST_FILES_ID  ! file name parameters
          Include SUBST_PE_COMM   ! PE communication displacement and direction
          Include SUBST_CONST     ! constants
+
 C Arguments:
 
          Integer, Intent( IN ) :: JDATE, JTIME, TSTEP      ! internal simulation date&time
@@ -880,11 +888,7 @@ C Arguments:
 C Parameters:
          Real, Parameter :: cond_min = 1.0 / resist_max ! minimum conductance [m/s]
          Real, Parameter :: KZMAXL = 500.0    ! upper limit for min Kz [m]
-#ifdef _AQM_
          Real, Parameter :: KZ0UT  = 1.0      ! minimum eddy diffusivity [m**2/sec] KZ0
-#else
-         Real, Parameter :: KZ0UT  = 0.01     ! minimum eddy diffusivity [m**2/sec] KZ0
-#endif
          Real, Parameter :: KZL    = 0.01     ! lowest KZ
          Real, Parameter :: KZU    = 1.0      ! 2.0  ! highest KZ
          Real, Parameter :: EPS    = 1.0E-08  ! small number for temperature difference
@@ -1117,6 +1121,7 @@ C met vars
             XMSG = MSG1 // TRIM( VNAME ) // ' from ' // MET_CRO_2D
             Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          End If
+
          VNAME = 'WSPD10'
          If ( .Not. INTERPX( MET_CRO_2D, VNAME, PNAME,
      &                       STRTCOLMC2,ENDCOLMC2, STRTROWMC2,ENDROWMC2, 1,1,
@@ -1124,6 +1129,7 @@ C met vars
             XMSG = MSG1 // TRIM( VNAME ) // ' from ' // MET_CRO_2D
             Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          End If
+
          VNAME = 'HFX'
          If ( .Not. INTERPX( MET_CRO_2D, VNAME, PNAME,
      &                       STRTCOLMC2,ENDCOLMC2, STRTROWMC2,ENDROWMC2, 1,1,
@@ -1265,6 +1271,7 @@ C Met_cro_2D variables that have recently changed due to MCIP or WRF/CMAQ
          End Where
          Met_Data%QSS_GRND = Es_Grnd * 0.622 / ( Met_Data%PRSFC - Es_Grnd )
          Nullify( Es_Grnd )
+
          Es_Air => BUFF2D
          Where( Met_Data%TEMP2 .Lt. stdtemp )
             Es_Air = vp0 *Exp( 22.514 - ( 6.15e3 / Met_Data%TEMP2 ) )
@@ -1297,6 +1304,7 @@ C-------------------------------- MET_DOT_3D --------------------------------
 C get ghost values for wind fields in case of free trop.
          CALL SUBST_COMM ( Met_Data%UWIND, DSPL_N0_E1_S0_W0, DRCN_E )
          CALL SUBST_COMM ( Met_Data%VWIND, DSPL_N1_E0_S0_W0, DRCN_N )
+
 C-------------------------------- Calculated Variables --------------------------------
          Met_Data%DZF = Met_Data%ZF - EOSHIFT(Met_Data%ZF, Shift = -1, Boundary = 0.0, Dim = 3)
 
@@ -1318,15 +1326,9 @@ C-------------------------------- Calculated Variables -------------------------
          Met_Data%THETAV = TV * ( P0 / Met_Data%PRES ) ** 0.286
          Nullify( TV )
 
-#ifdef _AQM_
-!        Met_Data%MOL = 1.0 / g2ddata(:,:,rmol_ind)
-         Met_Data%MOL = 1.0
-#endif
-
 C------  Updating MOL, then WSTAR, MOLI, HOL 
          DO R = 1, MY_NROWS
             DO C = 1, MY_NCOLS
-#ifdef _AQM_
  !             CPAIR    = 1004.67 * ( 1.0 + 0.84 * Met_Data%QV( C,R,1 ) )   ! J/(K KG)
                CPAIR    = CPD * ( 1.0 + 0.84 * Met_Data%QV( C,R,1 ) )   ! J/(K KG)
                TMPFX    = Met_Data%HFX( C,R ) / ( CPAIR * Met_Data%DENS( C,R,1 ) )
@@ -1345,7 +1347,6 @@ C------  Updating MOL, then WSTAR, MOLI, HOL
                END IF
                Met_Data%MOL( C,R ) = Met_Data%THETAV( C,R,1 )
      &                             * Met_Data%USTAR( C,R ) ** 2 / ( karman * GRAV * TSTV )
-#endif
                IF ( Met_Data%MOL( C,R ) .LT. 0.0 ) THEN
                   Met_Data%WSTAR( C,R ) = Met_Data%USTAR( C,R ) * ( Met_Data%PBL( C,R )
      &                                  / ( karman * ABS( Met_Data%MOL( C,R ) ) ) ) ** 0.333333
@@ -1370,7 +1371,6 @@ C------
                END DO
 
                Met_Data%LPBL( C,R ) = LP
-#ifndef _AQM_
                If ( LP .Eq. 1 ) Then
                   FINT = ( Met_Data%PBL( C,R ) )
      &                 / ( Met_Data%ZF( C,R,LP ) )
@@ -1382,7 +1382,6 @@ C------
                   Met_Data%XPBL( C,R ) = FINT * ( X3FACE_GD( LP ) - X3FACE_GD( LP-1 ) )
      &                        + X3FACE_GD( LP-1 )
                End If
-#endif
             END DO
          END DO
          Where( Met_Data%THETAV( :,:,1 ) - Met_Data%THETAV( :,:,2 ) .Gt. EPS .And.

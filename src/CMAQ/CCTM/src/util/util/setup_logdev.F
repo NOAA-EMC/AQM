@@ -45,9 +45,7 @@ C   12 Aug 15 D.Wong:   Replaced SUBST_MPI with mpif.h
       USE UTILIO_DEFN
 
       IMPLICIT NONE
-#ifdef _AQM_
-      INTEGER :: LOGDEV
-#else
+
 #ifdef parallel      
       include 'mpif.h'
 #endif
@@ -81,7 +79,7 @@ C   12 Aug 15 D.Wong:   Replaced SUBST_MPI with mpif.h
          END IF
 
       END IF
-#endif
+
       LOGDEV = INIT3()
 
       END FUNCTION SETUP_LOGDEV 

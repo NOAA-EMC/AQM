@@ -511,7 +511,7 @@ C *** compute only on first pass
         FIRSTIME = .FALSE.
 
         LOGDEV = INIT3()
-!#ifndef _AQM_
+         
 C *** Get PM diagnostic file flag.
         PMDIAG = .TRUE.         ! default
         VARDESC = 'Flag for writing the aerosol diagnostic file'
@@ -528,12 +528,9 @@ C *** Get PM diagnostic file flag.
            XMSG = 'Environment variable not set ... Using default:'
            WRITE( LOGDEV, '(5X, A, I9)' ) XMSG
         END IF
-!#endif
+
 C *** Get flag for average PM diagnostic file.
         APMDIAG = .FALSE.         ! default
-!#ifdef _AQM_
-!        call get_env (pmdiag, CTM_PMDIAG, .true.)
-!#else
         VARDESC = 'Flag for writing the average aerosol diagnostic file'
         APMDIAG = ENVYN( CTM_APMDIAG, VARDESC, APMDIAG, STATUS )
 !       STATUS = 0
@@ -548,8 +545,6 @@ C *** Get flag for average PM diagnostic file.
            XMSG = 'Environment variable not set ... Using default:'
            WRITE( LOGDEV, '(5X, A, I9)' ) XMSG
         END IF
-
-!#endif
 
         CALL MAP_AERO()
         CALL MAP_PRECURSOR()
@@ -1105,7 +1100,7 @@ C *** calculate KBRONO2 from coarse mode
                END SELECT
 
             END DO LOOP_RATES
-#ifndef _AQM_
+
 #ifdef verbose_aerosol_chemistry
             IF ( DUMP_CELL ) THEN
 
@@ -1196,7 +1191,7 @@ C *** calculate KBRONO2 from coarse mode
 9500        FORMAT( A, ES12.4 )
 9501        FORMAT( A, ES12.4, A )          
 #endif
-#endif
+        
             END DO LOOP_COL
          END DO  LOOP_ROW
       END DO LOOP_LAY

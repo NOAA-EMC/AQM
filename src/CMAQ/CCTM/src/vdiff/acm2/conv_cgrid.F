@@ -126,8 +126,10 @@ C #/m**3 (number density), and m**2/m**3 (surface area) species
             END DO
 
          END IF
+
          CALL SUBHFILE ( MET_CRO_3D, GXOFF, GYOFF,
      &                   STRTCOLMC3, ENDCOLMC3, STRTROWMC3, ENDROWMC3 )
+
       END IF          !  if Firstime
 
       IF ( .NOT. INTERPX( MET_CRO_3D, 'DENS', PNAME,

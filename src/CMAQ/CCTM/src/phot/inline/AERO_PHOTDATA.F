@@ -110,7 +110,6 @@ C Local:
 !...Get flag to use core-shell mixing model for aerosol optical properties
 
          CORE_SHELL = .FALSE.         ! default
-#ifndef _AQM_
          XMSG = 'Use core-shell mixing model for aerosol optical properties'
          CORE_SHELL = ENVYN( CORE_SHELL_OPTICS, XMSG, CORE_SHELL, ESTAT )
          IF ( ESTAT .NE. 0 ) WRITE( LOGDEV, '(5X, A)' ) XMSG
@@ -125,9 +124,9 @@ C Local:
             XMSG = 'Environment variable not set ... Using default:'
             WRITE( LOGDEV, '(5X, A, L5)' ) XMSG, CORE_SHELL
          END IF
-#endif
+
 !...Get flag to use fast optics for volume mixing model for aerosol optical properties
-#ifndef _AQM_
+
          MIE_CALC = .FALSE.         ! default
          XMSG = 'Use Mie theory for aerosol optical properties of Internal mixing model'
          MIE_CALC = ENVYN( OPTICS_MIE_CALC, XMSG, MIE_CALC, ESTAT )
@@ -143,8 +142,6 @@ C Local:
             XMSG = 'Environment variable not set ... Using default:'
             WRITE( LOGDEV, '(5X, A, L5)' ) XMSG, MIE_CALC
          END IF
-#endif
-!        CALL MAP_AERO()
 C...Allocate needed arrays
 
          ALLOCATE ( VOL_MINS( N_MODE ), STAT = ALLOCSTAT )

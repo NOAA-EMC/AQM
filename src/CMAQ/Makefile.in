@@ -108,21 +108,56 @@ am_libCCTM_a_OBJECTS = $(AERO)/libCCTM_a-AERO_DATA.$(OBJEXT) \
 	$(AERO)/libCCTM_a-isocom.$(OBJEXT) \
 	$(AERO)/libCCTM_a-isofwd.$(OBJEXT) \
 	$(AERO)/libCCTM_a-isorev.$(OBJEXT) \
+	$(AERO)/libCCTM_a-opvis.$(OBJEXT) \
+	$(AERO)/libCCTM_a-opavis.$(OBJEXT) \
+	$(AERO)/libCCTM_a-oppmdiag.$(OBJEXT) \
+	$(AERO)/libCCTM_a-opapmdiag.$(OBJEXT) \
 	$(AERO)/libCCTM_a-PRECURSOR_DATA.$(OBJEXT) \
 	$(AERO)/libCCTM_a-PMDIAG_DATA.$(OBJEXT) \
 	$(AERO)/libCCTM_a-SOA_DEFN.$(OBJEXT) \
+	$(BIOG)/libCCTM_a-beis3.$(OBJEXT) \
+	$(BIOG)/libCCTM_a-checkmem.$(OBJEXT) \
+	$(BIOG)/libCCTM_a-chkgrid.$(OBJEXT) \
+	$(BIOG)/libCCTM_a-czangle.$(OBJEXT) \
+	$(BIOG)/libCCTM_a-getparb.$(OBJEXT) \
+	$(BIOG)/libCCTM_a-hrno.$(OBJEXT) \
+	$(BIOG)/libCCTM_a-parsline.$(OBJEXT) \
+	$(BIOG)/libCCTM_a-tmpbeis.$(OBJEXT) \
+	$(BIOG)/libCCTM_a-wrdaymsg.$(OBJEXT) \
 	$(CLOUD)/libCCTM_a-concld_prop_acm.$(OBJEXT) \
 	$(CLOUD)/libCCTM_a-hlconst.$(OBJEXT) \
+	$(DEPV)/libCCTM_a-ABFLUX_MOD.$(OBJEXT) \
+	$(DEPV)/libCCTM_a-BIDI_MOD.$(OBJEXT) \
 	$(DEPV)/libCCTM_a-cgrid_depv.$(OBJEXT) \
 	$(DEPV)/libCCTM_a-DEPV_DEFN.$(OBJEXT) \
 	$(DEPV)/libCCTM_a-DEPVVARS.$(OBJEXT) \
 	$(DEPV)/libCCTM_a-gas_depv_map.$(OBJEXT) \
+	$(DEPV)/libCCTM_a-HGSIM.$(OBJEXT) \
 	$(DEPV)/libCCTM_a-LSM_MOD.$(OBJEXT) \
 	$(DEPV)/libCCTM_a-MOSAIC_MOD.$(OBJEXT) \
+	$(DEPV)/libCCTM_a-opdepv_diag.$(OBJEXT) \
+	$(DEPV)/libCCTM_a-opdepv_mos.$(OBJEXT) \
+	$(DEPV)/libCCTM_a-opdepv_fst.$(OBJEXT) \
 	$(DEPV)/libCCTM_a-m3dry.$(OBJEXT) \
+	$(EMIS)/libCCTM_a-BEIS_DEFN.$(OBJEXT) \
+	$(EMIS)/libCCTM_a-BIOG_EMIS.$(OBJEXT) \
+	$(EMIS)/libCCTM_a-cropcal.$(OBJEXT) \
+	$(EMIS)/libCCTM_a-DUST_EMIS.$(OBJEXT) \
 	$(EMIS)/libCCTM_a-EMIS_DEFN.$(OBJEXT) \
+	$(EMIS)/libCCTM_a-LTNG_DEFN.$(OBJEXT) \
 	$(EMIS)/libCCTM_a-LUS_DEFN.$(OBJEXT) \
+	$(EMIS)/libCCTM_a-MGEMIS.$(OBJEXT) \
+	$(EMIS)/libCCTM_a-opemis.$(OBJEXT) \
+	$(EMIS)/libCCTM_a-PTBILIN.$(OBJEXT) \
+	$(EMIS)/libCCTM_a-PTMAP.$(OBJEXT) \
+	$(EMIS)/libCCTM_a-PTMET.$(OBJEXT) \
+	$(EMIS)/libCCTM_a-PT3D_DEFN.$(OBJEXT) \
 	$(EMIS)/libCCTM_a-SSEMIS.$(OBJEXT) \
+	$(EMIS)/libCCTM_a-STK_EMIS.$(OBJEXT) \
+	$(EMIS)/libCCTM_a-STK_PRMS.$(OBJEXT) \
+	$(EMIS)/libCCTM_a-tfabove.$(OBJEXT) \
+	$(EMIS)/libCCTM_a-tfbelow.$(OBJEXT) \
+	$(EMIS)/libCCTM_a-UDTYPES.$(OBJEXT) \
 	$(GAS)/libCCTM_a-degrade_data.$(OBJEXT) \
 	$(GAS)/libCCTM_a-degrade.$(OBJEXT) \
 	$(GAS)/libCCTM_a-DEGRADE_SETUP_TOX.$(OBJEXT) \
@@ -142,20 +177,33 @@ am_libCCTM_a_OBJECTS = $(AERO)/libCCTM_a-AERO_DATA.$(OBJEXT) \
 	$(GRID)/libCCTM_a-GRID_CONF.$(OBJEXT) \
 	$(GRID)/libCCTM_a-HGRD_DEFN.$(OBJEXT) \
 	$(GRID)/libCCTM_a-VGRD_DEFN.$(OBJEXT) \
+	$(GRID)/libCCTM_a-PAGRD_DEFN.$(OBJEXT) \
 	$(GRID)/libCCTM_a-PCGRID_DEFN.$(OBJEXT) \
 	$(MECHS)/libCCTM_a-RXNS_DATA_MODULE.$(OBJEXT) \
 	$(MECHS)/libCCTM_a-RXNS_FUNC_MODULE.$(OBJEXT) \
+	$(PA)/libCCTM_a-PA_DEFN.$(OBJEXT) \
+	$(PA)/libCCTM_a-pa_update.$(OBJEXT) \
 	$(PHOT)/libCCTM_a-AERO_PHOTDATA.$(OBJEXT) \
 	$(PHOT)/libCCTM_a-CLOUD_OPTICS.$(OBJEXT) \
 	$(PHOT)/libCCTM_a-complex_number_module.$(OBJEXT) \
 	$(PHOT)/libCCTM_a-CSQY_DATA.$(OBJEXT) \
 	$(PHOT)/libCCTM_a-o3totcol.$(OBJEXT) \
+	$(PHOT)/libCCTM_a-opphot.$(OBJEXT) \
 	$(PHOT)/libCCTM_a-phot.$(OBJEXT) \
 	$(PHOT)/libCCTM_a-PHOT_MET_DATA.$(OBJEXT) \
 	$(PHOT)/libCCTM_a-PHOT_MOD.$(OBJEXT) \
 	$(PHOT)/libCCTM_a-PHOTOLYSIS_ALBEDO.$(OBJEXT) \
 	$(PHOT)/libCCTM_a-SEAS_STRAT_O3_MIN.$(OBJEXT) \
 	$(PHOT)/libCCTM_a-twoway_rrtmg_aero_optics.$(OBJEXT) \
+	$(PLRISE)/libCCTM_a-delta_zs.$(OBJEXT) \
+	$(PLRISE)/libCCTM_a-fire_plmris.$(OBJEXT) \
+	$(PLRISE)/libCCTM_a-openlayout.$(OBJEXT) \
+	$(PLRISE)/libCCTM_a-oppt3d_diag.$(OBJEXT) \
+	$(PLRISE)/libCCTM_a-plmris.$(OBJEXT) \
+	$(PLRISE)/libCCTM_a-plsprd.$(OBJEXT) \
+	$(PLRISE)/libCCTM_a-preplm.$(OBJEXT) \
+	$(PLRISE)/libCCTM_a-ungridb2.$(OBJEXT) \
+	$(PLRISE)/libCCTM_a-write3_distr.$(OBJEXT) \
 	$(SPCS)/libCCTM_a-CGRID_SPCS.$(OBJEXT) \
 	$(STENEX)/libCCTM_a-noop_comm_module.$(OBJEXT) \
 	$(STENEX)/libCCTM_a-noop_data_copy_module.$(OBJEXT) \
@@ -168,14 +216,23 @@ am_libCCTM_a_OBJECTS = $(AERO)/libCCTM_a-AERO_DATA.$(OBJEXT) \
 	$(STENEX)/libCCTM_a-noop_slice_module.$(OBJEXT) \
 	$(STENEX)/libCCTM_a-noop_term_module.$(OBJEXT) \
 	$(STENEX)/libCCTM_a-noop_util_module.$(OBJEXT) \
+	$(UTIL)/libCCTM_a-bmatvec.$(OBJEXT) \
 	$(UTIL)/libCCTM_a-findex.$(OBJEXT) \
+	$(UTIL)/libCCTM_a-get_envlist.$(OBJEXT) \
 	$(UTIL)/libCCTM_a-setup_logdev.$(OBJEXT) \
+	$(UTIL)/libCCTM_a-subhdomain.$(OBJEXT) \
 	$(UTIL)/libCCTM_a-UTILIO_DEFN.$(OBJEXT) \
+	$(VDIFF)/libCCTM_a-aero_sedv.$(OBJEXT) \
 	$(VDIFF)/libCCTM_a-ASX_DATA_MOD.$(OBJEXT) \
 	$(VDIFF)/libCCTM_a-conv_cgrid.$(OBJEXT) \
 	$(VDIFF)/libCCTM_a-matrix1.$(OBJEXT) \
+	$(VDIFF)/libCCTM_a-opddep.$(OBJEXT) \
+	$(VDIFF)/libCCTM_a-opddep_fst.$(OBJEXT) \
+	$(VDIFF)/libCCTM_a-opddep_mos.$(OBJEXT) \
+	$(VDIFF)/libCCTM_a-rddepv.$(OBJEXT) \
+	$(VDIFF)/libCCTM_a-SEDIMENTATION.$(OBJEXT) \
 	$(VDIFF)/libCCTM_a-tri.$(OBJEXT) \
-	$(VDIFF)/libCCTM_a-vdiffacmx.$(OBJEXT) \
+	$(VDIFF)/libCCTM_a-VDIFF_DIAG.$(OBJEXT) \
 	$(VDIFF)/libCCTM_a-VDIFF_MAP.$(OBJEXT) \
 	$(VDIFF)/libCCTM_a-vdiffproc.$(OBJEXT)
 libCCTM_a_OBJECTS = $(am_libCCTM_a_OBJECTS)
@@ -370,36 +427,54 @@ top_srcdir = @top_srcdir@
 noinst_LIBRARIES = libCCTM.a
 
 # CCTM sources
-CCTM = $(srcdir)/CCTM/src
+CCTM = $(builddir)/CCTM/src
 libCCTM = libCCTM_a
 libCCTM_a_SOURCES = $(AERO)/AERO_DATA.F $(AERO)/aero_depv.F \
 	$(AERO)/aero_driver.F $(AERO)/AERO_EMIS.F \
 	$(AERO)/AEROMET_DATA.F $(AERO)/AEROSOL_CHEMISTRY.F \
 	$(AERO)/aero_subs.F $(AERO)/AOD_DEFN.F $(AERO)/coags.f \
 	$(AERO)/getpar.f $(AERO)/isocom.f $(AERO)/isofwd.f \
-	$(AERO)/isorev.f $(AERO)/isrpia.inc $(AERO)/PRECURSOR_DATA.F \
-	$(AERO)/PMDIAG_DATA.F $(AERO)/SOA_DEFN.F \
-	$(CLOUD)/concld_prop_acm.F $(CLOUD)/hlconst.F \
+	$(AERO)/isorev.f $(AERO)/isrpia.inc $(AERO)/opvis.F \
+	$(AERO)/opavis.F $(AERO)/oppmdiag.F $(AERO)/opapmdiag.F \
+	$(AERO)/PRECURSOR_DATA.F $(AERO)/PMDIAG_DATA.F \
+	$(AERO)/SOA_DEFN.F $(BIOG)/beis3.F $(BIOG)/checkmem.f \
+	$(BIOG)/chkgrid.F $(BIOG)/czangle.F $(BIOG)/getparb.f \
+	$(BIOG)/hrno.F $(BIOG)/parsline.f $(BIOG)/tmpbeis.F \
+	$(BIOG)/wrdaymsg.f $(CLOUD)/concld_prop_acm.F \
+	$(CLOUD)/hlconst.F $(DEPV)/ABFLUX_MOD.F $(DEPV)/BIDI_MOD.F \
 	$(DEPV)/cgrid_depv.F $(DEPV)/DEPV_DEFN.F $(DEPV)/DEPVVARS.F \
-	$(DEPV)/gas_depv_map.F $(DEPV)/LSM_MOD.F $(DEPV)/MOSAIC_MOD.F \
-	$(DEPV)/m3dry.F $(EMIS)/EMIS_DEFN.F $(EMIS)/LUS_DEFN.F \
-	$(EMIS)/SSEMIS.F $(GAS)/degrade_data.F $(GAS)/degrade.F \
+	$(DEPV)/gas_depv_map.F $(DEPV)/HGSIM.F $(DEPV)/LSM_MOD.F \
+	$(DEPV)/MOSAIC_MOD.F $(DEPV)/opdepv_diag.F \
+	$(DEPV)/opdepv_mos.F $(DEPV)/opdepv_fst.F $(DEPV)/m3dry.F \
+	$(EMIS)/BEIS_DEFN.F $(EMIS)/BIOG_EMIS.F $(EMIS)/cropcal.F \
+	$(EMIS)/DUST_EMIS.F $(EMIS)/EMIS_DEFN.F $(EMIS)/LTNG_DEFN.F \
+	$(EMIS)/LUS_DEFN.F $(EMIS)/MGEMIS.F $(EMIS)/opemis.F \
+	$(EMIS)/PTBILIN.F $(EMIS)/PTMAP.F $(EMIS)/PTMET.F \
+	$(EMIS)/PT3D_DEFN.F $(EMIS)/SSEMIS.F $(EMIS)/STK_EMIS.F \
+	$(EMIS)/STK_PRMS.F $(EMIS)/tfabove.F $(EMIS)/tfbelow.F \
+	$(EMIS)/UDTYPES.F $(GAS)/degrade_data.F $(GAS)/degrade.F \
 	$(GAS)/DEGRADE_SETUP_TOX.F $(GAS)/final_degrade.F \
 	$(GAS)/find_degraded.F $(GAS)/hrdata_mod.F $(GAS)/hrdriver.F \
 	$(GAS)/hrg1.F $(GAS)/hrg2.F $(GAS)/hrg3.F $(GAS)/hrg4.F \
 	$(GAS)/hrinit.F $(GAS)/hrprodloss.F $(GAS)/hrrates.F \
 	$(GAS)/hrsolver.F $(GAS)/init_degrade.F $(GRID)/GRID_CONF.F \
-	$(GRID)/HGRD_DEFN.F $(GRID)/VGRD_DEFN.F $(GRID)/PCGRID_DEFN.F \
-	$(ICL)/const/CONST.EXT $(ICL)/emctrl/EMISPRM.EXT \
-	$(ICL)/filenames/FILES_CTM.EXT $(ICL)/mpi/PE_COMM.EXT \
-	$(MECHS)/RXNS_DATA_MODULE.F90 $(MECHS)/RXNS_FUNC_MODULE.F90 \
-	$(PHOT)/AERO_PHOTDATA.F $(PHOT)/CLOUD_OPTICS.F \
-	$(PHOT)/complex_number_module.F90 $(PHOT)/CSQY_DATA.F \
-	$(PHOT)/o3totcol.f $(PHOT)/OMI_1979_to_2015.dat $(PHOT)/phot.F \
+	$(GRID)/HGRD_DEFN.F $(GRID)/VGRD_DEFN.F $(GRID)/PAGRD_DEFN.F \
+	$(GRID)/PCGRID_DEFN.F $(ICL)/const/CONST.EXT \
+	$(ICL)/emctrl/EMISPRM.EXT $(ICL)/filenames/FILES_CTM.EXT \
+	$(ICL)/mpi/PE_COMM.EXT $(MECHS)/RXNS_DATA_MODULE.F90 \
+	$(MECHS)/RXNS_FUNC_MODULE.F90 $(PA)/PA_DEFN.F \
+	$(PA)/pa_update.F $(PHOT)/AERO_PHOTDATA.F \
+	$(PHOT)/CLOUD_OPTICS.F $(PHOT)/complex_number_module.F90 \
+	$(PHOT)/CSQY_DATA.F $(PHOT)/o3totcol.f \
+	$(PHOT)/OMI_1979_to_2015.dat $(PHOT)/opphot.F $(PHOT)/phot.F \
 	$(PHOT)/PHOT_MET_DATA.F $(PHOT)/PHOT_MOD.F \
 	$(PHOT)/PHOTOLYSIS_ALBEDO.F $(PHOT)/PHOT_OPTICS.dat \
 	$(PHOT)/SEAS_STRAT_O3_MIN.F \
-	$(PHOT)/twoway_rrtmg_aero_optics.F90 $(SPCS)/CGRID_SPCS.F \
+	$(PHOT)/twoway_rrtmg_aero_optics.F90 $(PLRISE)/delta_zs.f \
+	$(PLRISE)/fire_plmris.F $(PLRISE)/openlayout.F \
+	$(PLRISE)/oppt3d_diag.F $(PLRISE)/plmris.F $(PLRISE)/plsprd.f \
+	$(PLRISE)/preplm.f $(PLRISE)/ungridb2.f \
+	$(PLRISE)/write3_distr.f $(SPCS)/CGRID_SPCS.F \
 	$(STENEX)/noop_comm_module.f $(STENEX)/noop_data_copy_module.f \
 	$(STENEX)/noop_gather_module.f \
 	$(STENEX)/noop_global_max_module.f \
@@ -407,21 +482,26 @@ libCCTM_a_SOURCES = $(AERO)/AERO_DATA.F $(AERO)/aero_depv.F \
 	$(STENEX)/noop_global_sum_module.f \
 	$(STENEX)/noop_init_module.f $(STENEX)/noop_modules.f \
 	$(STENEX)/noop_slice_module.f $(STENEX)/noop_term_module.f \
-	$(STENEX)/noop_util_module.f $(UTIL)/findex.f \
-	$(UTIL)/setup_logdev.F $(UTIL)/UTILIO_DEFN.F \
-	$(VDIFF)/ASX_DATA_MOD.F $(VDIFF)/conv_cgrid.F \
-	$(VDIFF)/matrix1.F $(VDIFF)/tri.F $(VDIFF)/vdiffacmx.F \
+	$(STENEX)/noop_util_module.f $(UTIL)/bmatvec.F \
+	$(UTIL)/findex.f $(UTIL)/get_envlist.f $(UTIL)/setup_logdev.F \
+	$(UTIL)/subhdomain.F $(UTIL)/UTILIO_DEFN.F \
+	$(VDIFF)/aero_sedv.F $(VDIFF)/ASX_DATA_MOD.F \
+	$(VDIFF)/conv_cgrid.F $(VDIFF)/matrix1.F $(VDIFF)/opddep.F \
+	$(VDIFF)/opddep_fst.F $(VDIFF)/opddep_mos.F $(VDIFF)/rddepv.F \
+	$(VDIFF)/SEDIMENTATION.F $(VDIFF)/tri.F $(VDIFF)/VDIFF_DIAG.F \
 	$(VDIFF)/VDIFF_MAP.F $(VDIFF)/vdiffproc.F
 
 # aero
 AERO = $(CCTM)/aero/aero6
 libAERO = $(AERO)/$(libCCTM)-
 
+# biog
+BIOG = $(CCTM)/biog/beis3
+libBIOG = $(BIOG)/$(libCCTM)-
+
 # cloud
 CLOUD = $(CCTM)/cloud/acm_ae6
 libCLOUD = $(CLOUD)/$(libCCTM)-
-
-# couple
 
 # depv
 DEPV = $(CCTM)/depv/m3dry
@@ -440,15 +520,23 @@ GRID = $(CCTM)/grid/cartesian
 libGRID = $(GRID)/$(libCCTM)-
 
 # includes
-ICL = $(CCTM)/ICL/fixed
+ICL = $(srcdir)/CCTM/src/ICL/fixed
 
 # MECHS
 MECHS = $(CCTM)/MECHS/cb6r3_ae6_aq
 libMECHS = $(MECHS)/$(libCCTM)-
 
+# Process Analysis
+PA = $(CCTM)/procan/pa
+libPA = $(PA)/$(libCCTM)-
+
 # phot sources
 PHOT = $(CCTM)/phot/inline
 libPHOT = $(PHOT)/$(libCCTM)-
+
+# plrise
+PLRISE = $(CCTM)/plrise/smoke
+libPLRISE = $(PLRISE)/$(libCCTM)-
 
 # scps
 SPCS = $(CCTM)/spcs/cgrid_spcs_nml
@@ -465,11 +553,16 @@ libUTIL = $(UTIL)/$(libCCTM)-
 # vdiff
 VDIFF = $(CCTM)/vdiff/acm2
 libVDIFF = $(VDIFF)/$(libCCTM)-
+
+#	$(VDIFF)/vdiffacmx.F
 libCCTM_a_CPPFLAGS = -DSUBST_FILES_ID=\"FILES_CTM.EXT\" \
 	-DSUBST_CONST=\"CONST.EXT\" -DSUBST_EMISPRM=\"EMISPRM.EXT\" \
 	-DSUBST_PE_COMM=\"PE_COMM.EXT\" -DSUBST_COMM=NOOP_COMM \
-	-DMOSAIC_MOD=MOSAIC_MODULE -DMosaic_Mod=Mosaic_Module -Dmpas \
-	-D_AQM_
+	-DSUBST_BARRIER=NOOP_BARRIER \
+	-DSUBST_SUBGRID_INDEX=NOOP_SUBGRID_INDEX \
+	-DMOSAIC_MOD=MOSAIC_MODULE -DMosaic_Mod=Mosaic_Module \
+	-DVDIFFACMX=DUMMY_VDIFFACMX -Dverbose_aero -Dverbose_gas \
+	-Dmpas -D_AQM_
 libCCTM_a_FFLAGS = $(CCTM_FFLAGS) -I $(ICL)/filenames -I $(ICL)/const \
 	-I $(ICL)/emctrl -I$(ICL)/mpi -I $(builddir)/../io/ioapi
 libCCTM_a_FCFLAGS = $(CCTM_FCFLAGS) -I $(builddir)/../../util -I \
@@ -543,12 +636,44 @@ $(AERO)/libCCTM_a-isofwd.$(OBJEXT): $(AERO)/$(am__dirstamp) \
 	$(AERO)/$(DEPDIR)/$(am__dirstamp)
 $(AERO)/libCCTM_a-isorev.$(OBJEXT): $(AERO)/$(am__dirstamp) \
 	$(AERO)/$(DEPDIR)/$(am__dirstamp)
+$(AERO)/libCCTM_a-opvis.$(OBJEXT): $(AERO)/$(am__dirstamp) \
+	$(AERO)/$(DEPDIR)/$(am__dirstamp)
+$(AERO)/libCCTM_a-opavis.$(OBJEXT): $(AERO)/$(am__dirstamp) \
+	$(AERO)/$(DEPDIR)/$(am__dirstamp)
+$(AERO)/libCCTM_a-oppmdiag.$(OBJEXT): $(AERO)/$(am__dirstamp) \
+	$(AERO)/$(DEPDIR)/$(am__dirstamp)
+$(AERO)/libCCTM_a-opapmdiag.$(OBJEXT): $(AERO)/$(am__dirstamp) \
+	$(AERO)/$(DEPDIR)/$(am__dirstamp)
 $(AERO)/libCCTM_a-PRECURSOR_DATA.$(OBJEXT): $(AERO)/$(am__dirstamp) \
 	$(AERO)/$(DEPDIR)/$(am__dirstamp)
 $(AERO)/libCCTM_a-PMDIAG_DATA.$(OBJEXT): $(AERO)/$(am__dirstamp) \
 	$(AERO)/$(DEPDIR)/$(am__dirstamp)
 $(AERO)/libCCTM_a-SOA_DEFN.$(OBJEXT): $(AERO)/$(am__dirstamp) \
 	$(AERO)/$(DEPDIR)/$(am__dirstamp)
+$(BIOG)/$(am__dirstamp):
+	@$(MKDIR_P) $(BIOG)
+	@: > $(BIOG)/$(am__dirstamp)
+$(BIOG)/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) $(BIOG)/$(DEPDIR)
+	@: > $(BIOG)/$(DEPDIR)/$(am__dirstamp)
+$(BIOG)/libCCTM_a-beis3.$(OBJEXT): $(BIOG)/$(am__dirstamp) \
+	$(BIOG)/$(DEPDIR)/$(am__dirstamp)
+$(BIOG)/libCCTM_a-checkmem.$(OBJEXT): $(BIOG)/$(am__dirstamp) \
+	$(BIOG)/$(DEPDIR)/$(am__dirstamp)
+$(BIOG)/libCCTM_a-chkgrid.$(OBJEXT): $(BIOG)/$(am__dirstamp) \
+	$(BIOG)/$(DEPDIR)/$(am__dirstamp)
+$(BIOG)/libCCTM_a-czangle.$(OBJEXT): $(BIOG)/$(am__dirstamp) \
+	$(BIOG)/$(DEPDIR)/$(am__dirstamp)
+$(BIOG)/libCCTM_a-getparb.$(OBJEXT): $(BIOG)/$(am__dirstamp) \
+	$(BIOG)/$(DEPDIR)/$(am__dirstamp)
+$(BIOG)/libCCTM_a-hrno.$(OBJEXT): $(BIOG)/$(am__dirstamp) \
+	$(BIOG)/$(DEPDIR)/$(am__dirstamp)
+$(BIOG)/libCCTM_a-parsline.$(OBJEXT): $(BIOG)/$(am__dirstamp) \
+	$(BIOG)/$(DEPDIR)/$(am__dirstamp)
+$(BIOG)/libCCTM_a-tmpbeis.$(OBJEXT): $(BIOG)/$(am__dirstamp) \
+	$(BIOG)/$(DEPDIR)/$(am__dirstamp)
+$(BIOG)/libCCTM_a-wrdaymsg.$(OBJEXT): $(BIOG)/$(am__dirstamp) \
+	$(BIOG)/$(DEPDIR)/$(am__dirstamp)
 $(CLOUD)/$(am__dirstamp):
 	@$(MKDIR_P) $(CLOUD)
 	@: > $(CLOUD)/$(am__dirstamp)
@@ -565,6 +690,10 @@ $(DEPV)/$(am__dirstamp):
 $(DEPV)/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) $(DEPV)/$(DEPDIR)
 	@: > $(DEPV)/$(DEPDIR)/$(am__dirstamp)
+$(DEPV)/libCCTM_a-ABFLUX_MOD.$(OBJEXT): $(DEPV)/$(am__dirstamp) \
+	$(DEPV)/$(DEPDIR)/$(am__dirstamp)
+$(DEPV)/libCCTM_a-BIDI_MOD.$(OBJEXT): $(DEPV)/$(am__dirstamp) \
+	$(DEPV)/$(DEPDIR)/$(am__dirstamp)
 $(DEPV)/libCCTM_a-cgrid_depv.$(OBJEXT): $(DEPV)/$(am__dirstamp) \
 	$(DEPV)/$(DEPDIR)/$(am__dirstamp)
 $(DEPV)/libCCTM_a-DEPV_DEFN.$(OBJEXT): $(DEPV)/$(am__dirstamp) \
@@ -573,9 +702,17 @@ $(DEPV)/libCCTM_a-DEPVVARS.$(OBJEXT): $(DEPV)/$(am__dirstamp) \
 	$(DEPV)/$(DEPDIR)/$(am__dirstamp)
 $(DEPV)/libCCTM_a-gas_depv_map.$(OBJEXT): $(DEPV)/$(am__dirstamp) \
 	$(DEPV)/$(DEPDIR)/$(am__dirstamp)
+$(DEPV)/libCCTM_a-HGSIM.$(OBJEXT): $(DEPV)/$(am__dirstamp) \
+	$(DEPV)/$(DEPDIR)/$(am__dirstamp)
 $(DEPV)/libCCTM_a-LSM_MOD.$(OBJEXT): $(DEPV)/$(am__dirstamp) \
 	$(DEPV)/$(DEPDIR)/$(am__dirstamp)
 $(DEPV)/libCCTM_a-MOSAIC_MOD.$(OBJEXT): $(DEPV)/$(am__dirstamp) \
+	$(DEPV)/$(DEPDIR)/$(am__dirstamp)
+$(DEPV)/libCCTM_a-opdepv_diag.$(OBJEXT): $(DEPV)/$(am__dirstamp) \
+	$(DEPV)/$(DEPDIR)/$(am__dirstamp)
+$(DEPV)/libCCTM_a-opdepv_mos.$(OBJEXT): $(DEPV)/$(am__dirstamp) \
+	$(DEPV)/$(DEPDIR)/$(am__dirstamp)
+$(DEPV)/libCCTM_a-opdepv_fst.$(OBJEXT): $(DEPV)/$(am__dirstamp) \
 	$(DEPV)/$(DEPDIR)/$(am__dirstamp)
 $(DEPV)/libCCTM_a-m3dry.$(OBJEXT): $(DEPV)/$(am__dirstamp) \
 	$(DEPV)/$(DEPDIR)/$(am__dirstamp)
@@ -585,11 +722,43 @@ $(EMIS)/$(am__dirstamp):
 $(EMIS)/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) $(EMIS)/$(DEPDIR)
 	@: > $(EMIS)/$(DEPDIR)/$(am__dirstamp)
+$(EMIS)/libCCTM_a-BEIS_DEFN.$(OBJEXT): $(EMIS)/$(am__dirstamp) \
+	$(EMIS)/$(DEPDIR)/$(am__dirstamp)
+$(EMIS)/libCCTM_a-BIOG_EMIS.$(OBJEXT): $(EMIS)/$(am__dirstamp) \
+	$(EMIS)/$(DEPDIR)/$(am__dirstamp)
+$(EMIS)/libCCTM_a-cropcal.$(OBJEXT): $(EMIS)/$(am__dirstamp) \
+	$(EMIS)/$(DEPDIR)/$(am__dirstamp)
+$(EMIS)/libCCTM_a-DUST_EMIS.$(OBJEXT): $(EMIS)/$(am__dirstamp) \
+	$(EMIS)/$(DEPDIR)/$(am__dirstamp)
 $(EMIS)/libCCTM_a-EMIS_DEFN.$(OBJEXT): $(EMIS)/$(am__dirstamp) \
+	$(EMIS)/$(DEPDIR)/$(am__dirstamp)
+$(EMIS)/libCCTM_a-LTNG_DEFN.$(OBJEXT): $(EMIS)/$(am__dirstamp) \
 	$(EMIS)/$(DEPDIR)/$(am__dirstamp)
 $(EMIS)/libCCTM_a-LUS_DEFN.$(OBJEXT): $(EMIS)/$(am__dirstamp) \
 	$(EMIS)/$(DEPDIR)/$(am__dirstamp)
+$(EMIS)/libCCTM_a-MGEMIS.$(OBJEXT): $(EMIS)/$(am__dirstamp) \
+	$(EMIS)/$(DEPDIR)/$(am__dirstamp)
+$(EMIS)/libCCTM_a-opemis.$(OBJEXT): $(EMIS)/$(am__dirstamp) \
+	$(EMIS)/$(DEPDIR)/$(am__dirstamp)
+$(EMIS)/libCCTM_a-PTBILIN.$(OBJEXT): $(EMIS)/$(am__dirstamp) \
+	$(EMIS)/$(DEPDIR)/$(am__dirstamp)
+$(EMIS)/libCCTM_a-PTMAP.$(OBJEXT): $(EMIS)/$(am__dirstamp) \
+	$(EMIS)/$(DEPDIR)/$(am__dirstamp)
+$(EMIS)/libCCTM_a-PTMET.$(OBJEXT): $(EMIS)/$(am__dirstamp) \
+	$(EMIS)/$(DEPDIR)/$(am__dirstamp)
+$(EMIS)/libCCTM_a-PT3D_DEFN.$(OBJEXT): $(EMIS)/$(am__dirstamp) \
+	$(EMIS)/$(DEPDIR)/$(am__dirstamp)
 $(EMIS)/libCCTM_a-SSEMIS.$(OBJEXT): $(EMIS)/$(am__dirstamp) \
+	$(EMIS)/$(DEPDIR)/$(am__dirstamp)
+$(EMIS)/libCCTM_a-STK_EMIS.$(OBJEXT): $(EMIS)/$(am__dirstamp) \
+	$(EMIS)/$(DEPDIR)/$(am__dirstamp)
+$(EMIS)/libCCTM_a-STK_PRMS.$(OBJEXT): $(EMIS)/$(am__dirstamp) \
+	$(EMIS)/$(DEPDIR)/$(am__dirstamp)
+$(EMIS)/libCCTM_a-tfabove.$(OBJEXT): $(EMIS)/$(am__dirstamp) \
+	$(EMIS)/$(DEPDIR)/$(am__dirstamp)
+$(EMIS)/libCCTM_a-tfbelow.$(OBJEXT): $(EMIS)/$(am__dirstamp) \
+	$(EMIS)/$(DEPDIR)/$(am__dirstamp)
+$(EMIS)/libCCTM_a-UDTYPES.$(OBJEXT): $(EMIS)/$(am__dirstamp) \
 	$(EMIS)/$(DEPDIR)/$(am__dirstamp)
 $(GAS)/$(am__dirstamp):
 	@$(MKDIR_P) $(GAS)
@@ -641,6 +810,8 @@ $(GRID)/libCCTM_a-HGRD_DEFN.$(OBJEXT): $(GRID)/$(am__dirstamp) \
 	$(GRID)/$(DEPDIR)/$(am__dirstamp)
 $(GRID)/libCCTM_a-VGRD_DEFN.$(OBJEXT): $(GRID)/$(am__dirstamp) \
 	$(GRID)/$(DEPDIR)/$(am__dirstamp)
+$(GRID)/libCCTM_a-PAGRD_DEFN.$(OBJEXT): $(GRID)/$(am__dirstamp) \
+	$(GRID)/$(DEPDIR)/$(am__dirstamp)
 $(GRID)/libCCTM_a-PCGRID_DEFN.$(OBJEXT): $(GRID)/$(am__dirstamp) \
 	$(GRID)/$(DEPDIR)/$(am__dirstamp)
 $(MECHS)/$(am__dirstamp):
@@ -653,6 +824,16 @@ $(MECHS)/libCCTM_a-RXNS_DATA_MODULE.$(OBJEXT):  \
 	$(MECHS)/$(am__dirstamp) $(MECHS)/$(DEPDIR)/$(am__dirstamp)
 $(MECHS)/libCCTM_a-RXNS_FUNC_MODULE.$(OBJEXT):  \
 	$(MECHS)/$(am__dirstamp) $(MECHS)/$(DEPDIR)/$(am__dirstamp)
+$(PA)/$(am__dirstamp):
+	@$(MKDIR_P) $(PA)
+	@: > $(PA)/$(am__dirstamp)
+$(PA)/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) $(PA)/$(DEPDIR)
+	@: > $(PA)/$(DEPDIR)/$(am__dirstamp)
+$(PA)/libCCTM_a-PA_DEFN.$(OBJEXT): $(PA)/$(am__dirstamp) \
+	$(PA)/$(DEPDIR)/$(am__dirstamp)
+$(PA)/libCCTM_a-pa_update.$(OBJEXT): $(PA)/$(am__dirstamp) \
+	$(PA)/$(DEPDIR)/$(am__dirstamp)
 $(PHOT)/$(am__dirstamp):
 	@$(MKDIR_P) $(PHOT)
 	@: > $(PHOT)/$(am__dirstamp)
@@ -669,6 +850,8 @@ $(PHOT)/libCCTM_a-CSQY_DATA.$(OBJEXT): $(PHOT)/$(am__dirstamp) \
 	$(PHOT)/$(DEPDIR)/$(am__dirstamp)
 $(PHOT)/libCCTM_a-o3totcol.$(OBJEXT): $(PHOT)/$(am__dirstamp) \
 	$(PHOT)/$(DEPDIR)/$(am__dirstamp)
+$(PHOT)/libCCTM_a-opphot.$(OBJEXT): $(PHOT)/$(am__dirstamp) \
+	$(PHOT)/$(DEPDIR)/$(am__dirstamp)
 $(PHOT)/libCCTM_a-phot.$(OBJEXT): $(PHOT)/$(am__dirstamp) \
 	$(PHOT)/$(DEPDIR)/$(am__dirstamp)
 $(PHOT)/libCCTM_a-PHOT_MET_DATA.$(OBJEXT): $(PHOT)/$(am__dirstamp) \
@@ -681,6 +864,30 @@ $(PHOT)/libCCTM_a-SEAS_STRAT_O3_MIN.$(OBJEXT):  \
 	$(PHOT)/$(am__dirstamp) $(PHOT)/$(DEPDIR)/$(am__dirstamp)
 $(PHOT)/libCCTM_a-twoway_rrtmg_aero_optics.$(OBJEXT):  \
 	$(PHOT)/$(am__dirstamp) $(PHOT)/$(DEPDIR)/$(am__dirstamp)
+$(PLRISE)/$(am__dirstamp):
+	@$(MKDIR_P) $(PLRISE)
+	@: > $(PLRISE)/$(am__dirstamp)
+$(PLRISE)/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) $(PLRISE)/$(DEPDIR)
+	@: > $(PLRISE)/$(DEPDIR)/$(am__dirstamp)
+$(PLRISE)/libCCTM_a-delta_zs.$(OBJEXT): $(PLRISE)/$(am__dirstamp) \
+	$(PLRISE)/$(DEPDIR)/$(am__dirstamp)
+$(PLRISE)/libCCTM_a-fire_plmris.$(OBJEXT): $(PLRISE)/$(am__dirstamp) \
+	$(PLRISE)/$(DEPDIR)/$(am__dirstamp)
+$(PLRISE)/libCCTM_a-openlayout.$(OBJEXT): $(PLRISE)/$(am__dirstamp) \
+	$(PLRISE)/$(DEPDIR)/$(am__dirstamp)
+$(PLRISE)/libCCTM_a-oppt3d_diag.$(OBJEXT): $(PLRISE)/$(am__dirstamp) \
+	$(PLRISE)/$(DEPDIR)/$(am__dirstamp)
+$(PLRISE)/libCCTM_a-plmris.$(OBJEXT): $(PLRISE)/$(am__dirstamp) \
+	$(PLRISE)/$(DEPDIR)/$(am__dirstamp)
+$(PLRISE)/libCCTM_a-plsprd.$(OBJEXT): $(PLRISE)/$(am__dirstamp) \
+	$(PLRISE)/$(DEPDIR)/$(am__dirstamp)
+$(PLRISE)/libCCTM_a-preplm.$(OBJEXT): $(PLRISE)/$(am__dirstamp) \
+	$(PLRISE)/$(DEPDIR)/$(am__dirstamp)
+$(PLRISE)/libCCTM_a-ungridb2.$(OBJEXT): $(PLRISE)/$(am__dirstamp) \
+	$(PLRISE)/$(DEPDIR)/$(am__dirstamp)
+$(PLRISE)/libCCTM_a-write3_distr.$(OBJEXT): $(PLRISE)/$(am__dirstamp) \
+	$(PLRISE)/$(DEPDIR)/$(am__dirstamp)
 $(SPCS)/$(am__dirstamp):
 	@$(MKDIR_P) $(SPCS)
 	@: > $(SPCS)/$(am__dirstamp)
@@ -723,9 +930,15 @@ $(UTIL)/$(am__dirstamp):
 $(UTIL)/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) $(UTIL)/$(DEPDIR)
 	@: > $(UTIL)/$(DEPDIR)/$(am__dirstamp)
+$(UTIL)/libCCTM_a-bmatvec.$(OBJEXT): $(UTIL)/$(am__dirstamp) \
+	$(UTIL)/$(DEPDIR)/$(am__dirstamp)
 $(UTIL)/libCCTM_a-findex.$(OBJEXT): $(UTIL)/$(am__dirstamp) \
 	$(UTIL)/$(DEPDIR)/$(am__dirstamp)
+$(UTIL)/libCCTM_a-get_envlist.$(OBJEXT): $(UTIL)/$(am__dirstamp) \
+	$(UTIL)/$(DEPDIR)/$(am__dirstamp)
 $(UTIL)/libCCTM_a-setup_logdev.$(OBJEXT): $(UTIL)/$(am__dirstamp) \
+	$(UTIL)/$(DEPDIR)/$(am__dirstamp)
+$(UTIL)/libCCTM_a-subhdomain.$(OBJEXT): $(UTIL)/$(am__dirstamp) \
 	$(UTIL)/$(DEPDIR)/$(am__dirstamp)
 $(UTIL)/libCCTM_a-UTILIO_DEFN.$(OBJEXT): $(UTIL)/$(am__dirstamp) \
 	$(UTIL)/$(DEPDIR)/$(am__dirstamp)
@@ -735,15 +948,27 @@ $(VDIFF)/$(am__dirstamp):
 $(VDIFF)/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) $(VDIFF)/$(DEPDIR)
 	@: > $(VDIFF)/$(DEPDIR)/$(am__dirstamp)
+$(VDIFF)/libCCTM_a-aero_sedv.$(OBJEXT): $(VDIFF)/$(am__dirstamp) \
+	$(VDIFF)/$(DEPDIR)/$(am__dirstamp)
 $(VDIFF)/libCCTM_a-ASX_DATA_MOD.$(OBJEXT): $(VDIFF)/$(am__dirstamp) \
 	$(VDIFF)/$(DEPDIR)/$(am__dirstamp)
 $(VDIFF)/libCCTM_a-conv_cgrid.$(OBJEXT): $(VDIFF)/$(am__dirstamp) \
 	$(VDIFF)/$(DEPDIR)/$(am__dirstamp)
 $(VDIFF)/libCCTM_a-matrix1.$(OBJEXT): $(VDIFF)/$(am__dirstamp) \
 	$(VDIFF)/$(DEPDIR)/$(am__dirstamp)
+$(VDIFF)/libCCTM_a-opddep.$(OBJEXT): $(VDIFF)/$(am__dirstamp) \
+	$(VDIFF)/$(DEPDIR)/$(am__dirstamp)
+$(VDIFF)/libCCTM_a-opddep_fst.$(OBJEXT): $(VDIFF)/$(am__dirstamp) \
+	$(VDIFF)/$(DEPDIR)/$(am__dirstamp)
+$(VDIFF)/libCCTM_a-opddep_mos.$(OBJEXT): $(VDIFF)/$(am__dirstamp) \
+	$(VDIFF)/$(DEPDIR)/$(am__dirstamp)
+$(VDIFF)/libCCTM_a-rddepv.$(OBJEXT): $(VDIFF)/$(am__dirstamp) \
+	$(VDIFF)/$(DEPDIR)/$(am__dirstamp)
+$(VDIFF)/libCCTM_a-SEDIMENTATION.$(OBJEXT): $(VDIFF)/$(am__dirstamp) \
+	$(VDIFF)/$(DEPDIR)/$(am__dirstamp)
 $(VDIFF)/libCCTM_a-tri.$(OBJEXT): $(VDIFF)/$(am__dirstamp) \
 	$(VDIFF)/$(DEPDIR)/$(am__dirstamp)
-$(VDIFF)/libCCTM_a-vdiffacmx.$(OBJEXT): $(VDIFF)/$(am__dirstamp) \
+$(VDIFF)/libCCTM_a-VDIFF_DIAG.$(OBJEXT): $(VDIFF)/$(am__dirstamp) \
 	$(VDIFF)/$(DEPDIR)/$(am__dirstamp)
 $(VDIFF)/libCCTM_a-VDIFF_MAP.$(OBJEXT): $(VDIFF)/$(am__dirstamp) \
 	$(VDIFF)/$(DEPDIR)/$(am__dirstamp)
@@ -758,13 +983,16 @@ libCCTM.a: $(libCCTM_a_OBJECTS) $(libCCTM_a_DEPENDENCIES) $(EXTRA_libCCTM_a_DEPE
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 	-rm -f $(AERO)/*.$(OBJEXT)
+	-rm -f $(BIOG)/*.$(OBJEXT)
 	-rm -f $(CLOUD)/*.$(OBJEXT)
 	-rm -f $(DEPV)/*.$(OBJEXT)
 	-rm -f $(EMIS)/*.$(OBJEXT)
 	-rm -f $(GAS)/*.$(OBJEXT)
 	-rm -f $(GRID)/*.$(OBJEXT)
 	-rm -f $(MECHS)/*.$(OBJEXT)
+	-rm -f $(PA)/*.$(OBJEXT)
 	-rm -f $(PHOT)/*.$(OBJEXT)
+	-rm -f $(PLRISE)/*.$(OBJEXT)
 	-rm -f $(SPCS)/*.$(OBJEXT)
 	-rm -f $(STENEX)/*.$(OBJEXT)
 	-rm -f $(UTIL)/*.$(OBJEXT)
@@ -827,6 +1055,30 @@ $(AERO)/libCCTM_a-AOD_DEFN.o: $(AERO)/AOD_DEFN.F
 $(AERO)/libCCTM_a-AOD_DEFN.obj: $(AERO)/AOD_DEFN.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(AERO)/libCCTM_a-AOD_DEFN.obj `if test -f '$(AERO)/AOD_DEFN.F'; then $(CYGPATH_W) '$(AERO)/AOD_DEFN.F'; else $(CYGPATH_W) '$(srcdir)/$(AERO)/AOD_DEFN.F'; fi`
 
+$(AERO)/libCCTM_a-opvis.o: $(AERO)/opvis.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(AERO)/libCCTM_a-opvis.o `test -f '$(AERO)/opvis.F' || echo '$(srcdir)/'`$(AERO)/opvis.F
+
+$(AERO)/libCCTM_a-opvis.obj: $(AERO)/opvis.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(AERO)/libCCTM_a-opvis.obj `if test -f '$(AERO)/opvis.F'; then $(CYGPATH_W) '$(AERO)/opvis.F'; else $(CYGPATH_W) '$(srcdir)/$(AERO)/opvis.F'; fi`
+
+$(AERO)/libCCTM_a-opavis.o: $(AERO)/opavis.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(AERO)/libCCTM_a-opavis.o `test -f '$(AERO)/opavis.F' || echo '$(srcdir)/'`$(AERO)/opavis.F
+
+$(AERO)/libCCTM_a-opavis.obj: $(AERO)/opavis.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(AERO)/libCCTM_a-opavis.obj `if test -f '$(AERO)/opavis.F'; then $(CYGPATH_W) '$(AERO)/opavis.F'; else $(CYGPATH_W) '$(srcdir)/$(AERO)/opavis.F'; fi`
+
+$(AERO)/libCCTM_a-oppmdiag.o: $(AERO)/oppmdiag.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(AERO)/libCCTM_a-oppmdiag.o `test -f '$(AERO)/oppmdiag.F' || echo '$(srcdir)/'`$(AERO)/oppmdiag.F
+
+$(AERO)/libCCTM_a-oppmdiag.obj: $(AERO)/oppmdiag.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(AERO)/libCCTM_a-oppmdiag.obj `if test -f '$(AERO)/oppmdiag.F'; then $(CYGPATH_W) '$(AERO)/oppmdiag.F'; else $(CYGPATH_W) '$(srcdir)/$(AERO)/oppmdiag.F'; fi`
+
+$(AERO)/libCCTM_a-opapmdiag.o: $(AERO)/opapmdiag.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(AERO)/libCCTM_a-opapmdiag.o `test -f '$(AERO)/opapmdiag.F' || echo '$(srcdir)/'`$(AERO)/opapmdiag.F
+
+$(AERO)/libCCTM_a-opapmdiag.obj: $(AERO)/opapmdiag.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(AERO)/libCCTM_a-opapmdiag.obj `if test -f '$(AERO)/opapmdiag.F'; then $(CYGPATH_W) '$(AERO)/opapmdiag.F'; else $(CYGPATH_W) '$(srcdir)/$(AERO)/opapmdiag.F'; fi`
+
 $(AERO)/libCCTM_a-PRECURSOR_DATA.o: $(AERO)/PRECURSOR_DATA.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(AERO)/libCCTM_a-PRECURSOR_DATA.o `test -f '$(AERO)/PRECURSOR_DATA.F' || echo '$(srcdir)/'`$(AERO)/PRECURSOR_DATA.F
 
@@ -845,6 +1097,36 @@ $(AERO)/libCCTM_a-SOA_DEFN.o: $(AERO)/SOA_DEFN.F
 $(AERO)/libCCTM_a-SOA_DEFN.obj: $(AERO)/SOA_DEFN.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(AERO)/libCCTM_a-SOA_DEFN.obj `if test -f '$(AERO)/SOA_DEFN.F'; then $(CYGPATH_W) '$(AERO)/SOA_DEFN.F'; else $(CYGPATH_W) '$(srcdir)/$(AERO)/SOA_DEFN.F'; fi`
 
+$(BIOG)/libCCTM_a-beis3.o: $(BIOG)/beis3.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(BIOG)/libCCTM_a-beis3.o `test -f '$(BIOG)/beis3.F' || echo '$(srcdir)/'`$(BIOG)/beis3.F
+
+$(BIOG)/libCCTM_a-beis3.obj: $(BIOG)/beis3.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(BIOG)/libCCTM_a-beis3.obj `if test -f '$(BIOG)/beis3.F'; then $(CYGPATH_W) '$(BIOG)/beis3.F'; else $(CYGPATH_W) '$(srcdir)/$(BIOG)/beis3.F'; fi`
+
+$(BIOG)/libCCTM_a-chkgrid.o: $(BIOG)/chkgrid.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(BIOG)/libCCTM_a-chkgrid.o `test -f '$(BIOG)/chkgrid.F' || echo '$(srcdir)/'`$(BIOG)/chkgrid.F
+
+$(BIOG)/libCCTM_a-chkgrid.obj: $(BIOG)/chkgrid.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(BIOG)/libCCTM_a-chkgrid.obj `if test -f '$(BIOG)/chkgrid.F'; then $(CYGPATH_W) '$(BIOG)/chkgrid.F'; else $(CYGPATH_W) '$(srcdir)/$(BIOG)/chkgrid.F'; fi`
+
+$(BIOG)/libCCTM_a-czangle.o: $(BIOG)/czangle.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(BIOG)/libCCTM_a-czangle.o `test -f '$(BIOG)/czangle.F' || echo '$(srcdir)/'`$(BIOG)/czangle.F
+
+$(BIOG)/libCCTM_a-czangle.obj: $(BIOG)/czangle.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(BIOG)/libCCTM_a-czangle.obj `if test -f '$(BIOG)/czangle.F'; then $(CYGPATH_W) '$(BIOG)/czangle.F'; else $(CYGPATH_W) '$(srcdir)/$(BIOG)/czangle.F'; fi`
+
+$(BIOG)/libCCTM_a-hrno.o: $(BIOG)/hrno.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(BIOG)/libCCTM_a-hrno.o `test -f '$(BIOG)/hrno.F' || echo '$(srcdir)/'`$(BIOG)/hrno.F
+
+$(BIOG)/libCCTM_a-hrno.obj: $(BIOG)/hrno.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(BIOG)/libCCTM_a-hrno.obj `if test -f '$(BIOG)/hrno.F'; then $(CYGPATH_W) '$(BIOG)/hrno.F'; else $(CYGPATH_W) '$(srcdir)/$(BIOG)/hrno.F'; fi`
+
+$(BIOG)/libCCTM_a-tmpbeis.o: $(BIOG)/tmpbeis.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(BIOG)/libCCTM_a-tmpbeis.o `test -f '$(BIOG)/tmpbeis.F' || echo '$(srcdir)/'`$(BIOG)/tmpbeis.F
+
+$(BIOG)/libCCTM_a-tmpbeis.obj: $(BIOG)/tmpbeis.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(BIOG)/libCCTM_a-tmpbeis.obj `if test -f '$(BIOG)/tmpbeis.F'; then $(CYGPATH_W) '$(BIOG)/tmpbeis.F'; else $(CYGPATH_W) '$(srcdir)/$(BIOG)/tmpbeis.F'; fi`
+
 $(CLOUD)/libCCTM_a-concld_prop_acm.o: $(CLOUD)/concld_prop_acm.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(CLOUD)/libCCTM_a-concld_prop_acm.o `test -f '$(CLOUD)/concld_prop_acm.F' || echo '$(srcdir)/'`$(CLOUD)/concld_prop_acm.F
 
@@ -856,6 +1138,18 @@ $(CLOUD)/libCCTM_a-hlconst.o: $(CLOUD)/hlconst.F
 
 $(CLOUD)/libCCTM_a-hlconst.obj: $(CLOUD)/hlconst.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(CLOUD)/libCCTM_a-hlconst.obj `if test -f '$(CLOUD)/hlconst.F'; then $(CYGPATH_W) '$(CLOUD)/hlconst.F'; else $(CYGPATH_W) '$(srcdir)/$(CLOUD)/hlconst.F'; fi`
+
+$(DEPV)/libCCTM_a-ABFLUX_MOD.o: $(DEPV)/ABFLUX_MOD.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(DEPV)/libCCTM_a-ABFLUX_MOD.o `test -f '$(DEPV)/ABFLUX_MOD.F' || echo '$(srcdir)/'`$(DEPV)/ABFLUX_MOD.F
+
+$(DEPV)/libCCTM_a-ABFLUX_MOD.obj: $(DEPV)/ABFLUX_MOD.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(DEPV)/libCCTM_a-ABFLUX_MOD.obj `if test -f '$(DEPV)/ABFLUX_MOD.F'; then $(CYGPATH_W) '$(DEPV)/ABFLUX_MOD.F'; else $(CYGPATH_W) '$(srcdir)/$(DEPV)/ABFLUX_MOD.F'; fi`
+
+$(DEPV)/libCCTM_a-BIDI_MOD.o: $(DEPV)/BIDI_MOD.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(DEPV)/libCCTM_a-BIDI_MOD.o `test -f '$(DEPV)/BIDI_MOD.F' || echo '$(srcdir)/'`$(DEPV)/BIDI_MOD.F
+
+$(DEPV)/libCCTM_a-BIDI_MOD.obj: $(DEPV)/BIDI_MOD.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(DEPV)/libCCTM_a-BIDI_MOD.obj `if test -f '$(DEPV)/BIDI_MOD.F'; then $(CYGPATH_W) '$(DEPV)/BIDI_MOD.F'; else $(CYGPATH_W) '$(srcdir)/$(DEPV)/BIDI_MOD.F'; fi`
 
 $(DEPV)/libCCTM_a-cgrid_depv.o: $(DEPV)/cgrid_depv.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(DEPV)/libCCTM_a-cgrid_depv.o `test -f '$(DEPV)/cgrid_depv.F' || echo '$(srcdir)/'`$(DEPV)/cgrid_depv.F
@@ -881,6 +1175,12 @@ $(DEPV)/libCCTM_a-gas_depv_map.o: $(DEPV)/gas_depv_map.F
 $(DEPV)/libCCTM_a-gas_depv_map.obj: $(DEPV)/gas_depv_map.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(DEPV)/libCCTM_a-gas_depv_map.obj `if test -f '$(DEPV)/gas_depv_map.F'; then $(CYGPATH_W) '$(DEPV)/gas_depv_map.F'; else $(CYGPATH_W) '$(srcdir)/$(DEPV)/gas_depv_map.F'; fi`
 
+$(DEPV)/libCCTM_a-HGSIM.o: $(DEPV)/HGSIM.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(DEPV)/libCCTM_a-HGSIM.o `test -f '$(DEPV)/HGSIM.F' || echo '$(srcdir)/'`$(DEPV)/HGSIM.F
+
+$(DEPV)/libCCTM_a-HGSIM.obj: $(DEPV)/HGSIM.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(DEPV)/libCCTM_a-HGSIM.obj `if test -f '$(DEPV)/HGSIM.F'; then $(CYGPATH_W) '$(DEPV)/HGSIM.F'; else $(CYGPATH_W) '$(srcdir)/$(DEPV)/HGSIM.F'; fi`
+
 $(DEPV)/libCCTM_a-LSM_MOD.o: $(DEPV)/LSM_MOD.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(DEPV)/libCCTM_a-LSM_MOD.o `test -f '$(DEPV)/LSM_MOD.F' || echo '$(srcdir)/'`$(DEPV)/LSM_MOD.F
 
@@ -893,11 +1193,53 @@ $(DEPV)/libCCTM_a-MOSAIC_MOD.o: $(DEPV)/MOSAIC_MOD.F
 $(DEPV)/libCCTM_a-MOSAIC_MOD.obj: $(DEPV)/MOSAIC_MOD.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(DEPV)/libCCTM_a-MOSAIC_MOD.obj `if test -f '$(DEPV)/MOSAIC_MOD.F'; then $(CYGPATH_W) '$(DEPV)/MOSAIC_MOD.F'; else $(CYGPATH_W) '$(srcdir)/$(DEPV)/MOSAIC_MOD.F'; fi`
 
+$(DEPV)/libCCTM_a-opdepv_diag.o: $(DEPV)/opdepv_diag.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(DEPV)/libCCTM_a-opdepv_diag.o `test -f '$(DEPV)/opdepv_diag.F' || echo '$(srcdir)/'`$(DEPV)/opdepv_diag.F
+
+$(DEPV)/libCCTM_a-opdepv_diag.obj: $(DEPV)/opdepv_diag.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(DEPV)/libCCTM_a-opdepv_diag.obj `if test -f '$(DEPV)/opdepv_diag.F'; then $(CYGPATH_W) '$(DEPV)/opdepv_diag.F'; else $(CYGPATH_W) '$(srcdir)/$(DEPV)/opdepv_diag.F'; fi`
+
+$(DEPV)/libCCTM_a-opdepv_mos.o: $(DEPV)/opdepv_mos.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(DEPV)/libCCTM_a-opdepv_mos.o `test -f '$(DEPV)/opdepv_mos.F' || echo '$(srcdir)/'`$(DEPV)/opdepv_mos.F
+
+$(DEPV)/libCCTM_a-opdepv_mos.obj: $(DEPV)/opdepv_mos.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(DEPV)/libCCTM_a-opdepv_mos.obj `if test -f '$(DEPV)/opdepv_mos.F'; then $(CYGPATH_W) '$(DEPV)/opdepv_mos.F'; else $(CYGPATH_W) '$(srcdir)/$(DEPV)/opdepv_mos.F'; fi`
+
+$(DEPV)/libCCTM_a-opdepv_fst.o: $(DEPV)/opdepv_fst.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(DEPV)/libCCTM_a-opdepv_fst.o `test -f '$(DEPV)/opdepv_fst.F' || echo '$(srcdir)/'`$(DEPV)/opdepv_fst.F
+
+$(DEPV)/libCCTM_a-opdepv_fst.obj: $(DEPV)/opdepv_fst.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(DEPV)/libCCTM_a-opdepv_fst.obj `if test -f '$(DEPV)/opdepv_fst.F'; then $(CYGPATH_W) '$(DEPV)/opdepv_fst.F'; else $(CYGPATH_W) '$(srcdir)/$(DEPV)/opdepv_fst.F'; fi`
+
 $(DEPV)/libCCTM_a-m3dry.o: $(DEPV)/m3dry.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(DEPV)/libCCTM_a-m3dry.o `test -f '$(DEPV)/m3dry.F' || echo '$(srcdir)/'`$(DEPV)/m3dry.F
 
 $(DEPV)/libCCTM_a-m3dry.obj: $(DEPV)/m3dry.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(DEPV)/libCCTM_a-m3dry.obj `if test -f '$(DEPV)/m3dry.F'; then $(CYGPATH_W) '$(DEPV)/m3dry.F'; else $(CYGPATH_W) '$(srcdir)/$(DEPV)/m3dry.F'; fi`
+
+$(EMIS)/libCCTM_a-BEIS_DEFN.o: $(EMIS)/BEIS_DEFN.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-BEIS_DEFN.o `test -f '$(EMIS)/BEIS_DEFN.F' || echo '$(srcdir)/'`$(EMIS)/BEIS_DEFN.F
+
+$(EMIS)/libCCTM_a-BEIS_DEFN.obj: $(EMIS)/BEIS_DEFN.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-BEIS_DEFN.obj `if test -f '$(EMIS)/BEIS_DEFN.F'; then $(CYGPATH_W) '$(EMIS)/BEIS_DEFN.F'; else $(CYGPATH_W) '$(srcdir)/$(EMIS)/BEIS_DEFN.F'; fi`
+
+$(EMIS)/libCCTM_a-BIOG_EMIS.o: $(EMIS)/BIOG_EMIS.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-BIOG_EMIS.o `test -f '$(EMIS)/BIOG_EMIS.F' || echo '$(srcdir)/'`$(EMIS)/BIOG_EMIS.F
+
+$(EMIS)/libCCTM_a-BIOG_EMIS.obj: $(EMIS)/BIOG_EMIS.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-BIOG_EMIS.obj `if test -f '$(EMIS)/BIOG_EMIS.F'; then $(CYGPATH_W) '$(EMIS)/BIOG_EMIS.F'; else $(CYGPATH_W) '$(srcdir)/$(EMIS)/BIOG_EMIS.F'; fi`
+
+$(EMIS)/libCCTM_a-cropcal.o: $(EMIS)/cropcal.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-cropcal.o `test -f '$(EMIS)/cropcal.F' || echo '$(srcdir)/'`$(EMIS)/cropcal.F
+
+$(EMIS)/libCCTM_a-cropcal.obj: $(EMIS)/cropcal.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-cropcal.obj `if test -f '$(EMIS)/cropcal.F'; then $(CYGPATH_W) '$(EMIS)/cropcal.F'; else $(CYGPATH_W) '$(srcdir)/$(EMIS)/cropcal.F'; fi`
+
+$(EMIS)/libCCTM_a-DUST_EMIS.o: $(EMIS)/DUST_EMIS.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-DUST_EMIS.o `test -f '$(EMIS)/DUST_EMIS.F' || echo '$(srcdir)/'`$(EMIS)/DUST_EMIS.F
+
+$(EMIS)/libCCTM_a-DUST_EMIS.obj: $(EMIS)/DUST_EMIS.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-DUST_EMIS.obj `if test -f '$(EMIS)/DUST_EMIS.F'; then $(CYGPATH_W) '$(EMIS)/DUST_EMIS.F'; else $(CYGPATH_W) '$(srcdir)/$(EMIS)/DUST_EMIS.F'; fi`
 
 $(EMIS)/libCCTM_a-EMIS_DEFN.o: $(EMIS)/EMIS_DEFN.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-EMIS_DEFN.o `test -f '$(EMIS)/EMIS_DEFN.F' || echo '$(srcdir)/'`$(EMIS)/EMIS_DEFN.F
@@ -905,17 +1247,89 @@ $(EMIS)/libCCTM_a-EMIS_DEFN.o: $(EMIS)/EMIS_DEFN.F
 $(EMIS)/libCCTM_a-EMIS_DEFN.obj: $(EMIS)/EMIS_DEFN.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-EMIS_DEFN.obj `if test -f '$(EMIS)/EMIS_DEFN.F'; then $(CYGPATH_W) '$(EMIS)/EMIS_DEFN.F'; else $(CYGPATH_W) '$(srcdir)/$(EMIS)/EMIS_DEFN.F'; fi`
 
+$(EMIS)/libCCTM_a-LTNG_DEFN.o: $(EMIS)/LTNG_DEFN.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-LTNG_DEFN.o `test -f '$(EMIS)/LTNG_DEFN.F' || echo '$(srcdir)/'`$(EMIS)/LTNG_DEFN.F
+
+$(EMIS)/libCCTM_a-LTNG_DEFN.obj: $(EMIS)/LTNG_DEFN.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-LTNG_DEFN.obj `if test -f '$(EMIS)/LTNG_DEFN.F'; then $(CYGPATH_W) '$(EMIS)/LTNG_DEFN.F'; else $(CYGPATH_W) '$(srcdir)/$(EMIS)/LTNG_DEFN.F'; fi`
+
 $(EMIS)/libCCTM_a-LUS_DEFN.o: $(EMIS)/LUS_DEFN.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-LUS_DEFN.o `test -f '$(EMIS)/LUS_DEFN.F' || echo '$(srcdir)/'`$(EMIS)/LUS_DEFN.F
 
 $(EMIS)/libCCTM_a-LUS_DEFN.obj: $(EMIS)/LUS_DEFN.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-LUS_DEFN.obj `if test -f '$(EMIS)/LUS_DEFN.F'; then $(CYGPATH_W) '$(EMIS)/LUS_DEFN.F'; else $(CYGPATH_W) '$(srcdir)/$(EMIS)/LUS_DEFN.F'; fi`
 
+$(EMIS)/libCCTM_a-MGEMIS.o: $(EMIS)/MGEMIS.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-MGEMIS.o `test -f '$(EMIS)/MGEMIS.F' || echo '$(srcdir)/'`$(EMIS)/MGEMIS.F
+
+$(EMIS)/libCCTM_a-MGEMIS.obj: $(EMIS)/MGEMIS.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-MGEMIS.obj `if test -f '$(EMIS)/MGEMIS.F'; then $(CYGPATH_W) '$(EMIS)/MGEMIS.F'; else $(CYGPATH_W) '$(srcdir)/$(EMIS)/MGEMIS.F'; fi`
+
+$(EMIS)/libCCTM_a-opemis.o: $(EMIS)/opemis.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-opemis.o `test -f '$(EMIS)/opemis.F' || echo '$(srcdir)/'`$(EMIS)/opemis.F
+
+$(EMIS)/libCCTM_a-opemis.obj: $(EMIS)/opemis.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-opemis.obj `if test -f '$(EMIS)/opemis.F'; then $(CYGPATH_W) '$(EMIS)/opemis.F'; else $(CYGPATH_W) '$(srcdir)/$(EMIS)/opemis.F'; fi`
+
+$(EMIS)/libCCTM_a-PTBILIN.o: $(EMIS)/PTBILIN.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-PTBILIN.o `test -f '$(EMIS)/PTBILIN.F' || echo '$(srcdir)/'`$(EMIS)/PTBILIN.F
+
+$(EMIS)/libCCTM_a-PTBILIN.obj: $(EMIS)/PTBILIN.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-PTBILIN.obj `if test -f '$(EMIS)/PTBILIN.F'; then $(CYGPATH_W) '$(EMIS)/PTBILIN.F'; else $(CYGPATH_W) '$(srcdir)/$(EMIS)/PTBILIN.F'; fi`
+
+$(EMIS)/libCCTM_a-PTMAP.o: $(EMIS)/PTMAP.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-PTMAP.o `test -f '$(EMIS)/PTMAP.F' || echo '$(srcdir)/'`$(EMIS)/PTMAP.F
+
+$(EMIS)/libCCTM_a-PTMAP.obj: $(EMIS)/PTMAP.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-PTMAP.obj `if test -f '$(EMIS)/PTMAP.F'; then $(CYGPATH_W) '$(EMIS)/PTMAP.F'; else $(CYGPATH_W) '$(srcdir)/$(EMIS)/PTMAP.F'; fi`
+
+$(EMIS)/libCCTM_a-PTMET.o: $(EMIS)/PTMET.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-PTMET.o `test -f '$(EMIS)/PTMET.F' || echo '$(srcdir)/'`$(EMIS)/PTMET.F
+
+$(EMIS)/libCCTM_a-PTMET.obj: $(EMIS)/PTMET.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-PTMET.obj `if test -f '$(EMIS)/PTMET.F'; then $(CYGPATH_W) '$(EMIS)/PTMET.F'; else $(CYGPATH_W) '$(srcdir)/$(EMIS)/PTMET.F'; fi`
+
+$(EMIS)/libCCTM_a-PT3D_DEFN.o: $(EMIS)/PT3D_DEFN.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-PT3D_DEFN.o `test -f '$(EMIS)/PT3D_DEFN.F' || echo '$(srcdir)/'`$(EMIS)/PT3D_DEFN.F
+
+$(EMIS)/libCCTM_a-PT3D_DEFN.obj: $(EMIS)/PT3D_DEFN.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-PT3D_DEFN.obj `if test -f '$(EMIS)/PT3D_DEFN.F'; then $(CYGPATH_W) '$(EMIS)/PT3D_DEFN.F'; else $(CYGPATH_W) '$(srcdir)/$(EMIS)/PT3D_DEFN.F'; fi`
+
 $(EMIS)/libCCTM_a-SSEMIS.o: $(EMIS)/SSEMIS.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-SSEMIS.o `test -f '$(EMIS)/SSEMIS.F' || echo '$(srcdir)/'`$(EMIS)/SSEMIS.F
 
 $(EMIS)/libCCTM_a-SSEMIS.obj: $(EMIS)/SSEMIS.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-SSEMIS.obj `if test -f '$(EMIS)/SSEMIS.F'; then $(CYGPATH_W) '$(EMIS)/SSEMIS.F'; else $(CYGPATH_W) '$(srcdir)/$(EMIS)/SSEMIS.F'; fi`
+
+$(EMIS)/libCCTM_a-STK_EMIS.o: $(EMIS)/STK_EMIS.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-STK_EMIS.o `test -f '$(EMIS)/STK_EMIS.F' || echo '$(srcdir)/'`$(EMIS)/STK_EMIS.F
+
+$(EMIS)/libCCTM_a-STK_EMIS.obj: $(EMIS)/STK_EMIS.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-STK_EMIS.obj `if test -f '$(EMIS)/STK_EMIS.F'; then $(CYGPATH_W) '$(EMIS)/STK_EMIS.F'; else $(CYGPATH_W) '$(srcdir)/$(EMIS)/STK_EMIS.F'; fi`
+
+$(EMIS)/libCCTM_a-STK_PRMS.o: $(EMIS)/STK_PRMS.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-STK_PRMS.o `test -f '$(EMIS)/STK_PRMS.F' || echo '$(srcdir)/'`$(EMIS)/STK_PRMS.F
+
+$(EMIS)/libCCTM_a-STK_PRMS.obj: $(EMIS)/STK_PRMS.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-STK_PRMS.obj `if test -f '$(EMIS)/STK_PRMS.F'; then $(CYGPATH_W) '$(EMIS)/STK_PRMS.F'; else $(CYGPATH_W) '$(srcdir)/$(EMIS)/STK_PRMS.F'; fi`
+
+$(EMIS)/libCCTM_a-tfabove.o: $(EMIS)/tfabove.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-tfabove.o `test -f '$(EMIS)/tfabove.F' || echo '$(srcdir)/'`$(EMIS)/tfabove.F
+
+$(EMIS)/libCCTM_a-tfabove.obj: $(EMIS)/tfabove.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-tfabove.obj `if test -f '$(EMIS)/tfabove.F'; then $(CYGPATH_W) '$(EMIS)/tfabove.F'; else $(CYGPATH_W) '$(srcdir)/$(EMIS)/tfabove.F'; fi`
+
+$(EMIS)/libCCTM_a-tfbelow.o: $(EMIS)/tfbelow.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-tfbelow.o `test -f '$(EMIS)/tfbelow.F' || echo '$(srcdir)/'`$(EMIS)/tfbelow.F
+
+$(EMIS)/libCCTM_a-tfbelow.obj: $(EMIS)/tfbelow.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-tfbelow.obj `if test -f '$(EMIS)/tfbelow.F'; then $(CYGPATH_W) '$(EMIS)/tfbelow.F'; else $(CYGPATH_W) '$(srcdir)/$(EMIS)/tfbelow.F'; fi`
+
+$(EMIS)/libCCTM_a-UDTYPES.o: $(EMIS)/UDTYPES.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-UDTYPES.o `test -f '$(EMIS)/UDTYPES.F' || echo '$(srcdir)/'`$(EMIS)/UDTYPES.F
+
+$(EMIS)/libCCTM_a-UDTYPES.obj: $(EMIS)/UDTYPES.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-UDTYPES.obj `if test -f '$(EMIS)/UDTYPES.F'; then $(CYGPATH_W) '$(EMIS)/UDTYPES.F'; else $(CYGPATH_W) '$(srcdir)/$(EMIS)/UDTYPES.F'; fi`
 
 $(GAS)/libCCTM_a-degrade_data.o: $(GAS)/degrade_data.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(GAS)/libCCTM_a-degrade_data.o `test -f '$(GAS)/degrade_data.F' || echo '$(srcdir)/'`$(GAS)/degrade_data.F
@@ -1031,11 +1445,29 @@ $(GRID)/libCCTM_a-VGRD_DEFN.o: $(GRID)/VGRD_DEFN.F
 $(GRID)/libCCTM_a-VGRD_DEFN.obj: $(GRID)/VGRD_DEFN.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(GRID)/libCCTM_a-VGRD_DEFN.obj `if test -f '$(GRID)/VGRD_DEFN.F'; then $(CYGPATH_W) '$(GRID)/VGRD_DEFN.F'; else $(CYGPATH_W) '$(srcdir)/$(GRID)/VGRD_DEFN.F'; fi`
 
+$(GRID)/libCCTM_a-PAGRD_DEFN.o: $(GRID)/PAGRD_DEFN.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(GRID)/libCCTM_a-PAGRD_DEFN.o `test -f '$(GRID)/PAGRD_DEFN.F' || echo '$(srcdir)/'`$(GRID)/PAGRD_DEFN.F
+
+$(GRID)/libCCTM_a-PAGRD_DEFN.obj: $(GRID)/PAGRD_DEFN.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(GRID)/libCCTM_a-PAGRD_DEFN.obj `if test -f '$(GRID)/PAGRD_DEFN.F'; then $(CYGPATH_W) '$(GRID)/PAGRD_DEFN.F'; else $(CYGPATH_W) '$(srcdir)/$(GRID)/PAGRD_DEFN.F'; fi`
+
 $(GRID)/libCCTM_a-PCGRID_DEFN.o: $(GRID)/PCGRID_DEFN.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(GRID)/libCCTM_a-PCGRID_DEFN.o `test -f '$(GRID)/PCGRID_DEFN.F' || echo '$(srcdir)/'`$(GRID)/PCGRID_DEFN.F
 
 $(GRID)/libCCTM_a-PCGRID_DEFN.obj: $(GRID)/PCGRID_DEFN.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(GRID)/libCCTM_a-PCGRID_DEFN.obj `if test -f '$(GRID)/PCGRID_DEFN.F'; then $(CYGPATH_W) '$(GRID)/PCGRID_DEFN.F'; else $(CYGPATH_W) '$(srcdir)/$(GRID)/PCGRID_DEFN.F'; fi`
+
+$(PA)/libCCTM_a-PA_DEFN.o: $(PA)/PA_DEFN.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(PA)/libCCTM_a-PA_DEFN.o `test -f '$(PA)/PA_DEFN.F' || echo '$(srcdir)/'`$(PA)/PA_DEFN.F
+
+$(PA)/libCCTM_a-PA_DEFN.obj: $(PA)/PA_DEFN.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(PA)/libCCTM_a-PA_DEFN.obj `if test -f '$(PA)/PA_DEFN.F'; then $(CYGPATH_W) '$(PA)/PA_DEFN.F'; else $(CYGPATH_W) '$(srcdir)/$(PA)/PA_DEFN.F'; fi`
+
+$(PA)/libCCTM_a-pa_update.o: $(PA)/pa_update.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(PA)/libCCTM_a-pa_update.o `test -f '$(PA)/pa_update.F' || echo '$(srcdir)/'`$(PA)/pa_update.F
+
+$(PA)/libCCTM_a-pa_update.obj: $(PA)/pa_update.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(PA)/libCCTM_a-pa_update.obj `if test -f '$(PA)/pa_update.F'; then $(CYGPATH_W) '$(PA)/pa_update.F'; else $(CYGPATH_W) '$(srcdir)/$(PA)/pa_update.F'; fi`
 
 $(PHOT)/libCCTM_a-AERO_PHOTDATA.o: $(PHOT)/AERO_PHOTDATA.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(PHOT)/libCCTM_a-AERO_PHOTDATA.o `test -f '$(PHOT)/AERO_PHOTDATA.F' || echo '$(srcdir)/'`$(PHOT)/AERO_PHOTDATA.F
@@ -1054,6 +1486,12 @@ $(PHOT)/libCCTM_a-CSQY_DATA.o: $(PHOT)/CSQY_DATA.F
 
 $(PHOT)/libCCTM_a-CSQY_DATA.obj: $(PHOT)/CSQY_DATA.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(PHOT)/libCCTM_a-CSQY_DATA.obj `if test -f '$(PHOT)/CSQY_DATA.F'; then $(CYGPATH_W) '$(PHOT)/CSQY_DATA.F'; else $(CYGPATH_W) '$(srcdir)/$(PHOT)/CSQY_DATA.F'; fi`
+
+$(PHOT)/libCCTM_a-opphot.o: $(PHOT)/opphot.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(PHOT)/libCCTM_a-opphot.o `test -f '$(PHOT)/opphot.F' || echo '$(srcdir)/'`$(PHOT)/opphot.F
+
+$(PHOT)/libCCTM_a-opphot.obj: $(PHOT)/opphot.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(PHOT)/libCCTM_a-opphot.obj `if test -f '$(PHOT)/opphot.F'; then $(CYGPATH_W) '$(PHOT)/opphot.F'; else $(CYGPATH_W) '$(srcdir)/$(PHOT)/opphot.F'; fi`
 
 $(PHOT)/libCCTM_a-phot.o: $(PHOT)/phot.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(PHOT)/libCCTM_a-phot.o `test -f '$(PHOT)/phot.F' || echo '$(srcdir)/'`$(PHOT)/phot.F
@@ -1085,11 +1523,41 @@ $(PHOT)/libCCTM_a-SEAS_STRAT_O3_MIN.o: $(PHOT)/SEAS_STRAT_O3_MIN.F
 $(PHOT)/libCCTM_a-SEAS_STRAT_O3_MIN.obj: $(PHOT)/SEAS_STRAT_O3_MIN.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(PHOT)/libCCTM_a-SEAS_STRAT_O3_MIN.obj `if test -f '$(PHOT)/SEAS_STRAT_O3_MIN.F'; then $(CYGPATH_W) '$(PHOT)/SEAS_STRAT_O3_MIN.F'; else $(CYGPATH_W) '$(srcdir)/$(PHOT)/SEAS_STRAT_O3_MIN.F'; fi`
 
+$(PLRISE)/libCCTM_a-fire_plmris.o: $(PLRISE)/fire_plmris.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(PLRISE)/libCCTM_a-fire_plmris.o `test -f '$(PLRISE)/fire_plmris.F' || echo '$(srcdir)/'`$(PLRISE)/fire_plmris.F
+
+$(PLRISE)/libCCTM_a-fire_plmris.obj: $(PLRISE)/fire_plmris.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(PLRISE)/libCCTM_a-fire_plmris.obj `if test -f '$(PLRISE)/fire_plmris.F'; then $(CYGPATH_W) '$(PLRISE)/fire_plmris.F'; else $(CYGPATH_W) '$(srcdir)/$(PLRISE)/fire_plmris.F'; fi`
+
+$(PLRISE)/libCCTM_a-openlayout.o: $(PLRISE)/openlayout.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(PLRISE)/libCCTM_a-openlayout.o `test -f '$(PLRISE)/openlayout.F' || echo '$(srcdir)/'`$(PLRISE)/openlayout.F
+
+$(PLRISE)/libCCTM_a-openlayout.obj: $(PLRISE)/openlayout.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(PLRISE)/libCCTM_a-openlayout.obj `if test -f '$(PLRISE)/openlayout.F'; then $(CYGPATH_W) '$(PLRISE)/openlayout.F'; else $(CYGPATH_W) '$(srcdir)/$(PLRISE)/openlayout.F'; fi`
+
+$(PLRISE)/libCCTM_a-oppt3d_diag.o: $(PLRISE)/oppt3d_diag.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(PLRISE)/libCCTM_a-oppt3d_diag.o `test -f '$(PLRISE)/oppt3d_diag.F' || echo '$(srcdir)/'`$(PLRISE)/oppt3d_diag.F
+
+$(PLRISE)/libCCTM_a-oppt3d_diag.obj: $(PLRISE)/oppt3d_diag.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(PLRISE)/libCCTM_a-oppt3d_diag.obj `if test -f '$(PLRISE)/oppt3d_diag.F'; then $(CYGPATH_W) '$(PLRISE)/oppt3d_diag.F'; else $(CYGPATH_W) '$(srcdir)/$(PLRISE)/oppt3d_diag.F'; fi`
+
+$(PLRISE)/libCCTM_a-plmris.o: $(PLRISE)/plmris.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(PLRISE)/libCCTM_a-plmris.o `test -f '$(PLRISE)/plmris.F' || echo '$(srcdir)/'`$(PLRISE)/plmris.F
+
+$(PLRISE)/libCCTM_a-plmris.obj: $(PLRISE)/plmris.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(PLRISE)/libCCTM_a-plmris.obj `if test -f '$(PLRISE)/plmris.F'; then $(CYGPATH_W) '$(PLRISE)/plmris.F'; else $(CYGPATH_W) '$(srcdir)/$(PLRISE)/plmris.F'; fi`
+
 $(SPCS)/libCCTM_a-CGRID_SPCS.o: $(SPCS)/CGRID_SPCS.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(SPCS)/libCCTM_a-CGRID_SPCS.o `test -f '$(SPCS)/CGRID_SPCS.F' || echo '$(srcdir)/'`$(SPCS)/CGRID_SPCS.F
 
 $(SPCS)/libCCTM_a-CGRID_SPCS.obj: $(SPCS)/CGRID_SPCS.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(SPCS)/libCCTM_a-CGRID_SPCS.obj `if test -f '$(SPCS)/CGRID_SPCS.F'; then $(CYGPATH_W) '$(SPCS)/CGRID_SPCS.F'; else $(CYGPATH_W) '$(srcdir)/$(SPCS)/CGRID_SPCS.F'; fi`
+
+$(UTIL)/libCCTM_a-bmatvec.o: $(UTIL)/bmatvec.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(UTIL)/libCCTM_a-bmatvec.o `test -f '$(UTIL)/bmatvec.F' || echo '$(srcdir)/'`$(UTIL)/bmatvec.F
+
+$(UTIL)/libCCTM_a-bmatvec.obj: $(UTIL)/bmatvec.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(UTIL)/libCCTM_a-bmatvec.obj `if test -f '$(UTIL)/bmatvec.F'; then $(CYGPATH_W) '$(UTIL)/bmatvec.F'; else $(CYGPATH_W) '$(srcdir)/$(UTIL)/bmatvec.F'; fi`
 
 $(UTIL)/libCCTM_a-setup_logdev.o: $(UTIL)/setup_logdev.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(UTIL)/libCCTM_a-setup_logdev.o `test -f '$(UTIL)/setup_logdev.F' || echo '$(srcdir)/'`$(UTIL)/setup_logdev.F
@@ -1097,11 +1565,23 @@ $(UTIL)/libCCTM_a-setup_logdev.o: $(UTIL)/setup_logdev.F
 $(UTIL)/libCCTM_a-setup_logdev.obj: $(UTIL)/setup_logdev.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(UTIL)/libCCTM_a-setup_logdev.obj `if test -f '$(UTIL)/setup_logdev.F'; then $(CYGPATH_W) '$(UTIL)/setup_logdev.F'; else $(CYGPATH_W) '$(srcdir)/$(UTIL)/setup_logdev.F'; fi`
 
+$(UTIL)/libCCTM_a-subhdomain.o: $(UTIL)/subhdomain.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(UTIL)/libCCTM_a-subhdomain.o `test -f '$(UTIL)/subhdomain.F' || echo '$(srcdir)/'`$(UTIL)/subhdomain.F
+
+$(UTIL)/libCCTM_a-subhdomain.obj: $(UTIL)/subhdomain.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(UTIL)/libCCTM_a-subhdomain.obj `if test -f '$(UTIL)/subhdomain.F'; then $(CYGPATH_W) '$(UTIL)/subhdomain.F'; else $(CYGPATH_W) '$(srcdir)/$(UTIL)/subhdomain.F'; fi`
+
 $(UTIL)/libCCTM_a-UTILIO_DEFN.o: $(UTIL)/UTILIO_DEFN.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(UTIL)/libCCTM_a-UTILIO_DEFN.o `test -f '$(UTIL)/UTILIO_DEFN.F' || echo '$(srcdir)/'`$(UTIL)/UTILIO_DEFN.F
 
 $(UTIL)/libCCTM_a-UTILIO_DEFN.obj: $(UTIL)/UTILIO_DEFN.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(UTIL)/libCCTM_a-UTILIO_DEFN.obj `if test -f '$(UTIL)/UTILIO_DEFN.F'; then $(CYGPATH_W) '$(UTIL)/UTILIO_DEFN.F'; else $(CYGPATH_W) '$(srcdir)/$(UTIL)/UTILIO_DEFN.F'; fi`
+
+$(VDIFF)/libCCTM_a-aero_sedv.o: $(VDIFF)/aero_sedv.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(VDIFF)/libCCTM_a-aero_sedv.o `test -f '$(VDIFF)/aero_sedv.F' || echo '$(srcdir)/'`$(VDIFF)/aero_sedv.F
+
+$(VDIFF)/libCCTM_a-aero_sedv.obj: $(VDIFF)/aero_sedv.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(VDIFF)/libCCTM_a-aero_sedv.obj `if test -f '$(VDIFF)/aero_sedv.F'; then $(CYGPATH_W) '$(VDIFF)/aero_sedv.F'; else $(CYGPATH_W) '$(srcdir)/$(VDIFF)/aero_sedv.F'; fi`
 
 $(VDIFF)/libCCTM_a-ASX_DATA_MOD.o: $(VDIFF)/ASX_DATA_MOD.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(VDIFF)/libCCTM_a-ASX_DATA_MOD.o `test -f '$(VDIFF)/ASX_DATA_MOD.F' || echo '$(srcdir)/'`$(VDIFF)/ASX_DATA_MOD.F
@@ -1121,17 +1601,47 @@ $(VDIFF)/libCCTM_a-matrix1.o: $(VDIFF)/matrix1.F
 $(VDIFF)/libCCTM_a-matrix1.obj: $(VDIFF)/matrix1.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(VDIFF)/libCCTM_a-matrix1.obj `if test -f '$(VDIFF)/matrix1.F'; then $(CYGPATH_W) '$(VDIFF)/matrix1.F'; else $(CYGPATH_W) '$(srcdir)/$(VDIFF)/matrix1.F'; fi`
 
+$(VDIFF)/libCCTM_a-opddep.o: $(VDIFF)/opddep.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(VDIFF)/libCCTM_a-opddep.o `test -f '$(VDIFF)/opddep.F' || echo '$(srcdir)/'`$(VDIFF)/opddep.F
+
+$(VDIFF)/libCCTM_a-opddep.obj: $(VDIFF)/opddep.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(VDIFF)/libCCTM_a-opddep.obj `if test -f '$(VDIFF)/opddep.F'; then $(CYGPATH_W) '$(VDIFF)/opddep.F'; else $(CYGPATH_W) '$(srcdir)/$(VDIFF)/opddep.F'; fi`
+
+$(VDIFF)/libCCTM_a-opddep_fst.o: $(VDIFF)/opddep_fst.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(VDIFF)/libCCTM_a-opddep_fst.o `test -f '$(VDIFF)/opddep_fst.F' || echo '$(srcdir)/'`$(VDIFF)/opddep_fst.F
+
+$(VDIFF)/libCCTM_a-opddep_fst.obj: $(VDIFF)/opddep_fst.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(VDIFF)/libCCTM_a-opddep_fst.obj `if test -f '$(VDIFF)/opddep_fst.F'; then $(CYGPATH_W) '$(VDIFF)/opddep_fst.F'; else $(CYGPATH_W) '$(srcdir)/$(VDIFF)/opddep_fst.F'; fi`
+
+$(VDIFF)/libCCTM_a-opddep_mos.o: $(VDIFF)/opddep_mos.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(VDIFF)/libCCTM_a-opddep_mos.o `test -f '$(VDIFF)/opddep_mos.F' || echo '$(srcdir)/'`$(VDIFF)/opddep_mos.F
+
+$(VDIFF)/libCCTM_a-opddep_mos.obj: $(VDIFF)/opddep_mos.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(VDIFF)/libCCTM_a-opddep_mos.obj `if test -f '$(VDIFF)/opddep_mos.F'; then $(CYGPATH_W) '$(VDIFF)/opddep_mos.F'; else $(CYGPATH_W) '$(srcdir)/$(VDIFF)/opddep_mos.F'; fi`
+
+$(VDIFF)/libCCTM_a-rddepv.o: $(VDIFF)/rddepv.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(VDIFF)/libCCTM_a-rddepv.o `test -f '$(VDIFF)/rddepv.F' || echo '$(srcdir)/'`$(VDIFF)/rddepv.F
+
+$(VDIFF)/libCCTM_a-rddepv.obj: $(VDIFF)/rddepv.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(VDIFF)/libCCTM_a-rddepv.obj `if test -f '$(VDIFF)/rddepv.F'; then $(CYGPATH_W) '$(VDIFF)/rddepv.F'; else $(CYGPATH_W) '$(srcdir)/$(VDIFF)/rddepv.F'; fi`
+
+$(VDIFF)/libCCTM_a-SEDIMENTATION.o: $(VDIFF)/SEDIMENTATION.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(VDIFF)/libCCTM_a-SEDIMENTATION.o `test -f '$(VDIFF)/SEDIMENTATION.F' || echo '$(srcdir)/'`$(VDIFF)/SEDIMENTATION.F
+
+$(VDIFF)/libCCTM_a-SEDIMENTATION.obj: $(VDIFF)/SEDIMENTATION.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(VDIFF)/libCCTM_a-SEDIMENTATION.obj `if test -f '$(VDIFF)/SEDIMENTATION.F'; then $(CYGPATH_W) '$(VDIFF)/SEDIMENTATION.F'; else $(CYGPATH_W) '$(srcdir)/$(VDIFF)/SEDIMENTATION.F'; fi`
+
 $(VDIFF)/libCCTM_a-tri.o: $(VDIFF)/tri.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(VDIFF)/libCCTM_a-tri.o `test -f '$(VDIFF)/tri.F' || echo '$(srcdir)/'`$(VDIFF)/tri.F
 
 $(VDIFF)/libCCTM_a-tri.obj: $(VDIFF)/tri.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(VDIFF)/libCCTM_a-tri.obj `if test -f '$(VDIFF)/tri.F'; then $(CYGPATH_W) '$(VDIFF)/tri.F'; else $(CYGPATH_W) '$(srcdir)/$(VDIFF)/tri.F'; fi`
 
-$(VDIFF)/libCCTM_a-vdiffacmx.o: $(VDIFF)/vdiffacmx.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(VDIFF)/libCCTM_a-vdiffacmx.o `test -f '$(VDIFF)/vdiffacmx.F' || echo '$(srcdir)/'`$(VDIFF)/vdiffacmx.F
+$(VDIFF)/libCCTM_a-VDIFF_DIAG.o: $(VDIFF)/VDIFF_DIAG.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(VDIFF)/libCCTM_a-VDIFF_DIAG.o `test -f '$(VDIFF)/VDIFF_DIAG.F' || echo '$(srcdir)/'`$(VDIFF)/VDIFF_DIAG.F
 
-$(VDIFF)/libCCTM_a-vdiffacmx.obj: $(VDIFF)/vdiffacmx.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(VDIFF)/libCCTM_a-vdiffacmx.obj `if test -f '$(VDIFF)/vdiffacmx.F'; then $(CYGPATH_W) '$(VDIFF)/vdiffacmx.F'; else $(CYGPATH_W) '$(srcdir)/$(VDIFF)/vdiffacmx.F'; fi`
+$(VDIFF)/libCCTM_a-VDIFF_DIAG.obj: $(VDIFF)/VDIFF_DIAG.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(VDIFF)/libCCTM_a-VDIFF_DIAG.obj `if test -f '$(VDIFF)/VDIFF_DIAG.F'; then $(CYGPATH_W) '$(VDIFF)/VDIFF_DIAG.F'; else $(CYGPATH_W) '$(srcdir)/$(VDIFF)/VDIFF_DIAG.F'; fi`
 
 $(VDIFF)/libCCTM_a-VDIFF_MAP.o: $(VDIFF)/VDIFF_MAP.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(VDIFF)/libCCTM_a-VDIFF_MAP.o `test -f '$(VDIFF)/VDIFF_MAP.F' || echo '$(srcdir)/'`$(VDIFF)/VDIFF_MAP.F
@@ -1213,11 +1723,65 @@ $(AERO)/libCCTM_a-isorev.o: $(AERO)/isorev.f
 $(AERO)/libCCTM_a-isorev.obj: $(AERO)/isorev.f
 	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(AERO)/libCCTM_a-isorev.obj `if test -f '$(AERO)/isorev.f'; then $(CYGPATH_W) '$(AERO)/isorev.f'; else $(CYGPATH_W) '$(srcdir)/$(AERO)/isorev.f'; fi`
 
+$(BIOG)/libCCTM_a-checkmem.o: $(BIOG)/checkmem.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(BIOG)/libCCTM_a-checkmem.o `test -f '$(BIOG)/checkmem.f' || echo '$(srcdir)/'`$(BIOG)/checkmem.f
+
+$(BIOG)/libCCTM_a-checkmem.obj: $(BIOG)/checkmem.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(BIOG)/libCCTM_a-checkmem.obj `if test -f '$(BIOG)/checkmem.f'; then $(CYGPATH_W) '$(BIOG)/checkmem.f'; else $(CYGPATH_W) '$(srcdir)/$(BIOG)/checkmem.f'; fi`
+
+$(BIOG)/libCCTM_a-getparb.o: $(BIOG)/getparb.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(BIOG)/libCCTM_a-getparb.o `test -f '$(BIOG)/getparb.f' || echo '$(srcdir)/'`$(BIOG)/getparb.f
+
+$(BIOG)/libCCTM_a-getparb.obj: $(BIOG)/getparb.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(BIOG)/libCCTM_a-getparb.obj `if test -f '$(BIOG)/getparb.f'; then $(CYGPATH_W) '$(BIOG)/getparb.f'; else $(CYGPATH_W) '$(srcdir)/$(BIOG)/getparb.f'; fi`
+
+$(BIOG)/libCCTM_a-parsline.o: $(BIOG)/parsline.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(BIOG)/libCCTM_a-parsline.o `test -f '$(BIOG)/parsline.f' || echo '$(srcdir)/'`$(BIOG)/parsline.f
+
+$(BIOG)/libCCTM_a-parsline.obj: $(BIOG)/parsline.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(BIOG)/libCCTM_a-parsline.obj `if test -f '$(BIOG)/parsline.f'; then $(CYGPATH_W) '$(BIOG)/parsline.f'; else $(CYGPATH_W) '$(srcdir)/$(BIOG)/parsline.f'; fi`
+
+$(BIOG)/libCCTM_a-wrdaymsg.o: $(BIOG)/wrdaymsg.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(BIOG)/libCCTM_a-wrdaymsg.o `test -f '$(BIOG)/wrdaymsg.f' || echo '$(srcdir)/'`$(BIOG)/wrdaymsg.f
+
+$(BIOG)/libCCTM_a-wrdaymsg.obj: $(BIOG)/wrdaymsg.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(BIOG)/libCCTM_a-wrdaymsg.obj `if test -f '$(BIOG)/wrdaymsg.f'; then $(CYGPATH_W) '$(BIOG)/wrdaymsg.f'; else $(CYGPATH_W) '$(srcdir)/$(BIOG)/wrdaymsg.f'; fi`
+
 $(PHOT)/libCCTM_a-o3totcol.o: $(PHOT)/o3totcol.f
 	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(PHOT)/libCCTM_a-o3totcol.o `test -f '$(PHOT)/o3totcol.f' || echo '$(srcdir)/'`$(PHOT)/o3totcol.f
 
 $(PHOT)/libCCTM_a-o3totcol.obj: $(PHOT)/o3totcol.f
 	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(PHOT)/libCCTM_a-o3totcol.obj `if test -f '$(PHOT)/o3totcol.f'; then $(CYGPATH_W) '$(PHOT)/o3totcol.f'; else $(CYGPATH_W) '$(srcdir)/$(PHOT)/o3totcol.f'; fi`
+
+$(PLRISE)/libCCTM_a-delta_zs.o: $(PLRISE)/delta_zs.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(PLRISE)/libCCTM_a-delta_zs.o `test -f '$(PLRISE)/delta_zs.f' || echo '$(srcdir)/'`$(PLRISE)/delta_zs.f
+
+$(PLRISE)/libCCTM_a-delta_zs.obj: $(PLRISE)/delta_zs.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(PLRISE)/libCCTM_a-delta_zs.obj `if test -f '$(PLRISE)/delta_zs.f'; then $(CYGPATH_W) '$(PLRISE)/delta_zs.f'; else $(CYGPATH_W) '$(srcdir)/$(PLRISE)/delta_zs.f'; fi`
+
+$(PLRISE)/libCCTM_a-plsprd.o: $(PLRISE)/plsprd.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(PLRISE)/libCCTM_a-plsprd.o `test -f '$(PLRISE)/plsprd.f' || echo '$(srcdir)/'`$(PLRISE)/plsprd.f
+
+$(PLRISE)/libCCTM_a-plsprd.obj: $(PLRISE)/plsprd.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(PLRISE)/libCCTM_a-plsprd.obj `if test -f '$(PLRISE)/plsprd.f'; then $(CYGPATH_W) '$(PLRISE)/plsprd.f'; else $(CYGPATH_W) '$(srcdir)/$(PLRISE)/plsprd.f'; fi`
+
+$(PLRISE)/libCCTM_a-preplm.o: $(PLRISE)/preplm.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(PLRISE)/libCCTM_a-preplm.o `test -f '$(PLRISE)/preplm.f' || echo '$(srcdir)/'`$(PLRISE)/preplm.f
+
+$(PLRISE)/libCCTM_a-preplm.obj: $(PLRISE)/preplm.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(PLRISE)/libCCTM_a-preplm.obj `if test -f '$(PLRISE)/preplm.f'; then $(CYGPATH_W) '$(PLRISE)/preplm.f'; else $(CYGPATH_W) '$(srcdir)/$(PLRISE)/preplm.f'; fi`
+
+$(PLRISE)/libCCTM_a-ungridb2.o: $(PLRISE)/ungridb2.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(PLRISE)/libCCTM_a-ungridb2.o `test -f '$(PLRISE)/ungridb2.f' || echo '$(srcdir)/'`$(PLRISE)/ungridb2.f
+
+$(PLRISE)/libCCTM_a-ungridb2.obj: $(PLRISE)/ungridb2.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(PLRISE)/libCCTM_a-ungridb2.obj `if test -f '$(PLRISE)/ungridb2.f'; then $(CYGPATH_W) '$(PLRISE)/ungridb2.f'; else $(CYGPATH_W) '$(srcdir)/$(PLRISE)/ungridb2.f'; fi`
+
+$(PLRISE)/libCCTM_a-write3_distr.o: $(PLRISE)/write3_distr.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(PLRISE)/libCCTM_a-write3_distr.o `test -f '$(PLRISE)/write3_distr.f' || echo '$(srcdir)/'`$(PLRISE)/write3_distr.f
+
+$(PLRISE)/libCCTM_a-write3_distr.obj: $(PLRISE)/write3_distr.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(PLRISE)/libCCTM_a-write3_distr.obj `if test -f '$(PLRISE)/write3_distr.f'; then $(CYGPATH_W) '$(PLRISE)/write3_distr.f'; else $(CYGPATH_W) '$(srcdir)/$(PLRISE)/write3_distr.f'; fi`
 
 $(STENEX)/libCCTM_a-noop_comm_module.o: $(STENEX)/noop_comm_module.f
 	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(STENEX)/libCCTM_a-noop_comm_module.o `test -f '$(STENEX)/noop_comm_module.f' || echo '$(srcdir)/'`$(STENEX)/noop_comm_module.f
@@ -1290,6 +1854,12 @@ $(UTIL)/libCCTM_a-findex.o: $(UTIL)/findex.f
 
 $(UTIL)/libCCTM_a-findex.obj: $(UTIL)/findex.f
 	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(UTIL)/libCCTM_a-findex.obj `if test -f '$(UTIL)/findex.f'; then $(CYGPATH_W) '$(UTIL)/findex.f'; else $(CYGPATH_W) '$(srcdir)/$(UTIL)/findex.f'; fi`
+
+$(UTIL)/libCCTM_a-get_envlist.o: $(UTIL)/get_envlist.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(UTIL)/libCCTM_a-get_envlist.o `test -f '$(UTIL)/get_envlist.f' || echo '$(srcdir)/'`$(UTIL)/get_envlist.f
+
+$(UTIL)/libCCTM_a-get_envlist.obj: $(UTIL)/get_envlist.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(UTIL)/libCCTM_a-get_envlist.obj `if test -f '$(UTIL)/get_envlist.f'; then $(CYGPATH_W) '$(UTIL)/get_envlist.f'; else $(CYGPATH_W) '$(srcdir)/$(UTIL)/get_envlist.f'; fi`
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
@@ -1405,6 +1975,8 @@ distclean-generic:
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
 	-test -z "$(AERO)/$(DEPDIR)/$(am__dirstamp)" || rm -f $(AERO)/$(DEPDIR)/$(am__dirstamp)
 	-test -z "$(AERO)/$(am__dirstamp)" || rm -f $(AERO)/$(am__dirstamp)
+	-test -z "$(BIOG)/$(DEPDIR)/$(am__dirstamp)" || rm -f $(BIOG)/$(DEPDIR)/$(am__dirstamp)
+	-test -z "$(BIOG)/$(am__dirstamp)" || rm -f $(BIOG)/$(am__dirstamp)
 	-test -z "$(CLOUD)/$(DEPDIR)/$(am__dirstamp)" || rm -f $(CLOUD)/$(DEPDIR)/$(am__dirstamp)
 	-test -z "$(CLOUD)/$(am__dirstamp)" || rm -f $(CLOUD)/$(am__dirstamp)
 	-test -z "$(DEPV)/$(DEPDIR)/$(am__dirstamp)" || rm -f $(DEPV)/$(DEPDIR)/$(am__dirstamp)
@@ -1417,8 +1989,12 @@ distclean-generic:
 	-test -z "$(GRID)/$(am__dirstamp)" || rm -f $(GRID)/$(am__dirstamp)
 	-test -z "$(MECHS)/$(DEPDIR)/$(am__dirstamp)" || rm -f $(MECHS)/$(DEPDIR)/$(am__dirstamp)
 	-test -z "$(MECHS)/$(am__dirstamp)" || rm -f $(MECHS)/$(am__dirstamp)
+	-test -z "$(PA)/$(DEPDIR)/$(am__dirstamp)" || rm -f $(PA)/$(DEPDIR)/$(am__dirstamp)
+	-test -z "$(PA)/$(am__dirstamp)" || rm -f $(PA)/$(am__dirstamp)
 	-test -z "$(PHOT)/$(DEPDIR)/$(am__dirstamp)" || rm -f $(PHOT)/$(DEPDIR)/$(am__dirstamp)
 	-test -z "$(PHOT)/$(am__dirstamp)" || rm -f $(PHOT)/$(am__dirstamp)
+	-test -z "$(PLRISE)/$(DEPDIR)/$(am__dirstamp)" || rm -f $(PLRISE)/$(DEPDIR)/$(am__dirstamp)
+	-test -z "$(PLRISE)/$(am__dirstamp)" || rm -f $(PLRISE)/$(am__dirstamp)
 	-test -z "$(SPCS)/$(DEPDIR)/$(am__dirstamp)" || rm -f $(SPCS)/$(DEPDIR)/$(am__dirstamp)
 	-test -z "$(SPCS)/$(am__dirstamp)" || rm -f $(SPCS)/$(am__dirstamp)
 	-test -z "$(STENEX)/$(DEPDIR)/$(am__dirstamp)" || rm -f $(STENEX)/$(DEPDIR)/$(am__dirstamp)
@@ -1527,147 +2103,337 @@ clean-local: clean-modules
 #####################
 
 # aero
-$(libAERO)AERO_DATA.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(libAERO)AEROMET_DATA.$(OBJEXT) \
-	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT) \
-	$(libUTIL)setup_logdev.$(OBJEXT)
-
-$(libAERO)aero_depv.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(libVDIFF)ASX_DATA_MOD.$(OBJEXT) \
-	$(libDEPV)LSM_MOD.$(OBJEXT) $(libAERO)AEROMET_DATA.$(OBJEXT) $(libAERO)AERO_DATA.$(OBJEXT) \
-	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) \
-	$(libGRID)GRID_CONF.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT) $(libDEPV)MOSAIC_MOD.$(OBJEXT)
-
-$(libAERO)aero_driver.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(libAERO)AEROSOL_CHEMISTRY.$(OBJEXT) \
-	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libAERO)AOD_DEFN.$(OBJEXT) $(libAERO)AEROMET_DATA.$(OBJEXT) \
-	$(libAERO)SOA_DEFN.$(OBJEXT) $(libAERO)PRECURSOR_DATA.$(OBJEXT) $(libAERO)AERO_DATA.$(OBJEXT) \
-	$(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT) \
-	$(libAERO)PMDIAG_DATA.$(OBJEXT)
-
-$(libAERO)AERO_EMIS.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(ICL)/const/CONST.EXT \
-	$(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libAERO)PRECURSOR_DATA.$(OBJEXT) \
-	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) \
-	$(libGRID)GRID_CONF.$(OBJEXT) $(libAERO)AERO_DATA.$(OBJEXT) \
-	$(libUTIL)UTILIO_DEFN.$(OBJEXT) $(libUTIL)setup_logdev.$(OBJEXT)
-
-$(libAERO)getpar.$(OBJEXT) : $(libAERO)AEROMET_DATA.$(OBJEXT) $(libAERO)AERO_DATA.$(OBJEXT) 
-
+$(libAERO)AERO_DATA.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
+	$(libAERO)AEROMET_DATA.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
+	$(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libAERO)aero_depv.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
+	$(libAERO)AERO_DATA.$(OBJEXT) $(libAERO)AEROMET_DATA.$(OBJEXT) \
+	$(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
+	$(libGRID)GRID_CONF.$(OBJEXT) $(libDEPV)LSM_MOD.$(OBJEXT) \
+	$(libDEPV)MOSAIC_MOD.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libAERO)aero_driver.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
+	$(libAERO)AERO_DATA.$(OBJEXT) $(libAERO)AEROMET_DATA.$(OBJEXT) \
+	$(libAERO)AEROSOL_CHEMISTRY.$(OBJEXT) $(libAERO)AOD_DEFN.$(OBJEXT) \
+	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
+	$(libAERO)PMDIAG_DATA.$(OBJEXT) $(libAERO)PRECURSOR_DATA.$(OBJEXT) \
+	$(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libAERO)SOA_DEFN.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libAERO)AERO_EMIS.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/filenames/FILES_CTM.EXT \
+	$(libAERO)AERO_DATA.$(OBJEXT) $(libVDIFF)ASX_DATA_MOD.$(OBJEXT) \
+	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libEMIS)DUST_EMIS.$(OBJEXT) \
+	$(libGRID)GRID_CONF.$(OBJEXT) $(libAERO)PRECURSOR_DATA.$(OBJEXT) \
+	$(libEMIS)PT3D_DEFN.$(OBJEXT) $(libEMIS)PTMAP.$(OBJEXT) \
+	$(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libEMIS)SSEMIS.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
 $(libAERO)AEROMET_DATA.$(OBJEXT) : $(ICL)/const/CONST.EXT
-
-$(libAERO)AEROSOL_CHEMISTRY.$(OBJEXT) : $(ICL)/const/CONST.EXT $(libAERO)SOA_DEFN.$(OBJEXT) \
-	$(libAERO)PRECURSOR_DATA.$(OBJEXT) $(libAERO)AEROMET_DATA.$(OBJEXT) $(libAERO)AERO_DATA.$(OBJEXT) \
-	$(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT) \
-	$(libUTIL)setup_logdev.$(OBJEXT)
-
-$(libAERO)aero_subs.$(OBJEXT) : $(AERO)/isrpia.inc $(ICL)/const/CONST.EXT $(libAERO)AOD_DEFN.$(OBJEXT) \
-	$(libAERO)AEROMET_DATA.$(OBJEXT) $(libAERO)SOA_DEFN.$(OBJEXT) $(libAERO)PRECURSOR_DATA.$(OBJEXT) \
-	$(libAERO)AERO_DATA.$(OBJEXT) $(libUTIL)setup_logdev.$(OBJEXT)
-
-$(libAERO)AOD_DEFN.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(libVDIFF)ASX_DATA_MOD.$(OBJEXT) \
-	$(libAERO)AERO_DATA.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT) \
-	$(libGRID)VGRD_DEFN.$(OBJEXT)
-
+$(libAERO)AEROSOL_CHEMISTRY.$(OBJEXT) : $(ICL)/const/CONST.EXT \
+	$(libAERO)AERO_DATA.$(OBJEXT) $(libAERO)AEROMET_DATA.$(OBJEXT) \
+	$(libGRID)GRID_CONF.$(OBJEXT) $(libAERO)PRECURSOR_DATA.$(OBJEXT) \
+	$(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libAERO)SOA_DEFN.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libAERO)aero_subs.$(OBJEXT) : $(ICL)/const/CONST.EXT $(AERO)/isrpia.inc \
+	$(libAERO)AERO_DATA.$(OBJEXT) $(libAERO)AEROMET_DATA.$(OBJEXT) \
+	$(libAERO)AOD_DEFN.$(OBJEXT) $(libAERO)PRECURSOR_DATA.$(OBJEXT) \
+	$(libAERO)SOA_DEFN.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libAERO)AOD_DEFN.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
+	$(libAERO)AERO_DATA.$(OBJEXT) $(libVDIFF)ASX_DATA_MOD.$(OBJEXT) \
+	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libAERO)getpar.$(OBJEXT) : \
+	$(libAERO)AERO_DATA.$(OBJEXT) $(libAERO)AEROMET_DATA.$(OBJEXT)
 $(libAERO)isocom.$(OBJEXT) : $(AERO)/isrpia.inc
 $(libAERO)isofwd.$(OBJEXT) : $(AERO)/isrpia.inc
 $(libAERO)isorev.$(OBJEXT) : $(AERO)/isrpia.inc
-$(libAERO)PRECURSOR_DATA.$(OBJEXT) : $(libAERO)AEROMET_DATA.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
-	$(libAERO)AERO_DATA.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libUTIL)setup_logdev.$(OBJEXT)
-$(libAERO)SOA_DEFN.$(OBJEXT) : $(libSPCS)CGRID_SPCS.$(OBJEXT) $(libAERO)AEROMET_DATA.$(OBJEXT) \
-	$(libAERO)AERO_DATA.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libUTIL)setup_logdev.$(OBJEXT)
+$(libAERO)opvis.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
+	$(libGRID)GRID_CONF.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libAERO)opavis.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
+	$(libGRID)GRID_CONF.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libAERO)oppmdiag.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
+	$(libGRID)GRID_CONF.$(OBJEXT) $(libAERO)PMDIAG_DATA.$(OBJEXT) \
+	$(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libAERO)opapmdiag.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
+	$(libGRID)GRID_CONF.$(OBJEXT) $(libAERO)PMDIAG_DATA.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libAERO)PRECURSOR_DATA.$(OBJEXT) : \
+	$(libAERO)AERO_DATA.$(OBJEXT) $(libAERO)AEROMET_DATA.$(OBJEXT) \
+	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libAERO)SOA_DEFN.$(OBJEXT) : \
+	$(libAERO)AERO_DATA.$(OBJEXT) $(libAERO)AEROMET_DATA.$(OBJEXT) \
+	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+
+# biog
+$(libBIOG)beis3.$(OBJEXT) : \
+	$(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libEMIS)BIOG_EMIS.$(OBJEXT)
+$(libBIOG)chkgrid.$(OBJEXT) : \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libBIOG)czangle.$(OBJEXT) : $(ICL)/const/CONST.EXT \
+	$(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libBIOG)hrno.$(OBJEXT) : \
+	$(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libEMIS)BIOG_EMIS.$(OBJEXT) \
+	$(libGRID)HGRD_DEFN.$(OBJEXT) $(libDEPV)LSM_MOD.$(OBJEXT) \
+	$(libSTENEX)noop_modules.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libBIOG)parsline.$(OBJEXT) : \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libBIOG)tmpbeis.$(OBJEXT) : \
+	$(libEMIS)BIOG_EMIS.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
+	$(libSTENEX)noop_modules.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libBIOG)wrdaymsg.$(OBJEXT) : \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
 
 # cloud
-$(libCLOUD)concld_prop_acm.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(ICL)/const/CONST.EXT \
-	$(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libPHOT)PHOT_MET_DATA.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT) \
-	$(libGRID)VGRD_DEFN.$(OBJEXT) $(libUTIL)setup_logdev.$(OBJEXT)
-$(libCLOUD)hlconst.$(OBJEXT) : $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libCLOUD)concld_prop_acm.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/filenames/FILES_CTM.EXT \
+	$(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT) \
+	$(libPHOT)PHOT_MET_DATA.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT) \
+	$(libGRID)VGRD_DEFN.$(OBJEXT)
+$(libCLOUD)hlconst.$(OBJEXT) : \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
 
 # depv
-$(libDEPV)cgrid_depv.$(OBJEXT) : $(libGRID)HGRD_DEFN.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) 
-$(libDEPV)DEPV_DEFN.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(ICL)/const/CONST.EXT \
-	$(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libDEPV)LSM_MOD.$(OBJEXT) $(libDEPV)DEPVVARS.$(OBJEXT) \
-	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT)
-$(libDEPV)gas_depv_map.$(OBJEXT) : $(libDEPV)DEPVVARS.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) 
-$(libDEPV)LSM_MOD.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(libGRID)HGRD_DEFN.$(OBJEXT) 
-$(libDEPV)MOSAIC_MOD.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(libGRID)HGRD_DEFN.$(OBJEXT) \
-	$(libDEPV)LSM_MOD.$(OBJEXT) $(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
-$(libDEPV)m3dry.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(libVDIFF)ASX_DATA_MOD.$(OBJEXT) \
-	$(libGRID)VGRD_DEFN.$(OBJEXT) $(libDEPV)DEPVVARS.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT)
+$(libDEPV)ABFLUX_MOD.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/filenames/FILES_CTM.EXT \
+	$(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libDEPV)BIDI_MOD.$(OBJEXT) \
+	$(libGRID)HGRD_DEFN.$(OBJEXT) $(libDEPV)LSM_MOD.$(OBJEXT) \
+	$(libDEPV)MOSAIC_MOD.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libDEPV)BIDI_MOD.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
+	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libDEPV)cgrid_depv.$(OBJEXT) : \
+	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libDEPV)DEPV_DEFN.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/filenames/FILES_CTM.EXT \
+	$(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libDEPV)BIDI_MOD.$(OBJEXT) \
+	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libDEPV)DEPVVARS.$(OBJEXT) \
+	$(libGRID)HGRD_DEFN.$(OBJEXT) $(libDEPV)LSM_MOD.$(OBJEXT) \
+	$(libDEPV)MOSAIC_MOD.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libDEPV)gas_depv_map.$(OBJEXT) : \
+	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libDEPV)DEPVVARS.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libDEPV)HGSIM.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/filenames/FILES_CTM.EXT \
+	$(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libDEPV)BIDI_MOD.$(OBJEXT) \
+	$(libDEPV)DEPVVARS.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT) \
+	$(libDEPV)LSM_MOD.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libDEPV)LSM_MOD.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
+	$(libGRID)HGRD_DEFN.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libDEPV)MOSAIC_MOD.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
+	$(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT) \
+	$(libDEPV)LSM_MOD.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libDEPV)opdepv_diag.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
+	$(libDEPV)DEPVVARS.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libDEPV)opdepv_mos.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
+	$(libDEPV)DEPVVARS.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
+	$(libDEPV)LSM_MOD.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libDEPV)opdepv_fst.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
+	$(libDEPV)DEPVVARS.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
+	$(libDEPV)LSM_MOD.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libDEPV)m3dry.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
+	$(libDEPV)ABFLUX_MOD.$(OBJEXT) $(libVDIFF)ASX_DATA_MOD.$(OBJEXT) \
+	$(libDEPV)BIDI_MOD.$(OBJEXT) $(libDEPV)DEPVVARS.$(OBJEXT) \
+	$(libGRID)HGRD_DEFN.$(OBJEXT) $(libDEPV)HGSIM.$(OBJEXT) \
+	$(libDEPV)LSM_MOD.$(OBJEXT) $(libDEPV)MOSAIC_MOD.$(OBJEXT) \
+	$(libSTENEX)noop_modules.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT) \
+	$(libGRID)VGRD_DEFN.$(OBJEXT)
 
 # emis
-$(libEMIS)EMIS_DEFN.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(ICL)/const/CONST.EXT \
-	$(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libVDIFF)ASX_DATA_MOD.$(OBJEXT) \
-	$(libAERO)AERO_DATA.$(OBJEXT) $(libAERO)AERO_EMIS.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
-	$(libGRID)VGRD_DEFN.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT) 
-$(libEMIS)LUS_DEFN.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(libGRID)HGRD_DEFN.$(OBJEXT) \
-	$(libUTIL)setup_logdev.$(OBJEXT)
-$(libEMIS)SSEMIS.$(OBJEXT) :  $(ICL)/filenames/FILES_CTM.EXT $(libGRID)HGRD_DEFN.$(OBJEXT) \
-	$(libAERO)AERO_DATA.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
-	$(libAERO)AEROMET_DATA.$(OBJEXT) $(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libUTIL)setup_logdev.$(OBJEXT)
+$(libEMIS)BEIS_DEFN.$(OBJEXT) : $(ICL)/const/CONST.EXT \
+	$(libEMIS)BIOG_EMIS.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
+	$(libGRID)HGRD_DEFN.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libEMIS)BIOG_EMIS.$(OBJEXT) : \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libEMIS)cropcal.$(OBJEXT) : \
+	$(libGRID)HGRD_DEFN.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libEMIS)DUST_EMIS.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/filenames/FILES_CTM.EXT \
+	$(libAERO)AERO_DATA.$(OBJEXT) $(libVDIFF)ASX_DATA_MOD.$(OBJEXT) \
+	$(libGRID)GRID_CONF.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT) \
+	$(libEMIS)LUS_DEFN.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libEMIS)EMIS_DEFN.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/filenames/FILES_CTM.EXT \
+	$(libAERO)AERO_DATA.$(OBJEXT) $(libAERO)AERO_EMIS.$(OBJEXT) \
+	$(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libEMIS)BEIS_DEFN.$(OBJEXT) \
+	$(libEMIS)BIOG_EMIS.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
+	$(libDEPV)DEPV_DEFN.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
+	$(libEMIS)LTNG_DEFN.$(OBJEXT) $(libEMIS)MGEMIS.$(OBJEXT) \
+	$(libEMIS)PT3D_DEFN.$(OBJEXT) $(libEMIS)PTMAP.$(OBJEXT) \
+	$(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libEMIS)STK_EMIS.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libEMIS)LTNG_DEFN.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
+	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libEMIS)LUS_DEFN.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
+	$(libGRID)HGRD_DEFN.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libEMIS)MGEMIS.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/filenames/FILES_CTM.EXT \
+	$(libAERO)AEROMET_DATA.$(OBJEXT) $(libVDIFF)ASX_DATA_MOD.$(OBJEXT) \
+	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
+	$(libGRID)HGRD_DEFN.$(OBJEXT) $(libGRID)PCGRID_DEFN.$(OBJEXT) \
+	$(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libEMIS)opemis.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
+	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libEMIS)EMIS_DEFN.$(OBJEXT) \
+	$(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT) \
+	$(libGRID)VGRD_DEFN.$(OBJEXT)
+$(libEMIS)PTBILIN.$(OBJEXT) : \
+	$(libGRID)HGRD_DEFN.$(OBJEXT) $(libEMIS)STK_PRMS.$(OBJEXT) \
+	$(libEMIS)UDTYPES.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT)
+$(libEMIS)PTMAP.$(OBJEXT) : \
+	$(libAERO)AERO_DATA.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
+	$(libEMIS)STK_EMIS.$(OBJEXT) $(libEMIS)UDTYPES.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libEMIS)PTMET.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
+	$(libUTIL)bmatvec.$(OBJEXT) $(libEMIS)PTBILIN.$(OBJEXT) \
+	$(libEMIS)STK_PRMS.$(OBJEXT) $(libEMIS)UDTYPES.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT)
+$(libEMIS)PT3D_DEFN.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/filenames/FILES_CTM.EXT \
+	$(libUTIL)bmatvec.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
+	$(libGRID)GRID_CONF.$(OBJEXT) $(libEMIS)PTBILIN.$(OBJEXT) \
+	$(libEMIS)PTMAP.$(OBJEXT) $(libEMIS)PTMET.$(OBJEXT) \
+	$(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libEMIS)STK_EMIS.$(OBJEXT) \
+	$(libEMIS)STK_PRMS.$(OBJEXT) $(libEMIS)UDTYPES.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT)
+$(libEMIS)SSEMIS.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
+	$(libAERO)AERO_DATA.$(OBJEXT) $(libAERO)AEROMET_DATA.$(OBJEXT) \
+	$(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
+	$(libGRID)HGRD_DEFN.$(OBJEXT) $(libSTENEX)noop_modules.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libEMIS)STK_EMIS.$(OBJEXT) : \
+	$(libEMIS)UDTYPES.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libEMIS)STK_PRMS.$(OBJEXT) : \
+	$(libGRID)HGRD_DEFN.$(OBJEXT) $(libEMIS)UDTYPES.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libEMIS)tfabove.$(OBJEXT) : \
+	$(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT) \
+	$(libEMIS)LUS_DEFN.$(OBJEXT)
+$(libEMIS)tfbelow.$(OBJEXT) : \
+	$(libGRID)HGRD_DEFN.$(OBJEXT) $(libEMIS)LUS_DEFN.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
 
 # gas
-$(libGAS)degrade_data.$(OBJEXT) : $(libGAS)DEGRADE_SETUP_TOX.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) 
-$(libGAS)degrade.$(OBJEXT) : $(libGAS)DEGRADE_SETUP_TOX.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) 
-$(libGAS)DEGRADE_SETUP_TOX.$(OBJEXT) : $(ICL)/const/CONST.EXT $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) \
-	$(libSPCS)CGRID_SPCS.$(OBJEXT) 
-$(libGAS)final_degrade.$(OBJEXT) : $(libGAS)DEGRADE_SETUP_TOX.$(OBJEXT) 
-$(libGAS)find_degraded.$(OBJEXT) : $(libGAS)DEGRADE_SETUP_TOX.$(OBJEXT) 
-$(libGAS)hrdriver.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(ICL)/const/CONST.EXT $(ICL)/emctrl/EMISPRM.EXT \
-	$(libGAS)DEGRADE_SETUP_TOX.$(OBJEXT) $(libGAS)hrdata_mod.$(OBJEXT) \
-	$(libMECHS)RXNS_FUNC_MODULE.$(OBJEXT) $(libAERO)AEROSOL_CHEMISTRY.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) \
-	$(libGRID)VGRD_DEFN.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT)
-$(libGAS)hrg1.$(OBJEXT) : $(libGAS)hrdata_mod.$(OBJEXT) 
-$(libGAS)hrg2.$(OBJEXT) : $(libGAS)hrdata_mod.$(OBJEXT) 
-$(libGAS)hrg3.$(OBJEXT) : $(libGAS)hrdata_mod.$(OBJEXT) 
-$(libGAS)hrg4.$(OBJEXT) : $(libGAS)hrdata_mod.$(OBJEXT) 
-$(libGAS)hrinit.$(OBJEXT) : $(ICL)/const/CONST.EXT $(libMECHS)RXNS_FUNC_MODULE.$(OBJEXT) \
-	$(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libGAS)hrdata_mod.$(OBJEXT) 
-$(libGAS)hrprodloss.$(OBJEXT) : $(libGAS)hrdata_mod.$(OBJEXT) 
-$(libGAS)hrrates.$(OBJEXT) : $(libGAS)hrdata_mod.$(OBJEXT) 
-$(libGAS)hrsolver.$(OBJEXT) : $(libGAS)hrdata_mod.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) \
+$(libGAS)degrade_data.$(OBJEXT) : \
+	$(libGAS)DEGRADE_SETUP_TOX.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT)
+$(libGAS)degrade.$(OBJEXT) : \
+	$(libGAS)DEGRADE_SETUP_TOX.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT)
+$(libGAS)DEGRADE_SETUP_TOX.$(OBJEXT) : $(ICL)/const/CONST.EXT \
+	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) \
 	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
-$(libGAS)init_degrade.$(OBJEXT) : $(libGAS)DEGRADE_SETUP_TOX.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) 
+$(libGAS)final_degrade.$(OBJEXT) : \
+	$(libGAS)DEGRADE_SETUP_TOX.$(OBJEXT)
+$(libGAS)find_degraded.$(OBJEXT) : \
+	$(libGAS)DEGRADE_SETUP_TOX.$(OBJEXT)
+$(libGAS)hrdriver.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/emctrl/EMISPRM.EXT $(ICL)/filenames/FILES_CTM.EXT \
+	$(libAERO)AEROSOL_CHEMISTRY.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
+	$(libGAS)DEGRADE_SETUP_TOX.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT) \
+	$(libGAS)hrdata_mod.$(OBJEXT) $(libPA)PA_DEFN.$(OBJEXT) \
+	$(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libMECHS)RXNS_FUNC_MODULE.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT)
+$(libGAS)hrg1.$(OBJEXT) : \
+	$(libGAS)hrdata_mod.$(OBJEXT)
+$(libGAS)hrg2.$(OBJEXT) : \
+	$(libGAS)hrdata_mod.$(OBJEXT)
+$(libGAS)hrg3.$(OBJEXT) : \
+	$(libGAS)hrdata_mod.$(OBJEXT)
+$(libGAS)hrg4.$(OBJEXT) : \
+	$(libGAS)hrdata_mod.$(OBJEXT)
+$(libGAS)hrinit.$(OBJEXT) : $(ICL)/const/CONST.EXT \
+	$(libGAS)hrdata_mod.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) \
+	$(libMECHS)RXNS_FUNC_MODULE.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libGAS)hrprodloss.$(OBJEXT) : \
+	$(libGAS)hrdata_mod.$(OBJEXT)
+$(libGAS)hrrates.$(OBJEXT) : \
+	$(libGAS)hrdata_mod.$(OBJEXT)
+$(libGAS)hrsolver.$(OBJEXT) : \
+	$(libGAS)hrdata_mod.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libGAS)init_degrade.$(OBJEXT) : \
+	$(libGAS)DEGRADE_SETUP_TOX.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT)
 
 # grid
-$(libGRID)GRID_CONF.$(OBJEXT) : $(libGRID)HGRD_DEFN.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT) \
-	$(libUTIL)setup_logdev.$(OBJEXT)
-$(libGRID)HGRD_DEFN.$(OBJEXT) : $(libUTIL)UTILIO_DEFN.$(OBJEXT) $(libUTIL)setup_logdev.$(OBJEXT)
-$(libGRID)VGRD_DEFN.$(OBJEXT) : $(libUTIL)UTILIO_DEFN.$(OBJEXT)
-$(libGRID)PCGRID_DEFN.$(OBJEXT) : $(libGRID)GRID_CONF.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
+$(libGRID)GRID_CONF.$(OBJEXT) : \
+	$(libGRID)HGRD_DEFN.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT)
+$(libGRID)HGRD_DEFN.$(OBJEXT) : \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libGRID)VGRD_DEFN.$(OBJEXT) : \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libGRID)PAGRD_DEFN.$(OBJEXT) : \
+	$(libGRID)GRID_CONF.$(OBJEXT) $(libSTENEX)noop_modules.$(OBJEXT) \
+	$(libPA)PA_DEFN.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libGRID)PCGRID_DEFN.$(OBJEXT) : \
+	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
 	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
 
 # MECHS
-$(libMECHS)RXNS_FUNC_MODULE.$(OBJEXT) : $(libSPCS)CGRID_SPCS.$(OBJEXT) \
-	$(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libMECHS)RXNS_FUNC_MODULE.$(OBJEXT) : \
+	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+
+# PA
+$(libPA)pa_update.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/emctrl/EMISPRM.EXT $(ICL)/filenames/FILES_CTM.EXT \
+	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
+	$(libSTENEX)noop_modules.$(OBJEXT) $(libPA)PA_DEFN.$(OBJEXT) \
+	$(libGRID)PAGRD_DEFN.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
 
 # phot
-$(libPHOT)AERO_PHOTDATA.$(OBJEXT) : $(ICL)/const/CONST.EXT $(libPHOT)twoway_rrtmg_aero_optics.$(OBJEXT) \
-	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) \
-	$(libGRID)VGRD_DEFN.$(OBJEXT) $(libPHOT)CSQY_DATA.$(OBJEXT) $(libAERO)AEROMET_DATA.$(OBJEXT) \
-	$(libAERO)SOA_DEFN.$(OBJEXT) $(libAERO)AERO_DATA.$(OBJEXT) 
-$(libPHOT)CLOUD_OPTICS.$(OBJEXT) : $(libPHOT)CSQY_DATA.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT) 
-$(libPHOT)CSQY_DATA.$(OBJEXT) : $(libGRID)VGRD_DEFN.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
-	$(libAERO)AERO_DATA.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) 
-$(libPHOT)phot.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(libPHOT)SEAS_STRAT_O3_MIN.$(OBJEXT) \
-	$(libPHOT)PHOT_MET_DATA.$(OBJEXT) $(libPHOT)PHOTOLYSIS_ALBEDO.$(OBJEXT) $(libPHOT)AERO_PHOTDATA.$(OBJEXT) \
-	$(libPHOT)PHOT_MOD.$(OBJEXT) $(libAERO)AERO_DATA.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
-	$(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libPHOT)CLOUD_OPTICS.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT) \
-	$(libGRID)VGRD_DEFN.$(OBJEXT) $(libPHOT)o3totcol.$(OBJEXT)
-$(libPHOT)PHOT_MET_DATA.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(ICL)/const/CONST.EXT \
-	$(libPHOT)CLOUD_OPTICS.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT)
-$(libPHOT)PHOT_MOD.$(OBJEXT) : $(ICL)/const/CONST.EXT $(libPHOT)AERO_PHOTDATA.$(OBJEXT) \
-	$(libPHOT)CLOUD_OPTICS.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libPHOT)CSQY_DATA.$(OBJEXT) 
-$(libPHOT)PHOTOLYSIS_ALBEDO.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(libDEPV)LSM_MOD.$(OBJEXT) \
-	$(libPHOT)PHOT_MOD.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT) \
-	$(libGRID)PCGRID_DEFN.$(OBJEXT)
-$(libPHOT)o3totcol.$(OBJEXT) : $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libPHOT)AERO_PHOTDATA.$(OBJEXT) : $(ICL)/const/CONST.EXT \
+	$(libAERO)AERO_DATA.$(OBJEXT) $(libAERO)AEROMET_DATA.$(OBJEXT) \
+	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libPHOT)twoway_rrtmg_aero_optics.$(OBJEXT) \
+	$(libPHOT)CSQY_DATA.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
+	$(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libAERO)SOA_DEFN.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libPHOT)CLOUD_OPTICS.$(OBJEXT) : \
+	$(libPHOT)CSQY_DATA.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libPHOT)CSQY_DATA.$(OBJEXT) : \
+	$(libAERO)AERO_DATA.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
+	$(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libPHOT)o3totcol.$(OBJEXT) : \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libPHOT)opphot.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
+	$(libGRID)GRID_CONF.$(OBJEXT) $(libPHOT)PHOT_MET_DATA.$(OBJEXT) \
+	$(libPHOT)PHOT_MOD.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libPHOT)phot.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
+	$(libAERO)AERO_DATA.$(OBJEXT) $(libPHOT)AERO_PHOTDATA.$(OBJEXT) \
+	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libPHOT)CLOUD_OPTICS.$(OBJEXT) \
+	$(libSTENEX)noop_modules.$(OBJEXT) $(libGRID)PCGRID_DEFN.$(OBJEXT) \
+	$(libPHOT)PHOT_MET_DATA.$(OBJEXT) $(libPHOT)PHOT_MOD.$(OBJEXT) \
+	$(libPHOT)PHOTOLYSIS_ALBEDO.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) \
+	$(libPHOT)SEAS_STRAT_O3_MIN.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libPHOT)PHOT_MET_DATA.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/filenames/FILES_CTM.EXT \
+	$(libPHOT)CLOUD_OPTICS.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libPHOT)PHOT_MOD.$(OBJEXT) : $(ICL)/const/CONST.EXT \
+	$(libPHOT)AERO_PHOTDATA.$(OBJEXT) $(libPHOT)CLOUD_OPTICS.$(OBJEXT) \
+	$(libPHOT)CSQY_DATA.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libPHOT)PHOTOLYSIS_ALBEDO.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
+	$(libDEPV)LSM_MOD.$(OBJEXT) $(libSTENEX)noop_modules.$(OBJEXT) \
+	$(libGRID)PCGRID_DEFN.$(OBJEXT) $(libPHOT)PHOT_MOD.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libPHOT)SEAS_STRAT_O3_MIN.$(OBJEXT) : \
+	$(libGRID)GRID_CONF.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libPHOT)twoway_rrtmg_aero_optics.$(OBJEXT) : \
+	$(libPHOT)complex_number_module.$(OBJEXT)
 
-$(libPHOT)SEAS_STRAT_O3_MIN.$(OBJEXT) : $(libGRID)VGRD_DEFN.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT) \
-	$(libGRID)GRID_CONF.$(OBJEXT)
-$(libPHOT)twoway_rrtmg_aero_optics.$(OBJEXT) : $(libPHOT)complex_number_module.$(OBJEXT) 
+# plrise
+$(libPLRISE)fire_plmris.$(OBJEXT) : $(ICL)/const/CONST.EXT
+$(libPLRISE)openlayout.$(OBJEXT) : \
+	$(libGRID)HGRD_DEFN.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libPLRISE)oppt3d_diag.$(OBJEXT) : \
+	$(libGRID)GRID_CONF.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libPLRISE)plmris.$(OBJEXT) : $(ICL)/const/CONST.EXT
+$(libPLRISE)preplm.$(OBJEXT) : \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libPLRISE)ungridb2.$(OBJEXT) : \
+	$(libGRID)HGRD_DEFN.$(OBJEXT) $(libEMIS)PTBILIN.$(OBJEXT)
+$(libPLRISE)write3_distr.$(OBJEXT) : \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
 
 # spcs
-$(libSPCS)CGRID_SPCS.$(OBJEXT) : $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libSPCS)CGRID_SPCS.$(OBJEXT) : \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
 
 # STENEX
-$(libSTENEX)noop_modules.$(OBJEXT) : $(libSTENEX)noop_comm_module.$(OBJEXT) \
+$(libSTENEX)noop_modules.$(OBJEXT) : \
+	$(libSTENEX)noop_comm_module.$(OBJEXT) \
 	$(libSTENEX)noop_data_copy_module.$(OBJEXT) \
 	$(libSTENEX)noop_gather_module.$(OBJEXT) \
 	$(libSTENEX)noop_global_max_module.$(OBJEXT) \
@@ -1679,25 +2445,63 @@ $(libSTENEX)noop_modules.$(OBJEXT) : $(libSTENEX)noop_comm_module.$(OBJEXT) \
 	$(libSTENEX)noop_util_module.$(OBJEXT)
 
 # util
-$(libUTIL)setup_logdev.$(OBJEXT) : $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libUTIL)setup_logdev.$(OBJEXT) : \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libUTIL)subhdomain.$(OBJEXT) : \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
 
 # vdiff
-$(libVDIFF)ASX_DATA_MOD.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(ICL)/const/CONST.EXT \
-	$(libDEPV)DEPVVARS.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) $(libDEPV)LSM_MOD.$(OBJEXT) \
-	$(libSTENEX)noop_modules.$(OBJEXT)
-$(libVDIFF)conv_cgrid.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(ICL)/const/CONST.EXT \
-	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT) \
+$(libVDIFF)aero_sedv.$(OBJEXT) : \
+	$(libAERO)AERO_DATA.$(OBJEXT) $(libAERO)AEROMET_DATA.$(OBJEXT) \
+	$(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
 	$(libGRID)GRID_CONF.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
-$(libVDIFF)matrix1.$(OBJEXT) : $(libSPCS)CGRID_SPCS.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT) 
-$(libVDIFF)tri.$(OBJEXT) : $(libSPCS)CGRID_SPCS.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT) 
-$(libVDIFF)vdiffacmx.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(libVDIFF)VDIFF_MAP.$(OBJEXT) \
-	$(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libDEPV)DEPV_DEFN.$(OBJEXT) \
-	$(libEMIS)EMIS_DEFN.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) 
-$(libVDIFF)VDIFF_MAP.$(OBJEXT) : $(ICL)/emctrl/EMISPRM.EXT $(libAERO)AERO_EMIS.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
-	$(libUTIL)findex.$(OBJEXT)
-$(libVDIFF)vdiffproc.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT $(libVDIFF)VDIFF_MAP.$(OBJEXT) \
-	$(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libDEPV)DEPV_DEFN.$(OBJEXT) \
-	$(libEMIS)EMIS_DEFN.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) 
+$(libVDIFF)ASX_DATA_MOD.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/filenames/FILES_CTM.EXT $(ICL)/mpi/PE_COMM.EXT \
+	$(libDEPV)DEPVVARS.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
+	$(libDEPV)LSM_MOD.$(OBJEXT) $(libSTENEX)noop_modules.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libVDIFF)conv_cgrid.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/filenames/FILES_CTM.EXT \
+	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libVDIFF)matrix1.$(OBJEXT) : \
+	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT) \
+	$(libGRID)VGRD_DEFN.$(OBJEXT)
+$(libVDIFF)opddep.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
+	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libVDIFF)opddep_fst.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
+	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
+	$(libDEPV)LSM_MOD.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libVDIFF)opddep_mos.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
+	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
+	$(libDEPV)LSM_MOD.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libVDIFF)rddepv.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
+	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT) \
+	$(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libVDIFF)SEDIMENTATION.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/filenames/FILES_CTM.EXT \
+	$(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
+	$(libGRID)GRID_CONF.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT) \
+	$(libVDIFF)VDIFF_DIAG.$(OBJEXT) $(libVDIFF)VDIFF_MAP.$(OBJEXT)
+$(libVDIFF)tri.$(OBJEXT) : \
+	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT)
+$(libVDIFF)vdiffacmx.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
+	$(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libDEPV)BIDI_MOD.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
+	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libDEPV)DEPV_DEFN.$(OBJEXT) $(libEMIS)EMIS_DEFN.$(OBJEXT) \
+	$(libGRID)GRID_CONF.$(OBJEXT) $(libDEPV)LSM_MOD.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT) \
+	$(libVDIFF)VDIFF_DIAG.$(OBJEXT) $(libVDIFF)VDIFF_MAP.$(OBJEXT)
+$(libVDIFF)VDIFF_DIAG.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
+	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
+	$(libSTENEX)noop_modules.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libVDIFF)VDIFF_MAP.$(OBJEXT) : $(ICL)/emctrl/EMISPRM.EXT \
+	$(libAERO)AERO_EMIS.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libVDIFF)vdiffproc.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
+	$(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libDEPV)BIDI_MOD.$(OBJEXT) \
+	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libDEPV)DEPV_DEFN.$(OBJEXT) \
+	$(libEMIS)EMIS_DEFN.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
+	$(libDEPV)HGSIM.$(OBJEXT) $(libDEPV)LSM_MOD.$(OBJEXT) \
+	$(libPA)PA_DEFN.$(OBJEXT) $(libVDIFF)SEDIMENTATION.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT) $(libVDIFF)VDIFF_DIAG.$(OBJEXT) \
+	$(libVDIFF)VDIFF_MAP.$(OBJEXT)
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

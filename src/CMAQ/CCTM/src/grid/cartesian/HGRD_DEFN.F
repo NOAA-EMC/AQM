@@ -176,7 +176,7 @@ C This function is expected to be called only once - at startup
             SUCCESS = .TRUE.
 
             MYPE = MYID
-#ifndef _AQM_
+
             VARDESC = 'Horizontal Domain Definition '
             CALL ENVSTR( HGRD_NAME, VARDESC, 'GRID_NAME', GRID_NAME, STATUS )
             IF ( STATUS .NE. 0 ) WRITE( LOGDEV, '(5X, A)' ) VARDESC
@@ -227,7 +227,6 @@ C    Retrieve the domain decompostion processor array
                NPROW = 1
             END IF
 #endif
-#endif
 
 C Retrieve the species saved to integral average concentration file
 
@@ -276,10 +275,11 @@ C Check NPROCS against NPCOL*NPROW
                CALL M3WARN ( 'HGRD_INIT', 0, 0, XMSG )
                SUCCESS = .FALSE.; RETURN
             END IF
-#ifndef _AQM_
+
 C Construct the processor-to-subdomain map for main domain
             CALL SUBHDOMAIN( NPROCS, NPCOL, NPROW, GL_NCOLS, GL_NROWS,
      &                       NCOLS_PE, NROWS_PE, COLSX_PE, ROWSX_PE )
+
 C Get corresponding dot file map
 
             DO I = 1, NPROCS
@@ -301,7 +301,7 @@ C Get corresponding dot file map
             MY_NROWS = NROWS_PE( MYPE+1 )
             MY_NBNDY = 2*NTHIK * ( MY_NCOLS + MY_NROWS + 2*NTHIK )
             GL_NBNDY = 2*NTHIK * ( GL_NCOLS + GL_NROWS + 2*NTHIK )
-#endif
+
             MY_NCOLS_DOT = COLSD_PE( 2,MYPE+1 ) - COLSD_PE( 1,MYPE+1 ) + 1
             MY_NROWS_DOT = ROWSD_PE( 2,MYPE+1 ) - ROWSD_PE( 1,MYPE+1 ) + 1
 

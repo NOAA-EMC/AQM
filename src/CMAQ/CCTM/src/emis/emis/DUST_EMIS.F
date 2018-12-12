@@ -1120,8 +1120,13 @@ C ------- Start Loop Over Erodible Landuse ----
                   do m = 1, n_dlcat+1   ! desert type & crop landuse categories
 
                      if ( elus( c,r,m ) .gt. 100.0 .or. elus( c,r,m ) .lt. 0.0 ) then
+#ifdef _AQM_
+                        print *,'DUST_EMIS: ',elus(c,r,m),ladut(c,r,m),vegfree,c,r,m
+                        elus( c,r,m ) = 0.99
+#else
                         write( xmsg,2009 ) elus( c,r,m ), c, r, m
                         call m3exit( pname, jdate, jtime, xmsg, xstat1 )
+#endif
                      end if
 
                      if ( elus( c,r,m ) .gt. 0.0 ) then

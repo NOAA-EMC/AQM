@@ -274,13 +274,13 @@ C   12 Aug 15 D.Wong: added code to handle parallel I/O implementation
 
             USE UTILIO_DEFN
             USE AERO_DATA
-#ifndef _AQM_
+
 #ifdef parallel
             USE SE_MODULES            ! stenex (using SE_UTIL_MODULE)
 #else
             USE NOOP_MODULES          ! stenex (using NOOP_UTIL_MODULE)
 #endif
-#endif
+
             IMPLICIT NONE
 
 C Arguments:
@@ -352,8 +352,8 @@ C Allocate SS arrays using NSSSPC value
             END IF
 
 C Get sea-salt-emission diagnostic output file flag.
+
             SSEMDIAG = .FALSE.         ! default
-#ifndef _AQM_
             VARDESC = 'Flag for writing the sea-salt-emission diagnostic file'
             SSEMDIAG = ENVYN( CTM_SSEMDIAG, VARDESC, SSEMDIAG, STATUS )
             IF ( STATUS .NE. 0 ) WRITE( LOGDEV, '(5X, A)' ) VARDESC
@@ -442,7 +442,7 @@ C Open the sea-salt emission dignostic file
 #endif
 
             END IF
-#endif
+
          END FUNCTION SSEMIS_INIT
 
 C:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -473,7 +473,7 @@ C Local variables:
          INTEGER      V, L       ! loop induction variables
 
 C-----------------------------------------------------------------------
-#ifndef _AQM_
+
 C Try to open existing file for update
          IF ( .NOT. OPEN3( CTM_SSEMIS_1, FSRDWR3, PNAME ) ) THEN
             XMSG = 'Could not open CTM_SSEMIS_1 for update - '
@@ -537,7 +537,7 @@ C Open sea-salt emissions diagnostic file
             END IF
 
          END IF
-#endif
+
          RETURN
 
          END SUBROUTINE OPSSEMIS
@@ -742,7 +742,6 @@ C Calculate dry sea-salt [kg/m3]
                SPECIFIC_VOL_H2O = 1.0D0 / REAL( AEROSPC( AH2O_IDX )%DENSITY, 8 )
                UNINITIALIZED    = .FALSE.
             END IF
-#ifndef _AQM_
 C Initialize sea-salt output buffer
             IF ( SSEMDIAG .AND. WSTEP .EQ. 0 ) SSBF = 0.0
             Met_Data%NACL_EMIS = 0.0
@@ -1028,7 +1027,7 @@ C Then reset the sea-salt emissions array and local write counter.
                END IF
 
             END IF  ! SSEMDIAG
-#endif
+
             RETURN
             
          END SUBROUTINE GET_SSEMIS

@@ -509,20 +509,10 @@ C Includes:
          logical isbeld
          integer logdev
          integer i, c, r, err
-#ifdef _AQM_
-         character( 4 ) :: mminlu
-         integer        :: num_land_cat
-#endif
 
          logdev = setup_logdev()
          success = .true.
 
-#ifdef _AQM_
-!        call get_env( land_scheme, 'CTM_WBDUST_BELD', 'UNKNOWN')
-         land_scheme  = 'BELD3'  ! TODO
-         mminlu       = 'USGS'
-         num_land_cat = 24
-#else
          vardesc = 'Flag for Wind Blown Dust - Land Use from BELD'
          call envstr( 'CTM_WBDUST_BELD', vardesc, 'UNKNOWN', land_scheme, err )
          if ( err .gt. 0 ) then
@@ -531,7 +521,7 @@ C Includes:
             call m3warn ( pname, jdate, jtime, xmsg )
             success = .false.; return
          end if
-#endif
+
          if ( land_scheme .eq. 'BELD3' ) then
             isbeld = .true.
             lufile( 1 ) = dust_lu_1 
@@ -545,7 +535,7 @@ C Includes:
             isbeld = .false.
             lufile( 1 ) = grid_cro_2d
          end if
-#ifndef _AQM_
+
          if ( .not. open3( lufile( 1 ), fsread3, pname ) ) then
             xmsg = 'could not open ' // trim( lufile( 1 ) )
             call m3warn( pname, jdate, jtime, xmsg )
@@ -565,16 +555,16 @@ C Includes:
      &                      strtcol_02, endcol_02, strtrow_02, endrow_02 )
 
          end if
-#endif
+
          if ( .not. isbeld ) then   ! determine land_scheme from GRID_CRO_2D
-#ifndef _AQM_
+
             if ( .not. desc3( lufile( 1 ) ) ) then
                xmsg = 'Could not get GRID_CRO_2D file description '
                call m3warn( pname, jdate, jtime, xmsg )
                success = .false.; return
             end if
-#endif
-#if defined(twoway) || defined(_AQM_)
+
+#ifdef twoway
 
 C mminlu and num_land_cat are WRF global variables
             
@@ -800,7 +790,7 @@ C mminlu and num_land_cat are WRF global variables
             call m3warn( pname, jdate, jtime, xmsg )
             success = .false.; return
          end if
-#ifndef _AQM_
+
 C Get desert land (fraction) data (assume if BELD, all desert types are in file 1)
          do i = 1, n_dlcat
             if ( .not. xtract3( lufile( 1 ), vnmld( i )%name, 1,1,
@@ -845,7 +835,7 @@ C Get landuse (fraction) data
                success = .false.; return
             end if
          end if
-#endif
+         
          if ( .not. isbeld ) then   ! transform ladut & lut to %
             ladut = 100.0 * ladut   ! array assignment
             lut   = 100.0 * lut     ! array assignment

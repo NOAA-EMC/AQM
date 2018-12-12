@@ -113,10 +113,11 @@ C-----------------------------------------------------------------------
 
 !     use mio_module
 #ifdef _AQM_
-      USE UTILIO_DEFN, ONLY : INTERPX, M3EXIT, XSTAT1
+      USE UTILIO_DEFN, ONLY : INTERPX, XSTAT1
 #endif
-
-      USE PHOT_MET_DATA, ONLY: IND_ACM_CLOUD, CLEAR_ACM_CLOUD, CAPTURE_ACM_CLOUD
+!     TODO: Need to be fixed
+!     USE PHOT_MET_DATA, ONLY: IND_ACM_CLOUD, CLEAR_ACM_CLOUD, CAPTURE_ACM_CLOUD
+      USE PHOT_MET_DATA, ONLY: CLEAR_ACM_CLOUD, CAPTURE_ACM_CLOUD
       USE ASX_DATA_MOD,  ONLY: GRID_DATA
 
       IMPLICIT NONE
@@ -134,7 +135,7 @@ C...........Arguments
 
 
 C...........Parameters
-
+      LOGICAL :: IND_ACM_CLOUD = .FALSE.  ! TODO: Need to be fixed
 
 C intermediate factor
       REAL            :: XKM

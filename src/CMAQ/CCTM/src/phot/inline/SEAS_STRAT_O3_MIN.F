@@ -2525,11 +2525,7 @@
             DTIME_UPPER   = ( TIME_UPPER - TIME )
             DTIME_LOWER   = ( TIME - TIME_LOWER )
                          
-#ifdef _AQM_
-            PTOP = MBAR_PER_PA * 12.0
-#else
             PTOP = MBAR_PER_PA * VGTOP_GD
-#endif
 ! find where PTOP reside relative pressure level of ozone column profiles
             IF ( PTOP .GT. LEV_PROFILE( 1 ) )  THEN
                 ILEV = 0

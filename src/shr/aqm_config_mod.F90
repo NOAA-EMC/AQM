@@ -11,7 +11,6 @@ module aqm_config_mod
 
   ! -- data structure for configuration options
   type aqm_config_type
-    sequence
     character(len=AQM_MAXSTR) :: ae_matrix_nml = ""
     character(len=AQM_MAXSTR) :: gc_matrix_nml = ""
     character(len=AQM_MAXSTR) :: nr_matrix_nml = ""

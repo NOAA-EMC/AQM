@@ -353,8 +353,9 @@ logical function envyn(name, description, defaultval, status)
 end function envyn
 
 
-logical function envint(name, description, defaultval, status)
+integer function envint(name, description, defaultval, status)
   use m3utilio, only : xstat0
+  implicit none
   character(len=*), intent(in)  :: name
   character(len=*), intent(in)  :: description
   integer,          intent(in)  :: defaultval

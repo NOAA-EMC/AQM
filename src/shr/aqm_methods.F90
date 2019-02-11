@@ -2,8 +2,11 @@ LOGICAL FUNCTION  DSCGRID( GNAME, CNAME,                             &
                            CTYPE, P_ALP, P_BET, P_GAM, XCENT, YCENT, &
                            XORIG, YORIG, XCELL, YCELL, NCOLS, NROWS, NTHIK )
 
+  USE M3UTILIO,      ONLY : LATGRD3
   USE aqm_model_mod, ONLY : aqm_model_domain_get
   USE aqm_rc_mod,    ONLY : aqm_rc_check
+
+  IMPLICIT NONE
 
   CHARACTER*(*), INTENT(IN   ) :: GNAME   !  grid  sys name
   CHARACTER*(*), INTENT(  OUT) :: CNAME   !  coord sys name
@@ -39,7 +42,7 @@ LOGICAL FUNCTION  DSCGRID( GNAME, CNAME,                             &
     NTHIK = 0
 
     CNAME = ' '
-    CTYPE = ' '
+    CTYPE = LATGRD3
     P_ALP = 0.
     P_BET = 0.
     P_GAM = 0.
@@ -61,16 +64,19 @@ LOGICAL FUNCTION DESC3( FNAME )
 
   USE M3UTILIO,      ONLY : &
     GDNAM3D, NLAYS3D, NVARS3D, VDESC3D, VGLVS3D, &
-    VGTOP3D, VGTYP3D, VNAME3D, UNITS3D
+    VGSGPN3, VGTOP3D, VGTYP3D, VNAME3D, UNITS3D
    
   USE aqm_model_mod, ONLY : aqm_config_type, &
                             aqm_model_get, aqm_model_domain_get
   USE aqm_rc_mod,    ONLY : aqm_rc_check
 
+  IMPLICIT NONE
+
   CHARACTER(LEN=*), INTENT(IN) :: FNAME
 
   INCLUDE SUBST_FILES_ID
  
+  integer :: localrc
   type(aqm_config_type), pointer :: config => null()
 
   NVARS3D = 0
@@ -316,6 +322,8 @@ logical function envyn(name, description, defaultval, status)
   use aqm_model_mod, only : aqm_config_type, aqm_model_get
   use aqm_rc_mod,    only : aqm_rc_check
 
+  implicit none
+
   character(len=*), intent(in)  :: name
   character(len=*), intent(in)  :: description
   logical,          intent(in)  :: defaultval
@@ -366,6 +374,7 @@ end function envint
 
 
 REAL FUNCTION ENVREAL( LNAME, DESC, DEFAULT, STAT )
+  IMPLICIT NONE
   CHARACTER*(*), INTENT(IN   ) :: LNAME
   CHARACTER*(*), INTENT(IN   ) :: DESC
   REAL         , INTENT(IN   ) :: DEFAULT
@@ -377,6 +386,7 @@ END FUNCTION ENVREAL
 
 SUBROUTINE ENVSTR( LNAME, DESC, DEFAULT, EQNAME, STAT )
   USE m3utilio, ONLY : XSTAT0
+  IMPLICIT NONE
   CHARACTER*(*), INTENT(IN   ) :: LNAME
   CHARACTER*(*), INTENT(IN   ) :: DESC
   CHARACTER*(*), INTENT(IN   ) :: DEFAULT
@@ -395,6 +405,8 @@ subroutine nameval(name, eqname)
 
   use aqm_model_mod, only : aqm_config_type, aqm_model_get
   use aqm_rc_mod,    only : aqm_rc_check
+
+  implicit none
 
   character(len=*), intent(in)  :: name
   character(len=*), intent(out) :: eqname
@@ -431,307 +443,6 @@ subroutine nameval(name, eqname)
   end select
   
 end subroutine nameval
-
-
-#if 0
-logical function interpx_1d( fname, vname, pname, &
-  col0, col1, row0, row1, lay0, lay1, jdate, jtime, buffer )
-
-  implicit none
-
-  character(len=*), intent(in)  :: fname, vname, pname
-  integer,          intent(in)  :: col0, col1, row0, row1, lay0, lay1
-  integer,          intent(in)  :: jdate, jtime
-  real,             intent(out) :: buffer(*)
-
-  ! -- local variables
-  INCLUDE SUBST_FILES_ID
-
-  real, dimension(:,:),   allocatable :: buf2d
-  real, dimension(:,:,:), allocatable :: buf3d
-
-  logical, external :: interpx_2d, interpx_3d
-
-  ! -- begin
-  interpx_1d = .false.
-
-  if ((trim(fname) == trim(GRID_CRO_2D)) .or. &
-      (trim(fname) == trim(MET_CRO_2D))) then
-    allocate(buf2d(col0:col1,row0:row1))
-    interpx_1d = interpx_2d( fname, vname, pname, &
-      col0, col1, row0, row1, lay0, lay1, jdate, jtime, buf2d )
-    if (interpx_1d) buffer(1:size(buf2d)) = reshape(buf2d, (/ size(buf2d) /))
-    deallocate(buf2d)
-  else if ((trim(fname) == trim(MET_CRO_3D)) .or. &
-           (trim(fname) == trim(MET_DOT_3D))) then
-    allocate(buf3d(col0:col1,row0:row1,lay0:lay1))
-    interpx_1d = interpx_3d( fname, vname, pname, &
-      col0, col1, row0, row1, lay0, lay1, jdate, jtime, buf3d )
-    if (interpx_1d) buffer(1:size(buf3d)) = reshape(buf3d, (/ size(buf3d) /))
-    deallocate(buf3d)
-  end if
-
-end function interpx_1d
-
-logical function interpx_2d( fname, vname, pname, &
-  col0, col1, row0, row1, lay0, lay1, jdate, jtime, buffer )
-
-  use aqm_types_mod, only : AQM_KIND_R8
-  use aqm_model_mod, only : aqm_state_type, &
-                            aqm_model_get, aqm_model_domain_get
-  use aqm_rc_mod,    only : aqm_rc_check, aqm_rc_test
-
-  implicit none
-
-  character(len=*), intent(in)  :: fname, vname, pname
-  integer,          intent(in)  :: col0, col1, row0, row1, lay0, lay1
-  integer,          intent(in)  :: jdate, jtime
-  real,             intent(out) :: buffer(:,:)
-
-  ! -- local variables
-  integer :: localrc, lu_index
-  real(AQM_KIND_R8), dimension(:,:), pointer :: lat, lon
-  type(aqm_state_type), pointer :: stateIn
-  logical, parameter :: debug = .true.
-
-  INCLUDE SUBST_FILES_ID
-
-  ! -- begin
-  interpx_2d = .false.
-  buffer = 0.
-
-  if (trim(fname) == trim(GRID_CRO_2D)) then
-
-    call aqm_model_get(stateIn=stateIn, rc=localrc)
-    if (aqm_rc_check(localrc, msg="Failure to retrive model input state", &
-      file=__FILE__, line=__LINE__)) return
-
-    call aqm_model_domain_get(lon=lon, lat=lat, rc=localrc)
-    if (aqm_rc_check(localrc, msg="Failure to retrieve grid coordinates", &
-      file=__FILE__, line=__LINE__)) return
-
-    if (vname(1:7) == 'LUFRAC_') then
-      lu_index = 0
-      read(vname(8:9), *, iostat=localrc) lu_index
-      if (aqm_rc_test(localrc /= 0, msg="Failure to identify LU_INDEX", &
-        file=__FILE__, line=__LINE__)) return
-      where (int(stateIn % stype) == lu_index) buffer = 1.0
-    else
-      select case (trim(vname))
-        case ('HT')
-          buffer = stateIn % ht
-        case ('LAT')
-          buffer = lat
-        case ('LON')
-          buffer = lon
-          where(buffer > 180.) buffer = buffer - 360.
-        case ('LWMASK')
-          buffer = stateIn % slmsk
-        case ('MSFX2')
-          buffer = 1.
-        case ('PURB')
-        case default
-          return
-      end select
-    end if
-
-  else if (trim(fname) == trim(MET_CRO_2D)) then
-
-    call aqm_model_get(stateIn=stateIn, rc=localrc)
-    if (aqm_rc_check(localrc, msg="Failure to retrive model input state", &
-      file=__FILE__, line=__LINE__)) return
-
-    select case (trim(vname))
-      case ("HFX")
-        buffer = stateIn % hfx
-      case ("LAI")
-        buffer = stateIn % xlai
-      case ("LH")
-        buffer = stateIn % lh
-      case ("PRSFC")
-        buffer = stateIn % psfc
-      case ("PBL")
-        buffer = stateIn % hpbl
-      case ("Q2")
-        buffer = stateIn % q2m
-      case ("RADYNI")
-          buffer = stateIn % cmm
-      case ("RSTOMI")
-          where ( stateIn % rc /= 0.0 ) buffer = 1.0 / stateIn % rc
-      case ("RC")
-        buffer = 100. * stateIn % rainc
-      case ("RGRND")
-        buffer = stateIn % rgrnd
-      case ("RN")
-        buffer = max(0., 100. * (stateIn % rain - stateIn % rainc))
-      case ("SEAICE")
-        buffer = stateIn % fice
-      case ("SLTYP")
-        buffer = stateIn % stype
-      case ("SNOCOV")
-        buffer = stateIn % sncov
-      case ("SOIM1")
-        buffer = stateIn % smois(:,:,1)
-      case ("SOIM2")
-        buffer = stateIn % smois(:,:,2)
-      case ("SOIT1")
-        buffer = stateIn % stemp(:,:,1)
-      case ("SOIT2")
-        buffer = stateIn % stemp(:,:,2)
-      case ("TEMPG")
-        buffer = stateIn % tsfc
-      case ("TEMP2")
-        buffer = stateIn % t2m
-      case ("USTAR")
-        buffer = stateIn % ustar
-      case ("VEG")
-        buffer = stateIn % vfrac
-      case ("WR")
-        buffer = stateIn % wr
-      case ("WSPD10")
-        buffer = sqrt(stateIn % u10m * stateIn % u10m + stateIn % v10m * stateIn % v10m)
-      case ("ZRUF")
-        buffer = 0.01 * stateIn % zorl
-      case default
-    !   return
-    end select
-
-  else if (trim(fname) == trim(OCEAN_1)) then
-
-    select case (trim(vname))
-      case ("OPEN")
-        buffer = 0.0
-      case ("SZONE")
-        buffer = 1.0
-      case ("SURF")
-        buffer = 1.0
-      case default
-        return
-    end select
-
-  else
-
-    return
-
-  end if
-
-  interpx_2d = .true.
-
-  if (debug) write(6,'("INTERPX: ",a10," - min/max ",2g20.6)') &
-    trim(vname), minval(buffer), maxval(buffer)
-
-end function interpx_2d
-
-
-logical function interpx_3d( fname, vname, pname, &
-  col0, col1, row0, row1, lay0, lay1, jdate, jtime, buffer )
-
-  use aqm_model_mod, only : aqm_config_type, aqm_state_type, aqm_model_get
-  use aqm_rc_mod,    only : aqm_rc_check
-
-  implicit none
-
-  character(len=*), intent(in)  :: fname, vname, pname
-  integer,          intent(in)  :: col0, col1, row0, row1, lay0, lay1
-  integer,          intent(in)  :: jdate, jtime
-  real,             intent(out) :: buffer(:,:,:)
-
-  ! -- local variables
-  integer :: localrc
-  integer :: nx, ny
-  type(aqm_config_type), pointer :: config  => null()
-  type(aqm_state_type),  pointer :: stateIn => null()
-  logical, parameter :: debug = .true.
-
-  ! -- constants
-  include SUBST_CONST
-  include SUBST_FILES_ID
-
-  real, parameter :: EPS1 = RWVAP/RDGAS - 1.
-
-  ! -- begin
-  interpx_3d = .false.
-  buffer = 0.
-
-  if (trim(fname) == trim(MET_CRO_3D)) then
-
-    call aqm_model_get(config=config, stateIn=stateIn, rc=localrc)
-    if (aqm_rc_check(localrc, msg="Failure to retrive model input state", &
-      file=__FILE__, line=__LINE__)) return
-
-    select case (trim(vname))
-      case ("JACOBF")
-        buffer = 1.0
-      case ("JACOBM")
-        buffer = 1.0
-      case ("DENS")
-        buffer = stateIn % temp &
-               * ( 1.0 + EPS1 * stateIn % tr(:,:,:,config % species % p_atm_qv) )
-        buffer = stateIn % prl / ( RDGAS * buffer )
-      case ("DENSA_J")
-        buffer = 1.0
-      case ("PRES")
-        buffer = stateIn % prl
-      case ("PV")
-        buffer = 1.0
-      case ("QV")
-        buffer = max(0., stateIn % tr(:,:,:,config % species % p_atm_qv))
-      case ("QC")
-        buffer = max(0., stateIn % tr(:,:,:,config % species % p_atm_qc))
-      case ("QR")
-        if (config % species % p_atm_qr > 0) &
-          buffer = max(0., stateIn % tr(:,:,:,config % species % p_atm_qr))
-      case ("QI")
-        if (config % species % p_atm_qi > 0) &
-          buffer = max(0., stateIn % tr(:,:,:,config % species % p_atm_qi))
-      case ("QS")
-        if (config % species % p_atm_qs > 0) &
-          buffer = max(0., stateIn % tr(:,:,:,config % species % p_atm_qs))
-      case ("QG")
-        if (config % species % p_atm_qg > 0) &
-          buffer = max(0., stateIn % tr(:,:,:,config % species % p_atm_qg))
-      case ("ZF")
-        buffer = max(0., stateIn % phil / GRAV)
-      case ("ZH")
-        buffer = max(0., stateIn % phii(:,:,1:size(buffer,3)) / GRAV)
-      case ("TA")
-        buffer = stateIn % temp
-      case default
-    !   return
-    end select
-
-  else if (trim(fname) == trim(MET_DOT_3D)) then
-
-    call aqm_model_get(stateIn=stateIn, rc=localrc)
-    if (aqm_rc_check(localrc, msg="Failure to retrive model input state", &
-      file=__FILE__, line=__LINE__)) return
-
-    select case (trim(vname))
-      case ("UWINDC")
-        ! u-wind is on C grid, while imported wind component are on A grid
-        ! this needs to be fixed
-        nx = size(stateIn % uwind, dim=1)
-        ny = size(stateIn % uwind, dim=2)
-        buffer(1:nx,1:ny,:) = stateIn % uwind
-      case ("VWINDC")
-        nx = size(stateIn % vwind, dim=1)
-        ny = size(stateIn % vwind, dim=2)
-        buffer(1:nx,1:ny,:) = stateIn % vwind
-    end select
-
-  else
-
-    return
-
-  end if
-
-  interpx_3d = .true.
-
-  if (debug) write(6,'("INTERPX: ",a8," - min/max ",2g20.6)') &
-    trim(vname), minval(buffer), maxval(buffer)
-
-end function interpx_3d
-#endif
 
 
 logical function interpx( fname, vname, pname, &
@@ -1106,14 +817,15 @@ LOGICAL FUNCTION  XTRACT3 ( FNAME, VNAME,                           &
 
   ! -- local variables
   integer :: localrc
-  integer :: c, r, k, lu_index
+  integer :: c, r, k, lbuf, lu_index
   type(aqm_state_type),  pointer :: stateIn => null()
 
   include SUBST_FILES_ID
 
   ! -- begin
 
-  BUFFER((LAY1-LAY0+1)*(ROW1-ROW0+1)*(COl1-COL0+1)) = 0.
+  lbuf = (LAY1-LAY0+1)*(ROW1-ROW0+1)*(COL1-COL0+1)
+  BUFFER(1:lbuf) = 0.
   XTRACT3 = .TRUE.
 
   IF (TRIM(FNAME) == TRIM(GRID_CRO_2D)) THEN
@@ -1231,6 +943,7 @@ END SUBROUTINE EDDYX
 ! -- dummy subroutines
 
 SUBROUTINE DUMMY_VDIFFACMX( dtsec, seddy, ddep, icmp, ddepj, ddepj_fst, cngrd )
+  IMPLICIT NONE
   REAL, INTENT( IN )    :: dtsec
   REAL, INTENT( INOUT ) :: seddy( :,:,: )
   REAL, INTENT( INOUT ) :: ddep ( :,:,: )

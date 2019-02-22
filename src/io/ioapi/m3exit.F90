@@ -3,7 +3,7 @@ subroutine m3exit( caller, jdate, jtime, msgtxt, xstat )
   character(len=*),  intent(in) :: caller
   integer,           intent(in) :: jdate, jtime
   character(len=*),  intent(in) :: msgtxt
-  integer, optional, intent(in) :: xstat
+  integer,           intent(in) :: xstat
 
   call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, &
     msg=trim(caller) // ':' // trim(msgtxt))

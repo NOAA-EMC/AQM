@@ -50,7 +50,7 @@ C number and names of gas deposition velocities
 
 C number and names of aerosol deposition velocities
       INTEGER, INTENT( IN ) :: N_ADEPV_NAMES
-      CHARACTER( 16 ) :: ADEPV_NAMES( : )
+      CHARACTER( 16 ), INTENT( IN ) :: ADEPV_NAMES( : )
 
 C number and names of (SOA+aerosol) species deposition velocities
 !     INTEGER, INTENT( IN ) :: N_SDEPV_NAMES

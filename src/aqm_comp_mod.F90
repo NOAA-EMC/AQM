@@ -184,6 +184,7 @@ contains
     integer,         intent(out) :: rc
 
     ! -- local variables
+    integer                 :: localrc
     integer                 :: deCount
     integer                 :: julday, yy, mm, dd, h, m, s
     integer                 :: jdate, jtime, tstep(3)
@@ -197,8 +198,8 @@ contains
     rc = ESMF_SUCCESS
 
     ! -- check if model is active on this PET, bail out if not
-    call aqm_model_get(deCount=deCount, rc=rc)
-    if (aqm_rc_check(rc, file=__FILE__, line=__LINE__)) then
+    call aqm_model_get(deCount=deCount, rc=localrc)
+    if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__)) then
       call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, msg="Failed to get model info", &
         line=__LINE__, file=__FILE__, rcToReturn=rc)
       return  ! bail out
@@ -249,8 +250,8 @@ contains
     jdate = yy * 1000 + julday
     jtime = h * 10000 + m * 100 + s
 
-    call cmaq_model_advance(jdate, jtime, tstep, rc=rc)
-    if (aqm_rc_check(rc, file=__FILE__, line=__LINE__)) then
+    call cmaq_model_advance(jdate, jtime, tstep, rc=localrc)
+    if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__)) then
       call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, msg="Failed to advance model", &
         line=__LINE__, file=__FILE__, rcToReturn=rc)
       return  ! bail out
@@ -299,15 +300,16 @@ contains
 
     ! -- local variables
     type(aqm_state_type), pointer :: stateOut
-    type(ESMF_Field)               :: field
-    integer                        :: item, localDe, localDeCount
+    type(ESMF_Field)              :: field
+    integer                       :: item, localDe, localDeCount
+    integer                       :: localrc
 
     ! -- begin
     rc = ESMF_SUCCESS
 
     ! -- check if model is active on this PET, bail out if not
-    call aqm_model_get(deCount=localDeCount, rc=rc)
-    if (aqm_rc_check(rc, file=__FILE__, line=__LINE__)) then
+    call aqm_model_get(deCount=localDeCount, rc=localrc)
+    if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__)) then
       call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, msg="Failed to get model info", &
         line=__LINE__, file=__FILE__, rcToReturn=rc)
       return  ! bail out
@@ -326,8 +328,8 @@ contains
 
       do localDe = 0, localDeCount-1
 
-        call aqm_model_get(stateOut=stateOut, de=localDe, rc=rc)
-        if (aqm_rc_check(rc)) then
+        call aqm_model_get(stateOut=stateOut, de=localDe, rc=localrc)
+        if (aqm_rc_check(localrc)) then
           call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, &
             msg="Failed to retrieve model's export state", &
             line=__LINE__, &
@@ -364,15 +366,16 @@ contains
 
     ! -- local variables
     type(aqm_state_type), pointer :: stateIn
-    type(ESMF_Field)               :: field
-    integer                        :: item, localDe, localDeCount
+    type(ESMF_Field)              :: field
+    integer                       :: item, localDe, localDeCount
+    integer                       :: localrc
 
     ! -- begin
     rc = ESMF_SUCCESS
 
     ! -- check if model is active on this PET, bail out if not
-    call aqm_model_get(deCount=localDeCount, rc=rc)
-    if (aqm_rc_check(rc, file=__FILE__, line=__LINE__)) then
+    call aqm_model_get(deCount=localDeCount, rc=localrc)
+    if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__)) then
       call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, msg="Failed to get model info", &
         line=__LINE__, file=__FILE__, rcToReturn=rc)
       return  ! bail out
@@ -391,8 +394,8 @@ contains
 
       do localDe = 0, localDeCount-1
 
-        call aqm_model_get(stateIn=stateIn, de=localDe, rc=rc)
-        if (aqm_rc_check(rc)) then
+        call aqm_model_get(stateIn=stateIn, de=localDe, rc=localrc)
+        if (aqm_rc_check(localrc)) then
           call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, &
             msg="Failed to retrieve model's import state", &
             line=__LINE__, &

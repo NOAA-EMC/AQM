@@ -109,8 +109,7 @@ am_libioapi_a_OBJECTS = libioapi_a-crlf.$(OBJEXT) \
 	libioapi_a-wkday.$(OBJEXT) libioapi_a-yr2day.$(OBJEXT) \
 	libioapi_a-m3exit.$(OBJEXT) libioapi_a-m3mesg.$(OBJEXT) \
 	libioapi_a-m3msg2.$(OBJEXT) libioapi_a-m3warn.$(OBJEXT) \
-	libioapi_a-m3utilio.$(OBJEXT) libioapi_a-read3.$(OBJEXT) \
-	libioapi_a-write3.$(OBJEXT)
+	libioapi_a-m3utilio.$(OBJEXT)
 libioapi_a_OBJECTS = $(am_libioapi_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -301,13 +300,12 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 noinst_LIBRARIES = libioapi.a
-# libioapi_a_SOURCES += m3exit.F90 m3warn.F90 m3utilio.F90 read3.F write3.F xtract3.F90
 libioapi_a_SOURCES = FDESC3.EXT PARMS3.EXT crlf.F currec.f currstep.f \
 	dt2str.f findc.f getefile.F index1.f julian.F junit.F hhmmss.f \
 	mmddyy.F nextime.F poly.f promptffile.f promptmfile.f \
 	sec2time.f secsdiff.F setlam.f sortic.f str2real.f time2sec.f \
 	upcase.f wkday.F yr2day.F m3exit.F90 m3mesg.F90 m3msg2.F90 \
-	m3warn.F90 m3utilio.F90 read3.F write3.F
+	m3warn.F90 m3utilio.F90
 libioapi_a_FFLAGS = $(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) $(ESMF_F90COMPILEFREECPP) $(ESMF_F90COMPILECPPFLAGS)
 libioapi_a_FCFLAGS = $(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) \
 	$(ESMF_F90COMPILEFREECPP) $(ESMF_F90COMPILECPPFLAGS) \
@@ -421,18 +419,6 @@ libioapi_a-yr2day.o: yr2day.F
 
 libioapi_a-yr2day.obj: yr2day.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-yr2day.obj `if test -f 'yr2day.F'; then $(CYGPATH_W) 'yr2day.F'; else $(CYGPATH_W) '$(srcdir)/yr2day.F'; fi`
-
-libioapi_a-read3.o: read3.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-read3.o `test -f 'read3.F' || echo '$(srcdir)/'`read3.F
-
-libioapi_a-read3.obj: read3.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-read3.obj `if test -f 'read3.F'; then $(CYGPATH_W) 'read3.F'; else $(CYGPATH_W) '$(srcdir)/read3.F'; fi`
-
-libioapi_a-write3.o: write3.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-write3.o `test -f 'write3.F' || echo '$(srcdir)/'`write3.F
-
-libioapi_a-write3.obj: write3.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-write3.obj `if test -f 'write3.F'; then $(CYGPATH_W) 'write3.F'; else $(CYGPATH_W) '$(srcdir)/write3.F'; fi`
 .F.f:
 	$(F77COMPILE) -F $<
 

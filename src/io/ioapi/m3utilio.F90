@@ -14,19 +14,17 @@ module m3utilio
   INTEGER           :: INTERP3
   INTEGER, EXTERNAL :: ENVINT
   INTEGER, EXTERNAL :: FINDC
-  INTEGER, EXTERNAL :: INDEX1, SEC2TIME, TIME2SEC, GETEFILE
-  INTEGER, EXTERNAL :: JULIAN, JUNIT
+  INTEGER, EXTERNAL :: SEC2TIME, GETEFILE
+  INTEGER, EXTERNAL :: JULIAN
   INTEGER, EXTERNAL :: PROMPTFFILE
   INTEGER, EXTERNAL :: SECSDIFF
   INTEGER, EXTERNAL :: WKDAY
   LOGICAL, EXTERNAL :: DSCGRID
   LOGICAL, EXTERNAL :: ENVYN
   LOGICAL, EXTERNAL :: INTERPX
-  LOGICAL, EXTERNAL :: READ3, WRITE3, XTRACT3
-  REAL,    EXTERNAL :: ENVREAL, POLY, STR2REAL
-  CHARACTER*10, EXTERNAL :: HHMMSS
+  LOGICAL, EXTERNAL :: XTRACT3
+  REAL,    EXTERNAL :: ENVREAL, POLY
   CHARACTER*14, EXTERNAL :: MMDDYY
-  CHARACTER*16, EXTERNAL :: PROMPTMFILE
 
 !...........   INTERFACE Blocks:
 
@@ -53,6 +51,34 @@ module m3utilio
   END INTERFACE
 
   INTERFACE
+    CHARACTER*10 FUNCTION HHMMSS ( JTIME )
+      INTEGER, INTENT(IN) :: JTIME
+    END FUNCTION HHMMSS
+  END INTERFACE
+
+  INTERFACE
+    INTEGER FUNCTION INDEX1( NAME, N, NLIST )
+      CHARACTER*(*), INTENT(IN   ) :: NAME        !  Character string being searched for
+      INTEGER      , INTENT(IN   ) :: N           !  Length of array to be searched
+      CHARACTER*(*), INTENT(IN   ) :: NLIST(*)    !  array to be searched
+    END FUNCTION INDEX1
+  END INTERFACE
+
+  INTERFACE
+    INTEGER FUNCTION JUNIT()
+    END FUNCTION JUNIT
+  END INTERFACE
+
+  INTERFACE
+    CHARACTER*16  FUNCTION PROMPTMFILE( PROMPT,  FMODE, DEFAULT, CALLER )
+      CHARACTER*(*), INTENT(IN   ) :: PROMPT         !  prompt for user
+      INTEGER      , INTENT(IN   ) :: FMODE          !  file opening-mode
+      CHARACTER*(*), INTENT(IN   ) :: DEFAULT        !  default logical file name
+      CHARACTER*(*), INTENT(IN   ) :: CALLER         !  caller-name for logging messages
+    END FUNCTION  PROMPTMFILE
+  END INTERFACE
+
+  INTERFACE
     LOGICAL FUNCTION SETLAM( A, B, C, X, Y )
       REAL, INTENT(IN   ) :: A          !  first secant latitude
       REAL, INTENT(IN   ) :: B          !  second secant latitude.  B > A
@@ -60,6 +86,18 @@ module m3utilio
       REAL, INTENT(IN   ) :: X          !  Lambert easting  in meters
       REAL, INTENT(IN   ) :: Y          !  Lambert northing in meters
     END FUNCTION SETLAM
+  END INTERFACE
+
+  INTERFACE
+    REAL FUNCTION STR2REAL( STRING )
+      CHARACTER*(*), INTENT(IN   ) :: STRING
+    END FUNCTION STR2REAL
+  END INTERFACE
+
+  INTERFACE
+    INTEGER  FUNCTION  TIME2SEC ( TIME )
+    INTEGER, INTENT(IN   ) :: TIME    !  formatted HHMMSS
+    END FUNCTION  TIME2SEC
   END INTERFACE
 
   INTERFACE
@@ -72,6 +110,21 @@ module m3utilio
     SUBROUTINE  M3MSG2( MESSAGE )
       CHARACTER*(*), INTENT(IN   ) :: MESSAGE
     END SUBROUTINE  M3MSG2
+  END INTERFACE
+
+  INTERFACE READ3
+    MODULE PROCEDURE READ3_INTEGER
+    MODULE PROCEDURE READ3_REAL
+  END INTERFACE
+
+  INTERFACE WRITE3
+    MODULE PROCEDURE WRITE3_INTEGER
+    MODULE PROCEDURE WRITE3_INTEGER2D
+    MODULE PROCEDURE WRITE3_REAL
+    MODULE PROCEDURE WRITE3_REAL1D
+    MODULE PROCEDURE WRITE3_REAL2D
+    MODULE PROCEDURE WRITE3_REAL3D
+    MODULE PROCEDURE WRITE3_REAL4D
   END INTERFACE
 
   public
@@ -93,6 +146,100 @@ contains
     CHARACTER*(*), INTENT(IN   ) :: FNAME   !  l
     CLOSE3 = .TRUE.
   END FUNCTION CLOSE3
+
+  LOGICAL FUNCTION READ3_INTEGER( FNAME, VNAME, LAYER, JDATE,JTIME, BUFFER)
+
+!...........   ARGUMENTS and their descriptions:
+
+    CHARACTER*(*), INTENT(IN   ) :: FNAME           !  logical file name
+    CHARACTER*(*), INTENT(IN   ) :: VNAME           !  variable name, or 'ALL'
+    INTEGER      , INTENT(IN   ) :: LAYER           !  layer number, or 0
+    INTEGER      , INTENT(IN   ) :: JDATE           !  date, formatted YYYYDDD
+    INTEGER      , INTENT(IN   ) :: JTIME           !  time, formatted HHMMSS
+    INTEGER      , INTENT(  OUT) :: BUFFER(*)       !  input buffer array
+
+    READ3_INTEGER = .TRUE.
+
+  END FUNCTION READ3_INTEGER
+
+  LOGICAL FUNCTION READ3_REAL( FNAME, VNAME, LAYER, JDATE,JTIME, BUFFER)
+
+!...........   ARGUMENTS and their descriptions:
+
+    CHARACTER*(*), INTENT(IN   ) :: FNAME           !  logical file name
+    CHARACTER*(*), INTENT(IN   ) :: VNAME           !  variable name, or 'ALL'
+    INTEGER      , INTENT(IN   ) :: LAYER           !  layer number, or 0
+    INTEGER      , INTENT(IN   ) :: JDATE           !  date, formatted YYYYDDD
+    INTEGER      , INTENT(IN   ) :: JTIME           !  time, formatted HHMMSS
+    REAL         , INTENT(  OUT) :: BUFFER(*)       !  input buffer array
+
+    READ3_REAL = .TRUE.
+
+  END FUNCTION READ3_REAL
+
+  LOGICAL FUNCTION WRITE3_REAL( FNAME, VNAME, JDATE, JTIME, BUFFER )
+    CHARACTER*(*), INTENT(IN   ) :: FNAME      !  logical file name
+    CHARACTER*(*), INTENT(IN   ) :: VNAME      !  logical file name
+    INTEGER      , INTENT(IN   ) :: JDATE      !  date, formatted YYYYDDD
+    INTEGER      , INTENT(IN   ) :: JTIME      !  time, formatted HHMMSS
+    REAL         , INTENT(IN   ) :: BUFFER     !  output buffer array
+    WRITE3_REAL = .TRUE.
+  END FUNCTION WRITE3_REAL
+
+  LOGICAL FUNCTION WRITE3_REAL1D( FNAME, VNAME, JDATE, JTIME, BUFFER )
+    CHARACTER*(*), INTENT(IN   ) :: FNAME      !  logical file name
+    CHARACTER*(*), INTENT(IN   ) :: VNAME      !  logical file name
+    INTEGER      , INTENT(IN   ) :: JDATE      !  date, formatted YYYYDDD
+    INTEGER      , INTENT(IN   ) :: JTIME      !  time, formatted HHMMSS
+    REAL         , INTENT(IN   ) :: BUFFER(:)  !  output buffer array
+    WRITE3_REAL1D = .TRUE.
+  END FUNCTION WRITE3_REAL1D
+
+
+  LOGICAL FUNCTION WRITE3_REAL2D( FNAME, VNAME, JDATE, JTIME, BUFFER )
+    CHARACTER*(*), INTENT(IN   ) :: FNAME      !  logical file name
+    CHARACTER*(*), INTENT(IN   ) :: VNAME      !  logical file name
+    INTEGER      , INTENT(IN   ) :: JDATE      !  date, formatted YYYYDDD
+    INTEGER      , INTENT(IN   ) :: JTIME      !  time, formatted HHMMSS
+    REAL         , INTENT(IN   ) :: BUFFER(:,:)  !  output buffer array
+    WRITE3_REAL2D = .TRUE.
+  END FUNCTION WRITE3_REAL2D
+
+  LOGICAL FUNCTION WRITE3_REAL3D( FNAME, VNAME, JDATE, JTIME, BUFFER )
+    CHARACTER*(*), INTENT(IN   ) :: FNAME      !  logical file name
+    CHARACTER*(*), INTENT(IN   ) :: VNAME      !  logical file name
+    INTEGER      , INTENT(IN   ) :: JDATE      !  date, formatted YYYYDDD
+    INTEGER      , INTENT(IN   ) :: JTIME      !  time, formatted HHMMSS
+    REAL         , INTENT(IN   ) :: BUFFER(:,:,:)  !  output buffer array
+    WRITE3_REAL3D = .TRUE.
+  END FUNCTION WRITE3_REAL3D
+
+  LOGICAL FUNCTION WRITE3_REAL4D( FNAME, VNAME, JDATE, JTIME, BUFFER )
+    CHARACTER*(*), INTENT(IN   ) :: FNAME      !  logical file name
+    CHARACTER*(*), INTENT(IN   ) :: VNAME      !  logical file name
+    INTEGER      , INTENT(IN   ) :: JDATE      !  date, formatted YYYYDDD
+    INTEGER      , INTENT(IN   ) :: JTIME      !  time, formatted HHMMSS
+    REAL         , INTENT(IN   ) :: BUFFER(:,:,:,:)  !  output buffer array
+    WRITE3_REAL4D = .TRUE.
+  END FUNCTION WRITE3_REAL4D
+
+  LOGICAL FUNCTION WRITE3_INTEGER( FNAME, VNAME, JDATE, JTIME, BUFFER )
+    CHARACTER*(*), INTENT(IN   ) :: FNAME      !  logical file name
+    CHARACTER*(*), INTENT(IN   ) :: VNAME      !  logical file name
+    INTEGER      , INTENT(IN   ) :: JDATE      !  date, formatted YYYYDDD
+    INTEGER      , INTENT(IN   ) :: JTIME      !  time, formatted HHMMSS
+    INTEGER      , INTENT(IN   ) :: BUFFER(:)  !  output buffer array
+    WRITE3_INTEGER = .TRUE.
+  END FUNCTION WRITE3_INTEGER
+
+  LOGICAL FUNCTION WRITE3_INTEGER2D( FNAME, VNAME, JDATE, JTIME, BUFFER )
+    CHARACTER*(*), INTENT(IN   ) :: FNAME      !  logical file name
+    CHARACTER*(*), INTENT(IN   ) :: VNAME      !  logical file name
+    INTEGER      , INTENT(IN   ) :: JDATE      !  date, formatted YYYYDDD
+    INTEGER      , INTENT(IN   ) :: JTIME      !  time, formatted HHMMSS
+    INTEGER      , INTENT(IN   ) :: BUFFER(:,:)  !  output buffer array
+    WRITE3_INTEGER2D = .TRUE.
+  END FUNCTION WRITE3_INTEGER2D
 
   subroutine m3parag( nmesg, msgs )
     integer,          intent(in) :: nmesg

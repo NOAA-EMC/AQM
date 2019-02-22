@@ -1,5 +1,19 @@
         LOGICAL FUNCTION SETLAM( A, B, C, X, Y )
 
+        IMPLICIT NONE
+
+C...........   ARGUMENTS:
+
+        REAL, INTENT(IN   ) :: A          !  first secant latitude
+        REAL, INTENT(IN   ) :: B          !  second secant latitude.  B > A
+        REAL, INTENT(IN   ) :: C          !  central meridian
+        REAL, INTENT(IN   ) :: X          !  Lambert easting  in meters
+        REAL, INTENT(IN   ) :: Y          !  Lambert northing in meters
+
+C.......   Scratch variables:
+
+        CHARACTER*256   MESG
+
 C.......   Check validity of input parameters:
 
         IF ( A .LT. -90.0 ) THEN

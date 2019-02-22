@@ -813,7 +813,7 @@ LOGICAL FUNCTION  XTRACT3 ( FNAME, VNAME,                           &
   INTEGER      , INTENT(IN   ) :: COL1            !  upper col bound
   INTEGER      , INTENT(IN   ) :: JDATE           !  date, formatted YYYYDDD
   INTEGER      , INTENT(IN   ) :: JTIME           !  time, formatted HHMMSS
-  REAL(8)      , INTENT(  OUT) :: BUFFER(*)       !  input buffer array
+  REAL         , INTENT(  OUT) :: BUFFER(*)       !  output buffer array
 
   ! -- local variables
   integer :: localrc
@@ -867,7 +867,7 @@ LOGICAL FUNCTION  XTRACT3 ( FNAME, VNAME,                           &
       do r = row0, row1
         do c = col0, col1
           k = k + 1
-          buffer(k) = stateIn % vfrac(c,r)
+          buffer(k) = real(stateIn % vfrac(c,r))
         end do
       end do
 

@@ -124,19 +124,19 @@ contains
     ! -- external methods
     INTERFACE
       SUBROUTINE VDIFF ( CGRID, JDATE, JTIME, TSTEP )
-        REAL, INTENT(INOUT)       :: CGRID( :,:,:,: )
-        INTEGER, INTENT( IN )     :: JDATE, JTIME
-        INTEGER, INTENT( IN )     :: TSTEP( 3 )
+        REAL, POINTER             :: CGRID( :,:,:,: )
+        INTEGER                   :: JDATE, JTIME
+        INTEGER                   :: TSTEP( 3 )
       END SUBROUTINE VDIFF
       SUBROUTINE CHEM ( CGRID, JDATE, JTIME, TSTEP )
-        REAL, INTENT(INOUT)       :: CGRID( :,:,:,: )
-        INTEGER, INTENT( IN )     :: JDATE, JTIME
-        INTEGER, INTENT( IN )     :: TSTEP( 3 )
+        REAL, POINTER             :: CGRID( :,:,:,: )
+        INTEGER                   :: JDATE, JTIME
+        INTEGER                   :: TSTEP( 3 )
       END SUBROUTINE CHEM
       SUBROUTINE AERO ( CGRID, JDATE, JTIME, TSTEP )
-        REAL, INTENT(INOUT)       :: CGRID( :,:,:,: )
-        INTEGER, INTENT( IN )     :: JDATE, JTIME
-        INTEGER, INTENT( IN )     :: TSTEP( 3 )
+        REAL, POINTER             :: CGRID( :,:,:,: )
+        INTEGER                   :: JDATE, JTIME
+        INTEGER                   :: TSTEP( 3 )
       END SUBROUTINE AERO
     END INTERFACE
 

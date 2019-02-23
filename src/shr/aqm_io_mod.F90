@@ -326,7 +326,7 @@ contains
       call aqm_io_file_read(datafile, buffer, recrange=recrange, recsize=recsize, recstride=recstride, rc=localrc)
       if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__, rc=rc)) return
 
-      write(6,'("aqm_data_read: tile=",i2,2x,a," - min/max = "2g16.6)') tile, &
+      write(6,'("aqm_io_read: tile=",i2,2x,a," - min/max = "2g16.6)') tile, &
         trim(datafile), minval(buffer), maxval(buffer)
     end if
 
@@ -401,7 +401,7 @@ contains
       call aqm_io_file_read(datafile, buffer, recrange=recrange, recsize=recsize, recstride=recstride, rc=localrc)
       if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__, rc=rc)) return
 
-      write(6,'("aqm_data_read: tile=",i2,2x,a," - min/max = "2g16.6)') tile, &
+      write(6,'("aqm_io_read: tile=",i2,2x,a," - min/max = "2g16.6)') tile, &
         trim(datafile), minval(buffer), maxval(buffer)
     end if
 
@@ -483,7 +483,7 @@ contains
         pos=pos, rc=localrc)
       if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__, rc=rc)) return
 
-      write(6,'("aqm_data_write: tile=",i2,2x,a," - min/max = "2g16.6)') tile, &
+      write(6,'("aqm_io_write: tile=",i2,2x,a," - min/max = "2g16.6)') tile, &
         trim(datafile), minval(recvbuf), maxval(recvbuf)
     end if
 

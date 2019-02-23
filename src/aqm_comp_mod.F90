@@ -8,7 +8,6 @@ module aqm_comp_mod
   use aqm_types_mod, only : AQM_MAXSTR
   use aqm_model_mod
   use aqm_io_mod
-  use aqm_iodata_mod
   use cmaq_model_mod
 
   implicit none

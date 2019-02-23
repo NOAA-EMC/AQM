@@ -543,17 +543,6 @@ module AQM
       file=__FILE__)) &
       return  ! bail out
 
-    ! write output if it is time
-    call aqm_output_write(rc)
-    if (aqm_rc_check(rc)) then
-      call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, &
-        msg="Failed to write air quality output", &
-        line=__LINE__, &
-        file=__FILE__, &
-        rcToReturn=rc)
-      return  ! bail out
-    end if
-
   end subroutine ModelAdvance
 
   !-----------------------------------------------------------------------------

@@ -16,6 +16,7 @@ module aqm_config_mod
     character(len=AQM_MAXSTR) :: nr_matrix_nml = ""
     character(len=AQM_MAXSTR) :: tr_matrix_nml = ""
     character(len=AQM_MAXSTR) :: csqy_data     = ""
+    character(len=AQM_MAXSTR) :: emi_inname    = ""
     character(len=AQM_MAXSTR) :: optics_data   = ""
     character(len=AQM_MAXSTR) :: omi           = ""
     integer                   :: atm_mp        = 0
@@ -45,7 +46,7 @@ contains
 
     integer                :: localrc, iostat
     logical                :: lbuffer(4)
-    character(AQM_MAXSTR)  :: sbuffer(7)
+    character(AQM_MAXSTR)  :: sbuffer(8)
 
     ! -- variables in input namelist
     character(len=AQM_MAXSTR) :: ae_matrix_nml
@@ -53,6 +54,7 @@ contains
     character(len=AQM_MAXSTR) :: nr_matrix_nml
     character(len=AQM_MAXSTR) :: tr_matrix_nml
     character(len=AQM_MAXSTR) :: csqy_data
+    character(len=AQM_MAXSTR) :: emi_inname
     character(len=AQM_MAXSTR) :: optics_data
     character(len=AQM_MAXSTR) :: omi
     integer                   :: atm_mp
@@ -67,6 +69,7 @@ contains
       nr_matrix_nml, &
       tr_matrix_nml, &
       csqy_data,     &
+      emi_inname,    &
       optics_data,   &
       omi,           &
       atm_mp,        &
@@ -84,6 +87,7 @@ contains
     nr_matrix_nml = ""
     tr_matrix_nml = ""
     csqy_data     = ""
+    emi_inname    = ""
     optics_data   = ""
     omi           = ""
     atm_mp        = 0
@@ -118,6 +122,7 @@ contains
       nr_matrix_nml, &
       tr_matrix_nml, &
       csqy_data,     &
+      emi_inname,    &
       optics_data,   &
       omi            &
     /)
@@ -131,8 +136,9 @@ contains
     config % nr_matrix_nml = sbuffer(3)
     config % tr_matrix_nml = sbuffer(4)
     config % csqy_data     = sbuffer(5)
-    config % optics_data   = sbuffer(6)
-    config % omi           = sbuffer(7)
+    config % emi_inname    = sbuffer(6)
+    config % optics_data   = sbuffer(7)
+    config % omi           = sbuffer(8)
 
     ! -- broadcast integer variable
     call aqm_comm_bcast(atm_mp, rc=localrc)

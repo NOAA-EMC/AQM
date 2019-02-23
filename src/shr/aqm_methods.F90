@@ -66,6 +66,7 @@ LOGICAL FUNCTION DESC3( FNAME )
     GDNAM3D, NLAYS3D, NVARS3D, VDESC3D, VGLVS3D, &
     VGSGPN3, VGTOP3D, VGTYP3D, VNAME3D, UNITS3D
    
+  USE aqm_emis_mod
   USE aqm_model_mod, ONLY : aqm_config_type, &
                             aqm_model_get, aqm_model_domain_get
   USE aqm_rc_mod,    ONLY : aqm_rc_check
@@ -102,43 +103,14 @@ LOGICAL FUNCTION DESC3( FNAME )
     !      'PMOTHR ', 'PTI    ', 'PCL_B  ' /)
     ! UNITS3D( 1:NVARS3D ) = 'MOL/S'
 
-    NVARS3D = 31
-    VNAME3D( 1:NVARS3D ) = &
-    (/ 'CO     ', 'NO     ', 'NO2    ', 'NH3    ', 'SO2    ', &
-       'SULF   ', 'ECH4   ', 'ALD2   ', 'ALDX   ', 'ETH    ', &
-       'ETHA   ', 'ETOH   ', 'FORM   ', 'IOLE   ', 'ISOP   ', &
-       'MEOH   ', 'NVOL   ', 'OLE    ', 'PAR    ', 'TERP   ', &
-       'TOL    ', 'UNK    ', 'UNR    ', 'XYL    ', 'BENZENE', &
-       'SESQ   ', 'CL2    ', 'HCL    ', 'HONO   ', 'HGNRVA ', &
-       'HGIIGAS' /)
-    UNITS3D( 1:NVARS3D ) = 'MOL/S'
+    NVARS3D = aqm_emis_num
+    VNAME3D( 1:NVARS3D ) = aqm_emis_def( 1:NVARS3D, 1 )
+    UNITS3D( 1:NVARS3D ) = aqm_emis_def( 1:NVARS3D, 2 )
 
-    NVARS3D = NVARS3D + 18
-    VNAME3D( NVARS3D-17:NVARS3D ) = &
-    (/ 'BENZ        ', 'CH4         ', 'TOLU        ', &
-       'PACD        ', 'AACD        ', 'FACD        ', 'GLYXL       ', 'KET         ', &
-       'ACET        ', 'PRPA        ', 'ETHY        ', 'XYLMN       ', 'NAPH        ', &
-       'SOAALK      ', 'FORM_PRIMARY', 'ALD2_PRIMARY', 'BUTADIENE13 ', 'ACROLEIN    ' /)
-    UNITS3D( NVARS3D-17:NVARS3D ) = 'MOL/S'
-
-    NVARS3D = NVARS3D + 20
-    VNAME3D( NVARS3D-19:NVARS3D ) = &
-    (/ 'PSO4        ', 'PNO3        ', 'PCL         ', 'PNH4        ', 'PNA         ', &
-       'PMG         ', 'PK          ', 'PCA         ', 'POC         ', 'PNCOM       ', &
-       'PEC         ', 'PFE         ', 'PAL         ', 'PSI         ', 'PTI         ', &
-       'PMN         ', 'PH2O        ', 'PMOTHR      ', 'PMC         ', 'PHGI        ' /)
-    UNITS3D( NVARS3D-19:NVARS3D ) = 'KG/HR  '
-
-    NVARS3D = NVARS3D + 7
-    VNAME3D( NVARS3D-6:NVARS3D ) = &
-    (/ 'ASO4J  ', 'ANH4J  ', 'ANO3K  ', 'ACLJ   ', 'AH2OJ  ', &
-       'ATOL1J ', 'ATOL2J ' /)
-    UNITS3D( NVARS3D-6:NVARS3D ) = 'KG/HR  '
-
-    NVARS3D = NVARS3D + 4
-    VNAME3D( NVARS3D-3:NVARS3D ) = &
-    (/ 'NH3    ', 'SV_ALK1', 'SV_XYL1', 'SV_TOL1' /)
-    UNITS3D( NVARS3D-3:NVARS3D ) = 'MOL/S'
+   ! -- missing emission species
+    NVARS3D = NVARS3D + aqm_emis_sup_num
+    VNAME3D( aqm_emis_num+1:NVARS3D ) = aqm_emis_sup_def( 1:aqm_emis_sup_num, 1)
+    UNITS3D( aqm_emis_num+1:NVARS3D ) = aqm_emis_sup_def( 1:aqm_emis_sup_num, 2)
 
   ELSE IF ( TRIM( FNAME ) .EQ. TRIM( GRID_DOT_2D ) ) THEN
     NVARS3D = 1
@@ -448,12 +420,11 @@ end subroutine nameval
 logical function interpx( fname, vname, pname, &
   col0, col1, row0, row1, lay0, lay1, jdate, jtime, buffer )
 
-  use aqm_types_mod, only : AQM_KIND_R8
-  use aqm_model_mod, only : aqm_state_type, &
-                            aqm_model_get, aqm_model_domain_get
+  use aqm_types_mod, only : AQM_KIND_R4, AQM_KIND_R8
   use aqm_rc_mod,    only : aqm_rc_check, aqm_rc_test
-
-  use aqm_model_mod, only : aqm_config_type, aqm_state_type, aqm_model_get
+  use aqm_emis_mod,  only : aqm_emis_read
+  use aqm_model_mod, only : aqm_config_type, aqm_state_type, &
+                            aqm_model_get, aqm_model_domain_get
 
   implicit none
 
@@ -467,11 +438,12 @@ logical function interpx( fname, vname, pname, &
   integer :: c, r, l, k
   integer :: lbuf, lu_index
   logical :: set_non_neg
-  real(AQM_KIND_R8), dimension(:,:),   pointer :: lat, lon
-  real(AQM_KIND_R8), dimension(:,:),   pointer :: p2d => null()
-  real(AQM_KIND_R8), dimension(:,:,:), pointer :: p3d => null()
-  type(aqm_config_type), pointer :: config  => null()
-  type(aqm_state_type),  pointer :: stateIn => null()
+  real(AQM_KIND_R4), dimension(:,:),   allocatable :: buf2d
+  real(AQM_KIND_R8), dimension(:,:),   pointer     :: lat, lon
+  real(AQM_KIND_R8), dimension(:,:),   pointer     :: p2d     => null()
+  real(AQM_KIND_R8), dimension(:,:,:), pointer     :: p3d     => null()
+  type(aqm_config_type),               pointer     :: config  => null()
+  type(aqm_state_type),                pointer     :: stateIn => null()
 
   ! -- constants
   include SUBST_CONST
@@ -538,15 +510,6 @@ logical function interpx( fname, vname, pname, &
         case default
           return
       end select
-      if (associated(p2d)) then
-        k = 0
-        do r = row0, row1
-          do c = col0, col1
-            k = k + 1
-            buffer(k) = p2d(c,r)
-          end do
-        end do
-      end if
     end if
 
   else if (trim(fname) == trim(MET_CRO_2D)) then
@@ -658,7 +621,31 @@ logical function interpx( fname, vname, pname, &
 
   else if (trim(fname) == trim(EMIS_1)) then
 
-    ! -- emissions are temporarily set to 0
+    ! -- read in emissions
+    allocate(buf2d(col0:col1,row0:row1), stat=localrc)
+    if (aqm_rc_test((localrc /= 0), &
+      msg="Failure to allocate emission buffer", &
+      file=__FILE__, line=__LINE__)) return
+
+    call aqm_emis_read(vname, jdate, jtime, buf2d, rc=localrc)
+    if (.not.aqm_rc_check(localrc, &
+      msg="Failure to read emissions for " // vname, &
+      file=__FILE__, line=__LINE__)) then
+
+      k = 0
+      do r = row0, row1
+        do c = col0, col1
+          k = k + 1
+          buffer(k) = buf2d(c,r)
+        end do
+      end do
+
+    end if
+
+    deallocate(buf2d, stat=localrc)
+    if (aqm_rc_test((localrc /= 0), &
+      msg="Failure to deallocate emission buffer", &
+      file=__FILE__, line=__LINE__)) return
 
   else if (trim(fname) == trim(MET_CRO_3D)) then
 

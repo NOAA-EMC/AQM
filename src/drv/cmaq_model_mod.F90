@@ -4,7 +4,6 @@ module cmaq_model_mod
   use aqm_types_mod
   use aqm_comm_mod
   use aqm_model_mod
-  use aqm_tracers_mod
   use cmaq_mod
 
   implicit none

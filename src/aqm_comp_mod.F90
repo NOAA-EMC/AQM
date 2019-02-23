@@ -124,30 +124,6 @@ contains
       return  ! bail out
     end if
 
-#if 0
-    ! -- allocate memory for internal workspace
-    call aqm_backgd_init(rc=localrc)
-    if (aqm_rc_check(localrc)) then
-      call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, &
-        msg="Failed to initialize I/O model subsystem", &
-        line=__LINE__, &
-        file=__FILE__, &
-        rcToReturn=rc)
-      return  ! bail out
-    end if
-
-    ! -- read-in emission and background fields
-    call aqm_backgd_read(rc=localrc)
-    if (aqm_rc_check(localrc)) then
-      call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, &
-        msg="Failed to initialize I/O model subsystem", &
-        line=__LINE__, &
-        file=__FILE__, &
-        rcToReturn=rc)
-      return  ! bail out
-    end if
-#endif
-
   end subroutine aqm_comp_create
 
   subroutine aqm_comp_init(rc)

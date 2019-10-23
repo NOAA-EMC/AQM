@@ -68,8 +68,8 @@ AX_COMPILER_VENDOR
 AC_LANG_POP([Fortran])
 case "x$ax_cv_fc_compiler_vendor" in
   "xintel")
-     CCTM_FCFLAGS="-free -override-limits"
-     CCTM_FFLAGS="-fixed -132 -override-limits"
+     CCTM_FCFLAGS="-free -qoverride-limits"
+     CCTM_FFLAGS="-fixed -132 -qoverride-limits"
      ;;
   "xgnu")
      CCTM_FCFLAGS="-ffree-line-length-none"

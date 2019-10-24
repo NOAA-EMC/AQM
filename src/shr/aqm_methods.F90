@@ -145,7 +145,7 @@ LOGICAL FUNCTION DESC3( FNAME )
        'RNA             ', 'RCA             ',            &
        'CFRAC           ', 'CLDT            ',            &
        'CLDB            ', 'WBAR            ',            &
-       'RADYNI          ', 'RSTOMI          ',            &
+       'RA              ', 'RS              ',            &
        'SNOCOV          ', 'VEG             ',            &
        'TEMP2           ', 'WR              ',            &
        'TEMPG           ', 'LAI             ',            &
@@ -162,7 +162,7 @@ LOGICAL FUNCTION DESC3( FNAME )
        'CM              ', 'CM              ',            &
        'FRACTION        ', 'M               ',            &
        'M               ', 'G/M**3          ',            &
-       'M/S             ', 'M/S             ',            &
+       'S/M             ', 'S/M             ',            &
        'NODIM           ', 'NO UNIT         ',            &
        'K               ', 'M               ',            &
        'K               ', 'AREA/AREA       ',            &
@@ -217,20 +217,22 @@ LOGICAL FUNCTION DESC3( FNAME )
        0.000000000000000E+000 &
     /)
 
-    NVARS3D = 10
+    NVARS3D = 11
     VNAME3D( 1:NVARS3D ) = &
     (/ 'JACOBF          ', 'JACOBM          ',            &
        'DENSA_J         ', 'TA              ',            &
        'QV              ', 'QC              ',            &
        'PRES            ', 'DENS            ',            &
-       'ZH              ', 'ZF              '             &
+       'ZH              ', 'ZF              ',            &
+       'CFRAC_3D        '                                 &
     /)
     UNITS3D( 1:NVARS3D ) = &
     (/ 'M               ', 'M               ',            &
        'KG/M**2         ', 'K               ',            &
        'KG/KG           ', 'KG/KG           ',            &
        'Pa              ', 'KG/M**3         ',            &
-       'M               ', 'M               '             &
+       'M               ', 'M               ',            &
+       'FRACTION        '                                 &
     /)
 
     call aqm_model_get(config=config, rc=localrc)
@@ -503,7 +505,14 @@ logical function interpx( fname, vname, pname, &
             end do
           end do
         case ('LWMASK')
-          p2d => stateIn % slmsk
+          k = 0
+          do r = row0, row1
+           do c = col0, col1
+             k = k + 1
+             buffer(k) = stateIn % slmsk(c,r)
+             if (nint(buffer(k)) == 2) buffer(k) = 0.  ! set sea ice points as water
+           end do
+          end do
         case ('MSFX2')
           buffer(1:lbuf) = 1.
         case ('PURB')
@@ -541,6 +550,18 @@ logical function interpx( fname, vname, pname, &
            if ( stateIn % rc(c,r) /= 0.0 ) buffer(k) = 1.0 / stateIn % rc(c,r)
          end do
         end do
+      case ("RA")
+        k = 0
+        do r = row0, row1
+         do c = col0, col1
+           k = k + 1
+           buffer(k) = sqrt(stateIn % uwind(c,r,1) * stateIn % uwind(c,r,1) +  &
+                            stateIn % vwind(c,r,1) * stateIn % vwind(c,r,1)) / &
+                       ( stateIn % ustar(c,r) * stateIn % ustar(c,r) )
+         end do
+        end do
+      case ("RS")
+        p2d => stateIn % rc
       case ("RC")
         k = 0
         do r = row0, row1
@@ -609,7 +630,6 @@ logical function interpx( fname, vname, pname, &
 
     select case (trim(vname))
       case ("OPEN")
-!       buffer = 0.0
         ! -- zero
       case ("SZONE")
         buffer(1:lbuf) = 1.0
@@ -673,6 +693,8 @@ logical function interpx( fname, vname, pname, &
         buffer(1:lbuf) = 1.0
       case ("PRES")
         p3d => stateIn % prl
+      case ("CFRAC_3D")
+        p3d => stateIn % cldfl
       case ("PV")
         buffer(1:lbuf) = 1.0
       case ("QV")
@@ -903,31 +925,12 @@ SUBROUTINE SUBHFILE ( FNAME, GXOFF, GYOFF, &
 
 END SUBROUTINE SUBHFILE
 
-
-SUBROUTINE EDDYX ( EDDYV )
-
-  use aqm_model_mod, only : aqm_state_type, aqm_model_get
-  use aqm_rc_mod,    only : aqm_rc_check
-
-  IMPLICIT NONE
-
-  ! -- arguments
-  REAL, INTENT( OUT ) :: EDDYV ( :,:,: ) ! eddy diffusivity (m**2/s)
-
-  ! -- local variables
-  integer :: localrc
-  type(aqm_state_type), pointer :: stateIn => null()
-
-  ! -- begin
-  call aqm_model_get(stateIn=stateIn, rc=localrc)
-  if (aqm_rc_check(localrc, msg="Failure to retrive model input state", &
-        file=__FILE__, line=__LINE__)) return
-
-  EDDYV = stateIn % dkt
-
-END SUBROUTINE EDDYX
-
 ! -- dummy subroutines
+
+SUBROUTINE DUMMY_EDDYX ( EDDYV )
+  REAL,   INTENT( OUT ) :: EDDYV ( :,:,: )
+  EDDYV = 0.0
+END SUBROUTINE DUMMY_EDDYX
 
 SUBROUTINE DUMMY_VDIFFACMX( dtsec, seddy, ddep, icmp, ddepj, ddepj_fst, cngrd )
   IMPLICIT NONE

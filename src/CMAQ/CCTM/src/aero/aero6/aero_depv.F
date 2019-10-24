@@ -457,7 +457,7 @@ C modal sedimentation velocities for number, 2nd, and 3rd moment, or mass:
       REAL SC0N, SC0A, SC0C     ! Schmidt numbers for number
       REAL SC2N, SC2A, SC2C     ! Schmidt numbers for 2ND MOMENT
       REAL SC3N, SC3A, SC3C     ! Schmidt numbers for 3rd moment
-      REAL STOKEN, STOKEA, STOKEC ! Stokes numbers for each mode
+      REAL*8 STOKEN, STOKEA, STOKEC ! Stokes numbers for each mode
       REAL RD0N, RD0A, RD0C     ! canopy resistance for number
       REAL RD2N, RD2A, RD2C     ! canopy resistance for 2nd moment
       REAL RD3N, RD3A, RD3C     ! canopy resisteance for 3rd moment
@@ -543,7 +543,7 @@ C Scalar variables for VARIABLE standard deviations.
       REAL    ESACM32          ! accumulation "
       REAL    ESCOM32          ! coarse       "
 
-      REAL    EIM              ! Impaction efficiency
+      REAL*8  EIM              ! Impaction efficiency
 
 C-----------------------------------------------------------------------
 

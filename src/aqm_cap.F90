@@ -12,7 +12,7 @@ module AQM
   implicit none
 
   ! -- import fields
-  integer, parameter :: importFieldCount = 36
+  integer, parameter :: importFieldCount = 35
   character(len=*), dimension(importFieldCount), parameter :: &
     importFieldNames = (/ &
       "canopy_moisture_storage                  ", &
@@ -21,7 +21,6 @@ module AQM
       "inst_canopy_resistance                   ", &
       "inst_cloud_frac_levels                   ", &
       "inst_convective_rainfall_amount          ", &
-      "inst_exchange_coefficient_heat_levels    ", &
       "inst_friction_velocity                   ", &
       "inst_geop_interface                      ", &
       "inst_geop_levels                         ", &
@@ -41,9 +40,9 @@ module AQM
       "inst_temp_height_surface                 ", &
       "inst_temp_levels                         ", &
       "inst_tracer_mass_frac                    ", &
-      "inst_u_wind_height10m                    ", &
+      "inst_zonal_wind_height10m                ", &
       "inst_vegetation_area_frac                ", &
-      "inst_v_wind_height10m                    ", &
+      "inst_merid_wind_height10m                ", &
       "inst_zonal_wind_levels                   ", &
       "leaf_area_index                          ", &
       "sea_ice_area_fraction                    ", &
@@ -109,17 +108,6 @@ module AQM
       return  ! bail out
     call NUOPC_CompSpecialize(model, specLabel=label_Advance, &
       specRoutine=ModelAdvance, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-    call ESMF_MethodRemove(model, label=label_CheckImport, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-    call NUOPC_CompSpecialize(model, specLabel=label_CheckImport, &
-      specRoutine=CheckImport, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
@@ -194,7 +182,6 @@ module AQM
     if (importFieldCount > 0) then
       call NUOPC_Advertise(importState, importFieldNames, &
         TransferOfferGeomObject="cannot provide", &
-        TransferOfferField="cannot provide", &
         SharePolicyField="share", &
         rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -207,7 +194,6 @@ module AQM
     if (exportFieldCount > 0) then
       call NUOPC_Advertise(exportState, exportFieldNames, &
         TransferOfferGeomObject="cannot provide", &
-        TransferOfferField="cannot provide", &
         SharePolicyField="share", &
         rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -544,60 +530,6 @@ module AQM
       return  ! bail out
 
   end subroutine ModelAdvance
-
-  !-----------------------------------------------------------------------------
-
-  subroutine CheckImport(model, rc)
-    type(ESMF_GridComp)   :: model
-    integer, intent(out)  :: rc
-    
-    ! Enforce a time dependency on the imported fields to be a coupling
-    ! timeStep ahead of the current time. This means that the air quality
-    ! component is assumed to run sequentially after the ATM during the
-    ! same timestep. An incorrect run sequence will be flagged here as an
-    ! incompatibility.
-    
-    ! local variables
-    type(ESMF_Clock)        :: clock
-    type(ESMF_Time)         :: time
-    type(ESMF_State)        :: importState
-    logical                 :: allCurrent
-
-    rc = ESMF_SUCCESS
-    
-    ! query the Component for its clock and importState
-    call NUOPC_ModelGet(model, modelClock=clock, importState=importState, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-
-    ! get the current time out of the clock
-    call ESMF_ClockGet(clock, stopTime=time, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-    
-    ! check that Fields in the importState show correct timestamp
-    allCurrent = NUOPC_IsAtTime(importState, time, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-      
-    if (.not.allCurrent) then
-      !TODO: introduce and use INCOMPATIBILITY return codes!!!!
-      call ESMF_LogSetError(ESMF_RC_ARG_BAD, &
-        msg="NUOPC INCOMPATIBILITY DETECTED: Import Fields not at the "// &
-        "expected time", &
-        line=__LINE__, &
-        file=__FILE__, &
-        rcToReturn=rc)
-      return  ! bail out
-    endif
-    
-  end subroutine
 
   !-----------------------------------------------------------------------------
 

@@ -416,12 +416,6 @@ contains
               line=__LINE__, &
               file=__FILE__)) &
               return  ! bail
-          case ("inst_exchange_coefficient_heat_levels")
-            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % dkt, rc=rc)
-            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-              line=__LINE__, &
-              file=__FILE__)) &
-              return  ! bail
           case ("inst_friction_velocity")
             call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % ustar, rc=rc)
             if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -540,7 +534,7 @@ contains
               file=__FILE__)) &
               return  ! bail
             call aqm_model_set(numTracers=size(stateIn % tr, dim=4), de=localDe)
-          case ("inst_u_wind_height10m")
+          case ("inst_zonal_wind_height10m")
             call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % u10m, rc=rc)
             if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
               line=__LINE__, &
@@ -552,7 +546,7 @@ contains
               line=__LINE__, &
               file=__FILE__)) &
               return  ! bail
-          case ("inst_v_wind_height10m")
+          case ("inst_merid_wind_height10m")
             call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % v10m, rc=rc)
             if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
               line=__LINE__, &

@@ -64,9 +64,11 @@ LOGICAL FUNCTION DESC3( FNAME )
 
   USE M3UTILIO,      ONLY : &
     GDNAM3D, NLAYS3D, NVARS3D, VDESC3D, VGLVS3D, &
-    VGSGPN3, VGTOP3D, VGTYP3D, VNAME3D, UNITS3D
+    VGSGPN3, VGTOP3D, VGTYP3D, VNAME3D, UNITS3D, &
+    NCOLS3D, NROWS3D
    
   USE aqm_emis_mod
+  USE aqm_bkgd_mod
   USE aqm_model_mod, ONLY : aqm_config_type, &
                             aqm_model_get, aqm_model_domain_get
   USE aqm_rc_mod,    ONLY : aqm_rc_check
@@ -78,6 +80,7 @@ LOGICAL FUNCTION DESC3( FNAME )
   INCLUDE SUBST_FILES_ID
  
   integer :: localrc
+  integer :: is, ie, js, je
   type(aqm_config_type), pointer :: config => null()
 
   NVARS3D = 0
@@ -85,7 +88,23 @@ LOGICAL FUNCTION DESC3( FNAME )
   UNITS3D = ""
   VDESC3D = ""
 
-  IF      ( TRIM( FNAME ) .EQ. TRIM( EMIS_1 ) ) THEN
+  IF ( (TRIM(FNAME) .EQ. TRIM(INIT_GASC_1)) .OR. &
+       (TRIM(FNAME) .EQ. TRIM(INIT_AERO_1)) .OR. &
+       (TRIM(FNAME) .EQ. TRIM(INIT_NONR_1)) .OR. &
+       (TRIM(FNAME) .EQ. TRIM(INIT_TRAC_1)) ) THEN
+
+    ! -- Input initial background values for the following species
+    NVARS3D = aqm_bkgd_num
+    VNAME3D( 1:NVARS3D ) = aqm_bkgd_def( 1:NVARS3D, 1 )
+
+    call aqm_model_domain_get(ids=is, ide=ie, jds=js, jde=je, nl=NLAYS3D, rc=localrc)
+    if (aqm_rc_check(localrc, msg="Failure to retrieve model coordinates", &
+      file=__FILE__, line=__LINE__)) return
+
+    NCOLS3D = ie - is + 1
+    NROWS3D = je - js + 1
+
+  ELSE IF ( TRIM( FNAME ) .EQ. TRIM( EMIS_1 ) ) THEN
 
     ! -- These species are used in MPAS 5.1 EPA-modified
     ! NVARS3D = 31
@@ -336,14 +355,42 @@ end function envyn
 
 
 integer function envint(name, description, defaultval, status)
-  use m3utilio, only : xstat0
+
+  use aqm_model_mod, only : aqm_config_type, aqm_model_get
+  use aqm_rc_mod,    only : aqm_rc_check
+  use m3utilio,      only : xstat0
+
   implicit none
+
   character(len=*), intent(in)  :: name
   character(len=*), intent(in)  :: description
   integer,          intent(in)  :: defaultval
   integer,          intent(out) :: status
-  envint = 0
+
+  ! -- local variables
+  integer :: deCount, localrc
+  type(aqm_config_type), pointer :: config => null()
+
+  ! -- begin
+
+  envint = defaultval
   status = xstat0
+
+  call aqm_model_get(deCount=deCount, config=config, rc=localrc)
+  if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__)) then
+    status = -2
+    return
+  end if
+
+  if (deCount < 1) return
+
+  select case (trim(name))
+    case ('CTM_TSTEP')
+      envint = config % ctm_tstep
+    case default
+      ! -- use default
+  end select
+
 end function envint
 
 
@@ -638,7 +685,7 @@ logical function interpx( fname, vname, pname, &
       case default
         return
     end select
-
+#if 0
   else if (trim(fname) == trim(EMIS_1)) then
 
     ! -- read in emissions
@@ -666,7 +713,7 @@ logical function interpx( fname, vname, pname, &
     if (aqm_rc_test((localrc /= 0), &
       msg="Failure to deallocate emission buffer", &
       file=__FILE__, line=__LINE__)) return
-
+#endif
   else if (trim(fname) == trim(MET_CRO_3D)) then
 
     call aqm_model_get(config=config, stateIn=stateIn, rc=localrc)
@@ -806,8 +853,12 @@ LOGICAL FUNCTION  XTRACT3 ( FNAME, VNAME,                           &
                             LAY0, LAY1, ROW0, ROW1, COL0, COL1,     &
                             JDATE, JTIME, BUFFER )
 
+  use aqm_types_mod, only : AQM_KIND_R4
   use aqm_model_mod, only : aqm_state_type, aqm_model_get
   use aqm_rc_mod,    only : aqm_rc_check, aqm_rc_test
+  use aqm_io_mod
+  use aqm_config_mod
+  use aqm_bkgd_mod
 
   implicit none
 
@@ -827,7 +878,9 @@ LOGICAL FUNCTION  XTRACT3 ( FNAME, VNAME,                           &
   ! -- local variables
   integer :: localrc
   integer :: c, r, k, lbuf, lu_index
-  type(aqm_state_type),  pointer :: stateIn => null()
+  type(aqm_config_type),  pointer :: config  => null()
+  type(aqm_state_type),   pointer :: stateIn => null()
+  real(AQM_KIND_R4), dimension(:,:), allocatable :: buf2d
 
   include SUBST_FILES_ID
 
@@ -881,6 +934,32 @@ LOGICAL FUNCTION  XTRACT3 ( FNAME, VNAME,                           &
       end do
 
     END IF
+
+  ELSE IF ( (TRIM(FNAME) .EQ. TRIM(INIT_GASC_1)) .OR. &
+            (TRIM(FNAME) .EQ. TRIM(INIT_AERO_1)) .OR. &
+            (TRIM(FNAME) .EQ. TRIM(INIT_NONR_1)) .OR. &
+            (TRIM(FNAME) .EQ. TRIM(INIT_TRAC_1)) ) THEN
+
+      allocate(buf2d(col0:col1,row0:row1))
+      buf2d = 0._AQM_KIND_R4
+
+      ! -- get model configuration
+      call aqm_bkgd_read(vname, buf2d, rc=localrc)
+      if (.not.aqm_rc_check(localrc, &
+        msg="Failure to read background values for " // vname, &
+        file=__FILE__, line=__LINE__)) then
+
+        k = 0
+        do r = row0, row1
+          do c = col0, col1
+            k = k + 1
+            buffer(k) = buf2d(c,r)
+          end do
+        end do
+
+      end if
+
+      deallocate(buf2d)
 
   END IF
 
@@ -942,3 +1021,26 @@ SUBROUTINE DUMMY_VDIFFACMX( dtsec, seddy, ddep, icmp, ddepj, ddepj_fst, cngrd )
   REAL, INTENT( INOUT ), OPTIONAL :: ddepj_fst( :,:,:,: )
   REAL, INTENT( INOUT ) :: cngrd( :,:,:,: )
 END SUBROUTINE DUMMY_VDIFFACMX
+
+SUBROUTINE DUMMY_OPCONC( JDATE, JTIME, JSTEP )
+  INTEGER      JDATE        ! starting date (YYYYDDD)
+  INTEGER      JTIME        ! starting time (HHMMSS)
+  INTEGER      TSTEP        ! output timestep (HHMMSS)
+END SUBROUTINE DUMMY_OPCONC
+
+SUBROUTINE DUMMY_OPACONC( JDATE, JTIME, JSTEP )
+  INTEGER, INTENT (IN ) :: JDATE        ! current model date, coded YYYYDDD
+  INTEGER, INTENT (IN ) :: JTIME        ! current model time, coded HHMMSS
+  INTEGER, INTENT (IN ) :: JSTEP        ! output timestep (HHMMSS)
+END SUBROUTINE DUMMY_OPACONC
+
+SUBROUTINE DUMMY_OPWDEP( JDATE, JTIME, JSTEP )
+  INTEGER, INTENT (IN ) :: JDATE        ! current model date, coded YYYYDDD
+  INTEGER, INTENT (IN ) :: JTIME        ! current model time, coded HHMMSS
+  INTEGER, INTENT (IN ) :: JSTEP        ! output timestep (HHMMSS)
+END SUBROUTINE DUMMY_OPWDEP
+
+SUBROUTINE DUMMY_WR_INIT ( CGRID, STDATE, STTIME, TSTEP )
+  REAL, POINTER         :: CGRID(:,:,:,:)
+  INTEGER, INTENT( IN ) :: STDATE, STTIME, TSTEP
+END SUBROUTINE DUMMY_WR_INIT

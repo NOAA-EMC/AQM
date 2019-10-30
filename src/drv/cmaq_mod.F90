@@ -59,7 +59,6 @@ contains
 
     ! -- local variables
     integer :: mype, nprocs
-    real, parameter :: CMIN = 1.0E-30
 
     ! -- begin
     if (present(rc)) rc = AQM_RC_SUCCESS
@@ -105,10 +104,6 @@ contains
 
     CGRID => PCGRID( 1:MY_NCOLS,1:MY_NROWS,:,: )   ! required for PinG
 
-    ! -- Initialize conc field: Copy IC's to CONC file as step 0
-    ! -- Convention: the input file concentration units are always ppmV.
-    CGRID = CMIN
-
   end subroutine cmaq_init
 
   subroutine cmaq_advance(jdate, jtime, tstep, run_aero, rc)
@@ -118,11 +113,19 @@ contains
     integer, optional, intent(out)   :: rc
 
     ! -- local variables
-    integer :: sdate, stime
+    logical, save :: first_run = .true.
+    integer :: sdate, stime, nsteps
     CHARACTER( 36 ) :: NMSG = 'After NEXTIME: returned JDATE, JTIME'
 
     ! -- external methods
     INTERFACE
+      SUBROUTINE INITSCEN ( CGRID, STDATE, STTIME, TSTEP, NSTEPS )
+        REAL, POINTER             :: CGRID( :,:,:,: )
+        INTEGER                   :: STDATE, STTIME
+        INTEGER                   :: TSTEP( 3 )
+        INTEGER                   :: NSTEPS
+      END SUBROUTINE INITSCEN
+
       SUBROUTINE VDIFF ( CGRID, JDATE, JTIME, TSTEP )
         REAL, POINTER             :: CGRID( :,:,:,: )
         INTEGER                   :: JDATE, JTIME
@@ -143,12 +146,18 @@ contains
     ! -- begin
     if (present(rc)) rc = AQM_RC_SUCCESS
 
+    SDATE = JDATE
+    STIME = JTIME
+
+    if (first_run) then
+      CALL INITSCEN ( CGRID, SDATE, STIME, TSTEP, NSTEPS )
+      first_run = .false.
+    end if
+
     ! -- advance all physical and chemical processes on a grid
     CALL VDIFF ( CGRID, JDATE, JTIME, TSTEP )
     
-    SDATE = JDATE
-    STIME = JTIME
-    CALL NEXTIME ( SDATE, STIME, TSTEP( 2 ) )
+!   CALL NEXTIME ( SDATE, STIME, TSTEP( 2 ) )
 
     CALL CHEM ( CGRID, JDATE, JTIME, TSTEP )
 
@@ -156,7 +165,7 @@ contains
       CALL AERO ( CGRID, JDATE, JTIME, TSTEP )
     end if
 
-    CALL NEXTIME ( JDATE, JTIME, TSTEP( 2 ) )
+!   CALL NEXTIME ( JDATE, JTIME, TSTEP( 2 ) )
     WRITE( cmaq_logdev,'(/ 5X, A, I8, I7.6)' ) NMSG, JDATE, JTIME
 
   end subroutine cmaq_advance

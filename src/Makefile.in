@@ -336,6 +336,7 @@ cmaq_objects = \
 	$(cmaq_dir)/CCTM/src/emis/emis/libCCTM_a-*.$(OBJEXT) \
 	$(cmaq_dir)/CCTM/src/gas/ebi_cb6r3_ae6_aq/libCCTM_a-*.$(OBJEXT) \
 	$(cmaq_dir)/CCTM/src/grid/cartesian/libCCTM_a-*.$(OBJEXT) \
+	$(cmaq_dir)/CCTM/src/init/yamo/libCCTM_a-*.$(OBJEXT) \
 	$(cmaq_dir)/CCTM/src/MECHS/cb6r3_ae6_aq/libCCTM_a-*.$(OBJEXT) \
 	$(cmaq_dir)/CCTM/src/phot/inline/libCCTM_a-*.$(OBJEXT) \
 	$(cmaq_dir)/CCTM/src/plrise/smoke/libCCTM_a-*.$(OBJEXT) \

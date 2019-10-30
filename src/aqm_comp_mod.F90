@@ -168,12 +168,13 @@ contains
     character(len=AQM_MAXSTR) :: tStamp
     type(ESMF_Time)         :: currTime
     type(ESMF_TimeInterval) :: timeStep
+    type(aqm_config_type), pointer :: config => null()
 
     ! -- begin
     rc = ESMF_SUCCESS
 
     ! -- check if model is active on this PET, bail out if not
-    call aqm_model_get(deCount=deCount, rc=localrc)
+    call aqm_model_get(deCount=deCount, config=config, rc=localrc)
     if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__)) then
       call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, msg="Failed to get model info", &
         line=__LINE__, file=__FILE__, rcToReturn=rc)
@@ -209,10 +210,12 @@ contains
       file=__FILE__)) &
       return  ! bail out
 
-    ! -- set model internal timestep
-    tstep( 1 ) = 0
-    tstep( 2 ) = h * 10000 + m * 100 + s
-    tstep( 3 ) = tstep( 2 )
+    ! -- set model internal timestep vector (HHMMSS)
+    tstep( 1 ) = h * 10000 + m * 100 + s    ! TSTEP(1) = local output step
+    tstep( 2 ) = tstep( 1 )                 ! TSTEP(2) = sciproc sync. step (chem)
+    tstep( 3 ) = tstep( 2 )                 ! TSTEP(3) = twoway model time step
+
+    config % ctm_tstep = tstep( 1 )
 
     call ESMF_TimeGet(currTime, yy=yy, mm=mm, dd=dd, h=h, m=m, s=s, &
       dayOfYear=julday, timeString=tStamp, rc=rc)

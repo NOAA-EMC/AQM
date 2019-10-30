@@ -20,6 +20,7 @@ module aqm_config_mod
     character(len=AQM_MAXSTR) :: optics_data   = ""
     character(len=AQM_MAXSTR) :: omi           = ""
     integer                   :: atm_mp        = 0
+    integer                   :: ctm_tstep     = 0
     logical                   :: ctm_photodiag = .false.
     logical                   :: ctm_pmdiag    = .false.
     logical                   :: ctm_depvfile  = .false.

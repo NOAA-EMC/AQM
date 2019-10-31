@@ -230,7 +230,6 @@ contains
          end do
       end do
     end if
-    first = .false.
 
     write(cmaq_logdev,'("cmaq_import: cgrid - min/max ",2g16.6)') &
       minval(cgrid), maxval(cgrid)

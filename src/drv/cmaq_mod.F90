@@ -7,7 +7,7 @@ module cmaq_mod
   USE PA_DEFN, Only: LIPR, LIRR
   use PCGRID_DEFN
 
-  use cgrid_spcs,  only : cgrid_spcs_init, nspcsd
+  use cgrid_spcs
 
   use UTILIO_DEFN, only : INIT3, MXVARS3
 
@@ -49,7 +49,7 @@ contains
       msg="cmaq_init: Number of species exceeds MXVARS3", &
       file=__FILE__, line=__LINE__, rc=rc)) return
 
-    nspecies = nspcsd
+    nspecies = n_gc_trns + n_ae_trns + n_nr_trns
 
   end subroutine cmaq_species_read
 
@@ -175,26 +175,132 @@ contains
     integer,           intent(in)  :: start_index
     integer, optional, intent(out) :: rc
 
+    ! -- local variables
+    integer :: c, r, l, n, off, spc, v
+
     ! -- begin
     if (present(rc)) rc = AQM_RC_SUCCESS
 
-    CGRID = tracers(:,:,:, start_index:start_index + nspcsd - 1)
-    write(cmaq_logdev,'("cmaq_import: cgrid - min/max ",2i8,2g16.6)') &
-      start_index,start_index + nspcsd - 1, minval(CGRID), maxval(CGRID)
+    n = max(0, start_index - 1)
+
+    ! -- gas chemistry
+    if ( n_gc_spc > 0 ) then
+      off = gc_strt - 1
+      do v = 1, n_gc_trns
+         spc = off + gc_trns_map( v )
+         n = n + 1
+         do l = 1, nlays
+            do r = 1, my_nrows
+               do c = 1, my_ncols
+                  cgrid( c,r,l,spc ) = tracers( c,r,l,n )
+               end do
+            end do
+         end do
+      end do
+    end if
+
+    ! -- aerosols
+    if ( n_ae_spc > 0 ) then
+      off = ae_strt - 1
+      do v = 1, n_ae_trns
+         spc = off + ae_trns_map( v )
+         n = n + 1
+         do l = 1, nlays
+            do r = 1, my_nrows
+               do c = 1, my_ncols
+                  cgrid( c,r,l,spc ) = tracers( c,r,l,n )
+               end do
+            end do
+         end do
+      end do
+    end if
+
+    ! -- non reactive species
+    if ( n_nr_spc > 0 ) then
+      off = nr_strt - 1
+      do v = 1, n_nr_trns
+         spc = off + nr_trns_map( v )
+         n = n + 1
+         do l = 1, nlays
+            do r = 1, my_nrows
+               do c = 1, my_ncols
+                  cgrid( c,r,l,spc ) = tracers( c,r,l,n )
+               end do
+            end do
+         end do
+      end do
+    end if
+    first = .false.
+
+    write(cmaq_logdev,'("cmaq_import: cgrid - min/max ",2g16.6)') &
+      minval(cgrid), maxval(cgrid)
 
   end subroutine cmaq_import
+
 
   subroutine cmaq_export(tracers, start_index, rc)
     real(AQM_KIND_R8), intent(out) :: tracers(:,:,:,:)
     integer,           intent(in)  :: start_index
     integer, optional, intent(out) :: rc
 
+    ! -- local variables
+    integer :: c, r, l, n, off, spc, v
+
     ! -- begin
     if (present(rc)) rc = AQM_RC_SUCCESS
 
-    tracers(:,:,:, start_index:start_index + nspcsd - 1) = CGRID
-    write(cmaq_logdev,'("cmaq_export: cgrid - min/max ",2i8,2g16.6)') &
-      start_index,start_index + nspcsd - 1, minval(CGRID), maxval(CGRID)
+    n = max(0, start_index - 1)
+
+    ! -- gas chemistry
+    if ( n_gc_spc > 0 ) then
+      off = gc_strt - 1
+      do v = 1, n_gc_trns
+         spc = off + gc_trns_map( v )
+         n = n + 1
+         do l = 1, nlays
+            do r = 1, my_nrows
+               do c = 1, my_ncols
+                  tracers( c,r,l,n ) = cgrid( c,r,l,spc )
+               end do
+            end do
+         end do
+      end do
+    end if
+
+    ! -- aerosols
+    if ( n_ae_spc > 0 ) then
+      off = ae_strt - 1
+      do v = 1, n_ae_trns
+         spc = off + ae_trns_map( v )
+         n = n + 1
+         do l = 1, nlays
+            do r = 1, my_nrows
+               do c = 1, my_ncols
+                  tracers( c,r,l,n ) = cgrid( c,r,l,spc )
+               end do
+            end do
+         end do
+      end do
+    end if
+
+    ! -- non reactive species
+    if ( n_nr_spc > 0 ) then
+      off = nr_strt - 1
+      do v = 1, n_nr_trns
+         spc = off + nr_trns_map( v )
+         n = n + 1
+         do l = 1, nlays
+            do r = 1, my_nrows
+               do c = 1, my_ncols
+                  tracers( c,r,l,n ) = cgrid( c,r,l,spc )
+               end do
+            end do
+         end do
+      end do
+    end if
+
+    write(cmaq_logdev,'("cmaq_export: cgrid - min/max ",2g16.6)') &
+      minval(cgrid), maxval(cgrid)
 
   end subroutine cmaq_export
 

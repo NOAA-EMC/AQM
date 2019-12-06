@@ -42,7 +42,7 @@ LOGICAL FUNCTION  DSCGRID( GNAME, CNAME,                             &
     NTHIK = 0
 
     CNAME = ' '
-    CTYPE = LATGRD3
+    CTYPE = 0  ! set to zero (unknown) as this is a column model with variable DX1 & DX2
     P_ALP = 0.
     P_BET = 0.
     P_GAM = 0.
@@ -68,7 +68,6 @@ LOGICAL FUNCTION DESC3( FNAME )
     NCOLS3D, NROWS3D
    
   USE aqm_emis_mod
-  USE aqm_bkgd_mod
   USE aqm_model_mod, ONLY : aqm_config_type, &
                             aqm_model_get, aqm_model_domain_get
   USE aqm_rc_mod,    ONLY : aqm_rc_check
@@ -94,8 +93,8 @@ LOGICAL FUNCTION DESC3( FNAME )
        (TRIM(FNAME) .EQ. TRIM(INIT_TRAC_1)) ) THEN
 
     ! -- Input initial background values for the following species
-    NVARS3D = aqm_bkgd_num
-    VNAME3D( 1:NVARS3D ) = aqm_bkgd_def( 1:NVARS3D, 1 )
+    NVARS3D = 2
+    VNAME3D( 1:NVARS3D ) = (/ 'CO     ', 'O3     ' /)
 
     call aqm_model_domain_get(ids=is, ide=ie, jds=js, jde=je, nl=NLAYS3D, rc=localrc)
     if (aqm_rc_check(localrc, msg="Failure to retrieve model coordinates", &
@@ -121,6 +120,7 @@ LOGICAL FUNCTION DESC3( FNAME )
     !      'PFE    ', 'PAL    ', 'PSI    ', 'PMN    ', 'PH2O   ', &
     !      'PMOTHR ', 'PTI    ', 'PCL_B  ' /)
     ! UNITS3D( 1:NVARS3D ) = 'MOL/S'
+    NLAYS3D = 1
 
     NVARS3D = aqm_emis_num
     VNAME3D( 1:NVARS3D ) = aqm_emis_def( 1:NVARS3D, 1 )
@@ -387,6 +387,8 @@ integer function envint(name, description, defaultval, status)
   select case (trim(name))
     case ('CTM_TSTEP')
       envint = config % ctm_tstep
+    case ('CTM_EMLAYS')
+      envint = 1
     case default
       ! -- use default
   end select
@@ -475,6 +477,8 @@ logical function interpx( fname, vname, pname, &
   use aqm_model_mod, only : aqm_config_type, aqm_state_type, &
                             aqm_model_get, aqm_model_domain_get
 
+  USE M3UTILIO,      ONLY : DESC3, NLAYS3D, VGLVS3D
+
   implicit none
 
   character(len=*), intent(in)  :: fname, vname, pname
@@ -487,6 +491,8 @@ logical function interpx( fname, vname, pname, &
   integer :: c, r, l, k
   integer :: lbuf, lu_index
   logical :: set_non_neg
+  real    :: fac
+  real,              dimension(:),     allocatable :: X3FACE_GD
   real(AQM_KIND_R4), dimension(:,:),   allocatable :: buf2d
   real(AQM_KIND_R8), dimension(:,:),   pointer     :: lat, lon
   real(AQM_KIND_R8), dimension(:,:),   pointer     :: p2d     => null()
@@ -685,7 +691,7 @@ logical function interpx( fname, vname, pname, &
       case default
         return
     end select
-#if 0
+
   else if (trim(fname) == trim(EMIS_1)) then
 
     ! -- read in emissions
@@ -699,11 +705,17 @@ logical function interpx( fname, vname, pname, &
       msg="Failure to read emissions for " // vname, &
       file=__FILE__, line=__LINE__)) then
 
+      if (trim(vname) == 'AECI' .or. trim(vname) == 'AECKJ') then
+        fac = 1.e+03
+      else
+        fac = 1.0
+      end if
+
       k = 0
       do r = row0, row1
         do c = col0, col1
           k = k + 1
-          buffer(k) = buf2d(c,r)
+          buffer(k) = fac * buf2d(c,r) / stateIn % area(c,r)
         end do
       end do
 
@@ -713,18 +725,48 @@ logical function interpx( fname, vname, pname, &
     if (aqm_rc_test((localrc /= 0), &
       msg="Failure to deallocate emission buffer", &
       file=__FILE__, line=__LINE__)) return
-#endif
+
   else if (trim(fname) == trim(MET_CRO_3D)) then
 
     call aqm_model_get(config=config, stateIn=stateIn, rc=localrc)
     if (aqm_rc_check(localrc, msg="Failure to retrive model input state", &
       file=__FILE__, line=__LINE__)) return
 
+    ! NOTE: Full levels
+
+    IF ( DESC3( MET_CRO_3D ) ) THEN
+
+      ALLOCATE ( X3FACE_GD( 0:NLAYS3D ))
+
+      DO L = 0, NLAYS3D
+         X3FACE_GD( L ) = 1.0 - VGLVS3D( L + 1 )
+      END DO
+    ENDIF
+
+
     select case (trim(vname))
       case ("JACOBF")
-        buffer(1:lbuf) = 1.0
+        k = 0
+        do l = lay0, lay1
+          do r = row0, row1
+            do c = col0, col1
+              k = k + 1
+              buffer(k) = (stateIn % phii(c,r,l+1) - stateIn % phii(c,r,l)) &
+                          / (X3FACE_GD( L ) - X3FACE_GD( L-1 )) / GRAV
+            end do
+          end do
+        end do
       case ("JACOBM")
-        buffer(1:lbuf) = 1.0
+        k = 0
+        do l = lay0, lay1
+          do r = row0, row1
+            do c = col0, col1
+              k = k + 1
+              buffer(k) = (stateIn % phii(c,r,l+1) - stateIn % phii(c,r,l)) &
+                          / (X3FACE_GD( L ) - X3FACE_GD( L-1 )) / GRAV
+            end do
+          end do
+        end do
       case ("DENS")
         k = 0
         do l = lay0, lay1
@@ -737,7 +779,21 @@ logical function interpx( fname, vname, pname, &
           end do
         end do
       case ("DENSA_J")
-        buffer(1:lbuf) = 1.0
+        k = 0
+        do l = lay0, lay1
+          do r = row0, row1
+            do c = col0, col1
+              k = k + 1
+              ! -- rho
+              buffer(k) = stateIn % prl(c,r,l) / ( RDGAS * stateIn % temp(c,r,l) &
+                * ( 1.0 + EPS1 * stateIn % tr(c,r,l,config % species % p_atm_qv) ) )
+              ! -- Jacobian
+              buffer(k) = buffer(k) &
+                          * (stateIn % phii(c,r,l+1) - stateIn % phii(c,r,l)) &
+                          / (X3FACE_GD( L ) - X3FACE_GD( L-1 )) / GRAV
+            end do
+          end do
+        end do
       case ("PRES")
         p3d => stateIn % prl
       case ("CFRAC_3D")
@@ -797,6 +853,8 @@ logical function interpx( fname, vname, pname, &
       case default
         ! set to 0
     end select
+
+    DEALLOCATE ( X3FACE_GD )
 
   else if (trim(fname) == trim(MET_DOT_3D)) then
 
@@ -858,7 +916,6 @@ LOGICAL FUNCTION  XTRACT3 ( FNAME, VNAME,                           &
   use aqm_rc_mod,    only : aqm_rc_check, aqm_rc_test
   use aqm_io_mod
   use aqm_config_mod
-  use aqm_bkgd_mod
 
   implicit none
 
@@ -935,31 +992,14 @@ LOGICAL FUNCTION  XTRACT3 ( FNAME, VNAME,                           &
 
     END IF
 
-  ELSE IF ( (TRIM(FNAME) .EQ. TRIM(INIT_GASC_1)) .OR. &
-            (TRIM(FNAME) .EQ. TRIM(INIT_AERO_1)) .OR. &
-            (TRIM(FNAME) .EQ. TRIM(INIT_NONR_1)) .OR. &
-            (TRIM(FNAME) .EQ. TRIM(INIT_TRAC_1)) ) THEN
+  ELSE IF ( TRIM(FNAME) .EQ. TRIM(INIT_GASC_1) ) THEN
 
-      allocate(buf2d(col0:col1,row0:row1))
-      buf2d = 0._AQM_KIND_R4
-
-      ! -- get model configuration
-      call aqm_bkgd_read(vname, buf2d, rc=localrc)
-      if (.not.aqm_rc_check(localrc, &
-        msg="Failure to read background values for " // vname, &
-        file=__FILE__, line=__LINE__)) then
-
-        k = 0
-        do r = row0, row1
-          do c = col0, col1
-            k = k + 1
-            buffer(k) = buf2d(c,r)
-          end do
-        end do
-
-      end if
-
-      deallocate(buf2d)
+    ! -- initialize gas-phase species
+    IF      (TRIM(VNAME) .EQ. 'CO') THEN
+      BUFFER(1:lbuf) = 60.E-03
+    ELSE IF (TRIM(VNAME) .EQ. 'O3') THEN
+      BUFFER(1:lbuf) = 40.E-03
+    END IF
 
   END IF
 

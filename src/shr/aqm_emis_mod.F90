@@ -16,11 +16,11 @@ module aqm_emis_mod
       'AACD       ', 'MOL/S      ', 'e_aacd.dat ',  &
       'ACET       ', 'MOL/S      ', 'e_acet.dat ',  &
       'ACROLEIN   ', 'MOL/S      ', 'e_acro.dat ',  &
-      'AECI       ', 'MOL/S      ', 'e_aeci.dat ',  &
-      'AECJ       ', 'MOL/S      ', 'e_aecj.dat ',  &
+      'AECI       ', 'G/S        ', 'e_aeci.dat ',  &
+      'AECJ       ', 'G/S        ', 'e_aecj.dat ',  &
       'ALD2       ', 'MOL/S      ', 'e_ald2.dat ',  &
       'ALDX       ', 'MOL/S      ', 'e_aldx.dat ',  &
-      'AORGCJ     ', 'MOL/S      ', 'e_aorg.dat ',  &
+      'AORGCJ     ', 'MOL/S      ', 'e_aorg.dat ',  & !!! wrong name
       'BENZ       ', 'MOL/S      ', 'e_benz.dat ',  &
       'BUTADIENE13', 'MOL/S      ', 'e_buta.dat ',  &
       'CH4        ', 'MOL/S      ', 'e_ch4.dat  ',  &
@@ -128,7 +128,6 @@ contains
     ispc = 0
     do i = 1, aqm_emis_num
       if (trim(spcname) == trim(aqm_emis_def(i,1))) then
-        if (is_emis_read(i)) return
         ispc = i
         exit
       end if
@@ -142,7 +141,6 @@ contains
       call aqm_io_read(aqm_emis_def(ispc, 3), buffer, &
         path=config % emi_inname, de=de, rc=localrc)
       if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__, rc=rc)) return
-      is_emis_read(ispc) = .true.
     end if
 
   end subroutine aqm_emis_read

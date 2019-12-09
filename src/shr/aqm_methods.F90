@@ -683,11 +683,17 @@ logical function interpx( fname, vname, pname, &
 
     select case (trim(vname))
       case ("OPEN")
-        ! -- zero
-      case ("SZONE")
-        buffer(1:lbuf) = 1.0
+        ! -- set to complement to land mask
+        k = 0
+        do r = row0, row1
+         do c = col0, col1
+           k = k + 1
+           buffer(k) = 1.0 - stateIn % slmsk(c,r)
+           if (nint(stateIn % slmsk(c,r)) == 2) buffer(k) = 1.0  ! set sea ice points as water
+         end do
+        end do
       case ("SURF")
-        buffer(1:lbuf) = 1.0
+        ! -- zero
       case default
         return
     end select

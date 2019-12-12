@@ -200,11 +200,15 @@ contains
         config % species % p_atm_qi = 4
         config % species % p_atm_qs = 5
         config % species % p_atm_qg = 6
+        ! -- set ozone pointer
+        config % species % p_atm_o3 = 7
       case (99)
         config % species % p_aqm_beg = 4
         ! -- set hydrometeors pointers
         config % species % p_atm_qv = 1
         config % species % p_atm_qc = 2
+        ! -- set ozone pointer
+        config % species % p_atm_o3 = 3
       case default
         call aqm_rc_set(AQM_RC_FAILURE, &
           msg="atm_mp option can only be 11 (GFDL) or 99 (Zhao/Carr/Sundqvist).", &

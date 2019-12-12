@@ -11,6 +11,8 @@ module aqm_species_mod
     integer :: p_atm_qi      = 0    ! QI: ice mixing ratio (kg kg-1)
     integer :: p_atm_qs      = 0    ! QS: snow mixing ratio (kg kg-1)
     integer :: p_atm_qg      = 0    ! QG: graupel mixing ratio (kg kg-1)
+    ! -- ozone
+    integer :: p_atm_o3      = 0    ! O3: ozone mixing ratio (kg kg-1)
     ! -- CMAQ species
     integer :: p_aqm_beg     = 0    ! start index of CMAQ species
   end type aqm_species_type

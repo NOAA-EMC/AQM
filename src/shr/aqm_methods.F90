@@ -80,7 +80,10 @@ LOGICAL FUNCTION DESC3( FNAME )
  
   integer :: localrc
   integer :: is, ie, js, je
-  type(aqm_config_type), pointer :: config => null()
+  type(aqm_config_type), pointer :: config
+
+  ! -- begin
+  nullify(config)
 
   NVARS3D = 0
   VNAME3D = ""
@@ -93,8 +96,8 @@ LOGICAL FUNCTION DESC3( FNAME )
        (TRIM(FNAME) .EQ. TRIM(INIT_TRAC_1)) ) THEN
 
     ! -- Input initial background values for the following species
-    NVARS3D = 2
-    VNAME3D( 1:NVARS3D ) = (/ 'CO     ', 'O3     ' /)
+    NVARS3D = 3
+    VNAME3D( 1:NVARS3D ) = (/ 'ECH4   ', 'CO     ', 'O3     ' /)
 
     call aqm_model_domain_get(ids=is, ide=ie, jds=js, jde=je, nl=NLAYS3D, rc=localrc)
     if (aqm_rc_check(localrc, msg="Failure to retrieve model coordinates", &
@@ -105,31 +108,11 @@ LOGICAL FUNCTION DESC3( FNAME )
 
   ELSE IF ( TRIM( FNAME ) .EQ. TRIM( EMIS_1 ) ) THEN
 
-    ! -- These species are used in MPAS 5.1 EPA-modified
-    ! NVARS3D = 31
-    ! VNAME3D( 1:NVARS3D ) = &
-    !   (/ 'CO     ', 'NO     ', 'NO2    ', 'NH3    ', 'SO2    ', &
-    !      'SULF   ', 'CH4    ', 'ALD2   ', 'ALDX   ', 'ETH    ', &
-    !      'ETHA   ', 'ETOH   ', 'FORM   ', 'IOLE   ', 'ISOP   ', &
-    !      'MEOH   ', 'NVOL   ', 'OLE    ', 'PAR    ', 'TERP   ', &
-    !      'TOL    ', 'UNK    ', 'UNR    ', 'XYL    ', 'BENZENE', &
-    !      'SESQ   ', 'CL2    ', 'HCL    ', 'HONO   ', 'HGNRVA ', &
-    !      'PHGI   ', 'HGIIGAS', 'PMC    ', 'PEC    ', 'PMFINE ', &
-    !      'PNO3   ', 'POC    ', 'PSO4   ', 'PCL    ', 'PNH4   ', &
-    !      'PNA    ', 'PMG    ', 'PK     ', 'PCA    ', 'PNCOM  ', &
-    !      'PFE    ', 'PAL    ', 'PSI    ', 'PMN    ', 'PH2O   ', &
-    !      'PMOTHR ', 'PTI    ', 'PCL_B  ' /)
-    ! UNITS3D( 1:NVARS3D ) = 'MOL/S'
     NLAYS3D = 1
 
     NVARS3D = aqm_emis_num
     VNAME3D( 1:NVARS3D ) = aqm_emis_def( 1:NVARS3D, 1 )
     UNITS3D( 1:NVARS3D ) = aqm_emis_def( 1:NVARS3D, 2 )
-
-   ! -- missing emission species
-    NVARS3D = NVARS3D + aqm_emis_sup_num
-    VNAME3D( aqm_emis_num+1:NVARS3D ) = aqm_emis_sup_def( 1:aqm_emis_sup_num, 1)
-    UNITS3D( aqm_emis_num+1:NVARS3D ) = aqm_emis_sup_def( 1:aqm_emis_sup_num, 2)
 
   ELSE IF ( TRIM( FNAME ) .EQ. TRIM( GRID_DOT_2D ) ) THEN
     NVARS3D = 1
@@ -199,42 +182,12 @@ LOGICAL FUNCTION DESC3( FNAME )
     GDNAM3D = 'Cubed-Sphere'
     VGTYP3D = VGSGPN3 ! non-hydrostatic sigma-P
     VGTOP3D = 20.
-    VGLVS3D( 1:NLAYS3D+1) = &
-    (/ &
-       1.00000000000000,        0.994670137967030,       &
-       0.988630030551305,       0.981795355947387,       &
-       0.974074829179211,       0.965370569372193,       &
-       0.955579045414836,       0.944592287197078,       &
-       0.932299594647352,       0.918589853166181,       &
-       0.903354556653176,       0.886491478900351,       &
-       0.867909171686985,       0.847532021746212,       &
-       0.825305882291101,       0.801203957859928,       &
-       0.775232608753270,       0.747436709629337,       &
-       0.717903956645773,       0.686767568199990,       &
-       0.654206972126252,       0.620446045471596,       &
-       0.585748535469621,       0.550410960071072,       &
-       0.514753123680963,       0.479106813575342,       &
-       0.443803755579685,       0.409163370230986,       &
-       0.375481639620453,       0.343021632871033,       &
-       0.312006338485267,       0.282614364066433,       &
-       0.254978018417156,       0.229183937796752,       &
-       0.205273975252949,       0.183250541893293,       &
-       0.163082923261438,       0.144713204521001,       &
-       0.128062075677410,       0.113034552990968,       &
-       9.952492552934208E-002,  8.742129366270174E-002,  &
-       7.660920966635407E-002,  6.697471990523667E-002,  &
-       5.840827204975076E-002,  5.080841024628596E-002,  &
-       4.407969004491388E-002,  3.813288583979074E-002,  &
-       3.288544494348749E-002,  2.826156655643848E-002,  &
-       2.419217215339815E-002,  2.061463896155175E-002,  &
-       1.747249395390158E-002,  1.471507822911011E-002,  &
-       1.229704358126450E-002,  1.017797739499531E-002,  &
-       8.321978184689799E-003,  6.697171906618627E-003,  &
-       5.275396081141108E-003,  4.031725976013030E-003,  &
-       2.944237698040571E-003,  1.993563989931395E-003,  &
-       1.162726420216179E-003,  4.367701495483935E-004,  &
-       0.000000000000000E+000 &
-    /)
+    ! -- actual sigma levels are not required for AQM since transport
+    ! -- is performed in the atmosphere. Bogus sigma levels are set
+    ! -- to satisfy d(sigma) = 1
+    DO is = 1, NLAYS3D+1
+      VGLVS3D( is ) = DBLE(NLAYS3D + 1 - is)
+    END DO
 
     NVARS3D = 11
     VNAME3D( 1:NVARS3D ) = &
@@ -255,7 +208,7 @@ LOGICAL FUNCTION DESC3( FNAME )
     /)
 
     call aqm_model_get(config=config, rc=localrc)
-    if (aqm_rc_check(localrc, msg="Failure to retrive model input state", &
+    if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
       file=__FILE__, line=__LINE__)) return
 
     if (config % species % p_atm_qr > 0) then
@@ -324,11 +277,13 @@ logical function envyn(name, description, defaultval, status)
 
   ! -- local variables
   integer :: deCount, localrc
-  type(aqm_config_type), pointer :: config => null()
+  type(aqm_config_type), pointer :: config
 
   ! -- begin
   envyn = defaultval
   status = 0
+
+  nullify(config)
 
   call aqm_model_get(deCount=deCount, config=config, rc=localrc)
   if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__)) then
@@ -369,12 +324,14 @@ integer function envint(name, description, defaultval, status)
 
   ! -- local variables
   integer :: deCount, localrc
-  type(aqm_config_type), pointer :: config => null()
+  type(aqm_config_type), pointer :: config
 
   ! -- begin
 
   envint = defaultval
   status = xstat0
+
+  nullify(config)
 
   call aqm_model_get(deCount=deCount, config=config, rc=localrc)
   if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__)) then
@@ -436,10 +393,12 @@ subroutine nameval(name, eqname)
 
   ! -- local variables
   integer :: deCount, localrc
-  type(aqm_config_type), pointer :: config => null()
+  type(aqm_config_type), pointer :: config
 
   ! -- begin
   eqname = ""
+
+  nullify(config)
 
   call aqm_model_get(deCount=deCount, config=config, rc=localrc)
   if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__)) return
@@ -476,6 +435,7 @@ logical function interpx( fname, vname, pname, &
   use aqm_emis_mod,  only : aqm_emis_read
   use aqm_model_mod, only : aqm_config_type, aqm_state_type, &
                             aqm_model_get, aqm_model_domain_get
+  use aqm_const_mod, only : eps1, grav, onebg, rdgas
 
   USE M3UTILIO,      ONLY : DESC3, NLAYS3D, VGLVS3D
 
@@ -491,21 +451,18 @@ logical function interpx( fname, vname, pname, &
   integer :: c, r, l, k
   integer :: lbuf, lu_index
   logical :: set_non_neg
-  real    :: fac
   real,              dimension(:),     allocatable :: X3FACE_GD
   real(AQM_KIND_R4), dimension(:,:),   allocatable :: buf2d
   real(AQM_KIND_R8), dimension(:,:),   pointer     :: lat, lon
-  real(AQM_KIND_R8), dimension(:,:),   pointer     :: p2d     => null()
-  real(AQM_KIND_R8), dimension(:,:,:), pointer     :: p3d     => null()
-  type(aqm_config_type),               pointer     :: config  => null()
-  type(aqm_state_type),                pointer     :: stateIn => null()
+  real(AQM_KIND_R8), dimension(:,:),   pointer     :: p2d
+  real(AQM_KIND_R8), dimension(:,:,:), pointer     :: p3d
+  type(aqm_config_type),               pointer     :: config
+  type(aqm_state_type),                pointer     :: stateIn
 
   ! -- constants
-  include SUBST_CONST
   include SUBST_FILES_ID
 
   logical, parameter :: debug = .true.
-  real,    parameter :: EPS1 = RWVAP/RDGAS - 1.
 
   ! -- begin
   interpx = .false.
@@ -515,12 +472,14 @@ logical function interpx( fname, vname, pname, &
 
   nullify(p2d)
   nullify(p3d)
+  nullify(config)
+  nullify(stateIn)
   set_non_neg = .false.
 
   if (trim(fname) == trim(GRID_CRO_2D)) then
 
     call aqm_model_get(stateIn=stateIn, rc=localrc)
-    if (aqm_rc_check(localrc, msg="Failure to retrive model input state", &
+    if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
       file=__FILE__, line=__LINE__)) return
 
     call aqm_model_domain_get(lon=lon, lat=lat, rc=localrc)
@@ -577,7 +536,7 @@ logical function interpx( fname, vname, pname, &
   else if (trim(fname) == trim(MET_CRO_2D)) then
 
     call aqm_model_get(stateIn=stateIn, rc=localrc)
-    if (aqm_rc_check(localrc, msg="Failure to retrive model input state", &
+    if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
       file=__FILE__, line=__LINE__)) return
 
     select case (trim(vname))
@@ -683,6 +642,9 @@ logical function interpx( fname, vname, pname, &
 
     select case (trim(vname))
       case ("OPEN")
+        call aqm_model_get(stateIn=stateIn, rc=localrc)
+        if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
+          file=__FILE__, line=__LINE__)) return
         ! -- set to complement to land mask
         k = 0
         do r = row0, row1
@@ -711,17 +673,15 @@ logical function interpx( fname, vname, pname, &
       msg="Failure to read emissions for " // vname, &
       file=__FILE__, line=__LINE__)) then
 
-      if (trim(vname) == 'AECI' .or. trim(vname) == 'AECKJ') then
-        fac = 1.e+03
-      else
-        fac = 1.0
-      end if
+      call aqm_model_get(config=config, stateIn=stateIn, rc=localrc)
+      if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
+        file=__FILE__, line=__LINE__)) return
 
       k = 0
       do r = row0, row1
         do c = col0, col1
           k = k + 1
-          buffer(k) = fac * buf2d(c,r) / stateIn % area(c,r)
+          buffer(k) = buf2d(c,r) / stateIn % area(c,r)
         end do
       end do
 
@@ -735,20 +695,8 @@ logical function interpx( fname, vname, pname, &
   else if (trim(fname) == trim(MET_CRO_3D)) then
 
     call aqm_model_get(config=config, stateIn=stateIn, rc=localrc)
-    if (aqm_rc_check(localrc, msg="Failure to retrive model input state", &
+    if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
       file=__FILE__, line=__LINE__)) return
-
-    ! NOTE: Full levels
-
-    IF ( DESC3( MET_CRO_3D ) ) THEN
-
-      ALLOCATE ( X3FACE_GD( 0:NLAYS3D ))
-
-      DO L = 0, NLAYS3D
-         X3FACE_GD( L ) = 1.0 - VGLVS3D( L + 1 )
-      END DO
-    ENDIF
-
 
     select case (trim(vname))
       case ("JACOBF")
@@ -757,8 +705,7 @@ logical function interpx( fname, vname, pname, &
           do r = row0, row1
             do c = col0, col1
               k = k + 1
-              buffer(k) = (stateIn % phii(c,r,l+1) - stateIn % phii(c,r,l)) &
-                          / (X3FACE_GD( L ) - X3FACE_GD( L-1 )) / GRAV
+              buffer(k) = onebg * (stateIn % phii(c,r,l+1) - stateIn % phii(c,r,l))
             end do
           end do
         end do
@@ -768,8 +715,7 @@ logical function interpx( fname, vname, pname, &
           do r = row0, row1
             do c = col0, col1
               k = k + 1
-              buffer(k) = (stateIn % phii(c,r,l+1) - stateIn % phii(c,r,l)) &
-                          / (X3FACE_GD( L ) - X3FACE_GD( L-1 )) / GRAV
+              buffer(k) = onebg * (stateIn % phii(c,r,l+1) - stateIn % phii(c,r,l))
             end do
           end do
         end do
@@ -779,8 +725,8 @@ logical function interpx( fname, vname, pname, &
           do r = row0, row1
             do c = col0, col1
               k = k + 1
-              buffer(k) = stateIn % prl(c,r,l) / ( RDGAS * stateIn % temp(c,r,l) &
-                * ( 1.0 + EPS1 * stateIn % tr(c,r,l,config % species % p_atm_qv) ) )
+              buffer(k) = stateIn % prl(c,r,l) / ( rdgas * stateIn % temp(c,r,l) &
+                * ( 1.0 + eps1 * stateIn % tr(c,r,l,config % species % p_atm_qv) ) )
             end do
           end do
         end do
@@ -791,12 +737,11 @@ logical function interpx( fname, vname, pname, &
             do c = col0, col1
               k = k + 1
               ! -- rho
-              buffer(k) = stateIn % prl(c,r,l) / ( RDGAS * stateIn % temp(c,r,l) &
-                * ( 1.0 + EPS1 * stateIn % tr(c,r,l,config % species % p_atm_qv) ) )
+              buffer(k) = stateIn % prl(c,r,l) / ( rdgas * stateIn % temp(c,r,l) &
+                * ( 1.0 + eps1 * stateIn % tr(c,r,l,config % species % p_atm_qv) ) )
               ! -- Jacobian
               buffer(k) = buffer(k) &
-                          * (stateIn % phii(c,r,l+1) - stateIn % phii(c,r,l)) &
-                          / (X3FACE_GD( L ) - X3FACE_GD( L-1 )) / GRAV
+                          * onebg * (stateIn % phii(c,r,l+1) - stateIn % phii(c,r,l))
             end do
           end do
         end do
@@ -838,7 +783,7 @@ logical function interpx( fname, vname, pname, &
           do r = row0, row1
             do c = col0, col1
               k = k + 1
-              buffer(k) = stateIn % phil(c,r,l) / GRAV
+              buffer(k) = onebg * stateIn % phil(c,r,l)
             end do
           end do
         end do
@@ -849,7 +794,7 @@ logical function interpx( fname, vname, pname, &
           do r = row0, row1
             do c = col0, col1
               k = k + 1
-              buffer(k) = stateIn % phii(c,r,l) / GRAV
+              buffer(k) = onebg * stateIn % phii(c,r,l)
             end do
           end do
         end do
@@ -860,13 +805,7 @@ logical function interpx( fname, vname, pname, &
         ! set to 0
     end select
 
-    DEALLOCATE ( X3FACE_GD )
-
   else if (trim(fname) == trim(MET_DOT_3D)) then
-
-    call aqm_model_get(stateIn=stateIn, rc=localrc)
-    if (aqm_rc_check(localrc, msg="Failure to retrive model input state", &
-      file=__FILE__, line=__LINE__)) return
 
     select case (trim(vname))
       case ("UWINDC")
@@ -920,6 +859,7 @@ LOGICAL FUNCTION  XTRACT3 ( FNAME, VNAME,                           &
   use aqm_types_mod, only : AQM_KIND_R4
   use aqm_model_mod, only : aqm_state_type, aqm_model_get
   use aqm_rc_mod,    only : aqm_rc_check, aqm_rc_test
+  use aqm_const_mod, only : con_mr2ppm_o3, thrs_p_strato
   use aqm_io_mod
   use aqm_config_mod
 
@@ -940,14 +880,17 @@ LOGICAL FUNCTION  XTRACT3 ( FNAME, VNAME,                           &
 
   ! -- local variables
   integer :: localrc
-  integer :: c, r, k, lbuf, lu_index
-  type(aqm_config_type),  pointer :: config  => null()
-  type(aqm_state_type),   pointer :: stateIn => null()
+  integer :: c, r, l, k, lbuf, lu_index
+  type(aqm_config_type),  pointer :: config
+  type(aqm_state_type),   pointer :: stateIn
   real(AQM_KIND_R4), dimension(:,:), allocatable :: buf2d
 
   include SUBST_FILES_ID
 
   ! -- begin
+
+  nullify(config)
+  nullify(stateIn)
 
   lbuf = (LAY1-LAY0+1)*(ROW1-ROW0+1)*(COL1-COL0+1)
   BUFFER(1:lbuf) = 0.
@@ -956,7 +899,7 @@ LOGICAL FUNCTION  XTRACT3 ( FNAME, VNAME,                           &
   IF (TRIM(FNAME) == TRIM(GRID_CRO_2D)) THEN
 
     call aqm_model_get(stateIn=stateIn, rc=localrc)
-    if (aqm_rc_check(localrc, msg="Failure to retrive model input state", &
+    if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
       file=__FILE__, line=__LINE__)) return
 
     if (vname(1:7) == 'LUFRAC_') then
@@ -985,7 +928,7 @@ LOGICAL FUNCTION  XTRACT3 ( FNAME, VNAME,                           &
         file=__FILE__, line=__LINE__)) return
 
       call aqm_model_get(stateIn=stateIn, rc=localrc)
-      if (aqm_rc_check(localrc, msg="Failure to retrive model input state", &
+      if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
         file=__FILE__, line=__LINE__)) return
 
       k = 0
@@ -1000,12 +943,30 @@ LOGICAL FUNCTION  XTRACT3 ( FNAME, VNAME,                           &
 
   ELSE IF ( TRIM(FNAME) .EQ. TRIM(INIT_GASC_1) ) THEN
 
-    ! -- initialize gas-phase species
-    IF      (TRIM(VNAME) .EQ. 'CO') THEN
-      BUFFER(1:lbuf) = 60.E-03
-    ELSE IF (TRIM(VNAME) .EQ. 'O3') THEN
-      BUFFER(1:lbuf) = 40.E-03
-    END IF
+    ! -- initialize gas-phase species (ppmV)
+    SELECT CASE (TRIM(VNAME))
+      CASE ('ECH4')
+        BUFFER(1:lbuf) = 1.80
+      CASE ('CO')
+        BUFFER(1:lbuf) = 60.E-03
+      CASE ('O3')
+        call aqm_model_get(config=config, stateIn=stateIn, rc=localrc)
+        if (aqm_rc_check(localrc, msg="Failure to retrieve model config", &
+          file=__FILE__, line=__LINE__)) return
+        k = 0
+        do l = lay0, lay1
+          do r = row0, row1
+            do c = col0, col1
+              k = k + 1
+              if (stateIn % prl(c,r,l) < thrs_p_strato) then
+                buffer(k) = con_mr2ppm_o3 * stateIn % tr(c,r,l,config % species % p_atm_o3)
+              else
+                buffer(k) = 40.E-03
+              end if
+            end do
+          end do
+        end do
+    END SELECT
 
   END IF
 

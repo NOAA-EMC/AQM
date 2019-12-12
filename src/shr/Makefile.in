@@ -653,7 +653,7 @@ libshr_a-aqm_model_mod.$(OBJEXT): libshr_a-aqm_clock_mod.$(OBJEXT) libshr_a-aqm_
 	libshr_a-aqm_state_mod.$(OBJEXT) libshr_a-aqm_types_mod.$(OBJEXT)
 libshr_a-aqm_methods.$(OBJEXT): libshr_a-aqm_model_mod.$(OBJEXT) libshr_a-aqm_emis_mod.$(OBJEXT) \
 	libshr_a-aqm_rc_mod.$(OBJEXT) libshr_a-aqm_types_mod.$(OBJEXT) libshr_a-aqm_io_mod.$(OBJEXT) \
-	libshr_a-aqm_config_mod.$(OBJEXT)
+	libshr_a-aqm_config_mod.$(OBJEXT) libshr_a-aqm_const_mod.$(OBJEXT)
 libshr_a-aqm_state_mod.$(OBJEXT): libshr_a-aqm_types_mod.$(OBJEXT)
 libshr_a-aqm_tracers_mod.$(OBJEXT): libshr_a-aqm_rc_mod.$(OBJEXT) libshr_a-aqm_config_mod.$(OBJEXT)
 

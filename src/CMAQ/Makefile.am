@@ -49,7 +49,6 @@ libCCTM_a_SOURCES += \
 CLOUD = $(CCTM)/cloud/acm_ae6
 libCLOUD = $(CLOUD)/$(libCCTM)-
 libCCTM_a_SOURCES += \
-	$(CLOUD)/concld_prop_acm.F \
 	$(CLOUD)/hlconst.F
 
 # depv
@@ -357,10 +356,6 @@ $(libBIOG)wrdaymsg.$(OBJEXT) : \
 	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
 
 # cloud
-$(libCLOUD)concld_prop_acm.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/filenames/FILES_CTM.EXT \
-	$(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT) \
-	$(libPHOT)PHOT_MET_DATA.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT) \
-	$(libGRID)VGRD_DEFN.$(OBJEXT)
 $(libCLOUD)hlconst.$(OBJEXT) : \
 	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
 

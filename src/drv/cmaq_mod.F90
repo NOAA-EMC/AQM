@@ -2,6 +2,7 @@ module cmaq_mod
 
   use aqm_rc_mod
   use aqm_types_mod
+  use aqm_const_mod, only : rdgas
 
   use PAGRD_DEFN
   USE PA_DEFN, Only: LIPR, LIRR
@@ -170,13 +171,16 @@ contains
 
   end subroutine cmaq_advance
 
-  subroutine cmaq_import(tracers, start_index, rc)
+  subroutine cmaq_import(tracers, prl, temp, start_index, rc)
     real(AQM_KIND_R8), intent(in)  :: tracers(:,:,:,:)
+    real(AQM_KIND_R8), intent(in)  :: prl(:,:,:)
+    real(AQM_KIND_R8), intent(in)  :: temp(:,:,:)
     integer,           intent(in)  :: start_index
     integer, optional, intent(out) :: rc
 
     ! -- local variables
     integer :: c, r, l, n, off, spc, v
+    real(AQM_KIND_R8) :: dens
 
     ! -- begin
     if (present(rc)) rc = AQM_RC_SUCCESS
@@ -205,10 +209,12 @@ contains
       do v = 1, n_ae_trns
          spc = off + ae_trns_map( v )
          n = n + 1
+         ! -- convert from x/kg to x/m3 (x = ug, number, m2)
          do l = 1, nlays
             do r = 1, my_nrows
                do c = 1, my_ncols
-                  cgrid( c,r,l,spc ) = tracers( c,r,l,n )
+                  dens = prl( c,r,l ) / ( rdgas * temp( c,r,l ) )
+                  cgrid( c,r,l,spc ) = dens * tracers( c,r,l,n )
                end do
             end do
          end do
@@ -237,13 +243,16 @@ contains
   end subroutine cmaq_import
 
 
-  subroutine cmaq_export(tracers, start_index, rc)
+  subroutine cmaq_export(tracers, prl, temp, start_index, rc)
     real(AQM_KIND_R8), intent(out) :: tracers(:,:,:,:)
+    real(AQM_KIND_R8), intent(in)  :: prl(:,:,:)
+    real(AQM_KIND_R8), intent(in)  :: temp(:,:,:)
     integer,           intent(in)  :: start_index
     integer, optional, intent(out) :: rc
 
     ! -- local variables
     integer :: c, r, l, n, off, spc, v
+    real(AQM_KIND_R8) :: rdens
 
     ! -- begin
     if (present(rc)) rc = AQM_RC_SUCCESS
@@ -272,10 +281,12 @@ contains
       do v = 1, n_ae_trns
          spc = off + ae_trns_map( v )
          n = n + 1
+         ! -- convert from x/m3 to x/kg (x = ug, number, m2)
          do l = 1, nlays
             do r = 1, my_nrows
                do c = 1, my_ncols
-                  tracers( c,r,l,n ) = cgrid( c,r,l,spc )
+                  rdens = rdgas * temp( c,r,l ) / prl( c,r,l )
+                  tracers( c,r,l,n ) = rdens * cgrid( c,r,l,spc )
                end do
             end do
          end do

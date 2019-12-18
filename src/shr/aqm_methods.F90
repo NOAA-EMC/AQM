@@ -725,8 +725,7 @@ logical function interpx( fname, vname, pname, &
           do r = row0, row1
             do c = col0, col1
               k = k + 1
-              buffer(k) = stateIn % prl(c,r,l) / ( rdgas * stateIn % temp(c,r,l) &
-                * ( 1.0 + eps1 * stateIn % tr(c,r,l,config % species % p_atm_qv) ) )
+              buffer(k) = stateIn % prl(c,r,l) / ( rdgas * stateIn % temp(c,r,l) )
             end do
           end do
         end do
@@ -737,8 +736,7 @@ logical function interpx( fname, vname, pname, &
             do c = col0, col1
               k = k + 1
               ! -- rho
-              buffer(k) = stateIn % prl(c,r,l) / ( rdgas * stateIn % temp(c,r,l) &
-                * ( 1.0 + eps1 * stateIn % tr(c,r,l,config % species % p_atm_qv) ) )
+              buffer(k) = stateIn % prl(c,r,l) / ( rdgas * stateIn % temp(c,r,l) )
               ! -- Jacobian
               buffer(k) = buffer(k) &
                           * onebg * (stateIn % phii(c,r,l+1) - stateIn % phii(c,r,l))

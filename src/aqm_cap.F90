@@ -58,9 +58,6 @@ module AQM
       "inst_tracer_mass_frac                "  &
     /)
 
-  ! -- verbosity
-  integer :: verbosity
-
   private
   
   public SetServices
@@ -130,28 +127,23 @@ module AQM
     integer, intent(out) :: rc
     
     ! local variables
-    character(len=5)     :: value
+    integer                    :: verbosity
+    character(len=ESMF_MAXSTR) :: msgString, name
 
     ! begin
     rc = ESMF_SUCCESS
 
-    ! get component verbosity
-    call ESMF_AttributeGet(model, name="Verbosity", value=value, &
-      defaultValue="min", convention="NUOPC", purpose="Instance", rc=rc)
+    ! get component's information
+    call NUOPC_CompGet(model, name=name, verbosity=verbosity, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-    ! convert value to verbosity
-    verbosity = ESMF_UtilString2Int(value, &
-      specialStringList=(/"min ","high", "max "/), &
-      specialValueList=(/0,255,255/), rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+
     ! write to log files
-    call ESMF_LogWrite("AQM: Verbosity = " // trim(value), &
+    msgString = ""
+    write(msgString, '("Verbosity = ",i0)') verbosity
+    call ESMF_LogWrite(trim(name)//": "//trim(msgString), &
       ESMF_LOGMSG_INFO, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
@@ -229,13 +221,21 @@ module AQM
     integer, dimension(:,:), allocatable :: computationalLBound, computationalUBound
 
     integer                    :: yy, mm, dd, h, m
+    integer                    :: verbosity
     real(ESMF_KIND_R8)         :: dts
     type(ESMF_Time)            :: startTime
     type(ESMF_TimeInterval)    :: TimeStep
-    character(len=255) :: msgString
+    character(len=ESMF_MAXSTR) :: msgString, name
 
     ! begin
     rc = ESMF_SUCCESS
+
+    ! get component's information
+    call NUOPC_CompGet(model, name=name, verbosity=verbosity, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
 
     ! -- initialize air quality model
     call ESMF_GridCompGet(model, vm=vm, rc=rc)
@@ -343,11 +343,11 @@ module AQM
         de   = localDeToDeMap(localDe+1) + 1
         tile = deToTileMap(de)
 
-        if (btest(verbosity,0)) then
-          write(msgString,'("AQM: localDe: ",i4," DE: ",i4, " tile=",i2," minIndexPDe=",2i4,2x," maxIndexPDe=",2i4," minIndexPTile=",2i4," maxIndexPTile=",2i4,4i4)') &
+        if (btest(verbosity,8)) then
+          write(msgString,'("localDe: ",i4," DE: ",i4, " tile=",i2," minIndexPDe=",2i4,2x," maxIndexPDe=",2i4," minIndexPTile=",2i4," maxIndexPTile=",2i4,4i4)') &
             localDe, de-1, tile, minIndexPDe(:,de), maxIndexPDe(:,de), minIndexPTile(:,tile), maxIndexPTile(:,tile), &
             computationalLBound(:,localDe+1), computationalUBound(:,localDe+1)
-          call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+          call ESMF_LogWrite(trim(name)//": "//trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
           if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
             line=__LINE__, &
             file=__FILE__)) &
@@ -459,10 +459,19 @@ module AQM
     type(ESMF_Field)              :: field
     type(ESMF_VM)                 :: vm
     integer                       :: item
+    integer                       :: diagnostic
+    character(len=ESMF_MAXSTR)    :: name
 
     ! begin
     rc = ESMF_SUCCESS
     
+    ! get component's information
+    call NUOPC_CompGet(model, name=name, diagnostic=diagnostic, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+
     ! query the Component for its clock, importState and exportState
     call NUOPC_ModelGet(model, modelClock=clock, importState=importState, &
       exportState=exportState, rc=rc)
@@ -501,7 +510,7 @@ module AQM
       return  ! bail out
 
     ! print field diagnostics
-    if (btest(verbosity,0)) then
+    if (btest(diagnostic,17)) then
       call ESMF_GridCompGet(model, vm=vm, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
         line=__LINE__, &

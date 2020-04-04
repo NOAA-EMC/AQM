@@ -96,6 +96,7 @@ AC_CONFIG_FILES([Makefile
                  src/shr/Makefile
                  src/drv/Makefile
                  src/io/Makefile
+                 src/io/aqmio/Makefile
                  src/io/ioapi/Makefile
                  src/Makefile])
 AC_OUTPUT

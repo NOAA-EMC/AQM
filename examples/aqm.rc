@@ -1,0 +1,116 @@
+################################################
+#                                              #
+#  NOAA Air Quality Model (AQM) Resource File  #
+#                                              #
+################################################
+
+#
+#  Input emissions
+#
+
+# supported file formats are: 
+#  - binary 	(Fortran unformatted)
+#  - netcdf 	(netCDF)
+#
+emissions_format: netcdf
+
+# emissions directory
+# <tile> is replaced with the tile number in case of multitile grids, or removed otherwise
+#
+emissions_path: /scratch1/NCEPDEV/stmp2/Raffaele.Montuoro/scrub/rtgen.142473/tmp/emis/07/tile<tile>
+
+# emissions file name
+emissions_file: emis.tile<tile>.nc
+
+# emissions time dependency
+# supported settings are:
+#  NetCDF only:
+#  - hourly	read data every hour
+#  - daily	read data every day
+#  - weekly	read data every 7 days
+#  - monthly	read data every calendar month
+#  Binary/NetCDF:
+#  - static     read data only at startup time
+#
+emissions_frequency: hourly
+
+# list of emission species
+# input emissions can be manipulated by adding multiple
+# sources/sinks to the same CMAQ species, scaled by the 
+# provided factors (positive for sources, negative for sinks).
+# For instance:
+#      
+#     NO2           MOL/S       0.750       no2_source_1
+#     NO2           MOL/S       0.250       no2_source_2
+#     NO2           MOL/S      -0.050       no2_sink_1
+#
+emissions_species::
+#     CMAQ          CMAQ                    Input variable (netCDF)
+#     Species       Units       Factor      or file (bin). Empty if N/A.
+#     -------------+-----------+-----------+----------
+#     ----------------- gas chemistry ----------------
+      AACD          MOL/S       1.000       e_aacd    
+      ACET          MOL/S       1.000       e_acet    
+      ACROLEIN      MOL/S       1.000       e_acro    
+      ALD2          MOL/S       1.000       e_ald2    
+      ALD2_PRIMARY  MOL/S       1.000                     
+      ALDX          MOL/S       1.000       e_aldx    
+      BENZ          MOL/S       1.000       e_benz    
+      BUTADIENE13   MOL/S       1.000       e_buta    
+      CH4           MOL/S       1.000       e_ch4     
+      CL2           MOL/S       1.000                     
+      CO            MOL/S       1.000       e_co      
+      ETH           MOL/S       1.000       e_eth     
+      ETHA          MOL/S       1.000       e_etha    
+      ETHY          MOL/S       1.000       e_ethy    
+      ETOH          MOL/S       1.000       e_etoh    
+      FACD          MOL/S       1.000       e_facd    
+      FORM          MOL/S       1.000       e_form    
+      FORM_PRIMARY  MOL/S       1.000                     
+      GLYXL         MOL/S       1.000       e_glyx    
+      HCL           MOL/S       1.000                     
+      HGIIGAS       MOL/S       1.000                     
+      HGNRVA        MOL/S       1.000                     
+      HONO          MOL/S       1.000       e_hono    
+      IOLE          MOL/S       1.000       e_iole    
+      ISOP          MOL/S       1.000                     
+      KET           MOL/S       1.000       e_ket     
+      MEOH          MOL/S       1.000       e_meoh    
+      NAPH          MOL/S       1.000       e_naph    
+      NO            MOL/S       1.000       e_no      
+      NO2           MOL/S       1.000       e_no2     
+      OLE           MOL/S       1.000       e_ole     
+      PACD          MOL/S       1.000       e_pacd    
+      PAR           MOL/S       1.000       e_par     
+      PRPA          MOL/S       1.000       e_prpa    
+      SESQ          MOL/S       1.000                     
+      SOAALK        MOL/S       1.000                     
+      SO2           MOL/S       1.000       e_so2     
+      SULF          MOL/S       1.000       e_sulf    
+      TERP          MOL/S       1.000                     
+      TOL           MOL/S       1.000       e_tol     
+      TOLU          MOL/S       1.000       e_tolu    
+      XYLMN         MOL/S       1.000       e_xyl     
+#     ----------------- particulate ----------------
+      PAL           G/S         1.000                       
+      PCA           G/S         1.000                       
+      PCL           G/S         1.000                       
+      PEC           G/S         1.000       e_pec     
+      PFE           G/S         1.000                       
+      PH2O          G/S         1.000                       
+      PK            G/S         1.000                       
+      PMC           G/S         1.000                       
+      PMG           G/S         1.000                       
+      PMN           G/S         1.000                       
+      PMOTHR        G/S         1.000                       
+      PNA           G/S         1.000                       
+      PNCOM         G/S         1.000                       
+      PNH4          G/S         1.000                       
+      PNO3          G/S         1.000                       
+      POC           G/S         1.000       e_poc     
+      PSI           G/S         1.000                       
+      PSO4          G/S         1.000                       
+      PTI           G/S         1.000                       
+#     ---------------- non reactive  ----------------
+      NH3           MOL/S       1.000       e_nh3      
+::

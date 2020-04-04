@@ -128,7 +128,8 @@ module AQM
     
     ! local variables
     integer                    :: verbosity
-    character(len=ESMF_MAXSTR) :: msgString, name
+    character(len=ESMF_MAXSTR) :: msgString, name, rcFile
+    type(ESMF_Config)          :: config
 
     ! begin
     rc = ESMF_SUCCESS
@@ -147,6 +148,40 @@ module AQM
       ESMF_LOGMSG_INFO, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+
+    ! get name of config file
+    call ESMF_AttributeGet(model, name="ResourceFile", value=rcFile, &
+      defaultValue="aqm.rc", convention="NUOPC", purpose="Instance", rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__)) &
+      return  ! bail out
+    if (btest(verbosity,8)) then
+      call ESMF_LogWrite(trim(name)//": ResourceFile = "//trim(rcFile), &
+        ESMF_LOGMSG_INFO, rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__,  &
+        file=__FILE__)) &
+        return  ! bail out
+    end if
+
+    ! load component's configuration
+    config = ESMF_ConfigCreate(rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__)) &
+      return  ! bail out
+    call ESMF_ConfigLoadFile(config, rcFile, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+    ! store Config object into gridded component
+    call ESMF_GridCompSet(model, config=config, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
       file=__FILE__)) &
       return  ! bail out
 
@@ -397,6 +432,13 @@ module AQM
         rcToReturn=rc)) &
         return  ! bail out
 
+      call ESMF_GridCompSet(model, grid=grid, rc=localrc)
+      if (ESMF_LogFoundDeallocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__,  &
+        file=__FILE__,  &
+        rcToReturn=rc)) &
+        return  ! bail out
+
     else
       call ESMF_LogSetError(ESMF_RC_NOT_IMPL, &
         msg="Imported fields can only be defined on Grid objects.", &
@@ -532,7 +574,7 @@ module AQM
     end if
 
     ! advance model
-    call aqm_comp_advance(clock, rc)
+    call aqm_comp_advance(model, rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &

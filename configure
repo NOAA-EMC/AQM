@@ -4737,7 +4737,7 @@ esac
 
 # Checks for library functions.
 
-ac_config_files="$ac_config_files Makefile src/CMAQ/Makefile src/shr/Makefile src/drv/Makefile src/io/Makefile src/io/ioapi/Makefile src/Makefile"
+ac_config_files="$ac_config_files Makefile src/CMAQ/Makefile src/shr/Makefile src/drv/Makefile src/io/Makefile src/io/aqmio/Makefile src/io/ioapi/Makefile src/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -5486,6 +5486,7 @@ do
     "src/shr/Makefile") CONFIG_FILES="$CONFIG_FILES src/shr/Makefile" ;;
     "src/drv/Makefile") CONFIG_FILES="$CONFIG_FILES src/drv/Makefile" ;;
     "src/io/Makefile") CONFIG_FILES="$CONFIG_FILES src/io/Makefile" ;;
+    "src/io/aqmio/Makefile") CONFIG_FILES="$CONFIG_FILES src/io/aqmio/Makefile" ;;
     "src/io/ioapi/Makefile") CONFIG_FILES="$CONFIG_FILES src/io/ioapi/Makefile" ;;
     "src/Makefile") CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
 

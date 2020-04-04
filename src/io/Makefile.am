@@ -1,1 +1,1 @@
-SUBDIRS = ioapi
+SUBDIRS = aqmio ioapi

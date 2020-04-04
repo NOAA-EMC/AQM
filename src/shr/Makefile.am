@@ -8,9 +8,15 @@ libshr_a_SOURCES = aqm_clock_mod.F90 aqm_comm_mod.F90 aqm_config_mod.F90 aqm_con
 libshr_a_CPPFLAGS = -DSUBST_CONST=\"CONST.EXT\" -DSUBST_FILES_ID=\"FILES_CTM.EXT\"
 
 libshr_a_FCFLAGS  = -I $(builddir)/../io/ioapi
+libshr_a_FCFLAGS += -I $(builddir)/../io/aqmio
 libshr_a_FCFLAGS += -I $(builddir)/../CMAQ
 libshr_a_FCFLAGS += -I $(srcdir)/../CMAQ/CCTM/src/ICL/fixed/const
 libshr_a_FCFLAGS += -I $(srcdir)/../CMAQ/CCTM/src/ICL/fixed/filenames
+
+include $(ESMFMKFILE)
+
+libshr_a_FCFLAGS += $(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) $(ESMF_F90COMPILEFREECPP) $(ESMF_F90COMPILECPPFLAGS)
+
 
 .PHONY: clean-modules
 

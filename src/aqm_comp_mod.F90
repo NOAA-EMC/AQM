@@ -8,6 +8,7 @@ module aqm_comp_mod
   use aqm_types_mod, only : AQM_MAXSTR
   use aqm_model_mod
   use aqm_io_mod
+  use aqm_emis_mod
   use cmaq_model_mod
 
   implicit none
@@ -70,6 +71,12 @@ contains
         rcToReturn=rc)
       return  ! bail out
     end if
+
+    ! -- initialize emission subsystem
+    call aqm_emis_init(model, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, &
+      msg="Failed to initialize emissions subsystem", &
+      line=__LINE__, file=__FILE__, rcToReturn=rc)) return  ! bail out
 
     ! -- read-in emission and background fields, setup internal parameters
     call aqm_model_config_init(rc=localrc)
@@ -153,10 +160,10 @@ contains
   end subroutine aqm_comp_init
 
 
-  subroutine aqm_comp_advance(clock, rc)
+  subroutine aqm_comp_advance(model, rc)
 
-    type(ESMF_Clock), intent(in) :: clock
-    integer,         intent(out) :: rc
+    type(ESMF_GridComp), intent(in)  :: model
+    integer,             intent(out) :: rc
 
     ! -- local variables
     integer                 :: localrc
@@ -166,6 +173,7 @@ contains
     integer(ESMF_KIND_I8)   :: advanceCount
     real(ESMF_KIND_R8)      :: dts
     character(len=AQM_MAXSTR) :: tStamp
+    type(ESMF_Clock)        :: clock
     type(ESMF_Time)         :: currTime
     type(ESMF_TimeInterval) :: timeStep
     type(aqm_config_type), pointer :: config => null()
@@ -182,6 +190,13 @@ contains
     end if
 
     if (deCount < 1) return
+
+    ! -- get component's clock
+    call ESMF_GridCompGet(model, clock=clock, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__)) &
+      return  ! bail out
 
     ! -- get current time and set model's internal clock
     call ESMF_ClockPrint(clock, &
@@ -228,6 +243,14 @@ contains
     jdate = yy * 1000 + julday
     jtime = h * 10000 + m * 100 + s
 
+    ! -- update input emissions if needed
+    call aqm_emis_update(model, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg="Failed to update emissions", &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+
+    ! -- advance CMAQ
     call cmaq_model_advance(jdate, jtime, tstep, rc=localrc)
     if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__)) then
       call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, msg="Failed to advance model", &
@@ -243,6 +266,12 @@ contains
 
     ! -- begin
     rc = ESMF_SUCCESS
+
+    call aqm_emis_finalize(rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
 
     call aqm_model_destroy()
 

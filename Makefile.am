@@ -2,6 +2,8 @@ SUBDIRS = src
 dist_doc_DATA = README
 nodist_data_DATA = aqm.mk
 
+EXTRA_DIST = examples
+
 ACLOCAL_AMFLAGS = -I m4
 
 aqm.mk:

@@ -596,7 +596,7 @@ contains
       return  ! bail out
 
     if (isRinging) then
-      call ESMF_AlarmGet(alarm, ringTime=currTime, rc=localrc)
+      call ESMF_ClockGet(clock, currTime=currTime, rc=localrc)
       if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
         line=__LINE__,  &
         file=__FILE__,  &

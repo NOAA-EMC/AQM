@@ -461,9 +461,8 @@ contains
     ! -- local variables
     integer :: localrc
     integer :: ncStatus
-    integer :: item, localDe, localDeCount, tileCount
+    integer :: item, localDe, localDeCount
     type(ioWrapper) :: is
-    type(ESMF_Grid) :: grid
 
     ! -- begin
     if (present(rc)) rc = ESMF_SUCCESS
@@ -480,18 +479,6 @@ contains
     if (.not.associated(is % IO % IOLayout)) return
 
     localDeCount = size(is % IO % IOLayout)
-
-    call ESMF_GridCompGet(IOComp, grid=grid, rc=localrc)
-    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__, &
-      rcToReturn=rc)) return  ! bail out
-
-    call ESMF_GridGet(grid, tileCount=tileCount, rc=localrc)
-    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__, &
-      rcToReturn=rc)) return  ! bail out
 
     do localDe = 0, localDeCount - 1
       if (is % IO % IOLayout(localDe) % localIOflag) then
@@ -831,14 +818,14 @@ contains
     ! -- local variables
     integer :: localrc
     integer :: localDe, localDeCount, rank
-    integer :: de, deCount, dimCount, tile, tileCount
+    integer :: de, deCount, dimCount, tile, tileCount, ungriddedCount
+    integer, dimension(:),   pointer     :: ungriddedLBound, ungriddedUBound
     integer, dimension(:),   allocatable :: deToTileMap, localDeToDeMap
     integer, dimension(:,:), allocatable :: minIndexPDe, maxIndexPDe
     integer, dimension(:,:), allocatable :: minIndexPTile, maxIndexPTile
     type(ioWrapper) :: is
     type(ESMF_Grid) :: grid, iogrid
     type(ESMF_DistGrid) :: distgrid
-    type(ESMF_Array) :: array
     type(ESMF_VM) :: vm
     type(ESMF_GeomType_flag)      :: geomtype
     type(ESMF_StaggerLoc)         :: staggerloc
@@ -869,22 +856,26 @@ contains
         line=__LINE__, &
         file=__FILE__, &
         rcToReturn=rc)) return  ! bail out
+      ! -- check if field is built on I/O component grid
       if (grid /= iogrid) then
-        call ESMF_LogWrite("I/O field and I/O component may not be on same grid", &
+        call ESMF_LogWrite("field and I/O component may not be on same grid", &
           ESMF_LOGMSG_WARNING, rc=localrc)
         if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
           line=__LINE__, &
           file=__FILE__, &
           rcToReturn=rc)) return  ! bail out
       end if
-      if (rank /= 2) then
+
+      ! -- check
+      if (rank < 2 .or. rank > 3) then
         call ESMF_LogSetError(ESMF_RC_NOT_IMPL, &
-          msg="Only 2D fields are supported.", &
+          msg="Only 2D and 3D fields are supported.", &
           line=__LINE__, &
           file=__FILE__, &
           rcToReturn=rc)
-        return  ! bail ou
+        return  ! bail out
       end if
+
       ! -- get domain decomposition
       call ESMF_GridGet(grid, staggerloc, distgrid=distgrid, rc=localrc)
       if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -899,6 +890,27 @@ contains
         file=__FILE__, &
         rcToReturn=rc)) return  ! bail out
 
+      ungriddedCount = rank - dimCount
+
+      if (ungriddedCount > 1) then
+        call ESMF_LogSetError(ESMF_RC_NOT_IMPL, &
+          msg="Only fields with one ungridded dimensions are supported", &
+          line=__LINE__, &
+          file=__FILE__, &
+          rcToReturn=rc)
+        return  ! bail out
+      end if
+
+      nullify(ungriddedLBound, ungriddedUbound)
+      if (ungriddedCount > 0) then
+        call ESMF_FieldGet(field, ungriddedLBound=ungriddedLBound, &
+          ungriddedUBound=ungriddedUBound, rc=localrc)
+        if (ESMF_LogFoundAllocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, &
+          file=__FILE__, &
+          rcToReturn=rc)) return  ! bail out
+      end if
+
       allocate(minIndexPDe(dimCount, deCount), maxIndexPDe(dimCount, deCount),  &
         minIndexPTile(dimCount, tileCount), maxIndexPTile(dimCount, tileCount), &
         deToTileMap(deCount), localDeToDeMap(localDeCount), stat=localrc)
@@ -910,20 +922,7 @@ contains
       call ESMF_DistGridGet(distgrid, &
         minIndexPDe=minIndexPDe, maxIndexPDe=maxIndexPDe, &
         minIndexPTile=minIndexPTile, maxIndexPTile=maxIndexPTile, &
-        rc=localrc)
-      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__, &
-        file=__FILE__, &
-        rcToReturn=rc)) return  ! bail out
-
-      call ESMF_FieldGet(field, array=array, rc=localrc)
-      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__, &
-        file=__FILE__, &
-        rcToReturn=rc)) return  ! bail out
-
-      call ESMF_ArrayGet(array, deToTileMap=deToTileMap, &
-        localDeToDeMap=localDeToDeMap, rc=localrc)
+        deToTileMap=deToTileMap, localDeToDeMap=localDeToDeMap, rc=localrc)
       if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
         line=__LINE__, &
         file=__FILE__, &
@@ -944,6 +943,7 @@ contains
             call AQMIO_FieldRead(is % IO, field, &
               minIndexPDe(:,de), maxIndexPDe(:,de), &
               minIndexPTile(:,tile), maxIndexPTile(:,tile), &
+              ungriddedLBound=ungriddedLBound, ungriddedUBound=ungriddedUBound, &
               variableName=variableName, timeSlice=timeSlice, localDe=localDe, &
               rc=localrc)
             if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -964,6 +964,22 @@ contains
               ! -- do nothing
         end select
       end do
+
+      if (associated(ungriddedLBound)) then
+        deallocate(ungriddedLBound, stat=localrc)
+        if (ESMF_LogFoundDeallocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, &
+          file=__FILE__, &
+          rcToReturn=rc)) return  ! bail out
+      end if
+
+      if (associated(ungriddedUBound)) then
+        deallocate(ungriddedUBound, stat=localrc)
+        if (ESMF_LogFoundDeallocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, &
+          file=__FILE__, &
+          rcToReturn=rc)) return  ! bail out
+      end if
 
       deallocate(minIndexPDe, maxIndexPDe, minIndexPTile, maxIndexPTile, &
         deToTileMap, localDeToDeMap, stat=localrc)
@@ -987,13 +1003,15 @@ contains
 
   subroutine AQMIO_FieldRead(IO, field, &
     minIndexPDe, maxIndexPDe, minIndexPTile, maxIndexPTile, &
-    variableName, timeSlice, localDe, rc)
+    ungriddedLBound, ungriddedUBound, variableName, timeSlice, localDe, rc)
     type(ioData),          intent(in)            :: IO
     type(ESMF_Field),      intent(in)            :: field
     integer, dimension(:), intent(in)            :: minIndexPDe
     integer, dimension(:), intent(in)            :: maxIndexPDe
     integer, dimension(:), intent(in)            :: minIndexPTile
     integer, dimension(:), intent(in)            :: maxIndexPTile
+    integer,               intent(in),  optional :: ungriddedLBound(:)
+    integer,               intent(in),  optional :: ungriddedUBound(:)
     character(len=*),      intent(in),  optional :: variableName
     integer,               intent(in),  optional :: timeSlice
     integer,               intent(in),  optional :: localDe
@@ -1003,17 +1021,23 @@ contains
     integer :: localrc
     integer :: ilen, jlen, lbuf, lde, localpe, rank
     integer :: varId, ncStatus, ndims, xtype
-    integer, dimension(2) :: elb, eub
-    integer, dimension(3) :: start
-    integer(ESMF_KIND_I4), dimension(:),   allocatable :: bcstbuf_i4
-    integer(ESMF_KIND_I4), dimension(:,:), allocatable :: buf_i4
-    integer(ESMF_KIND_I4), dimension(:,:), pointer     :: fp_i4 => null()
-    real(ESMF_KIND_R4),    dimension(:),   allocatable :: bcstbuf_r4
-    real(ESMF_KIND_R4),    dimension(:,:), allocatable :: buf_r4
-    real(ESMF_KIND_R4),    dimension(:,:), pointer     :: fp_r4 => null()
-    real(ESMF_KIND_R8),    dimension(:),   allocatable :: bcstbuf_r8
-    real(ESMF_KIND_R8),    dimension(:,:), allocatable :: buf_r8
-    real(ESMF_KIND_R8),    dimension(:,:), pointer     :: fp_r8 => null()
+    integer :: kmin, kmax, klen, uid
+    integer, dimension(3) :: elb, eub
+    integer,               dimension(:),     allocatable :: dimids
+    integer,               dimension(:),     allocatable :: elemCount
+    integer,               dimension(:),     allocatable :: elemStart
+    integer(ESMF_KIND_I4), dimension(:),     allocatable :: bcstbuf_i4
+    integer(ESMF_KIND_I4), dimension(:,:,:), allocatable :: buf_i4
+    integer(ESMF_KIND_I4), dimension(:,:),   pointer     :: fp2d_i4 => null()
+    integer(ESMF_KIND_I4), dimension(:,:,:), pointer     :: fp3d_i4 => null()
+    real(ESMF_KIND_R4),    dimension(:),     allocatable :: bcstbuf_r4
+    real(ESMF_KIND_R4),    dimension(:,:,:), allocatable :: buf_r4
+    real(ESMF_KIND_R4),    dimension(:,:),   pointer     :: fp2d_r4 => null()
+    real(ESMF_KIND_R4),    dimension(:,:,:), pointer     :: fp3d_r4 => null()
+    real(ESMF_KIND_R8),    dimension(:),     allocatable :: bcstbuf_r8
+    real(ESMF_KIND_R8),    dimension(:,:,:), allocatable :: buf_r8
+    real(ESMF_KIND_R8),    dimension(:,:),   pointer     :: fp2d_r8 => null()
+    real(ESMF_KIND_R8),    dimension(:,:,:), pointer     :: fp3d_r8 => null()
     character(len=ESMF_MAXSTR) :: fieldName, dataSetName
     type(ESMF_TypeKind_Flag) :: typekind
     type(ESMF_VM) :: vm
@@ -1033,13 +1057,20 @@ contains
 
     if (present(variableName)) fieldName = variableName
 
+    kmin = 1
+    if (present(ungriddedLBound)) kmin = ungriddedLBound(1)
+
+    kmax = 1
+    if (present(ungriddedUBound)) kmax = ungriddedUBound(1)
+
     ilen = maxIndexPTile(1)-minIndexPTile(1)+1
     jlen = maxIndexPTile(2)-minIndexPTile(2)+1
-    lbuf = ilen * jlen
+    klen = kmax - kmin + 1
+    lbuf = ilen * jlen * klen
 
     if      (typekind == ESMF_TYPEKIND_I4) then
       allocate(buf_i4(minIndexPTile(1):maxIndexPTile(1), &
-                      minIndexPTile(2):maxIndexPTile(2)), stat=localrc)
+                      minIndexPTile(2):maxIndexPTile(2),kmin:kmax), stat=localrc)
       if (ESMF_LogFoundAllocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
         line=__LINE__, &
         file=__FILE__, &
@@ -1047,7 +1078,7 @@ contains
        buf_i4 = 0_ESMF_KIND_I4
     else if (typekind == ESMF_TYPEKIND_R4) then
       allocate(buf_r4(minIndexPTile(1):maxIndexPTile(1), &
-                      minIndexPTile(2):maxIndexPTile(2)), stat=localrc)
+                      minIndexPTile(2):maxIndexPTile(2),kmin:kmax), stat=localrc)
       if (ESMF_LogFoundAllocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
         line=__LINE__, &
         file=__FILE__, &
@@ -1055,7 +1086,7 @@ contains
       buf_r4 = 0._ESMF_KIND_R4
     else if (typekind == ESMF_TYPEKIND_R8) then
       allocate(buf_r8(minIndexPTile(1):maxIndexPTile(1), &
-                      minIndexPTile(2):maxIndexPTile(2)), stat=localrc)
+                      minIndexPTile(2):maxIndexPTile(2),kmin:kmax), stat=localrc)
       if (ESMF_LogFoundAllocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
         line=__LINE__, &
         file=__FILE__, &
@@ -1080,6 +1111,13 @@ contains
 #if HAVE_NETCDF
         dataSetName = "NetCDF data set"
 
+        ncStatus = nf90_inquire(IO % IOLayout(lde) % ncid, unlimitedDimId=uid)
+        if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
+          msg="Field "//trim(fieldName)//" not defined in "//trim(dataSetName), &
+          line=__LINE__, &
+          file=__FILE__, &
+          rcToReturn=rc)) return  ! bail out
+
         ncStatus = nf90_inq_varid(IO % IOLayout(lde) % ncid, trim(fieldName), varId)
         if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
           msg="Field "//trim(fieldName)//" not defined in "//trim(dataSetName), &
@@ -1095,20 +1133,67 @@ contains
           file=__FILE__, &
           rcToReturn=rc)) return  ! bail out
 
-        start = 1
-        if (present(timeSlice)) then
-          start(3) = timeSlice
-          ndims = ndims - 1
-        end if
+        allocate(elemStart(ndims), elemCount(ndims))
+        elemStart = 1
+        elemCount = 1
 
-        if (ndims /= rank) then
-          call ESMF_LogSetError(ESMF_RC_NOT_IMPL, &
-            msg="Variable "//trim(fieldName)//" has different rank than Field", &
+        if (uid == -1) then
+          if (present(timeSlice)) then
+            if (timeSlice == 1) then
+              call ESMF_LogWrite("No time record found in "//trim(dataSetName) &
+                // " - proceed only for first time step", &
+                ESMF_LOGMSG_WARNING, rc=localrc)
+              if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+                line=__LINE__, &
+                file=__FILE__, &
+                rcToReturn=rc)) return  ! bail out
+            else
+              call ESMF_LogSetError(ESMF_RC_NOT_FOUND, &
+                msg="No time record found in "//dataSetName, &
+                line=__LINE__, &
+                file=__FILE__, &
+                rcToReturn=rc)
+              return  ! bail out
+            end if
+          end if
+        else
+          allocate(dimids(ndims))
+          ncStatus = nf90_inquire_variable(IO % IOLayout(lde) % ncid, varId, dimIds=dimids)
+          if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
+            msg="Error inquiring variable "//trim(fieldName)//" in "//trim(dataSetName), &
             line=__LINE__, &
             file=__FILE__, &
-            rcToReturn=rc)
-          return  ! bail out
+            rcToReturn=rc)) return  ! bail out
+          if (dimids(ndims) == uid) then
+            if (present(timeSlice)) elemStart(ndims) = timeSlice
+            ndims = ndims - 1
+          else
+            if (present(timeSlice)) then
+              call ESMF_LogSetError(ESMF_RC_NOT_FOUND, &
+                msg="No time record found for variable "//fieldName, &
+                line=__LINE__, &
+                file=__FILE__, &
+                rcToReturn=rc)
+              return  ! bail out
+            end if
+          end if
+          deallocate(dimids)
         end if
+
+        if (klen > 1) then
+          if (rank /= ndims) localrc = ESMF_RC_ARG_INCOMP
+        else
+          if (rank > ndims .or. rank < ndims-1) localrc = ESMF_RC_ARG_INCOMP
+        end if
+        if (ESMF_LogFoundError(rcToCheck=localrc, &
+          msg="Field rank incompatible with netCDF variable "//trim(fieldName), &
+          line=__LINE__, &
+          file=__FILE__, &
+          rcToReturn=rc)) return  ! bail out
+
+        elemCount(1) = ilen
+        elemCount(2) = jlen
+        if (ndims > 2) elemCount(3) = klen
 
         if      (typekind == ESMF_TYPEKIND_I4) then
 
@@ -1121,7 +1206,8 @@ contains
             return  ! bail out
           end if
 
-          ncStatus = nf90_get_var(IO % IOLayout(lde) % ncid, varId, buf_i4, start=start)
+          ncStatus = nf90_get_var(IO % IOLayout(lde) % ncid, varId, buf_i4, &
+            start=elemStart, count=elemCount)
           if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
             msg="Error reading field "//trim(fieldName)//" from "//trim(dataSetName), &
             line=__LINE__, &
@@ -1139,7 +1225,8 @@ contains
             return  ! bail out
           end if
 
-          ncStatus = nf90_get_var(IO % IOLayout(lde) % ncid, varId, buf_r4, start=start)
+          ncStatus = nf90_get_var(IO % IOLayout(lde) % ncid, varId, buf_r4, &
+            start=elemStart, count=elemCount)
           if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
             msg="Error reading field "//trim(fieldName)//" from "//trim(dataSetName), &
             line=__LINE__, &
@@ -1157,7 +1244,8 @@ contains
             return  ! bail out
           end if
 
-          ncStatus = nf90_get_var(IO % IOLayout(lde) % ncid, varId, buf_r8, start=start)
+          ncStatus = nf90_get_var(IO % IOLayout(lde) % ncid, varId, buf_r8, &
+            start=elemStart, count=elemCount)
           if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
             msg="Error reading field "//trim(fieldName)//" from "//trim(dataSetName), &
             line=__LINE__, &
@@ -1174,6 +1262,9 @@ contains
           return  ! bail out
 
         end if
+
+        deallocate(elemStart, elemCount)
+
 #else
         call ESMF_LogSetError(rcToCheck=ESMF_RC_LIB_NOT_PRESENT, &
           msg="- netCDF support is unavailable", &
@@ -1242,17 +1333,41 @@ contains
         file=__FILE__, &
         rcToReturn=rc)) return  ! bail out
 
-      call ESMF_FieldGet(field, localDe=lde, farrayPtr=fp_i4, &
-        exclusiveLBound=elb, exclusiveUBound=eub, rc=localrc)
-      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      buf_i4 = reshape(bcstbuf_i4, (/ilen,jlen,klen/))
+      deallocate(bcstbuf_i4, stat=localrc)
+      if (ESMF_LogFoundDeallocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
         line=__LINE__, &
         file=__FILE__, &
         rcToReturn=rc)) return  ! bail out
 
-      buf_i4 = reshape(bcstbuf_i4, (/ilen,jlen/))
+      select case (rank)
+        case (2)
+          nullify(fp2d_i4)
+          call ESMF_FieldGet(field, localDe=lde, farrayPtr=fp2d_i4, &
+            exclusiveLBound=elb(1:2), exclusiveUBound=eub(1:2), rc=localrc)
+          if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, &
+            file=__FILE__, &
+            rcToReturn=rc)) return  ! bail out
 
-      fp_i4(elb(1):eub(1),elb(2):eub(2)) = buf_i4(minIndexPDe(1):maxIndexPDe(1), &
-                                                  minIndexPDe(2):maxIndexPDe(2))
+          fp2d_i4(elb(1):eub(1),elb(2):eub(2)) = &
+            buf_i4(minIndexPDe(1):maxIndexPDe(1), &
+                   minIndexPDe(2):maxIndexPDe(2), kmin)
+
+        case (3)
+          nullify(fp3d_i4)
+          call ESMF_FieldGet(field, localDe=lde, farrayPtr=fp3d_i4, &
+            exclusiveLBound=elb, exclusiveUBound=eub, rc=localrc)
+          if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, &
+            file=__FILE__, &
+            rcToReturn=rc)) return  ! bail out
+
+          fp3d_i4(elb(1):eub(1),elb(2):eub(2),elb(3):eub(3)) = &
+            buf_i4(minIndexPDe(1):maxIndexPDe(1), &
+                   minIndexPDe(2):maxIndexPDe(2), &
+                   kmin:kmax)
+      end select
 
       deallocate(buf_i4, bcstbuf_i4, stat=localrc)
       if (ESMF_LogFoundDeallocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -1276,19 +1391,41 @@ contains
         file=__FILE__, &
         rcToReturn=rc)) return  ! bail out
 
-      call ESMF_FieldGet(field, localDe=lde, farrayPtr=fp_r4, &
-        exclusiveLBound=elb, exclusiveUBound=eub, rc=localrc)
-      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      buf_r4 = reshape(bcstbuf_r4, (/ilen,jlen,klen/))
+
+      deallocate(bcstbuf_r4, stat=localrc)
+      if (ESMF_LogFoundDeallocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
         line=__LINE__, &
         file=__FILE__, &
         rcToReturn=rc)) return  ! bail out
 
-      buf_r4 = reshape(bcstbuf_r4, (/ilen,jlen/))
+      select case (rank)
+        case (2)
+          call ESMF_FieldGet(field, localDe=lde, farrayPtr=fp2d_r4, &
+            exclusiveLBound=elb(1:2), exclusiveUBound=eub(1:2), rc=localrc)
+          if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, &
+            file=__FILE__, &
+            rcToReturn=rc)) return  ! bail out
 
-      fp_r4(elb(1):eub(1),elb(2):eub(2)) = buf_r4(minIndexPDe(1):maxIndexPDe(1), &
-                                                  minIndexPDe(2):maxIndexPDe(2))
+          fp2d_r4(elb(1):eub(1),elb(2):eub(2)) = &
+            buf_r4(minIndexPDe(1):maxIndexPDe(1), &
+                   minIndexPDe(2):maxIndexPDe(2), kmin)
+        case (3)
+          call ESMF_FieldGet(field, localDe=lde, farrayPtr=fp3d_r4, &
+            exclusiveLBound=elb, exclusiveUBound=eub, rc=localrc)
+          if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, &
+            file=__FILE__, &
+            rcToReturn=rc)) return  ! bail out
 
-      deallocate(buf_r4, bcstbuf_r4, stat=localrc)
+          fp3d_r4(elb(1):eub(1),elb(2):eub(2),elb(3):eub(3)) = &
+            buf_r4(minIndexPDe(1):maxIndexPDe(1), &
+                   minIndexPDe(2):maxIndexPDe(2), &
+                   kmin:kmax)
+      end select
+
+      deallocate(buf_r4, stat=localrc)
       if (ESMF_LogFoundDeallocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
         line=__LINE__, &
         file=__FILE__, &
@@ -1310,19 +1447,41 @@ contains
         file=__FILE__, &
         rcToReturn=rc)) return  ! bail out
 
-      call ESMF_FieldGet(field, localDe=lde, farrayPtr=fp_r8, &
-        exclusiveLBound=elb, exclusiveUBound=eub, rc=localrc)
-      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      buf_r8 = reshape(bcstbuf_r8, (/ilen,jlen,klen/))
+
+      deallocate(bcstbuf_r8, stat=localrc)
+      if (ESMF_LogFoundDeallocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
         line=__LINE__, &
         file=__FILE__, &
         rcToReturn=rc)) return  ! bail out
 
-      buf_r8 = reshape(bcstbuf_r8, (/ilen,jlen/))
+      select case (rank)
+        case (2)
+          call ESMF_FieldGet(field, localDe=lde, farrayPtr=fp2d_r8, &
+            exclusiveLBound=elb(1:2), exclusiveUBound=eub(1:2), rc=localrc)
+          if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, &
+            file=__FILE__, &
+            rcToReturn=rc)) return  ! bail out
 
-      fp_r8(elb(1):eub(1),elb(2):eub(2)) = buf_r8(minIndexPDe(1):maxIndexPDe(1), &
-                                                  minIndexPDe(2):maxIndexPDe(2))
+          fp2d_r8(elb(1):eub(1),elb(2):eub(2)) = &
+            buf_r8(minIndexPDe(1):maxIndexPDe(1), &
+                   minIndexPDe(2):maxIndexPDe(2), kmin)
+        case (3)
+          call ESMF_FieldGet(field, localDe=lde, farrayPtr=fp3d_r8, &
+            exclusiveLBound=elb, exclusiveUBound=eub, rc=localrc)
+          if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, &
+            file=__FILE__, &
+            rcToReturn=rc)) return  ! bail out
 
-      deallocate(buf_r8, bcstbuf_r8, stat=localrc)
+          fp3d_r8(elb(1):eub(1),elb(2):eub(2),elb(3):eub(3)) = &
+            buf_r8(minIndexPDe(1):maxIndexPDe(1), &
+                   minIndexPDe(2):maxIndexPDe(2), &
+                   kmin:kmax)
+      end select
+
+      deallocate(buf_r8, stat=localrc)
       if (ESMF_LogFoundDeallocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
         line=__LINE__, &
         file=__FILE__, &

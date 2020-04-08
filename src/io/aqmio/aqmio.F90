@@ -339,8 +339,9 @@ contains
     integer :: ncStatus
     integer :: item, localDe, localDeCount, tileCount
     integer :: cmode
+    logical :: create
     character(len=ESMF_MAXPATHLEN) :: fullName
-    character(len=5) :: liomode, fmode
+    character(len=6) :: liomode, fmode
     type(ioWrapper) :: is
     type(ESMF_Grid) :: grid
     type(ESMF_IOFmt_flag) :: liofmt
@@ -367,6 +368,7 @@ contains
     liomode = "read"
     if (present(iomode)) liomode = iomode
 
+    create = .false.
     select case (trim(liomode))
       case ("r", "read")
         cmode = NF90_NOWRITE
@@ -374,6 +376,9 @@ contains
       case ("w", "write")
         cmode = NF90_WRITE
         fmode = "write"
+      case ("c", "create")
+        cmode = NF90_CLOBBER
+        create = .true.
       case default
         call ESMF_LogSetError(ESMF_RC_ARG_WRONG, &
           msg="- Unsupported open mode: "//trim(liomode), &
@@ -405,13 +410,29 @@ contains
         end if
         if      (liofmt == ESMF_IOFMT_NETCDF) then
 #if HAVE_NETCDF
-          ncStatus = nf90_open(trim(fullName), cmode, &
-            is % IO % IOLayout(localDe) % ncid)
-          if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
-            msg="Error opening NetCDF data set: "//trim(fullName), &
-            line=__LINE__, &
-            file=__FILE__, &
-            rcToReturn=rc)) return  ! bail out
+          if (create) then
+            ncStatus = nf90_create(trim(fullName), cmode, &
+              is % IO % IOLayout(localDe) % ncid)
+            if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
+              msg="Error creaing NetCDF data set: "//trim(fullName), &
+              line=__LINE__, &
+              file=__FILE__, &
+              rcToReturn=rc)) return  ! bail out
+            ncStatus = nf90_enddef(is % IO % IOLayout(localDe) % ncid)
+            if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
+              msg=ESMF_LOGERR_PASSTHRU, &
+              line=__LINE__, &
+              file=__FILE__, &
+              rcToReturn=rc)) return  ! bail out
+          else
+            ncStatus = nf90_open(trim(fullName), cmode, &
+              is % IO % IOLayout(localDe) % ncid)
+            if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
+              msg="Error opening NetCDF data set: "//trim(fullName), &
+              line=__LINE__, &
+              file=__FILE__, &
+              rcToReturn=rc)) return  ! bail out
+          end if
 #else
           call ESMF_LogSetError(rcToCheck=ESMF_RC_LIB_NOT_PRESENT, &
             msg="- AQM was not built with NetCDF support", &
@@ -954,6 +975,7 @@ contains
             call AQMIO_FieldWrite(is % IO, field, &
               minIndexPDe(:,de), maxIndexPDe(:,de), &
               minIndexPTile(:,tile), maxIndexPTile(:,tile), &
+              ungriddedLBound=ungriddedLBound, ungriddedUBound=ungriddedUBound, &
               variableName=variableName, timeSlice=timeSlice, localDe=localDe, &
               rc=localrc)
             if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -1133,7 +1155,11 @@ contains
           file=__FILE__, &
           rcToReturn=rc)) return  ! bail out
 
-        allocate(elemStart(ndims), elemCount(ndims))
+        allocate(elemStart(ndims), elemCount(ndims), stat=localrc)
+        if (ESMF_LogFoundAllocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, &
+          file=__FILE__, &
+          rcToReturn=rc)) return  ! bail out
         elemStart = 1
         elemCount = 1
 
@@ -1157,7 +1183,11 @@ contains
             end if
           end if
         else
-          allocate(dimids(ndims))
+          allocate(dimids(ndims), stat=localrc)
+          if (ESMF_LogFoundAllocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, &
+            file=__FILE__, &
+            rcToReturn=rc)) return  ! bail out
           ncStatus = nf90_inquire_variable(IO % IOLayout(lde) % ncid, varId, dimIds=dimids)
           if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
             msg="Error inquiring variable "//trim(fieldName)//" in "//trim(dataSetName), &
@@ -1177,7 +1207,11 @@ contains
               return  ! bail out
             end if
           end if
-          deallocate(dimids)
+          deallocate(dimids, stat=localrc)
+          if (ESMF_LogFoundDeallocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, &
+            file=__FILE__, &
+            rcToReturn=rc)) return  ! bail out
         end if
 
         if (klen > 1) then
@@ -1263,7 +1297,11 @@ contains
 
         end if
 
-        deallocate(elemStart, elemCount)
+        deallocate(elemStart, elemCount, stat=localrc)
+        if (ESMF_LogFoundDeallocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, &
+          file=__FILE__, &
+          rcToReturn=rc)) return  ! bail out
 
 #else
         call ESMF_LogSetError(rcToCheck=ESMF_RC_LIB_NOT_PRESENT, &
@@ -1495,13 +1533,15 @@ contains
 
   subroutine AQMIO_FieldWrite(IO, field, &
     minIndexPDe, maxIndexPDe, minIndexPTile, maxIndexPTile, &
-    variableName, timeSlice, localDe, rc)
+    ungriddedLBound, ungriddedUBound, variableName, timeSlice, localDe, rc)
     type(ioData),          intent(in)            :: IO
     type(ESMF_Field),      intent(in)            :: field
     integer, dimension(:), intent(in)            :: minIndexPDe
     integer, dimension(:), intent(in)            :: maxIndexPDe
     integer, dimension(:), intent(in)            :: minIndexPTile
     integer, dimension(:), intent(in)            :: maxIndexPTile
+    integer,               intent(in),  optional :: ungriddedLBound(:)
+    integer,               intent(in),  optional :: ungriddedUBound(:)
     character(len=*),      intent(in),  optional :: variableName
     integer,               intent(in),  optional :: timeSlice
     integer,               intent(in),  optional :: localDe
@@ -1512,17 +1552,21 @@ contains
     integer :: ilen, jlen, lbuf, lde, localpe
     integer :: varId, ncStatus
     integer :: ndims, rank
-    integer, dimension(2) :: elb, eub
-    integer, dimension(3) :: start
-    integer(ESMF_KIND_I4), dimension(:),   allocatable :: recvbuf_i4
-    integer(ESMF_KIND_I4), dimension(:,:), allocatable :: buf_i4
-    integer(ESMF_KIND_I4), dimension(:,:), pointer     :: fp_i4 => null()
-    real(ESMF_KIND_R4),    dimension(:),   allocatable :: recvbuf_r4
-    real(ESMF_KIND_R4),    dimension(:,:), allocatable :: buf_r4
-    real(ESMF_KIND_R4),    dimension(:,:), pointer     :: fp_r4 => null()
-    real(ESMF_KIND_R8),    dimension(:),   allocatable :: recvbuf_r8
-    real(ESMF_KIND_R8),    dimension(:,:), allocatable :: buf_r8
-    real(ESMF_KIND_R8),    dimension(:,:), pointer     :: fp_r8 => null()
+    integer :: kmin, kmax, klen
+    integer, dimension(3) :: elb, eub
+    integer, dimension(:), allocatable :: start
+    integer(ESMF_KIND_I4), dimension(:),     allocatable :: recvbuf_i4
+    integer(ESMF_KIND_I4), dimension(:,:,:), allocatable :: buf_i4
+    integer(ESMF_KIND_I4), dimension(:,:),   pointer     :: fp2d_i4 => null()
+    integer(ESMF_KIND_I4), dimension(:,:,:), pointer     :: fp3d_i4 => null()
+    real(ESMF_KIND_R4),    dimension(:),     allocatable :: recvbuf_r4
+    real(ESMF_KIND_R4),    dimension(:,:,:), allocatable :: buf_r4
+    real(ESMF_KIND_R4),    dimension(:,:),   pointer     :: fp2d_r4 => null()
+    real(ESMF_KIND_R4),    dimension(:,:,:), pointer     :: fp3d_r4 => null()
+    real(ESMF_KIND_R8),    dimension(:),     allocatable :: recvbuf_r8
+    real(ESMF_KIND_R8),    dimension(:,:,:), allocatable :: buf_r8
+    real(ESMF_KIND_R8),    dimension(:,:),   pointer     :: fp2d_r8 => null()
+    real(ESMF_KIND_R8),    dimension(:,:,:), pointer     :: fp3d_r8 => null()
     character(len=ESMF_MAXSTR) :: fieldName, dataSetName
     type(ESMF_VM) :: vm
     type(ESMF_TypeKind_Flag) :: typekind
@@ -1542,9 +1586,16 @@ contains
 
     if (present(variableName)) fieldName = variableName
 
+    kmin = 1
+    if (present(ungriddedLBound)) kmin = ungriddedLBound(1)
+
+    kmax = 1
+    if (present(ungriddedUBound)) kmax = ungriddedUBound(1)
+
     ilen = maxIndexPTile(1)-minIndexPTile(1)+1
     jlen = maxIndexPTile(2)-minIndexPTile(2)+1
-    lbuf = ilen * jlen
+    klen = kmax - kmin + 1
+    lbuf = ilen * jlen * klen
 
     call ESMF_GridCompGet(IO % IOLayout(lde) % taskComp, vm=vm, rc=localrc)
     if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -1560,25 +1611,41 @@ contains
 
     if      (typekind == ESMF_TYPEKIND_I4) then
 
-      call ESMF_FieldGet(field, localDe=lde, farrayPtr=fp_i4, &
-        exclusiveLBound=elb, exclusiveUBound=eub, rc=localrc)
-      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__, &
-        file=__FILE__, &
-        rcToReturn=rc)) return  ! bail out
-
       allocate(buf_i4(minIndexPTile(1):maxIndexPTile(1), &
-                      minIndexPTile(2):maxIndexPTile(2)), stat=localrc)
+                      minIndexPTile(2):maxIndexPTile(2),kmin:kmax), stat=localrc)
       if (ESMF_LogFoundAllocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
         line=__LINE__, &
         file=__FILE__, &
         rcToReturn=rc)) return  ! bail out
 
       buf_i4 = 0_ESMF_KIND_I4
-      buf_i4(minIndexPDe(1):maxIndexPDe(1), &
-             minIndexPDe(2):maxIndexPDe(2)) = fp_i4(elb(1):eub(1),elb(2):eub(2))
 
-      nullify(fp_i4)
+      select case (rank)
+        case(2)
+          nullify(fp2d_i4)
+          call ESMF_FieldGet(field, localDe=lde, farrayPtr=fp2d_i4, &
+            exclusiveLBound=elb(1:2), exclusiveUBound=eub(1:2), rc=localrc)
+          if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, &
+            file=__FILE__, &
+            rcToReturn=rc)) return  ! bail out
+
+          buf_i4(minIndexPDe(1):maxIndexPDe(1), &
+                 minIndexPDe(2):maxIndexPDe(2), &
+                 kmin) = fp2d_i4(elb(1):eub(1),elb(2):eub(2))
+        case(3)
+          nullify(fp3d_i4)
+          call ESMF_FieldGet(field, localDe=lde, farrayPtr=fp3d_i4, &
+            exclusiveLBound=elb, exclusiveUBound=eub, rc=localrc)
+          if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, &
+            file=__FILE__, &
+            rcToReturn=rc)) return  ! bail out
+
+          buf_i4(minIndexPDe(1):maxIndexPDe(1), &
+                 minIndexPDe(2):maxIndexPDe(2), &
+                 kmin:kmax) = fp3d_i4(elb(1):eub(1),elb(2):eub(2),elb(3):eub(3))
+      end select
 
       allocate(recvbuf_i4(lbuf), stat=localrc)
       if (ESMF_LogFoundAllocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -1593,7 +1660,7 @@ contains
         file=__FILE__, &
         rcToReturn=rc)) return  ! bail out
 
-      buf_i4 = reshape(recvbuf_i4, (/ilen, jlen/))
+      buf_i4 = reshape(recvbuf_i4, (/ilen, jlen, klen/))
 
       deallocate(recvbuf_i4, stat=localrc)
       if (ESMF_LogFoundDeallocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -1603,25 +1670,41 @@ contains
 
     else if (typekind == ESMF_TYPEKIND_R4) then
 
-      call ESMF_FieldGet(field, localDe=lde, farrayPtr=fp_r4, &
-        exclusiveLBound=elb, exclusiveUBound=eub, rc=localrc)
-      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__, &
-        file=__FILE__, &
-        rcToReturn=rc)) return  ! bail out
-
       allocate(buf_r4(minIndexPTile(1):maxIndexPTile(1), &
-                      minIndexPTile(2):maxIndexPTile(2)), stat=localrc)
+                      minIndexPTile(2):maxIndexPTile(2),kmin:kmax), stat=localrc)
       if (ESMF_LogFoundAllocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
         line=__LINE__, &
         file=__FILE__, &
         rcToReturn=rc)) return  ! bail out
 
       buf_r4 = 0._ESMF_KIND_R4
-      buf_r4(minIndexPDe(1):maxIndexPDe(1), &
-             minIndexPDe(2):maxIndexPDe(2)) = fp_r4(elb(1):eub(1),elb(2):eub(2))
 
-      nullify(fp_r4)
+      select case (rank)
+        case(2)
+          nullify(fp2d_r4)
+          call ESMF_FieldGet(field, localDe=lde, farrayPtr=fp2d_r4, &
+            exclusiveLBound=elb(1:2), exclusiveUBound=eub(1:2), rc=localrc)
+          if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, &
+            file=__FILE__, &
+            rcToReturn=rc)) return  ! bail out
+
+          buf_r4(minIndexPDe(1):maxIndexPDe(1), &
+                 minIndexPDe(2):maxIndexPDe(2), &
+                 kmin) = fp2d_r4(elb(1):eub(1),elb(2):eub(2))
+        case(3)
+          nullify(fp3d_r4)
+          call ESMF_FieldGet(field, localDe=lde, farrayPtr=fp3d_r4, &
+            exclusiveLBound=elb, exclusiveUBound=eub, rc=localrc)
+          if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, &
+            file=__FILE__, &
+            rcToReturn=rc)) return  ! bail out
+
+          buf_r4(minIndexPDe(1):maxIndexPDe(1), &
+                 minIndexPDe(2):maxIndexPDe(2), &
+                 kmin:kmax) = fp3d_r4(elb(1):eub(1),elb(2):eub(2),elb(3):eub(3))
+      end select
 
       allocate(recvbuf_r4(lbuf), stat=localrc)
       if (ESMF_LogFoundAllocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -1636,7 +1719,7 @@ contains
         file=__FILE__, &
         rcToReturn=rc)) return  ! bail out
 
-      buf_r4 = reshape(recvbuf_r4, (/ilen, jlen/))
+      buf_r4 = reshape(recvbuf_r4, (/ilen, jlen, klen/))
 
       deallocate(recvbuf_r4, stat=localrc)
       if (ESMF_LogFoundDeallocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -1646,25 +1729,40 @@ contains
 
     else if (typekind == ESMF_TYPEKIND_R8) then
 
-      call ESMF_FieldGet(field, localDe=lde, farrayPtr=fp_r8, &
-        exclusiveLBound=elb, exclusiveUBound=eub, rc=localrc)
-      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__, &
-        file=__FILE__, &
-        rcToReturn=rc)) return  ! bail out
-
       allocate(buf_r8(minIndexPTile(1):maxIndexPTile(1), &
-                      minIndexPTile(2):maxIndexPTile(2)), stat=localrc)
+                      minIndexPTile(2):maxIndexPTile(2),kmin:kmax), stat=localrc)
       if (ESMF_LogFoundAllocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
         line=__LINE__, &
         file=__FILE__, &
         rcToReturn=rc)) return  ! bail out
 
       buf_r8 = 0._ESMF_KIND_R8
-      buf_r8(minIndexPDe(1):maxIndexPDe(1), &
-             minIndexPDe(2):maxIndexPDe(2)) = fp_r8(elb(1):eub(1),elb(2):eub(2))
+      select case (rank)
+        case(2)
+          nullify(fp2d_r8)
+          call ESMF_FieldGet(field, localDe=lde, farrayPtr=fp2d_r8, &
+            exclusiveLBound=elb(1:2), exclusiveUBound=eub(1:2), rc=localrc)
+          if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, &
+            file=__FILE__, &
+            rcToReturn=rc)) return  ! bail out
 
-      nullify(fp_r8)
+          buf_r8(minIndexPDe(1):maxIndexPDe(1), &
+                 minIndexPDe(2):maxIndexPDe(2), &
+                 kmin) = fp2d_r8(elb(1):eub(1),elb(2):eub(2))
+        case(3)
+          nullify(fp3d_r8)
+          call ESMF_FieldGet(field, localDe=lde, farrayPtr=fp3d_r8, &
+            exclusiveLBound=elb, exclusiveUBound=eub, rc=localrc)
+          if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, &
+            file=__FILE__, &
+            rcToReturn=rc)) return  ! bail out
+
+          buf_r8(minIndexPDe(1):maxIndexPDe(1), &
+                 minIndexPDe(2):maxIndexPDe(2), &
+                 kmin:kmax) = fp3d_r8(elb(1):eub(1),elb(2):eub(2),elb(3):eub(3))
+      end select
 
       allocate(recvbuf_r8(lbuf), stat=localrc)
       if (ESMF_LogFoundAllocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -1679,7 +1777,7 @@ contains
         file=__FILE__, &
         rcToReturn=rc)) return  ! bail out
 
-      buf_r8 = reshape(recvbuf_r8, (/ilen, jlen/))
+      buf_r8 = reshape(recvbuf_r8, (/ilen, jlen, klen/))
 
       deallocate(recvbuf_r8, stat=localrc)
       if (ESMF_LogFoundDeallocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -1703,11 +1801,20 @@ contains
         dataSetName = "NetCDF data set"
 
         ncStatus = nf90_inq_varid(IO % IOLayout(lde) % ncid, trim(fieldName), varId)
-        if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
-          msg="Field "//trim(fieldName)//" not defined in "//trim(dataSetName), &
-          line=__LINE__, &
-          file=__FILE__, &
-          rcToReturn=rc)) return  ! bail out
+        if (ncStatus == NF90_ENOTVAR) then
+          call AQMIO_VariableCreate(IO % IOLayout(lde), field, present(timeSlice), &
+            varId=varId, rc=localrc)
+          if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, &
+            file=__FILE__, &
+            rcToReturn=rc)) return  ! bail out
+        else
+          if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
+            msg="Field "//trim(fieldName)//" not defined in "//trim(dataSetName), &
+            line=__LINE__, &
+            file=__FILE__, &
+            rcToReturn=rc)) return  ! bail out
+        end if
       
         ncStatus = nf90_inquire_variable(IO % IOLayout(lde) % ncid, varId, ndims=ndims)
         if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
@@ -1716,9 +1823,15 @@ contains
           file=__FILE__, &
           rcToReturn=rc)) return  ! bail out
 
+        allocate(start(ndims), stat=localrc)
+        if (ESMF_LogFoundAllocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, &
+          file=__FILE__, &
+          rcToReturn=rc)) return  ! bail out
+
         start = 1
         if (present(timeSlice)) then
-          start(3) = timeSlice
+          start(ndims) = timeSlice
           ndims = ndims - 1
         end if
 
@@ -1753,6 +1866,12 @@ contains
             file=__FILE__, &
             rcToReturn=rc)) return  ! bail out
         end if
+
+        deallocate(start, stat=localrc)
+        if (ESMF_LogFoundDeallocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, &
+          file=__FILE__, &
+          rcToReturn=rc)) return  ! bail out
 #else
         call ESMF_LogSetError(rcToCheck=ESMF_RC_LIB_NOT_PRESENT, &
           msg="- netCDF support is unavailable", &
@@ -2205,6 +2324,211 @@ contains
     end if
 
   end subroutine AQMIO_FileNameGet
+
+!------------------------------------------------------------------------------
+
+#if HAVE_NETCDF
+  subroutine AQMIO_VariableCreate(IOLayout, field, unlimited, varId, rc)
+    type(AQMIOLayout), intent(in)            :: IOLayout
+    type(ESMF_Field),  intent(in)            :: field
+    logical,           intent(in)            :: unlimited
+    integer,           intent(out), optional :: varId
+    integer,           intent(out), optional :: rc
+
+    ! -- local variables
+    integer :: localrc, stat
+    integer :: ncStatus
+    integer :: rank, lrank
+    integer :: dimCount, tileCount, tile
+    integer :: item, length, dimId, lvarId, uid, ndims, xtype
+    integer, dimension(:),   allocatable :: dimIds, dimLen
+    integer, dimension(:),   allocatable :: ungriddedLBound, ungriddedUBound
+    integer, dimension(:,:), allocatable :: minIndexPTile, maxIndexPTile
+    character(len=ESMF_MAXSTR) :: fieldName
+    character(len=ESMF_MAXSTR) :: dimName
+    type(ESMF_DistGrid)      :: distgrid
+    type(ESMF_Grid)          :: grid
+    type(ESMF_StaggerLoc)    :: staggerloc
+    type(ESMF_TypeKind_Flag) :: typekind
+
+    ! -- begin
+    if (present(rc)) rc = ESMF_SUCCESS
+
+    ncStatus = nf90_inquire(IOLayout % ncid, nDimensions=ndims, &
+      unlimitedDimId=uid)
+    if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
+      msg="Error inquiring NetCDF dataset", &
+      line=__LINE__, &
+      file=__FILE__, &
+      rcToReturn=rc)) return  ! bail out
+
+    call ESMF_FieldGet(field, name=fieldName, rank=rank, grid=grid, &
+      staggerloc=staggerloc, typekind=typekind, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__, &
+      rcToReturn=rc)) return  ! bail out
+
+    call ESMF_GridGet(grid, distgrid=distgrid, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__, &
+      rcToReturn=rc)) return  ! bail out
+
+    call ESMF_DistgridGet(distgrid, dimCount=dimCount, &
+      tileCount=tileCount, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__, &
+      rcToReturn=rc)) return  ! bail out
+
+    allocate(minIndexPTile(dimCount, tileCount), &
+      maxIndexPTile(dimCount, tileCount), stat=stat)
+    if (ESMF_LogFoundAllocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__, &
+      rcToReturn=rc)) return  ! bail out
+
+    call ESMF_DistGridGet(distgrid, minIndexPTile=minIndexPTile, &
+      maxIndexPTile=maxIndexPTile, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__, &
+      rcToReturn=rc)) return  ! bail out
+
+    ncStatus = nf90_redef(IOLayout % ncid)
+    if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
+      msg="Error switching to redef mode ", &
+      line=__LINE__, &
+      file=__FILE__, &
+      rcToReturn=rc)) return  ! bail out
+
+    lrank = rank
+    if (unlimited) lrank = lrank + 1
+
+    allocate(dimLen(lrank), dimIds(lrank), stat=stat)
+    if (ESMF_LogFoundAllocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__, &
+      rcToReturn=rc)) return  ! bail out
+
+    dimIds = -1
+    dimLen = 0
+
+    if (unlimited) then
+      if (uid == -1) then
+        ncStatus = nf90_def_dim(IOLayout % ncid, "Time", NF90_UNLIMITED, dimIds(lrank))
+        if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
+          msg="Error adding unlimited dimension", &
+          line=__LINE__, &
+          file=__FILE__, &
+          rcToReturn=rc)) return  ! bail out
+      else
+        dimIds(lrank) = uid
+      end if
+    end if
+
+    do item = 1, dimCount
+      tile = IOLayout % tile
+      dimLen(item) = maxIndexPTile(item, tile) - minIndexPTile(item, tile) + 1
+    end do
+
+    deallocate(minIndexPTile, maxIndexPTile, stat=stat)
+    if (ESMF_LogFoundDeallocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__, &
+      rcToReturn=rc)) return  ! bail out
+
+    if (rank - dimCount > 0) then
+      allocate(ungriddedLBound(rank-dimCount), ungriddedUBound(rank-dimCount), stat=stat)
+      if (ESMF_LogFoundAllocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__, &
+        file=__FILE__, &
+        rcToReturn=rc)) return  ! bail out
+      call ESMF_FieldGet(field, ungriddedLBound=ungriddedLBound, &
+        ungriddedUBound=ungriddedUBound, rc=localrc)
+      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__, &
+        file=__FILE__, &
+        rcToReturn=rc)) return  ! bail out
+      dimLen(dimCount+1:rank) = ungriddedUBound - ungriddedLBound + 1
+    end if
+
+    do dimId = 1, ndims
+      ncStatus = nf90_inquire_dimension(IOLayout % ncid, dimId, len=length)
+      if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
+        msg="Error defining dimension "//trim(dimName), &
+        line=__LINE__, &
+        file=__FILE__, &
+        rcToReturn=rc)) return  ! bail out
+      do item = 1, rank
+        if (length == dimLen(item)) then
+          dimIds(item) = dimId
+          exit
+        end if
+      end do
+    end do
+
+    dimId = ndims
+    do item = 1, rank
+      if (dimIds(item) < 0) then
+        dimid = dimid + 1
+        dimName = ""
+        write(dimName, '("x",i0.2)') dimid
+        ncStatus = nf90_def_dim(IOLayout % ncid, trim(dimName), dimLen(item), dimIds(item))
+        if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
+          msg="Error defining dimension "//trim(dimName), &
+          line=__LINE__, &
+          file=__FILE__, &
+          rcToReturn=rc)) return  ! bail out
+      end if
+    end do
+
+    deallocate(dimLen, stat=stat)
+    if (ESMF_LogFoundDeallocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__, &
+      rcToReturn=rc)) return  ! bail out
+
+    if      (typekind == ESMF_TYPEKIND_I4) then
+      xtype = NF90_INT
+    else if (typekind == ESMF_TYPEKIND_R4) then
+      xtype = NF90_FLOAT
+    else if (typekind == ESMF_TYPEKIND_R8) then
+      xtype = NF90_DOUBLE
+    else
+      call ESMF_LogSetError(ESMF_RC_NOT_IMPL, &
+        msg="Field: "//trim(fieldName)//" - typekind not supported", &
+        line=__LINE__, &
+        file=__FILE__, &
+        rcToReturn=rc)
+      return  ! bail out
+    end if
+
+    ncStatus = nf90_def_var(IOLayout % ncid, trim(fieldName), xtype, dimIds, lvarId)
+    if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
+      msg="Error defining NetCDF variable: "//trim(fieldName), &
+      line=__LINE__, &
+      file=__FILE__, &
+      rcToReturn=rc)) return  ! bail out
+
+    deallocate(dimIds, stat=stat)
+    if (ESMF_LogFoundDeallocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__, &
+      rcToReturn=rc)) return  ! bail out
+
+    ncStatus = nf90_enddef(IOLayout % ncid)
+    if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
+      msg="Error defining NetCDF data set", &
+      line=__LINE__, &
+      file=__FILE__, &
+      rcToReturn=rc)) return  ! bail out
+
+    if (present(varId)) varId = lvarId
+
+  end subroutine AQMIO_VariableCreate
+#endif
 
 !------------------------------------------------------------------------------
 

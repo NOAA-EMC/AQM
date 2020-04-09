@@ -33,6 +33,7 @@ module AQMIO
   public :: AQMIO_Open
   public :: AQMIO_Close
   public :: AQMIO_Read
+  public :: AQMIO_ReadTimes
   public :: AQMIO_Write
 
 contains
@@ -435,7 +436,7 @@ contains
           end if
 #else
           call ESMF_LogSetError(rcToCheck=ESMF_RC_LIB_NOT_PRESENT, &
-            msg="- AQM was not built with NetCDF support", &
+            msg="- AQMIO was not built with NetCDF support", &
             line=__LINE__, &
             file=__FILE__, &
             rcToReturn=rc)
@@ -514,7 +515,7 @@ contains
           is % IO % IOLayout(localDe) % ncid = 0
 #else
           call ESMF_LogSetError(rcToCheck=ESMF_RC_LIB_NOT_PRESENT, &
-            msg="AQM was not built with NetCDF support", &
+            msg="AQMIO was not built with NetCDF support", &
             line=__LINE__, &
             file=__FILE__, &
             rcToReturn=rc)
@@ -617,7 +618,7 @@ contains
           end if
 #else
           call ESMF_LogSetError(rcToCheck=ESMF_RC_LIB_NOT_PRESENT, &
-            msg="- AQM was not built with NetCDF support", &
+            msg="- AQMIO was not built with NetCDF support", &
             line=__LINE__, &
             file=__FILE__, &
             rcToReturn=rc)
@@ -823,6 +824,90 @@ contains
     end if
 
   end subroutine AQMIO_Read
+
+!------------------------------------------------------------------------------
+
+  subroutine AQMIO_ReadTimes(IOComp, variableName, timesList, fileName, filePath, iofmt, rc)
+    type(ESMF_GridComp),   intent(inout)           :: IOComp
+    character(len=*),      intent(in)              :: variableName
+    type(ESMF_Time),       intent(inout), pointer  :: timesList(:)
+    character(len=*),      intent(in),    optional :: fileName
+    character(len=*),      intent(in),    optional :: filePath
+    type(ESMF_IOFmt_flag), intent(in),    optional :: iofmt
+    integer,               intent(out),   optional :: rc
+
+    ! -- local variables
+    integer :: localrc
+    integer :: item, localDe, localDeCount
+    logical :: isOpen
+    type(ioWrapper) :: is
+
+    ! -- begin
+    if (present(rc)) rc = ESMF_SUCCESS
+
+    if (.not.ESMF_GridCompIsPetLocal(IOComp)) return
+
+    call ESMF_GridCompGetInternalState(IOComp, is, localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__, &
+      rcToReturn=rc)) return  ! bail out
+
+    if (.not.associated(is % IO)) return
+    if (.not.associated(is % IO % IOLayout)) return
+
+    if (present(iofmt)) then
+      if (.not.(iofmt == ESMF_IOFMT_NETCDF)) then
+        call ESMF_LogSetError(ESMF_RC_ARG_INCOMP, &
+          msg="This function only supports NetCDF I/O", &
+          line=__LINE__, &
+          file=__FILE__, &
+          rcToReturn=rc)
+        return  ! bail out
+      end if
+    end if
+
+    localDeCount = size(is % IO % IOLayout)
+
+    if (present(fileName)) then
+      isOpen = AQMIO_IsOpen(IOComp, fileName, filePath=filePath, &
+        iofmt=iofmt, rc=localrc)
+      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__, &
+        file=__FILE__, &
+        rcToReturn=rc)) return  ! bail out
+      if (.not.isOpen) then
+        call AQMIO_Close(IOComp, rc=localrc)
+        if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, &
+          file=__FILE__, &
+          rcToReturn=rc)) return  ! bail out
+        call AQMIO_Open(IOComp, fileName, filePath=filePath, &
+          iomode="read", iofmt=iofmt, rc=localrc)
+        if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, &
+          file=__FILE__, &
+          rcToReturn=rc)) return  ! bail out
+      end if
+    end if
+
+    ! -- read times on localDe = 0 only, assuming tile-specific files are
+    ! -- consistent
+    call AQMIO_TimesRead(is % IO, variableName, timesList, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__, &
+      rcToReturn=rc)) return  ! bail out
+
+    if (present(fileName)) then
+      call AQMIO_Close(IOComp, rc=localrc)
+      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__, &
+        file=__FILE__, &
+        rcToReturn=rc)) return  ! bail out
+    end if
+
+  end subroutine AQMIO_ReadTimes
 
 !------------------------------------------------------------------------------
 ! Private methods below
@@ -1528,6 +1613,180 @@ contains
     end if
 
   end subroutine AQMIO_FieldRead
+
+!------------------------------------------------------------------------------
+
+  subroutine AQMIO_TimesRead(IO, variableName, timesList, localDe, rc)
+    type(ioData),     intent(in)            :: IO
+    character(len=*), intent(in)            :: variableName
+    type(ESMF_Time),  pointer               :: timesList(:)
+    integer,          intent(in),  optional :: localDe
+    integer,          intent(out), optional :: rc
+
+    ! -- local variables
+    integer :: localrc
+    integer :: ncStatus
+    integer :: item, uid, varId, xtype, ndims, lde
+    integer :: yy, mm, dd, h, m, s
+    integer, dimension(:), allocatable :: dimIds, dimLen
+    character(len=19), dimension(:), allocatable :: timeStrings
+    type(ESMF_VM) :: vm
+
+    ! -- begin
+    if (present(rc)) rc = ESMF_SUCCESS
+
+    if (associated(timesList)) then
+      call ESMF_LogSetError(ESMF_RC_ARG_BAD, &
+        msg="timesList pointer must not be associated",&
+        line=__LINE__, &
+        file=__FILE__, &
+        rcToReturn=rc)
+      return
+    end if
+
+    lde = 0
+    if (present(localDe)) lde = localDe
+
+    if (IO % IOLayout(lde) % ncid > 0) then
+
+#if HAVE_NETCDF
+      ncStatus = nf90_inquire(IO % IOLayout(lde) % ncid, unlimitedDimId=uid)
+      if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
+        msg="Unlimited dimension not found", &
+        line=__LINE__, &
+        file=__FILE__, &
+        rcToReturn=rc)) return  ! bail out
+
+      if (uid == -1) then
+        call ESMF_LogSetError(ESMF_RC_NOT_FOUND, &
+          msg="Time record not found", &
+          line=__LINE__, &
+          file=__FILE__, &
+          rcToReturn=rc)
+        return
+      end if
+
+      ncStatus = nf90_inq_varid(IO % IOLayout(lde) % ncid, trim(variableName), varId)
+      if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
+        msg="Variable "//trim(variableName)//" not found", &
+        line=__LINE__, &
+        file=__FILE__, &
+        rcToReturn=rc)) return  ! bail out
+
+      ncStatus = nf90_inquire_variable(IO % IOLayout(lde) % ncid, varId, &
+        xtype=xtype, ndims=ndims)
+      if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
+        msg="Error inquiring variable "//trim(variableName), &
+        line=__LINE__, &
+        file=__FILE__, &
+        rcToReturn=rc)) return  ! bail out
+
+      ! -- only time strings are supported
+      if (xtype /= NF90_CHAR) then
+        call ESMF_LogSetError(ESMF_RC_NOT_VALID, &
+          msg="Variable "//trim(variableName)//" must be string", &
+          line=__LINE__, &
+          file=__FILE__, &
+          rcToReturn=rc)
+        return
+      end if
+
+      if (ndims /= 2) then
+        call ESMF_LogSetError(ESMF_RC_NOT_VALID, &
+          msg="Variable "//trim(variableName)//" must have 2 dimensions", &
+          line=__LINE__, &
+          file=__FILE__, &
+          rcToReturn=rc)
+        return
+      end if
+
+      allocate(dimIds(ndims), dimLen(ndims), stat=localrc)
+      if (ESMF_LogFoundAllocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__, &
+        file=__FILE__, &
+        rcToReturn=rc)) return  ! bail out
+
+      ncStatus = nf90_inquire_variable(IO % IOLayout(lde) % ncid, varId, dimIds=dimIds)
+      if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
+        msg="Error inquiring variable "//trim(variableName), &
+        line=__LINE__, &
+        file=__FILE__, &
+        rcToReturn=rc)) return  ! bail out
+
+      if (dimIds(ndims) /= uid) then
+        call ESMF_LogSetError(ESMF_RC_NOT_VALID, &
+          msg="Variable "//trim(variableName)//" does not have unlimited dimensions", &
+          line=__LINE__, &
+          file=__FILE__, &
+          rcToReturn=rc)
+        return
+      end if
+
+      do item = 1, ndims
+        ncStatus = nf90_inquire_dimension(IO % IOLayout(lde) % ncid, dimIds(item), len=dimLen(item))
+        if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
+          msg="Unable to retrieve dimension length", &
+          line=__LINE__, &
+          file=__FILE__, &
+          rcToReturn=rc)) return  ! bail out
+      end do
+
+      if (dimLen(1) /= 19) then
+        call ESMF_LogSetError(ESMF_RC_FILE_UNEXPECTED, &
+          msg="String length must be 19 for variable "//trim(variableName), &
+          line=__LINE__, &
+          file=__FILE__, &
+          rcToReturn=rc)
+        return  ! bail out
+      end if
+
+      allocate(timesList(dimLen(2)), timeStrings(dimlen(2)), stat=localrc)
+      if (ESMF_LogFoundAllocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__, &
+        file=__FILE__, &
+        rcToReturn=rc)) return  ! bail out
+
+      timeStrings = ""
+      ncStatus = nf90_get_var(IO % IOLayout(lde) % ncid, varId, timeStrings)
+      if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
+        msg="Error reading variable "//trim(variableName), &
+        line=__LINE__, &
+        file=__FILE__, &
+        rcToReturn=rc)) return  ! bail out
+
+      do item = 1, dimlen(2)
+        read(timeStrings(item), '(i4.4,5(1x,i2.2))', iostat=localrc) yy, mm, dd, h, m, s
+        if (localrc /= 0) then
+          call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, &
+            msg="Unable to read timestamp", &
+            line=__LINE__, &
+            file=__FILE__, &
+            rcToReturn=rc)
+          return  ! bail out
+        end if
+        call ESMF_TimeSet(timesList(item), yy=yy, mm=mm, dd=dd, h=h, m=m, s=s, rc=localrc)
+        if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, &
+          file=__FILE__, &
+          rcToReturn=rc)) return  ! bail out
+      end do
+
+      deallocate(timeStrings, stat=localrc)
+      if (ESMF_LogFoundDeallocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__, &
+        file=__FILE__, &
+        rcToReturn=rc)) return  ! bail out
+
+#else
+      call ESMF_LogSetError(rcToCheck=ESMF_RC_LIB_NOT_PRESENT, &
+        msg="- AQMIO was not built with NetCDF support", &
+        line=__LINE__, &
+        file=__FILE__, &
+        rcToReturn=rc)
+#endif
+    end if
+
+  end subroutine AQMIO_TimesRead
 
 !------------------------------------------------------------------------------
 

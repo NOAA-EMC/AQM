@@ -110,9 +110,9 @@ LOGICAL FUNCTION DESC3( FNAME )
 
     NLAYS3D = 1
 
-    NVARS3D = aqm_emis_num
-    VNAME3D( 1:NVARS3D ) = aqm_emis_def( 1:NVARS3D, 1 )
-    UNITS3D( 1:NVARS3D ) = aqm_emis_def( 1:NVARS3D, 2 )
+    NVARS3D = size( aqm_emis_ref_table, dim=1 )
+    VNAME3D( 1:NVARS3D ) = aqm_emis_ref_table( 1:NVARS3D, 1 )
+    UNITS3D( 1:NVARS3D ) = aqm_emis_ref_table( 1:NVARS3D, 2 )
 
   ELSE IF ( TRIM( FNAME ) .EQ. TRIM( GRID_DOT_2D ) ) THEN
     NVARS3D = 1
@@ -452,7 +452,6 @@ logical function interpx( fname, vname, pname, &
   integer :: lbuf, lu_index
   logical :: set_non_neg
   real,              dimension(:),     allocatable :: X3FACE_GD
-  real(AQM_KIND_R4), dimension(:,:),   allocatable :: buf2d
   real(AQM_KIND_R8), dimension(:,:),   pointer     :: lat, lon
   real(AQM_KIND_R8), dimension(:,:),   pointer     :: p2d
   real(AQM_KIND_R8), dimension(:,:,:), pointer     :: p3d
@@ -663,33 +662,9 @@ logical function interpx( fname, vname, pname, &
   else if (trim(fname) == trim(EMIS_1)) then
 
     ! -- read in emissions
-    allocate(buf2d(col0:col1,row0:row1), stat=localrc)
+    call aqm_emis_read(vname, buffer, rc=localrc)
     if (aqm_rc_test((localrc /= 0), &
-      msg="Failure to allocate emission buffer", &
-      file=__FILE__, line=__LINE__)) return
-
-    call aqm_emis_read(vname, jdate, jtime, buf2d, rc=localrc)
-    if (.not.aqm_rc_check(localrc, &
       msg="Failure to read emissions for " // vname, &
-      file=__FILE__, line=__LINE__)) then
-
-      call aqm_model_get(config=config, stateIn=stateIn, rc=localrc)
-      if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
-        file=__FILE__, line=__LINE__)) return
-
-      k = 0
-      do r = row0, row1
-        do c = col0, col1
-          k = k + 1
-          buffer(k) = buf2d(c,r) / stateIn % area(c,r)
-        end do
-      end do
-
-    end if
-
-    deallocate(buf2d, stat=localrc)
-    if (aqm_rc_test((localrc /= 0), &
-      msg="Failure to deallocate emission buffer", &
       file=__FILE__, line=__LINE__)) return
 
   else if (trim(fname) == trim(MET_CRO_3D)) then
@@ -881,7 +856,6 @@ LOGICAL FUNCTION  XTRACT3 ( FNAME, VNAME,                           &
   integer :: c, r, l, k, lbuf, lu_index
   type(aqm_config_type),  pointer :: config
   type(aqm_state_type),   pointer :: stateIn
-  real(AQM_KIND_R4), dimension(:,:), allocatable :: buf2d
 
   include SUBST_FILES_ID
 

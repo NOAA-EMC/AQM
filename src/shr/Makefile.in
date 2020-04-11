@@ -106,6 +106,7 @@ am_libshr_a_OBJECTS = libshr_a-aqm_clock_mod.$(OBJEXT) \
 	libshr_a-aqm_methods.$(OBJEXT) \
 	libshr_a-aqm_species_mod.$(OBJEXT) \
 	libshr_a-aqm_state_mod.$(OBJEXT) \
+	libshr_a-aqm_tools_mod.$(OBJEXT) \
 	libshr_a-aqm_tracers_mod.$(OBJEXT) \
 	libshr_a-aqm_types_mod.$(OBJEXT)
 libshr_a_OBJECTS = $(am_libshr_a_OBJECTS)
@@ -271,7 +272,7 @@ noinst_LIBRARIES = libshr.a
 libshr_a_SOURCES = aqm_clock_mod.F90 aqm_comm_mod.F90 aqm_config_mod.F90 aqm_const_mod.F90 \
 	aqm_data_mod.F90 aqm_domain_mod.F90 aqm_emis_mod.F90 aqm_io_mod.F90 aqm_iolayout_mod.F90 \
 	aqm_model_mod.F90 aqm_rc_mod.F90 aqm_methods.F90 aqm_species_mod.F90 \
-	aqm_state_mod.F90 aqm_tracers_mod.F90 aqm_types_mod.F90
+	aqm_state_mod.F90 aqm_tools_mod.F90 aqm_tracers_mod.F90 aqm_types_mod.F90
 
 libshr_a_CPPFLAGS = -DSUBST_CONST=\"CONST.EXT\" -DSUBST_FILES_ID=\"FILES_CTM.EXT\"
 libshr_a_FCFLAGS = -I $(builddir)/../io/ioapi -I \
@@ -418,6 +419,12 @@ libshr_a-aqm_state_mod.o: aqm_state_mod.F90
 
 libshr_a-aqm_state_mod.obj: aqm_state_mod.F90
 	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libshr_a_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_state_mod.obj `if test -f 'aqm_state_mod.F90'; then $(CYGPATH_W) 'aqm_state_mod.F90'; else $(CYGPATH_W) '$(srcdir)/aqm_state_mod.F90'; fi`
+
+libshr_a-aqm_tools_mod.o: aqm_tools_mod.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libshr_a_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_tools_mod.o `test -f 'aqm_tools_mod.F90' || echo '$(srcdir)/'`aqm_tools_mod.F90
+
+libshr_a-aqm_tools_mod.obj: aqm_tools_mod.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libshr_a_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_tools_mod.obj `if test -f 'aqm_tools_mod.F90'; then $(CYGPATH_W) 'aqm_tools_mod.F90'; else $(CYGPATH_W) '$(srcdir)/aqm_tools_mod.F90'; fi`
 
 libshr_a-aqm_tracers_mod.o: aqm_tracers_mod.F90
 	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libshr_a_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_tracers_mod.o `test -f 'aqm_tracers_mod.F90' || echo '$(srcdir)/'`aqm_tracers_mod.F90
@@ -647,9 +654,8 @@ libshr_a-aqm_config_mod.$(OBJEXT): libshr_a-aqm_comm_mod.$(OBJEXT) libshr_a-aqm_
 libshr_a-aqm_const_mod.$(OBJEXT): libshr_a-aqm_types_mod.$(OBJEXT)
 libshr_a-aqm_data_mod.$(OBJEXT): libshr_a-aqm_rc_mod.$(OBJEXT) libshr_a-aqm_types_mod.$(OBJEXT)
 libshr_a-aqm_domain_mod.$(OBJEXT): libshr_a-aqm_types_mod.$(OBJEXT)
-libshr_a-aqm_emis_mod.$(OBJEXT): libshr_a-aqm_comm_mod.$(OBJEXT) libshr_a-aqm_config_mod.$(OBJEXT) \
-	libshr_a-aqm_io_mod.$(OBJEXT) libshr_a-aqm_model_mod.$(OBJEXT) libshr_a-aqm_rc_mod.$(OBJEXT) \
-	libshr_a-aqm_types_mod.$(OBJEXT)
+libshr_a-aqm_emis_mod.$(OBJEXT): libshr_a-aqm_model_mod.$(OBJEXT) libshr_a-aqm_rc_mod.$(OBJEXT) \
+	libshr_a-aqm_tools_mod.$(OBJEXT) libshr_a-aqm_types_mod.$(OBJEXT)
 libshr_a-aqm_io_mod.$(OBJEXT): libshr_a-aqm_comm_mod.$(OBJEXT) libshr_a-aqm_model_mod.$(OBJEXT) \
 	libshr_a-aqm_rc_mod.$(OBJEXT) libshr_a-aqm_types_mod.$(OBJEXT)
 libshr_a-aqm_model_mod.$(OBJEXT): libshr_a-aqm_clock_mod.$(OBJEXT) libshr_a-aqm_comm_mod.$(OBJEXT) \
@@ -660,6 +666,7 @@ libshr_a-aqm_methods.$(OBJEXT): libshr_a-aqm_model_mod.$(OBJEXT) libshr_a-aqm_em
 	libshr_a-aqm_rc_mod.$(OBJEXT) libshr_a-aqm_types_mod.$(OBJEXT) libshr_a-aqm_io_mod.$(OBJEXT) \
 	libshr_a-aqm_config_mod.$(OBJEXT) libshr_a-aqm_const_mod.$(OBJEXT)
 libshr_a-aqm_state_mod.$(OBJEXT): libshr_a-aqm_types_mod.$(OBJEXT)
+libshr_a-aqm_tools_mod.$(OBJEXT): libshr_a-aqm_types_mod.$(OBJEXT)
 libshr_a-aqm_tracers_mod.$(OBJEXT): libshr_a-aqm_rc_mod.$(OBJEXT) libshr_a-aqm_config_mod.$(OBJEXT)
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

@@ -59,6 +59,14 @@ contains
     if (aqm_rc_check(localrc, msg="Failed to initialize CMAQ", &
       file=__FILE__, line=__LINE__, rc=rc)) return
 
+    ! -- initialize emissions
+    call cmaq_emis_init(rc=localrc)
+    if (aqm_rc_check(localrc, msg="Failed to initialize CMAQ", &
+      file=__FILE__, line=__LINE__, rc=rc)) return
+
+    ! -- print out emissions table
+    if (aqm_comm_isroot()) call cmaq_emis_print(cmaq_logdev)
+
     ! -- print out model configuration
     if (aqm_comm_isroot()) then
       write(cmaq_logdev,'(28("-"))')

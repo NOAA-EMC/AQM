@@ -3,6 +3,8 @@ module cmaq_mod
   use aqm_rc_mod
   use aqm_types_mod
   use aqm_const_mod, only : rdgas
+  use aqm_emis_mod
+  use aqm_tools_mod, only : aqm_units_conv
 
   use PAGRD_DEFN
   USE PA_DEFN, Only: LIPR, LIRR
@@ -10,7 +12,9 @@ module cmaq_mod
 
   use cgrid_spcs
 
-  use UTILIO_DEFN, only : INIT3, MXVARS3
+  use AERO_DATA,   only : aerolist, n_aerolist
+
+  use UTILIO_DEFN, only : INDEX1, INIT3, MXVARS3
 
   implicit none
 
@@ -24,6 +28,8 @@ module cmaq_mod
 
   public :: cmaq_advance
   public :: cmaq_init
+  public :: cmaq_emis_init
+  public :: cmaq_emis_print
   public :: cmaq_species_read
   public :: cmaq_export
   public :: cmaq_import
@@ -313,5 +319,108 @@ contains
       minval(cgrid), maxval(cgrid)
 
   end subroutine cmaq_export
+
+  subroutine cmaq_emis_init(rc)
+
+    integer, optional, intent(out) :: rc
+
+    ! -- local variables
+    integer :: stat
+    integer :: area_flag, ltable, n, spc
+    integer, allocatable :: umap(:)
+
+    ! -- begin
+    if (present(rc)) rc = AQM_RC_SUCCESS
+
+    ! -- set proper units for input emissions
+    ! -- performing conversions if necessary
+
+    ! -- check if internal emissions reference table was allocated
+    if (aqm_rc_test(.not.allocated(aqm_emis_ref_table), &
+      msg="cmaq_emis_init: internal emissions table not allocated", &
+      file=__FILE__, line=__LINE__, rc=rc)) return
+
+    ! -- add internal units to emissions reference table
+    ltable = size(aqm_emis_ref_table, dim=1)
+
+    ! -- gas species
+    do n = 1, n_gc_spc
+      spc = index1( gc_emis( n ), ltable, aqm_emis_ref_table(:,1) )
+      if (spc > 0) aqm_emis_ref_table(spc,2) = "MOL/S"
+    end do
+    ! -- non reactive
+    do n = 1, n_nr_spc
+      spc = index1( nr_emis( n ), ltable, aqm_emis_ref_table(:,1) )
+      if (spc > 0) aqm_emis_ref_table(spc,2) = "MOL/S"
+    end do
+    ! -- aerosol species
+    ! -- these must go last since they should override particulate sources
+    ! -- for the previous categories
+    do n = 1, n_aerolist
+      if ( aerolist( n ) % emis( 1:1 ) /= ' ' ) then
+        spc = index1( aerolist( n ) % emis, ltable, aqm_emis_ref_table(:,1) )
+        if (spc > 0) aqm_emis_ref_table(spc,2) = "G/S"
+      end if
+    end do
+
+    allocate(umap(size(aqm_emis_species)), stat=stat)
+    if (aqm_rc_test(stat /= 0, &
+      msg="cmaq_emis_init: unable to allocate memory", &
+      file=__FILE__, line=__LINE__, rc=rc)) return
+    umap = 0
+
+    do n = 1, size(aqm_emis_species)
+      spc = index1( aqm_emis_species( n ), ltable, aqm_emis_ref_table(:,1) )
+      if (spc > 0) umap(n) = spc
+    end do
+
+    ! -- include conversion factors from source units to internal units
+    do n = 1, size(aqm_emis_species)
+      aqm_emis_dens_flag(n) = 0
+      spc = index1( aqm_emis_species(n), n_ae_emis, ae_emis )
+      if (spc > 0) then
+        aqm_emis_factors(n) = aqm_emis_factors(n) &
+          * aqm_units_conv( aqm_emis_units(n), aqm_emis_ref_table(umap(n),2), ae_molwt(ae_emis_map(spc)), aqm_emis_dens_flag(n) )
+      end if
+      spc = index1( aqm_emis_species(n), n_gc_emis, gc_emis )
+      if (spc > 0) then
+        aqm_emis_factors(n) = aqm_emis_factors(n) &
+          * aqm_units_conv( aqm_emis_units(n), aqm_emis_ref_table(umap(n),2), gc_molwt(gc_emis_map(spc)), aqm_emis_dens_flag(n) )
+      end if
+      spc = index1( aqm_emis_species(n), n_nr_emis, nr_emis )
+      if (spc > 0) then
+        aqm_emis_factors(n) = aqm_emis_factors(n) &
+          * aqm_units_conv( aqm_emis_units(n), aqm_emis_ref_table(umap(n),2), nr_molwt(nr_emis_map(spc)), aqm_emis_dens_flag(n) )
+      end if
+    end do
+
+    deallocate(umap, stat=stat)
+    if (aqm_rc_test(stat /= 0, &
+      msg="cmaq_emis_init: unable to deallocate memory", &
+      file=__FILE__, line=__LINE__, rc=rc)) return
+
+  end subroutine cmaq_emis_init
+
+  subroutine cmaq_emis_print(unit)
+    integer, intent(in) :: unit
+
+    ! -- local variables
+    integer :: ltable, n, spc
+
+    ! -- begin
+    ltable = size(aqm_emis_ref_table, dim=1)
+
+    write(unit,'(2x,58("-"))')
+    write(unit,'(21x,"Emission Table")')
+    write(unit,'(2x,58("-"))')
+    do n = 1, size(aqm_emis_species)
+      spc = index1( aqm_emis_species(n), ltable, aqm_emis_ref_table(:,1) )
+      if (spc > 0) &
+        write(unit,'(2x,i4,2x,a13,4x,a8,1x,"->",1x,a8,4x,g12.5)') n, trim(aqm_emis_species(n)), &
+          trim(aqm_emis_units(n)), trim(aqm_emis_ref_table(spc,2)), aqm_emis_factors(n)
+    end do
+    write(unit,'(2x,58("-"))')
+
+  end subroutine cmaq_emis_print
 
 end module cmaq_mod

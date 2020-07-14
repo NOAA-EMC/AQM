@@ -7,8 +7,13 @@ libdrv_a_CPPFLAGS = -Dverbose_driver
 libdrv_a_FCFLAGS  = -I $(builddir)/../shr
 libdrv_a_FCFLAGS += -I $(builddir)/../CMAQ
 libdrv_a_FCFLAGS += -I $(builddir)/../io/ioapi
+libdrv_a_FCFLAGS += -I $(builddir)/../io/aqmio
 
 libdrv_a_DEPENDENCIES = $(builddir)/../shr/libshr.a
+
+include $(ESMFMKFILE)
+
+libdrv_a_FCFLAGS += $(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) $(ESMF_F90COMPILEFREECPP) $(ESMF_F90COMPILECPPFLAGS)
 
 .PHONY: clean-modules
 

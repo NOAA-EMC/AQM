@@ -261,7 +261,9 @@ noinst_LIBRARIES = libdrv.a
 libdrv_a_SOURCES = cmaq_model_mod.F90 cmaq_mod.F90 cmaq_methods.F90
 libdrv_a_CPPFLAGS = -Dverbose_driver
 libdrv_a_FCFLAGS = -I $(builddir)/../shr -I $(builddir)/../CMAQ -I \
-	$(builddir)/../io/ioapi
+	$(builddir)/../io/ioapi -I $(builddir)/../io/aqmio \
+	$(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) \
+	$(ESMF_F90COMPILEFREECPP) $(ESMF_F90COMPILECPPFLAGS)
 libdrv_a_DEPENDENCIES = $(builddir)/../shr/libshr.a
 all: all-am
 
@@ -535,6 +537,8 @@ uninstall-am:
 	mostlyclean-compile mostlyclean-generic pdf pdf-am ps ps-am \
 	tags tags-am uninstall uninstall-am
 
+
+include $(ESMFMKFILE)
 
 .PHONY: clean-modules
 

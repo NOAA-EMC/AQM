@@ -37,7 +37,6 @@ libBIOG = $(BIOG)/$(libCCTM)-
 libCCTM_a_SOURCES += \
 	$(BIOG)/beis3.F \
 	$(BIOG)/checkmem.f \
-	$(BIOG)/chkgrid.F \
 	$(BIOG)/czangle.F \
 	$(BIOG)/getparb.f \
 	$(BIOG)/hrno.F \
@@ -339,8 +338,6 @@ $(libAERO)SOA_DEFN.$(OBJEXT) : \
 # biog
 $(libBIOG)beis3.$(OBJEXT) : \
 	$(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libEMIS)BIOG_EMIS.$(OBJEXT)
-$(libBIOG)chkgrid.$(OBJEXT) : \
-	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
 $(libBIOG)czangle.$(OBJEXT) : $(ICL)/const/CONST.EXT \
 	$(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
 $(libBIOG)hrno.$(OBJEXT) : \

@@ -118,7 +118,6 @@ am_libCCTM_a_OBJECTS = $(AERO)/libCCTM_a-AERO_DATA.$(OBJEXT) \
 	$(AERO)/libCCTM_a-SOA_DEFN.$(OBJEXT) \
 	$(BIOG)/libCCTM_a-beis3.$(OBJEXT) \
 	$(BIOG)/libCCTM_a-checkmem.$(OBJEXT) \
-	$(BIOG)/libCCTM_a-chkgrid.$(OBJEXT) \
 	$(BIOG)/libCCTM_a-czangle.$(OBJEXT) \
 	$(BIOG)/libCCTM_a-getparb.$(OBJEXT) \
 	$(BIOG)/libCCTM_a-hrno.$(OBJEXT) \
@@ -441,12 +440,12 @@ libCCTM_a_SOURCES = $(AERO)/AERO_DATA.F $(AERO)/aero_depv.F \
 	$(AERO)/opavis.F $(AERO)/oppmdiag.F $(AERO)/opapmdiag.F \
 	$(AERO)/PRECURSOR_DATA.F $(AERO)/PMDIAG_DATA.F \
 	$(AERO)/SOA_DEFN.F $(BIOG)/beis3.F $(BIOG)/checkmem.f \
-	$(BIOG)/chkgrid.F $(BIOG)/czangle.F $(BIOG)/getparb.f \
-	$(BIOG)/hrno.F $(BIOG)/parsline.f $(BIOG)/tmpbeis.F \
-	$(BIOG)/wrdaymsg.f $(CLOUD)/hlconst.F $(DEPV)/ABFLUX_MOD.F \
-	$(DEPV)/BIDI_MOD.F $(DEPV)/cgrid_depv.F $(DEPV)/DEPV_DEFN.F \
-	$(DEPV)/DEPVVARS.F $(DEPV)/gas_depv_map.F $(DEPV)/HGSIM.F \
-	$(DEPV)/LSM_MOD.F $(DEPV)/MOSAIC_MOD.F $(DEPV)/opdepv_diag.F \
+	$(BIOG)/czangle.F $(BIOG)/getparb.f $(BIOG)/hrno.F \
+	$(BIOG)/parsline.f $(BIOG)/tmpbeis.F $(BIOG)/wrdaymsg.f \
+	$(CLOUD)/hlconst.F $(DEPV)/ABFLUX_MOD.F $(DEPV)/BIDI_MOD.F \
+	$(DEPV)/cgrid_depv.F $(DEPV)/DEPV_DEFN.F $(DEPV)/DEPVVARS.F \
+	$(DEPV)/gas_depv_map.F $(DEPV)/HGSIM.F $(DEPV)/LSM_MOD.F \
+	$(DEPV)/MOSAIC_MOD.F $(DEPV)/opdepv_diag.F \
 	$(DEPV)/opdepv_mos.F $(DEPV)/opdepv_fst.F $(DEPV)/m3dry.F \
 	$(EMIS)/BEIS_DEFN.F $(EMIS)/BIOG_EMIS.F $(EMIS)/cropcal.F \
 	$(EMIS)/DUST_EMIS.F $(EMIS)/EMIS_DEFN.F $(EMIS)/LTNG_DEFN.F \
@@ -667,8 +666,6 @@ $(BIOG)/$(DEPDIR)/$(am__dirstamp):
 $(BIOG)/libCCTM_a-beis3.$(OBJEXT): $(BIOG)/$(am__dirstamp) \
 	$(BIOG)/$(DEPDIR)/$(am__dirstamp)
 $(BIOG)/libCCTM_a-checkmem.$(OBJEXT): $(BIOG)/$(am__dirstamp) \
-	$(BIOG)/$(DEPDIR)/$(am__dirstamp)
-$(BIOG)/libCCTM_a-chkgrid.$(OBJEXT): $(BIOG)/$(am__dirstamp) \
 	$(BIOG)/$(DEPDIR)/$(am__dirstamp)
 $(BIOG)/libCCTM_a-czangle.$(OBJEXT): $(BIOG)/$(am__dirstamp) \
 	$(BIOG)/$(DEPDIR)/$(am__dirstamp)
@@ -1119,12 +1116,6 @@ $(BIOG)/libCCTM_a-beis3.o: $(BIOG)/beis3.F
 
 $(BIOG)/libCCTM_a-beis3.obj: $(BIOG)/beis3.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(BIOG)/libCCTM_a-beis3.obj `if test -f '$(BIOG)/beis3.F'; then $(CYGPATH_W) '$(BIOG)/beis3.F'; else $(CYGPATH_W) '$(srcdir)/$(BIOG)/beis3.F'; fi`
-
-$(BIOG)/libCCTM_a-chkgrid.o: $(BIOG)/chkgrid.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(BIOG)/libCCTM_a-chkgrid.o `test -f '$(BIOG)/chkgrid.F' || echo '$(srcdir)/'`$(BIOG)/chkgrid.F
-
-$(BIOG)/libCCTM_a-chkgrid.obj: $(BIOG)/chkgrid.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(BIOG)/libCCTM_a-chkgrid.obj `if test -f '$(BIOG)/chkgrid.F'; then $(CYGPATH_W) '$(BIOG)/chkgrid.F'; else $(CYGPATH_W) '$(srcdir)/$(BIOG)/chkgrid.F'; fi`
 
 $(BIOG)/libCCTM_a-czangle.o: $(BIOG)/czangle.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(BIOG)/libCCTM_a-czangle.o `test -f '$(BIOG)/czangle.F' || echo '$(srcdir)/'`$(BIOG)/czangle.F
@@ -2192,8 +2183,6 @@ $(libAERO)SOA_DEFN.$(OBJEXT) : \
 # biog
 $(libBIOG)beis3.$(OBJEXT) : \
 	$(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libEMIS)BIOG_EMIS.$(OBJEXT)
-$(libBIOG)chkgrid.$(OBJEXT) : \
-	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
 $(libBIOG)czangle.$(OBJEXT) : $(ICL)/const/CONST.EXT \
 	$(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
 $(libBIOG)hrno.$(OBJEXT) : \

@@ -102,7 +102,6 @@ am_libioapi_a_OBJECTS = libioapi_a-crlf.$(OBJEXT) \
 	libioapi_a-julian.$(OBJEXT) libioapi_a-junit.$(OBJEXT) \
 	libioapi_a-hhmmss.$(OBJEXT) libioapi_a-mmddyy.$(OBJEXT) \
 	libioapi_a-nextime.$(OBJEXT) libioapi_a-poly.$(OBJEXT) \
-	libioapi_a-promptffile.$(OBJEXT) \
 	libioapi_a-promptmfile.$(OBJEXT) libioapi_a-sec2time.$(OBJEXT) \
 	libioapi_a-secsdiff.$(OBJEXT) libioapi_a-setlam.$(OBJEXT) \
 	libioapi_a-sortic.$(OBJEXT) libioapi_a-str2real.$(OBJEXT) \
@@ -304,10 +303,10 @@ top_srcdir = @top_srcdir@
 noinst_LIBRARIES = libioapi.a
 libioapi_a_SOURCES = FDESC3.EXT PARMS3.EXT crlf.F currec.f currstep.f \
 	dt2str.f findc.f getefile.F index1.f julian.F junit.F hhmmss.f \
-	mmddyy.F nextime.F poly.f promptffile.f promptmfile.f \
-	sec2time.f secsdiff.F setlam.f sortic.f str2real.f time2sec.f \
-	upcase.f wkday.F yr2day.F m3exit.F90 m3mesg.F90 m3msg2.F90 \
-	m3warn.F90 m3utilio.F90
+	mmddyy.F nextime.F poly.f promptmfile.f sec2time.f secsdiff.F \
+	setlam.f sortic.f str2real.f time2sec.f upcase.f wkday.F \
+	yr2day.F m3exit.F90 m3mesg.F90 m3msg2.F90 m3warn.F90 \
+	m3utilio.F90
 libioapi_a_FFLAGS = $(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) $(ESMF_F90COMPILEFREECPP) $(ESMF_F90COMPILECPPFLAGS)
 libioapi_a_FCFLAGS = $(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) \
 	$(ESMF_F90COMPILEFREECPP) $(ESMF_F90COMPILECPPFLAGS) \
@@ -507,12 +506,6 @@ libioapi_a-poly.o: poly.f
 
 libioapi_a-poly.obj: poly.f
 	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-poly.obj `if test -f 'poly.f'; then $(CYGPATH_W) 'poly.f'; else $(CYGPATH_W) '$(srcdir)/poly.f'; fi`
-
-libioapi_a-promptffile.o: promptffile.f
-	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-promptffile.o `test -f 'promptffile.f' || echo '$(srcdir)/'`promptffile.f
-
-libioapi_a-promptffile.obj: promptffile.f
-	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-promptffile.obj `if test -f 'promptffile.f'; then $(CYGPATH_W) 'promptffile.f'; else $(CYGPATH_W) '$(srcdir)/promptffile.f'; fi`
 
 libioapi_a-promptmfile.o: promptmfile.f
 	$(AM_V_F77)$(F77) $(libioapi_a_FFLAGS) $(FFLAGS) -c -o libioapi_a-promptmfile.o `test -f 'promptmfile.f' || echo '$(srcdir)/'`promptmfile.f

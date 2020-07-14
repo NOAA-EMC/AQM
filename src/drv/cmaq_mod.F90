@@ -326,8 +326,16 @@ contains
 
     ! -- local variables
     integer :: stat
+    integer :: item
     integer :: area_flag, ltable, n, spc
     integer, allocatable :: umap(:)
+    type(aqm_internal_emis_type), pointer :: em
+
+    ! -- local parameters
+    character(len=*), parameter :: etype(2) = (/ &
+      "anthropogenic", &
+      "biogenic     "  &
+    /)
 
     ! -- begin
     if (present(rc)) rc = AQM_RC_SUCCESS
@@ -336,68 +344,103 @@ contains
     ! -- performing conversions if necessary
 
     ! -- check if internal emissions reference table was allocated
-    if (aqm_rc_test(.not.allocated(aqm_emis_ref_table), &
-      msg="cmaq_emis_init: internal emissions table not allocated", &
-      file=__FILE__, line=__LINE__, rc=rc)) return
+    do item = 1, size(etype)
 
-    ! -- add internal units to emissions reference table
-    ltable = size(aqm_emis_ref_table, dim=1)
+      nullify(em)
+      em => aqm_emis_get(trim(etype(item)))
 
-    ! -- gas species
-    do n = 1, n_gc_spc
-      spc = index1( gc_emis( n ), ltable, aqm_emis_ref_table(:,1) )
-      if (spc > 0) aqm_emis_ref_table(spc,2) = "MOL/S"
-    end do
-    ! -- non reactive
-    do n = 1, n_nr_spc
-      spc = index1( nr_emis( n ), ltable, aqm_emis_ref_table(:,1) )
-      if (spc > 0) aqm_emis_ref_table(spc,2) = "MOL/S"
-    end do
-    ! -- aerosol species
-    ! -- these must go last since they should override particulate sources
-    ! -- for the previous categories
-    do n = 1, n_aerolist
-      if ( aerolist( n ) % emis( 1:1 ) /= ' ' ) then
-        spc = index1( aerolist( n ) % emis, ltable, aqm_emis_ref_table(:,1) )
-        if (spc > 0) aqm_emis_ref_table(spc,2) = "G/S"
+      if (associated(em)) then
+
+        select case (trim(etype(item)))
+          case ("anthropogenic")
+
+          ! -- check if internal emissions reference table was allocated
+          if (aqm_rc_test(.not.associated(em % table), &
+            msg="cmaq_emis_init: internal emissions table not allocated", &
+            file=__FILE__, line=__LINE__, rc=rc)) return
+
+          ! -- add internal units to emissions reference table
+          ltable = size(em % table, dim=1)
+
+          ! -- gas species
+          do n = 1, n_gc_spc
+            spc = index1( gc_emis( n ), ltable, em % table(:,1) )
+            if (spc > 0) em % table(spc,2) = "MOL/S"
+          end do
+          ! -- non reactive
+          do n = 1, n_nr_spc
+            spc = index1( nr_emis( n ), ltable, em % table(:,1) )
+            if (spc > 0) em % table(spc,2) = "MOL/S"
+          end do
+          ! -- aerosol species
+          ! -- these must go last since they should override particulate sources
+          ! -- for the previous categories
+          do n = 1, n_aerolist
+            if ( aerolist( n ) % emis( 1:1 ) /= ' ' ) then
+              spc = index1( aerolist( n ) % emis, ltable, em % table(:,1) )
+              if (spc > 0) em % table(spc,2) = "G/S"
+            end if
+          end do
+
+          allocate(umap(size(em % species)), stat=stat)
+          if (aqm_rc_test(stat /= 0, &
+            msg="cmaq_emis_init: unable to allocate memory", &
+            file=__FILE__, line=__LINE__, rc=rc)) return
+          umap = 0
+
+          do n = 1, size(em % species)
+            spc = index1( em % species( n ), ltable, em % table(:,1) )
+            if (spc > 0) umap(n) = spc
+          end do
+
+          ! -- include conversion factors from source units to internal units
+          do n = 1, size(em % species)
+            em % dens_flag(n) = 0
+            spc = index1( em % species(n), n_ae_emis, ae_emis )
+            if (spc > 0) then
+              em % factors(n) = em % factors(n) &
+                * aqm_units_conv( em % units(n), em % table(umap(n),2), ae_molwt(ae_emis_map(spc)), em % dens_flag(n) )
+            end if
+            spc = index1( em % species(n), n_gc_emis, gc_emis )
+            if (spc > 0) then
+              em % factors(n) = em % factors(n) &
+                * aqm_units_conv( em % units(n), em % table(umap(n),2), gc_molwt(gc_emis_map(spc)), em % dens_flag(n) )
+            end if
+            spc = index1( em % species(n), n_nr_emis, nr_emis )
+            if (spc > 0) then
+              em % factors(n) = em % factors(n) &
+                * aqm_units_conv( em % units(n), em % table(umap(n),2), nr_molwt(nr_emis_map(spc)), em % dens_flag(n) )
+            end if
+          end do
+
+          nullify(em)
+
+          deallocate(umap, stat=stat)
+          if (aqm_rc_test(stat /= 0, &
+            msg="cmaq_emis_init: unable to deallocate memory", &
+            file=__FILE__, line=__LINE__, rc=rc)) return
+
+          case ("biogenic")
+
+          ! -- include conversion factors from source units to internal units
+          do n = 1, size(em % species)
+            em % dens_flag(n) = 0
+            select case (trim(em % units(n)))
+              case ("GMC/HR", "GMN/HR")
+                em % dens_flag(n) = 0
+              case ("1")
+                em % dens_flag(n) = 1
+              case default
+                call aqm_rc_set(AQM_RC_SUCCESS, &
+                  msg="cmaq_emis_init: biogenics: unknown units: "//trim(em % units(n)), &
+                  file=__FILE__, line=__LINE__, rc=rc)
+                return
+            end select
+          end do
+
+        end select
       end if
-    end do
-
-    allocate(umap(size(aqm_emis_species)), stat=stat)
-    if (aqm_rc_test(stat /= 0, &
-      msg="cmaq_emis_init: unable to allocate memory", &
-      file=__FILE__, line=__LINE__, rc=rc)) return
-    umap = 0
-
-    do n = 1, size(aqm_emis_species)
-      spc = index1( aqm_emis_species( n ), ltable, aqm_emis_ref_table(:,1) )
-      if (spc > 0) umap(n) = spc
-    end do
-
-    ! -- include conversion factors from source units to internal units
-    do n = 1, size(aqm_emis_species)
-      aqm_emis_dens_flag(n) = 0
-      spc = index1( aqm_emis_species(n), n_ae_emis, ae_emis )
-      if (spc > 0) then
-        aqm_emis_factors(n) = aqm_emis_factors(n) &
-          * aqm_units_conv( aqm_emis_units(n), aqm_emis_ref_table(umap(n),2), ae_molwt(ae_emis_map(spc)), aqm_emis_dens_flag(n) )
-      end if
-      spc = index1( aqm_emis_species(n), n_gc_emis, gc_emis )
-      if (spc > 0) then
-        aqm_emis_factors(n) = aqm_emis_factors(n) &
-          * aqm_units_conv( aqm_emis_units(n), aqm_emis_ref_table(umap(n),2), gc_molwt(gc_emis_map(spc)), aqm_emis_dens_flag(n) )
-      end if
-      spc = index1( aqm_emis_species(n), n_nr_emis, nr_emis )
-      if (spc > 0) then
-        aqm_emis_factors(n) = aqm_emis_factors(n) &
-          * aqm_units_conv( aqm_emis_units(n), aqm_emis_ref_table(umap(n),2), nr_molwt(nr_emis_map(spc)), aqm_emis_dens_flag(n) )
-      end if
-    end do
-
-    deallocate(umap, stat=stat)
-    if (aqm_rc_test(stat /= 0, &
-      msg="cmaq_emis_init: unable to deallocate memory", &
-      file=__FILE__, line=__LINE__, rc=rc)) return
+    enddo
 
   end subroutine cmaq_emis_init
 
@@ -406,20 +449,27 @@ contains
 
     ! -- local variables
     integer :: ltable, n, spc
+    type(aqm_internal_emis_type), pointer :: em
 
     ! -- begin
-    ltable = size(aqm_emis_ref_table, dim=1)
+    nullify(em)
+    em => aqm_emis_get("anthropogenic")
 
-    write(unit,'(2x,58("-"))')
-    write(unit,'(21x,"Emission Table")')
-    write(unit,'(2x,58("-"))')
-    do n = 1, size(aqm_emis_species)
-      spc = index1( aqm_emis_species(n), ltable, aqm_emis_ref_table(:,1) )
-      if (spc > 0) &
-        write(unit,'(2x,i4,2x,a13,4x,a8,1x,"->",1x,a8,4x,g12.5)') n, trim(aqm_emis_species(n)), &
-          trim(aqm_emis_units(n)), trim(aqm_emis_ref_table(spc,2)), aqm_emis_factors(n)
-    end do
-    write(unit,'(2x,58("-"))')
+    if (associated(em)) then
+
+      ltable = size(em % table, dim=1)
+
+      write(unit,'(2x,58("-"))')
+      write(unit,'(21x,"Emission Table")')
+      write(unit,'(2x,58("-"))')
+      do n = 1, size(em % species)
+        spc = index1( em % species(n), ltable, em % table(:,1) )
+        if (spc > 0) &
+          write(unit,'(2x,i4,2x,a13,4x,a8,1x,"->",1x,a8,4x,g12.5)') n, trim(em % species(n)), &
+            trim(em % units(n)), trim(em % table(spc,2)), em % factors(n)
+      end do
+      write(unit,'(2x,58("-"))')
+    end if
 
   end subroutine cmaq_emis_print
 

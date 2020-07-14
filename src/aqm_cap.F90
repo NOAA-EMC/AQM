@@ -592,7 +592,7 @@ module AQM
     rc = ESMF_SUCCESS
 
     ! finalize model
-    call aqm_comp_finalize(rc)
+    call aqm_comp_finalize(model, rc)
 
   end subroutine ModelFinalize
 

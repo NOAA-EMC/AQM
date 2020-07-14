@@ -25,7 +25,7 @@ lib_LIBRARIES = libaqm.a
 
 libaqm_a_SOURCES = aqm_cap.F90 aqm_comp_mod.F90
 
-libaqm_a_FCFLAGS  = -I shr -I drv -I io/ioapi -I CMAQ/
+libaqm_a_FCFLAGS  = -I shr -I drv -I io/aqmio -I io/ioapi -I CMAQ/
 libaqm_a_FCFLAGS += $(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) $(ESMF_F90COMPILEFREECPP) $(ESMF_F90COMPILECPPFLAGS)
 
 libaqm_a_LIBADD = drv/libdrv_a-*.$(OBJEXT) shr/libshr_a-*.$(OBJEXT) io/ioapi/*.$(OBJEXT) io/aqmio/*.$(OBJEXT) $(cmaq_objects)

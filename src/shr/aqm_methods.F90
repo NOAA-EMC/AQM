@@ -1,3 +1,14 @@
+LOGICAL FUNCTION CHKGRID( FNAME )
+
+  IMPLICIT NONE
+
+  CHARACTER( * ), INTENT( IN )  :: FNAME   ! File name
+
+  CHKGRID = .TRUE.
+
+END FUNCTION CHKGRID
+
+
 LOGICAL FUNCTION  DSCGRID( GNAME, CNAME,                             &
                            CTYPE, P_ALP, P_BET, P_GAM, XCENT, YCENT, &
                            XORIG, YORIG, XCELL, YCELL, NCOLS, NROWS, NTHIK )
@@ -106,13 +117,13 @@ LOGICAL FUNCTION DESC3( FNAME )
     NCOLS3D = ie - is + 1
     NROWS3D = je - js + 1
 
+  ELSE IF ( TRIM( FNAME ) .EQ. 'B3GRD' ) THEN
+
+    call aqm_emis_desc("biogenic", NLAYS3D, NVARS3D, VNAME3D, UNITS3D)
+
   ELSE IF ( TRIM( FNAME ) .EQ. TRIM( EMIS_1 ) ) THEN
 
-    NLAYS3D = 1
-
-    NVARS3D = size( aqm_emis_ref_table, dim=1 )
-    VNAME3D( 1:NVARS3D ) = aqm_emis_ref_table( 1:NVARS3D, 1 )
-    UNITS3D( 1:NVARS3D ) = aqm_emis_ref_table( 1:NVARS3D, 2 )
+    call aqm_emis_desc("anthropogenic", NLAYS3D, NVARS3D, VNAME3D, UNITS3D)
 
   ELSE IF ( TRIM( FNAME ) .EQ. TRIM( GRID_DOT_2D ) ) THEN
     NVARS3D = 1
@@ -265,6 +276,7 @@ END FUNCTION DESC3
 
 logical function envyn(name, description, defaultval, status)
 
+  use aqm_emis_mod,  only : aqm_internal_emis_type, aqm_emis_get
   use aqm_model_mod, only : aqm_config_type, aqm_model_get
   use aqm_rc_mod,    only : aqm_rc_check
 
@@ -278,6 +290,7 @@ logical function envyn(name, description, defaultval, status)
   ! -- local variables
   integer :: deCount, localrc
   type(aqm_config_type), pointer :: config
+  type(aqm_internal_emis_type), pointer :: em
 
   ! -- begin
   envyn = defaultval
@@ -294,6 +307,16 @@ logical function envyn(name, description, defaultval, status)
   if (deCount < 1) return
 
   select case (trim(name))
+    case ('BIOSW_YN')
+      envyn = config % biosw_yn
+    case ('SUMMER_YN')
+      envyn = .false.
+      em => aqm_emis_get("biogenic")
+      if (associated(em)) envyn = (trim(em % period) == "summer")
+    case ('CTM_BIOGEMIS')
+      envyn = .false.
+      em => aqm_emis_get("biogenic")
+      envyn = associated(em)
     case ('CTM_DEPVFILE')
       envyn = config % ctm_depvfile
     case ('CTM_PMDIAG')
@@ -302,6 +325,8 @@ logical function envyn(name, description, defaultval, status)
       envyn = config % ctm_photodiag
     case ('CTM_GRAV_SETL')
       envyn = .false.
+    case ('INITIAL_RUN')
+      envyn = .true.
     case default
       status = -2
   end select
@@ -366,23 +391,79 @@ END FUNCTION ENVREAL
 
 SUBROUTINE ENVSTR( LNAME, DESC, DEFAULT, EQNAME, STAT )
   USE m3utilio, ONLY : XSTAT0
+  use aqm_emis_mod, ONLY : aqm_internal_emis_type, aqm_emis_get
   IMPLICIT NONE
   CHARACTER*(*), INTENT(IN   ) :: LNAME
   CHARACTER*(*), INTENT(IN   ) :: DESC
   CHARACTER*(*), INTENT(IN   ) :: DEFAULT
   CHARACTER*(*), INTENT(  OUT) :: EQNAME
   INTEGER      , INTENT(  OUT) :: STAT
+  TYPE(aqm_internal_emis_type), POINTER :: em
 
-  EQNAME = ''
+  EQNAME = ""
   STAT = XSTAT0
 
-  IF ( TRIM(LNAME) .EQ. 'GRID_NAME' ) EQNAME = 'Cubed-Sphere'
+  SELECT CASE ( TRIM(LNAME) )
+    CASE ( 'GRID_NAME' )
+      EQNAME = 'Cubed-Sphere'
+    CASE ( 'BIOG_SPRO' )
+      NULLIFY(em)
+      em => aqm_emis_get("biogenic")
+      IF (ASSOCIATED(em)) EQNAME = em % specprofile
+    CASE DEFAULT
+      EQNAME = DEFAULT
+  END SELECT
 
 END SUBROUTINE ENVSTR
 
 
+INTEGER FUNCTION PROMPTFFILE( PROMPT, RDONLY, FMTTED, DEFAULT, CALLER )
+
+  use aqm_emis_mod,  ONLY : aqm_internal_emis_type, aqm_emis_get
+  USE aqm_model_mod, ONLY : aqm_config_type, aqm_model_get
+  USE aqm_rc_mod,    ONLY : aqm_rc_check, aqm_rc_test
+
+  IMPLICIT NONE
+
+! ARGUMENTS and their descriptions:
+
+  CHARACTER*(*), INTENT(IN   ) :: PROMPT         !  prompt for user
+  LOGICAL      , INTENT(IN   ) :: RDONLY         !  TRUE iff file is input-only
+  LOGICAL      , INTENT(IN   ) :: FMTTED         !  TRUE iff file should be formatted
+  CHARACTER*(*), INTENT(IN   ) :: DEFAULT        !  default logical file name
+  CHARACTER*(*), INTENT(IN   ) :: CALLER         !  caller-name for logging messages
+
+  INTEGER :: IDEV
+  INTEGER :: deCount, localrc
+  TYPE(aqm_config_type), pointer :: config
+  TYPE(aqm_internal_emis_type), POINTER :: em
+
+  INTEGER, EXTERNAL :: GETEFILE
+
+  PROMPTFFILE = -1
+
+  IF ( TRIM(DEFAULT) .EQ. 'GSPRO' ) THEN
+
+    NULLIFY(em)
+    em => aqm_emis_get("biogenic")
+    IF (ASSOCIATED(em)) THEN
+
+      IDEV = GETEFILE( DEFAULT, RDONLY, FMTTED, CALLER )
+      IF ( aqm_rc_test( ( IDEV .LT. 0 ), &
+        MSG = 'Could not open input file "' // TRIM( em % specfile ) // '".', &
+        file=__FILE__, line=__LINE__)) RETURN
+
+        PROMPTFFILE = IDEV
+      END IF
+
+  END IF
+
+END FUNCTION PROMPTFFILE
+
+
 subroutine nameval(name, eqname)
 
+  use aqm_emis_mod,  only : aqm_internal_emis_type, aqm_emis_get
   use aqm_model_mod, only : aqm_config_type, aqm_model_get
   use aqm_rc_mod,    only : aqm_rc_check
 
@@ -394,6 +475,7 @@ subroutine nameval(name, eqname)
   ! -- local variables
   integer :: deCount, localrc
   type(aqm_config_type), pointer :: config
+  type(aqm_internal_emis_type), pointer :: em
 
   ! -- begin
   eqname = ""
@@ -416,6 +498,10 @@ subroutine nameval(name, eqname)
       eqname = config % tr_matrix_nml
     case ('CSQY_DATA')
       eqname = config % csqy_data
+    case ('GSPRO')
+      nullify(em)
+      em => aqm_emis_get("biogenic")
+      if (associated(em)) eqname = em % specfile
     case ('OPTICS_DATA')
       eqname = config % optics_data
     case ('OMI')
@@ -662,7 +748,7 @@ logical function interpx( fname, vname, pname, &
   else if (trim(fname) == trim(EMIS_1)) then
 
     ! -- read in emissions
-    call aqm_emis_read(vname, buffer, rc=localrc)
+    call aqm_emis_read("anthropogenic", vname, buffer, rc=localrc)
     if (aqm_rc_test((localrc /= 0), &
       msg="Failure to read emissions for " // vname, &
       file=__FILE__, line=__LINE__)) return
@@ -833,6 +919,7 @@ LOGICAL FUNCTION  XTRACT3 ( FNAME, VNAME,                           &
   use aqm_model_mod, only : aqm_state_type, aqm_model_get
   use aqm_rc_mod,    only : aqm_rc_check, aqm_rc_test
   use aqm_const_mod, only : con_mr2ppm_o3, thrs_p_strato
+  use aqm_emis_mod,  only : aqm_emis_read
   use aqm_io_mod
   use aqm_config_mod
 
@@ -939,6 +1026,14 @@ LOGICAL FUNCTION  XTRACT3 ( FNAME, VNAME,                           &
           end do
         end do
     END SELECT
+
+  ELSE IF ( TRIM(FNAME) .EQ. 'B3GRD' ) THEN
+
+    ! -- read in biogenic emissions
+    call aqm_emis_read("biogenic", vname, buffer, rc=localrc)
+    if (aqm_rc_test((localrc /= 0), &
+      msg="Failure to read emissions for " // vname, &
+      file=__FILE__, line=__LINE__)) return
 
   END IF
 

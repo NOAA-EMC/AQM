@@ -9,6 +9,7 @@ module aqm_comp_mod
   use aqm_model_mod
   use aqm_io_mod
   use aqm_emis_mod
+  use aqm_internal_mod
   use cmaq_model_mod
 
   implicit none
@@ -22,19 +23,35 @@ contains
     integer, optional, intent(out) :: rc
 
     ! -- local variables
-    integer                 :: localrc
+    integer                 :: localrc, stat
     integer                 :: comm
-    integer                 :: yy, mm, dd, h, m
+    integer                 :: deCount
+    integer                 :: yy, mm, dd, h, m, s, julday
     real(ESMF_KIND_R8)      :: dts
     type(ESMF_State)        :: importState, exportState
     type(ESMF_Clock)        :: clock
     type(ESMF_VM)           :: vm
-    type(ESMF_Time)         :: startTime
+    type(ESMF_Time)         :: startTime, stopTime
     type(ESMF_TimeInterval) :: TimeStep
+    type(aqm_internal_state_type) :: is
+    type(aqm_config_type), pointer :: config => null()
 
 
     ! -- begin
     if (present(rc)) rc = ESMF_SUCCESS
+
+    ! -- allocate memory for the internal state and store it into component
+    allocate(is % wrap, stat=stat)
+    if (ESMF_LogFoundAllocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+    call ESMF_GridCompSetInternalState(model, is, rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__)) &
+      return  ! bail out
 
     ! -- query the Component for its clock, importState and exportState
     call NUOPC_ModelGet(model, modelClock=clock, rc=localrc)
@@ -91,7 +108,8 @@ contains
 
     ! -- initialize internal clock
     ! -- get clock information
-    call ESMF_ClockGet(clock, startTime=startTime, timeStep=timeStep, rc=localrc)
+    call ESMF_ClockGet(clock, startTime=startTime, stopTime=stopTime, &
+      timeStep=timeStep, rc=localrc)
     if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__,  &
       file=__FILE__,  &
@@ -130,6 +148,43 @@ contains
         rcToReturn=rc)
       return  ! bail out
     end if
+
+    ! -- set starting and ending dates
+    nullify(config)
+    call aqm_model_get(deCount=deCount, config=config, rc=localrc)
+    if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__)) then
+      call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, msg="Failed to get model config", &
+        line=__LINE__, file=__FILE__, rcToReturn=rc)
+      return  ! bail out
+    end if
+
+    if (deCount < 1) return
+
+    call ESMF_TimeGet(startTime, yy=yy, dayOfYear=julday, h=h, m=m, s=s, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+    config % ctm_stdate =  1000 * yy + julday
+    config % ctm_sttime = 10000 * h + 100 * m + s
+
+    call ESMF_TimeIntervalGet(stopTime-startTime, h=h, m=m, s=s, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+    call ESMF_TimeIntervalGet(timeStep, h=h, m=m, s=s, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+    config % ctm_tstep = 10000 * h + 100 * m + s
 
   end subroutine aqm_comp_create
 
@@ -212,25 +267,16 @@ contains
       file=__FILE__)) &
       return  ! bail out
 
-    call ESMF_ClockGet(clock, currTime=currTime, timeStep=timeStep, &
-      advanceCount=advanceCount, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-
-    call ESMF_TimeIntervalGet(timeStep, h=h, m=m, s=s, s_r8=dts, rc=rc)
+    call ESMF_ClockGet(clock, currTime=currTime, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
 
     ! -- set model internal timestep vector (HHMMSS)
-    tstep( 1 ) = h * 10000 + m * 100 + s    ! TSTEP(1) = local output step
+    tstep( 1 ) = config % ctm_tstep         ! TSTEP(1) = local output step
     tstep( 2 ) = tstep( 1 )                 ! TSTEP(2) = sciproc sync. step (chem)
     tstep( 3 ) = tstep( 2 )                 ! TSTEP(3) = twoway model time step
-
-    config % ctm_tstep = tstep( 1 )
 
     call ESMF_TimeGet(currTime, yy=yy, mm=mm, dd=dd, h=h, m=m, s=s, &
       dayOfYear=julday, timeString=tStamp, rc=rc)
@@ -261,13 +307,14 @@ contains
   end subroutine aqm_comp_advance
 
 
-  subroutine aqm_comp_finalize(rc)
-    integer, intent(out) :: rc
+  subroutine aqm_comp_finalize(model, rc)
+    type(ESMF_GridComp), intent(in)  :: model
+    integer,             intent(out) :: rc
 
     ! -- begin
     rc = ESMF_SUCCESS
 
-    call aqm_emis_finalize(rc=rc)
+    call aqm_emis_finalize(model, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &

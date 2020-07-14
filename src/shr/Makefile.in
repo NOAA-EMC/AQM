@@ -101,7 +101,9 @@ am_libshr_a_OBJECTS = libshr_a-aqm_clock_mod.$(OBJEXT) \
 	libshr_a-aqm_const_mod.$(OBJEXT) \
 	libshr_a-aqm_data_mod.$(OBJEXT) \
 	libshr_a-aqm_domain_mod.$(OBJEXT) \
-	libshr_a-aqm_emis_mod.$(OBJEXT) libshr_a-aqm_io_mod.$(OBJEXT) \
+	libshr_a-aqm_emis_mod.$(OBJEXT) \
+	libshr_a-aqm_internal_mod.$(OBJEXT) \
+	libshr_a-aqm_io_mod.$(OBJEXT) \
 	libshr_a-aqm_iolayout_mod.$(OBJEXT) \
 	libshr_a-aqm_model_mod.$(OBJEXT) libshr_a-aqm_rc_mod.$(OBJEXT) \
 	libshr_a-aqm_methods.$(OBJEXT) \
@@ -272,8 +274,8 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 noinst_LIBRARIES = libshr.a
 libshr_a_SOURCES = aqm_clock_mod.F90 aqm_comm_mod.F90 aqm_config_mod.F90 aqm_const_mod.F90 \
-	aqm_data_mod.F90 aqm_domain_mod.F90 aqm_emis_mod.F90 aqm_io_mod.F90 aqm_iolayout_mod.F90 \
-	aqm_model_mod.F90 aqm_rc_mod.F90 aqm_methods.F90 aqm_species_mod.F90 \
+	aqm_data_mod.F90 aqm_domain_mod.F90 aqm_emis_mod.F90 aqm_internal_mod.F90 aqm_io_mod.F90 \
+	aqm_iolayout_mod.F90 aqm_model_mod.F90 aqm_rc_mod.F90 aqm_methods.F90 aqm_species_mod.F90 \
 	aqm_state_mod.F90 aqm_tools_mod.F90 aqm_tracers_mod.F90 aqm_types_mod.F90
 
 libshr_a_CPPFLAGS = -DSUBST_CONST=\"CONST.EXT\" -DSUBST_FILES_ID=\"FILES_CTM.EXT\"
@@ -379,6 +381,12 @@ libshr_a-aqm_emis_mod.o: aqm_emis_mod.F90
 
 libshr_a-aqm_emis_mod.obj: aqm_emis_mod.F90
 	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libshr_a_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_emis_mod.obj `if test -f 'aqm_emis_mod.F90'; then $(CYGPATH_W) 'aqm_emis_mod.F90'; else $(CYGPATH_W) '$(srcdir)/aqm_emis_mod.F90'; fi`
+
+libshr_a-aqm_internal_mod.o: aqm_internal_mod.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libshr_a_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_internal_mod.o `test -f 'aqm_internal_mod.F90' || echo '$(srcdir)/'`aqm_internal_mod.F90
+
+libshr_a-aqm_internal_mod.obj: aqm_internal_mod.F90
+	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libshr_a_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_internal_mod.obj `if test -f 'aqm_internal_mod.F90'; then $(CYGPATH_W) 'aqm_internal_mod.F90'; else $(CYGPATH_W) '$(srcdir)/aqm_internal_mod.F90'; fi`
 
 libshr_a-aqm_io_mod.o: aqm_io_mod.F90
 	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libshr_a_CPPFLAGS) $(CPPFLAGS) $(libshr_a_FCFLAGS) $(FCFLAGS) -c -o libshr_a-aqm_io_mod.o `test -f 'aqm_io_mod.F90' || echo '$(srcdir)/'`aqm_io_mod.F90
@@ -656,8 +664,8 @@ libshr_a-aqm_config_mod.$(OBJEXT): libshr_a-aqm_comm_mod.$(OBJEXT) libshr_a-aqm_
 libshr_a-aqm_const_mod.$(OBJEXT): libshr_a-aqm_types_mod.$(OBJEXT)
 libshr_a-aqm_data_mod.$(OBJEXT): libshr_a-aqm_rc_mod.$(OBJEXT) libshr_a-aqm_types_mod.$(OBJEXT)
 libshr_a-aqm_domain_mod.$(OBJEXT): libshr_a-aqm_types_mod.$(OBJEXT)
-libshr_a-aqm_emis_mod.$(OBJEXT): libshr_a-aqm_model_mod.$(OBJEXT) libshr_a-aqm_rc_mod.$(OBJEXT) \
-	libshr_a-aqm_tools_mod.$(OBJEXT) libshr_a-aqm_types_mod.$(OBJEXT)
+libshr_a-aqm_emis_mod.$(OBJEXT): libshr_a-aqm_internal_mod.$(OBJEXT) libshr_a-aqm_model_mod.$(OBJEXT) \
+	libshr_a-aqm_rc_mod.$(OBJEXT) libshr_a-aqm_tools_mod.$(OBJEXT) libshr_a-aqm_types_mod.$(OBJEXT)
 libshr_a-aqm_io_mod.$(OBJEXT): libshr_a-aqm_comm_mod.$(OBJEXT) libshr_a-aqm_model_mod.$(OBJEXT) \
 	libshr_a-aqm_rc_mod.$(OBJEXT) libshr_a-aqm_types_mod.$(OBJEXT)
 libshr_a-aqm_model_mod.$(OBJEXT): libshr_a-aqm_clock_mod.$(OBJEXT) libshr_a-aqm_comm_mod.$(OBJEXT) \

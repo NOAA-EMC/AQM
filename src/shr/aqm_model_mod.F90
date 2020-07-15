@@ -3,7 +3,6 @@ module aqm_model_mod
   use aqm_rc_mod
   use aqm_types_mod
   use aqm_config_mod
-  use aqm_clock_mod
   use aqm_data_mod,     only : aqm_data_type, aqm_data_destroy
   use aqm_domain_mod,   only : aqm_domain_type
   use aqm_state_mod,    only : aqm_state_type
@@ -13,7 +12,6 @@ module aqm_model_mod
   implicit none
 
   type aqm_model_type
-    type(aqm_clock_type),   pointer :: clock   => null()
     type(aqm_config_type),  pointer :: config  => null()
     type(aqm_domain_type)   :: domain
     type(aqm_state_type)    :: stateIn, stateOut
@@ -27,7 +25,6 @@ module aqm_model_mod
 
   public :: aqm_model_type
   ! -- also provide subtypes
-  public :: aqm_clock_type
   public :: aqm_config_type
   public :: aqm_domain_type
   public :: aqm_state_type
@@ -39,9 +36,6 @@ module aqm_model_mod
   public :: aqm_model_init
   public :: aqm_model_get
   public :: aqm_model_set
-  public :: aqm_model_clock_create
-  public :: aqm_model_clock_get
-  public :: aqm_model_clock_set
   public :: aqm_model_config_init
   public :: aqm_model_domain_get
   public :: aqm_model_domain_set
@@ -98,30 +92,22 @@ contains
           msg="Failure to allocate model data memory", &
           file=__FILE__, line=__LINE__, rc=rc)) return
         nullify(aqm_model(de) % config)
-        nullify(aqm_model(de) % clock)
       end do
       de = 0
       call aqm_data_destroy(aqm_model(de) % data, rc=localrc)
       if (associated(aqm_model(de) % config)) then
-!       if (associated(aqm_model(de) % config % species)) then
-!         deallocate(aqm_model(de) % config % species, stat=localrc)
-!         if (aqm_rc_test((localrc /= 0), &
-!           msg="Failure to allocate model species memory", &
-!           file=__FILE__, line=__LINE__, rc=rc)) return
-!         nullify(aqm_model(de) % config % species)
-!       end if
+        if (associated(aqm_model(de) % config % species)) then
+          deallocate(aqm_model(de) % config % species, stat=localrc)
+          if (aqm_rc_test((localrc /= 0), &
+            msg="Failure to allocate model species memory", &
+            file=__FILE__, line=__LINE__, rc=rc)) return
+          nullify(aqm_model(de) % config % species)
+        end if
         deallocate(aqm_model(de) % config, stat=localrc)
         if (aqm_rc_test((localrc /= 0), &
           msg="Failure to allocate model config memory", &
           file=__FILE__, line=__LINE__, rc=rc)) return
         nullify(aqm_model(de) % config)
-      end if
-      if (associated(aqm_model(de) % clock)) then
-        deallocate(aqm_model(de) % clock, stat=localrc)
-        if (aqm_rc_test((localrc /= 0), &
-          msg="Failure to allocate model clock memory", &
-          file=__FILE__, line=__LINE__, rc=rc)) return
-        nullify(aqm_model(de) % clock)
       end if
       deallocate(aqm_model, stat=localrc)
       if (aqm_rc_test((localrc /= 0), msg="Failure to allocate model memory", &
@@ -170,115 +156,6 @@ contains
     end do
 
   end subroutine aqm_model_init
-
-
-  subroutine aqm_model_clock_create(rc)
-    integer, optional, intent(out) :: rc
-
-    ! -- local variables
-    integer                        :: localrc
-    integer                        :: de, deCount
-    type(aqm_model_type), pointer :: model
-
-    ! -- begin
-    if (present(rc)) rc = AQM_RC_SUCCESS
-
-    nullify(model)
-
-    ! -- NOTE: config is allocated only on DE 0 on each PET
-    ! --       config points to DE 0 on other DEs on the same PET
-    deCount = 0
-    call aqm_model_local_get(de=0, deCount=deCount, model=model, rc=localrc)
-    if (aqm_rc_check(localrc, msg="Failure to retrieve model on local DE", &
-      file=__FILE__, line=__LINE__, rc=rc)) return
-
-    if (deCount > 0) then
-      if (.not.associated(model % clock)) allocate(model % clock)
-      call aqm_clock_set(model % clock, &
-        julday=0, yy=0, mm=0, dd=0, h=0, m=0, s=0, dts=0._AQM_KIND_R8, &
-        advanceCount=0, rc=localrc)
-      if (aqm_rc_check(localrc, msg="Failure to set model clock", &
-        file=__FILE__, line=__LINE__, rc=rc)) return
-      ! -- populate pointers on other local DEs
-      do de = 1, deCount-1
-        call aqm_model_set(de=de, clock=model % clock, rc=localrc)
-        if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__, rc=rc)) return
-      end do
-    end if
-
-  end subroutine aqm_model_clock_create
-
-  subroutine aqm_model_clock_get(julday, yy, mm, dd, h, m, s, tz, dts, &
-    advanceCount, tStamp, rc)
-    integer,            optional, intent(out) :: julday
-    integer,            optional, intent(out) :: yy, mm, dd, h, m, s, tz
-    real(AQM_KIND_R8), optional, intent(out) :: dts
-    integer,            optional, intent(out) :: advanceCount
-    character(len=12),  optional, intent(out) :: tStamp
-    integer,            optional, intent(out) :: rc
-
-    ! -- local variables
-    integer :: localrc
-    integer :: deCount
-    type(aqm_clock_type), pointer :: clock
-
-    ! -- begin
-    if (present(rc)) rc = AQM_RC_SUCCESS
-
-    call aqm_model_get(de=0, deCount=deCount, clock=clock, rc=localrc)
-    if (aqm_rc_check(localrc, msg="Failure to retrieve model on local DE", &
-      file=__FILE__, line=__LINE__, rc=rc)) return
-
-    if (deCount > 0) then
-      call aqm_clock_get(clock, julday=julday, yy=yy, mm=mm, dd=dd, &
-        h=h, m=m, s=s, tz=tz, dts=dts, advanceCount=advanceCount, &
-        tStamp=tStamp, rc=localrc)
-      if (aqm_rc_check(localrc, msg="Failure to get model clock info", &
-        file=__FILE__, line=__LINE__, rc=rc)) return
-    else
-      if (present(julday)) julday = 0
-      if (present(yy))     yy     = 0
-      if (present(mm))     mm     = 0
-      if (present(dd))     dd     = 0
-      if (present(h))      h      = 0
-      if (present(m))      m      = 0
-      if (present(s))      s      = 0
-      if (present(tz))     tz     = 0
-      if (present(dts))    dts    = 0._AQM_KIND_R8
-      if (present(advanceCount)) advanceCount = 0
-      if (present(tStamp)) tStamp = ""
-    end if
-
-  end subroutine aqm_model_clock_get
-
-
-  subroutine aqm_model_clock_set(julday, yy, mm, dd, h, m, s, tz, dts, advanceCount, rc)
-    integer,            optional, intent(in)  :: julday
-    integer,            optional, intent(in)  :: yy, mm, dd, h, m, s, tz
-    real(AQM_KIND_R8), optional, intent(in)  :: dts
-    integer,            optional, intent(in)  :: advanceCount
-    integer,            optional, intent(out) :: rc
-
-    ! -- local variables
-    integer :: localrc
-    integer :: deCount
-    type(aqm_clock_type), pointer :: clock
-
-    ! -- begin
-    if (present(rc)) rc = AQM_RC_SUCCESS
-
-    call aqm_model_get(de=0, deCount=deCount, clock=clock, rc=localrc)
-    if (aqm_rc_check(localrc, msg="Failure to retrieve model on local DE", &
-      file=__FILE__, line=__LINE__, rc=rc)) return
-
-    if (deCount > 0) then
-      call aqm_clock_set(clock, julday=julday, yy=yy, mm=mm, dd=dd, &
-        h=h, m=m, s=s, tz=tz, dts=dts, advanceCount=advanceCount, rc=localrc)
-      if (aqm_rc_check(localrc, msg="Failure to set model clock", &
-        file=__FILE__, line=__LINE__, rc=rc)) return
-    end if
-
-  end subroutine aqm_model_clock_set
 
 
   subroutine aqm_model_config_init(rc)
@@ -458,8 +335,8 @@ contains
   end subroutine aqm_model_domain_get
 
 
-  subroutine aqm_model_set(de, numIntLayers, numModLayers, numSoilLayers, numTracers, modelComm, tileComm, &
-    localIOflag, clock, config, rc)
+  subroutine aqm_model_set(de, numIntLayers, numModLayers, numSoilLayers, numTracers, &
+    modelComm, tileComm, localIOflag, config, rc)
 
     integer, optional, intent(in)  :: de
     integer, optional, intent(in)  :: numIntLayers
@@ -469,7 +346,6 @@ contains
     integer, optional, intent(in)  :: modelComm
     integer, optional, intent(in)  :: tileComm
     logical, optional, intent(in)  :: localIOflag
-    type(aqm_clock_type),  optional, pointer :: clock
     type(aqm_config_type), optional, pointer :: config
     integer, optional, intent(out) :: rc
 
@@ -493,19 +369,17 @@ contains
       if (present(tileComm))     model % iolayout % tileComm  = tileComm
       if (present(localIOflag))  model % iolayout % localIOflag = localIOflag
       if (present(config))       model % config => config
-      if (present(clock))        model % clock  => clock
     end if
 
   end subroutine aqm_model_set
 
 
-  subroutine aqm_model_get(de, deCount, stateIn, stateOut, clock, config, &
+  subroutine aqm_model_get(de, deCount, stateIn, stateOut, config, &
     data, domain, tile, tileCount, tileComm, modelComm, localIOflag, rc)
 
     integer,               optional,  intent(in)  :: de
     integer,               optional,  intent(out) :: deCount
     type(aqm_state_type), optional,  pointer     :: stateIn, stateOut
-    type(aqm_clock_type), optional,  pointer     :: clock
     type(aqm_config_type),optional,  pointer     :: config
     type(aqm_data_type),  optional,  pointer     :: data
     type(aqm_domain_type),optional,  pointer     :: domain
@@ -532,7 +406,6 @@ contains
     if (localDeCount > 0) then
       if (present(stateIn))     stateIn     => model % stateIn
       if (present(stateOut))    stateOut    => model % stateOut
-      if (present(clock))       clock       => model % clock
       if (present(config))      config      => model % config
       if (present(data))        data        => model % data
       if (present(domain))      domain      => model % domain

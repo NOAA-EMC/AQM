@@ -115,41 +115,8 @@ contains
       file=__FILE__,  &
       rcToReturn=rc)) &
       return  ! bail out
-    ! -- get forecast initial time
-    call ESMF_TimeGet(startTime, yy=yy, mm=mm, dd=dd, h=h, m=m, rc=localrc)
-    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__,  &
-      file=__FILE__,  &
-      rcToReturn=rc)) &
-      return  ! bail out
-    ! -- get time step
-    call ESMF_TimeIntervalGet(timeStep, s_r8=dts, rc=localrc)
-    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__,  &
-      file=__FILE__,  &
-      rcToReturn=rc)) &
-      return  ! bail out
-    ! -- set internal clock
-    call aqm_model_clock_create(rc=localrc)
-    if (aqm_rc_check(localrc)) then
-      call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, &
-        msg="Failed to create model clock", &
-        line=__LINE__, &
-        file=__FILE__, &
-        rcToReturn=rc)
-      return  ! bail out
-    end if
-    call aqm_model_clock_set(yy=yy, mm=mm, dd=dd, h=h, m=m, dts=dts, tz=0, rc=localrc)
-    if (aqm_rc_check(localrc)) then
-      call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, &
-        msg="Failed to initialize model clock", &
-        line=__LINE__, &
-        file=__FILE__, &
-        rcToReturn=rc)
-      return  ! bail out
-    end if
 
-    ! -- set starting and ending dates
+    ! -- set starting/ending forecast dates and model timestep
     nullify(config)
     call aqm_model_get(deCount=deCount, config=config, rc=localrc)
     if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__)) then
@@ -158,33 +125,35 @@ contains
       return  ! bail out
     end if
 
-    if (deCount < 1) return
+    if (deCount > 0) then
 
-    call ESMF_TimeGet(startTime, yy=yy, dayOfYear=julday, h=h, m=m, s=s, rc=localrc)
-    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__,  &
-      file=__FILE__,  &
-      rcToReturn=rc)) &
-      return  ! bail out
+      call ESMF_TimeGet(startTime, yy=yy, dayOfYear=julday, h=h, m=m, s=s, rc=localrc)
+      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__,  &
+        file=__FILE__,  &
+        rcToReturn=rc)) &
+        return  ! bail out
 
-    config % ctm_stdate =  1000 * yy + julday
-    config % ctm_sttime = 10000 * h + 100 * m + s
+      config % ctm_stdate =  1000 * yy + julday
+      config % ctm_sttime = 10000 * h + 100 * m + s
 
-    call ESMF_TimeIntervalGet(stopTime-startTime, h=h, m=m, s=s, rc=localrc)
-    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__,  &
-      file=__FILE__,  &
-      rcToReturn=rc)) &
-      return  ! bail out
+      call ESMF_TimeIntervalGet(stopTime-startTime, h=h, m=m, s=s, rc=localrc)
+      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__,  &
+        file=__FILE__,  &
+        rcToReturn=rc)) &
+        return  ! bail out
 
-    call ESMF_TimeIntervalGet(timeStep, h=h, m=m, s=s, rc=localrc)
-    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__,  &
-      file=__FILE__,  &
-      rcToReturn=rc)) &
-      return  ! bail out
+      call ESMF_TimeIntervalGet(timeStep, h=h, m=m, s=s, rc=localrc)
+      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__,  &
+        file=__FILE__,  &
+        rcToReturn=rc)) &
+        return  ! bail out
 
-    config % ctm_tstep = 10000 * h + 100 * m + s
+      config % ctm_tstep = 10000 * h + 100 * m + s
+
+    end if
 
   end subroutine aqm_comp_create
 

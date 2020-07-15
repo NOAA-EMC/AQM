@@ -334,7 +334,7 @@ contains
     end if
 
     call ESMF_ConfigGetAttribute(config, em % path, &
-      label=trim(em % name) //"_path:", rc=localrc)
+      label=trim(em % name) //"_path:", default="", rc=localrc)
     if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__,  &
       file=__FILE__,  &

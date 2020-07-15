@@ -2560,25 +2560,24 @@ contains
     integer :: lstr
 
     ! -- begin
-    fullName = ""
+    fullName = fileName
 
     if (present(filePath)) then
       if (len_trim(filePath) > 0) then
-        if (present(tile)) then
-          fullName = AQMIO_StringReplaceWithInt(filePath, "<tile>", tile)
+        lstr = len_trim(filePath)
+        if (filePath(lstr:lstr) == "/") then
+          fullName = trim(filePath) // fileName
         else
-          fullName = AQMIO_StringReplaceWithString(filePath, "/<tile>/", "/")
-          fullName = AQMIO_StringReplaceWithString(fullName, "<tile>", "")
+          fullName = trim(filePath) // "/" // fileName
         end if
-        lstr = len_trim(fullName)
-        if (fullName(lstr:lstr) /= "/") fullName = trim(fullName) // "/"
       end if
     end if
 
     if (present(tile)) then
-      fullName = trim(fullName) // AQMIO_StringReplaceWithInt(fileName, "<tile>", tile)
+      fullName = AQMIO_StringReplaceWithInt(fullName, "<tile>", tile)
     else
-      fullName = trim(fullName) // AQMIO_StringReplaceWithString(fileName, ".<tile>.", ".")
+      fullName = AQMIO_StringReplaceWithString(fullName, "/<tile>/", "/")
+      fullName = AQMIO_StringReplaceWithString(fullName, ".<tile>.", ".")
       fullName = AQMIO_StringReplaceWithString(fullName, "<tile>", "")
     end if
 

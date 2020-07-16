@@ -6,8 +6,6 @@ module aqm_model_mod
   use aqm_data_mod,     only : aqm_data_type, aqm_data_destroy
   use aqm_domain_mod,   only : aqm_domain_type
   use aqm_state_mod,    only : aqm_state_type
-  use aqm_iolayout_mod, only : aqm_iolayout_type
-  use aqm_comm_mod
 
   implicit none
 
@@ -16,7 +14,6 @@ module aqm_model_mod
     type(aqm_domain_type)   :: domain
     type(aqm_state_type)    :: stateIn, stateOut
     type(aqm_data_type)     :: data
-    type(aqm_iolayout_type) :: iolayout
   end type aqm_model_type
 
   type(aqm_model_type), dimension(:), allocatable, target :: aqm_model
@@ -29,11 +26,9 @@ module aqm_model_mod
   public :: aqm_domain_type
   public :: aqm_state_type
   public :: aqm_data_type
-  public :: aqm_iolayout_type
 
   public :: aqm_model_create
   public :: aqm_model_destroy
-  public :: aqm_model_init
   public :: aqm_model_get
   public :: aqm_model_set
   public :: aqm_model_config_create
@@ -115,47 +110,6 @@ contains
     end if
 
   end subroutine aqm_model_destroy
-
-
-  subroutine aqm_model_init(rc, comm, isolate)
-    integer, optional, intent(in)  :: comm
-    logical, optional, intent(in)  :: isolate
-    integer, optional, intent(out) :: rc
-
-    ! -- local variables
-    integer :: color, de, deCount, localrc
-    integer :: modelComm
-
-    ! -- begin
-    if (present(rc)) rc = AQM_RC_SUCCESS
-
-    call aqm_model_local_get(deCount=deCount, rc=localrc)
-    if (aqm_rc_check(localrc, msg="Failure to retrieve model", &
-        file=__FILE__, line=__LINE__, rc=rc)) return
-
-    ! -- initialize communications, if needed
-    call aqm_comm_init(comm=comm, isolate=isolate, rc=localrc)
-    if (aqm_rc_check(localrc, msg="Failure to initialize communications", &
-        file=__FILE__, line=__LINE__, rc=rc)) return
-
-    ! -- create new communicators to separate PETs with model from PETs with no model
-    color = 0
-    if (deCount > 0) color = 1
-
-    call aqm_comm_create(modelComm, color, rc=localrc)
-    if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__, rc=rc)) return
-
-    ! -- set new communicator
-    call aqm_comm_set(comm=modelComm, rc=localrc)
-    if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__, rc=rc)) return
-
-    ! -- store new communicator in model's data structure
-    do de = 0, deCount-1
-      call aqm_model_set(de=de, modelComm=modelComm, rc=localrc)
-      if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__, rc=rc)) return
-    end do
-
-  end subroutine aqm_model_init
 
 
   subroutine aqm_model_config_create(rc)
@@ -334,16 +288,13 @@ contains
 
 
   subroutine aqm_model_set(de, numIntLayers, numModLayers, numSoilLayers, numTracers, &
-    modelComm, tileComm, localIOflag, config, rc)
+    config, rc)
 
     integer, optional, intent(in)  :: de
     integer, optional, intent(in)  :: numIntLayers
     integer, optional, intent(in)  :: numModLayers
     integer, optional, intent(in)  :: numSoilLayers
     integer, optional, intent(in)  :: numTracers
-    integer, optional, intent(in)  :: modelComm
-    integer, optional, intent(in)  :: tileComm
-    logical, optional, intent(in)  :: localIOflag
     type(aqm_config_type), optional, pointer :: config
     integer, optional, intent(out) :: rc
 
@@ -363,9 +314,6 @@ contains
       if (present(numModLayers)) model % domain % nl = numModLayers
       if (present(numSoilLayers)) model % domain % ns = numSoilLayers
       if (present(numTracers))   model % domain % nt = numTracers
-      if (present(modelComm))    model % iolayout % modelComm = modelComm
-      if (present(tileComm))     model % iolayout % tileComm  = tileComm
-      if (present(localIOflag))  model % iolayout % localIOflag = localIOflag
       if (present(config))       model % config => config
     end if
 
@@ -373,7 +321,7 @@ contains
 
 
   subroutine aqm_model_get(de, deCount, stateIn, stateOut, config, &
-    data, domain, tile, tileCount, tileComm, modelComm, localIOflag, rc)
+    data, domain, tile, tileCount, rc)
 
     integer,               optional,  intent(in)  :: de
     integer,               optional,  intent(out) :: deCount
@@ -382,9 +330,7 @@ contains
     type(aqm_data_type),  optional,  pointer     :: data
     type(aqm_domain_type),optional,  pointer     :: domain
     integer,               optional,  intent(out) :: tile
-    integer,               optional,  intent(out) :: tileCount, tileComm
-    integer,               optional,  intent(out) :: modelComm
-    logical,               optional,  intent(out) :: localIOflag
+    integer,               optional,  intent(out) :: tileCount
     integer,               optional,  intent(out) :: rc
 
     !-- local variables
@@ -409,9 +355,6 @@ contains
       if (present(domain))      domain      => model % domain
       if (present(tile))        tile        =  model % domain % tile
       if (present(tileCount))   tileCount   =  model % domain % tileCount
-      if (present(modelComm))   modelComm   =  model % iolayout % modelComm
-      if (present(tileComm))    tileComm    =  model % iolayout % tileComm
-      if (present(localIOflag)) localIOflag =  model % iolayout % localIOflag
     end if
 
   end subroutine aqm_model_get

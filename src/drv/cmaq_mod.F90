@@ -444,8 +444,9 @@ contains
 
   end subroutine cmaq_emis_init
 
-  subroutine cmaq_emis_print(unit)
-    integer, intent(in) :: unit
+  subroutine cmaq_emis_print(etype, unit)
+    character(len=*), intent(in) :: etype
+    integer,          intent(in) :: unit
 
     ! -- local variables
     integer :: ltable, n, spc
@@ -453,14 +454,14 @@ contains
 
     ! -- begin
     nullify(em)
-    em => aqm_emis_get("anthropogenic")
+    em => aqm_emis_get(etype)
 
     if (associated(em)) then
 
       ltable = size(em % table, dim=1)
 
       write(unit,'(2x,58("-"))')
-      write(unit,'(21x,"Emission Table")')
+      write(unit,'(21x,"Emission Table for ",a)') em % type
       write(unit,'(2x,58("-"))')
       do n = 1, size(em % species)
         spc = index1( em % species(n), ltable, em % table(:,1) )

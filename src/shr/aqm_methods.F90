@@ -920,7 +920,6 @@ LOGICAL FUNCTION  XTRACT3 ( FNAME, VNAME,                           &
   use aqm_rc_mod,    only : aqm_rc_check, aqm_rc_test
   use aqm_const_mod, only : con_mr2ppm_o3, thrs_p_strato
   use aqm_emis_mod,  only : aqm_emis_read
-  use aqm_io_mod
   use aqm_config_mod
 
   implicit none

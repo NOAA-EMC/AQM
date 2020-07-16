@@ -2,7 +2,6 @@ module cmaq_model_mod
 
   use aqm_rc_mod
   use aqm_types_mod
-  use aqm_comm_mod
   use aqm_model_mod
   use cmaq_mod
 
@@ -63,29 +62,6 @@ contains
     call cmaq_emis_init(rc=localrc)
     if (aqm_rc_check(localrc, msg="Failed to initialize CMAQ", &
       file=__FILE__, line=__LINE__, rc=rc)) return
-
-    ! -- print out emissions table
-    if (aqm_comm_isroot()) call cmaq_emis_print(cmaq_logdev)
-
-    ! -- print out model configuration
-    if (aqm_comm_isroot()) then
-      write(cmaq_logdev,'(28("-"))')
-      write(cmaq_logdev,'("CMAQ configuration:")')
-      write(cmaq_logdev,'(28("-"))')
-      write(cmaq_logdev,'(2x,"ae_matrix_nml: ",a)') trim(config % ae_matrix_nml)
-      write(cmaq_logdev,'(2x,"gc_matrix_nml: ",a)') trim(config % gc_matrix_nml)
-      write(cmaq_logdev,'(2x,"nr_matrix_nml: ",a)') trim(config % nr_matrix_nml)
-      write(cmaq_logdev,'(2x,"tr_matrix_nml: ",a)') trim(config % tr_matrix_nml)
-      write(cmaq_logdev,'(2x,"csqy_data    : ",a)') trim(config % csqy_data)
-      write(cmaq_logdev,'(2x,"optics_data  : ",a)') trim(config % optics_data)
-      write(cmaq_logdev,'(2x,"omi          : ",a)') trim(config % omi)
-      write(cmaq_logdev,'(2x,"ctm_depvfile : ",l7)') config % ctm_depvfile
-      write(cmaq_logdev,'(2x,"ctm_photodiag: ",l7)') config % ctm_photodiag
-      write(cmaq_logdev,'(2x,"ctm_pmdiag   : ",l7)') config % ctm_pmdiag
-      write(cmaq_logdev,'(2x,"run_aero     : ",l7)') config % run_aero
-      write(cmaq_logdev,'(2x,"N. species   : ",i0)') numSpecies
-      write(cmaq_logdev,'(28("-"))')
-    end if
 
   end subroutine cmaq_model_init
 

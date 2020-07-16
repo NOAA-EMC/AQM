@@ -36,7 +36,7 @@ module aqm_model_mod
   public :: aqm_model_init
   public :: aqm_model_get
   public :: aqm_model_set
-  public :: aqm_model_config_init
+  public :: aqm_model_config_create
   public :: aqm_model_domain_get
   public :: aqm_model_domain_set
   public :: aqm_model_domain_coord_set
@@ -158,7 +158,7 @@ contains
   end subroutine aqm_model_init
 
 
-  subroutine aqm_model_config_init(rc)
+  subroutine aqm_model_config_create(rc)
     integer, optional, intent(out) :: rc
 
     ! -- local variables
@@ -177,13 +177,11 @@ contains
       file=__FILE__, line=__LINE__, rc=rc)) return
 
     if (deCount > 0) then
-      if (.not.associated(model % config)) allocate(model % config)
-      ! -- read in namelist options
-      call aqm_config_read(model % config, rc=localrc)
-      if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__, rc=rc)) return
-      ! -- setup internal species pointers
-      call aqm_config_species_init(model % config, rc=localrc)
-      if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__, rc=rc)) return
+      if (.not.associated(model % config)) then
+        allocate(model % config, stat=localrc)
+        if (aqm_rc_test((localrc /= 0), msg="Failure to allocate model configuration", &
+          file=__FILE__, line=__LINE__, rc=rc)) return
+      end if
       ! -- populate pointers on other local DEs
       do de = 1, deCount-1
         call aqm_model_set(de=de, config=model % config, rc=localrc)
@@ -191,7 +189,7 @@ contains
       end do
     end if
 
-  end subroutine aqm_model_config_init
+  end subroutine aqm_model_config_create
 
 
   subroutine aqm_model_domain_set(minIndexPDe, maxIndexPDe, minIndexPTile, maxIndexPTile, &

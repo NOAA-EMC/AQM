@@ -5,6 +5,7 @@ module aqm_comp_mod
   use NUOPC_Model, only : NUOPC_ModelGet
   use aqm_rc_mod
   use aqm_comm_mod
+  use aqm_config_mod
   use aqm_types_mod, only : AQM_MAXSTR
   use aqm_model_mod
   use aqm_io_mod
@@ -34,7 +35,7 @@ contains
     type(ESMF_Time)         :: startTime, stopTime
     type(ESMF_TimeInterval) :: TimeStep
     type(aqm_internal_state_type) :: is
-    type(aqm_config_type), pointer :: config => null()
+    type(aqm_config_type), pointer :: config
 
 
     ! -- begin
@@ -89,14 +90,8 @@ contains
       return  ! bail out
     end if
 
-    ! -- initialize emission subsystem
-    call aqm_emis_init(model, rc=localrc)
-    if (ESMF_LogFoundError(rcToCheck=localrc, &
-      msg="Failed to initialize emissions subsystem", &
-      line=__LINE__, file=__FILE__, rcToReturn=rc)) return  ! bail out
-
-    ! -- read-in emission and background fields, setup internal parameters
-    call aqm_model_config_init(rc=localrc)
+    ! -- allocate model's internal configuration
+    call aqm_model_config_create(rc=localrc)
     if (aqm_rc_check(localrc)) then
       call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, &
         msg="Failed to initialize model configuration", &
@@ -106,17 +101,7 @@ contains
       return  ! bail out
     end if
 
-    ! -- initialize internal clock
-    ! -- get clock information
-    call ESMF_ClockGet(clock, startTime=startTime, stopTime=stopTime, &
-      timeStep=timeStep, rc=localrc)
-    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__,  &
-      file=__FILE__,  &
-      rcToReturn=rc)) &
-      return  ! bail out
-
-    ! -- set starting/ending forecast dates and model timestep
+    ! -- read model configuration
     nullify(config)
     call aqm_model_get(deCount=deCount, config=config, rc=localrc)
     if (aqm_rc_check(localrc, file=__FILE__, line=__LINE__)) then
@@ -126,34 +111,20 @@ contains
     end if
 
     if (deCount > 0) then
-
-      call ESMF_TimeGet(startTime, yy=yy, dayOfYear=julday, h=h, m=m, s=s, rc=localrc)
-      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      call aqm_config_init(model, config, rc=localrc)
+      if (ESMF_LogFoundError(rcToCheck=localrc, &
+        msg="Failed to read model configuration", &
         line=__LINE__,  &
         file=__FILE__,  &
         rcToReturn=rc)) &
         return  ! bail out
-
-      config % ctm_stdate =  1000 * yy + julday
-      config % ctm_sttime = 10000 * h + 100 * m + s
-
-      call ESMF_TimeIntervalGet(stopTime-startTime, h=h, m=m, s=s, rc=localrc)
-      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__,  &
-        file=__FILE__,  &
-        rcToReturn=rc)) &
-        return  ! bail out
-
-      call ESMF_TimeIntervalGet(timeStep, h=h, m=m, s=s, rc=localrc)
-      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__,  &
-        file=__FILE__,  &
-        rcToReturn=rc)) &
-        return  ! bail out
-
-      config % ctm_tstep = 10000 * h + 100 * m + s
-
     end if
+
+    ! -- initialize emission subsystem
+    call aqm_emis_init(model, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, &
+      msg="Failed to initialize emissions subsystem", &
+      line=__LINE__, file=__FILE__, rcToReturn=rc)) return  ! bail out
 
   end subroutine aqm_comp_create
 

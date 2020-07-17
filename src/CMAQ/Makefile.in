@@ -180,8 +180,6 @@ am_libCCTM_a_OBJECTS = $(AERO)/libCCTM_a-AERO_DATA.$(OBJEXT) \
 	$(GRID)/libCCTM_a-VGRD_DEFN.$(OBJEXT) \
 	$(GRID)/libCCTM_a-PAGRD_DEFN.$(OBJEXT) \
 	$(GRID)/libCCTM_a-PCGRID_DEFN.$(OBJEXT) \
-	$(INIT)/libCCTM_a-initscen.$(OBJEXT) \
-	$(INIT)/libCCTM_a-load_cgrid.$(OBJEXT) \
 	$(MECHS)/libCCTM_a-RXNS_DATA_MODULE.$(OBJEXT) \
 	$(MECHS)/libCCTM_a-RXNS_FUNC_MODULE.$(OBJEXT) \
 	$(PA)/libCCTM_a-PA_DEFN.$(OBJEXT) \
@@ -481,9 +479,9 @@ libCCTM_a_SOURCES = $(AERO)/AERO_DATA.F $(AERO)/aero_depv.F \
 	$(GRID)/HGRD_DEFN.F $(GRID)/VGRD_DEFN.F $(GRID)/PAGRD_DEFN.F \
 	$(GRID)/PCGRID_DEFN.F $(ICL)/const/CONST.EXT \
 	$(ICL)/emctrl/EMISPRM.EXT $(ICL)/filenames/FILES_CTM.EXT \
-	$(ICL)/mpi/PE_COMM.EXT $(INIT)/initscen.F $(INIT)/load_cgrid.F \
-	$(MECHS)/RXNS_DATA_MODULE.F90 $(MECHS)/RXNS_FUNC_MODULE.F90 \
-	$(PA)/PA_DEFN.F $(PA)/pa_update.F $(PHOT)/AERO_PHOTDATA.F \
+	$(ICL)/mpi/PE_COMM.EXT $(MECHS)/RXNS_DATA_MODULE.F90 \
+	$(MECHS)/RXNS_FUNC_MODULE.F90 $(PA)/PA_DEFN.F \
+	$(PA)/pa_update.F $(PHOT)/AERO_PHOTDATA.F \
 	$(PHOT)/CLOUD_OPTICS.F $(PHOT)/complex_number_module.F90 \
 	$(PHOT)/CSQY_DATA.F $(PHOT)/o3totcol.f \
 	$(PHOT)/OMI_1979_to_2015.dat $(PHOT)/opphot.F $(PHOT)/phot.F \
@@ -542,10 +540,6 @@ libGRID = $(GRID)/$(libCCTM)-
 # includes
 ICL = $(srcdir)/CCTM/src/ICL/fixed
 
-# init
-INIT = $(srcdir)/CCTM/src/init/yamo
-libINIT = $(INIT)/$(libCCTM)-
-
 # MECHS
 MECHS = $(CCTM)/MECHS/cb6r3_ae6_aq
 libMECHS = $(MECHS)/$(libCCTM)-
@@ -577,8 +571,6 @@ libUTIL = $(UTIL)/$(libCCTM)-
 # vdiff
 VDIFF = $(CCTM)/vdiff/acm2
 libVDIFF = $(VDIFF)/$(libCCTM)-
-
-#	$(VDIFF)/vdiffacmx.F
 libCCTM_a_CPPFLAGS = -DSUBST_FILES_ID=\"FILES_CTM.EXT\" \
 	-DSUBST_CONST=\"CONST.EXT\" -DSUBST_EMISPRM=\"EMISPRM.EXT\" \
 	-DSUBST_PE_COMM=\"PE_COMM.EXT\" -DSUBST_COMM=NOOP_COMM \
@@ -836,16 +828,6 @@ $(GRID)/libCCTM_a-PAGRD_DEFN.$(OBJEXT): $(GRID)/$(am__dirstamp) \
 	$(GRID)/$(DEPDIR)/$(am__dirstamp)
 $(GRID)/libCCTM_a-PCGRID_DEFN.$(OBJEXT): $(GRID)/$(am__dirstamp) \
 	$(GRID)/$(DEPDIR)/$(am__dirstamp)
-$(INIT)/$(am__dirstamp):
-	@$(MKDIR_P) $(INIT)
-	@: > $(INIT)/$(am__dirstamp)
-$(INIT)/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) $(INIT)/$(DEPDIR)
-	@: > $(INIT)/$(DEPDIR)/$(am__dirstamp)
-$(INIT)/libCCTM_a-initscen.$(OBJEXT): $(INIT)/$(am__dirstamp) \
-	$(INIT)/$(DEPDIR)/$(am__dirstamp)
-$(INIT)/libCCTM_a-load_cgrid.$(OBJEXT): $(INIT)/$(am__dirstamp) \
-	$(INIT)/$(DEPDIR)/$(am__dirstamp)
 $(MECHS)/$(am__dirstamp):
 	@$(MKDIR_P) $(MECHS)
 	@: > $(MECHS)/$(am__dirstamp)
@@ -1021,7 +1003,6 @@ mostlyclean-compile:
 	-rm -f $(EMIS)/*.$(OBJEXT)
 	-rm -f $(GAS)/*.$(OBJEXT)
 	-rm -f $(GRID)/*.$(OBJEXT)
-	-rm -f $(INIT)/*.$(OBJEXT)
 	-rm -f $(MECHS)/*.$(OBJEXT)
 	-rm -f $(PA)/*.$(OBJEXT)
 	-rm -f $(PHOT)/*.$(OBJEXT)
@@ -1477,18 +1458,6 @@ $(GRID)/libCCTM_a-PCGRID_DEFN.o: $(GRID)/PCGRID_DEFN.F
 
 $(GRID)/libCCTM_a-PCGRID_DEFN.obj: $(GRID)/PCGRID_DEFN.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(GRID)/libCCTM_a-PCGRID_DEFN.obj `if test -f '$(GRID)/PCGRID_DEFN.F'; then $(CYGPATH_W) '$(GRID)/PCGRID_DEFN.F'; else $(CYGPATH_W) '$(srcdir)/$(GRID)/PCGRID_DEFN.F'; fi`
-
-$(INIT)/libCCTM_a-initscen.o: $(INIT)/initscen.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(INIT)/libCCTM_a-initscen.o `test -f '$(INIT)/initscen.F' || echo '$(srcdir)/'`$(INIT)/initscen.F
-
-$(INIT)/libCCTM_a-initscen.obj: $(INIT)/initscen.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(INIT)/libCCTM_a-initscen.obj `if test -f '$(INIT)/initscen.F'; then $(CYGPATH_W) '$(INIT)/initscen.F'; else $(CYGPATH_W) '$(srcdir)/$(INIT)/initscen.F'; fi`
-
-$(INIT)/libCCTM_a-load_cgrid.o: $(INIT)/load_cgrid.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(INIT)/libCCTM_a-load_cgrid.o `test -f '$(INIT)/load_cgrid.F' || echo '$(srcdir)/'`$(INIT)/load_cgrid.F
-
-$(INIT)/libCCTM_a-load_cgrid.obj: $(INIT)/load_cgrid.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(INIT)/libCCTM_a-load_cgrid.obj `if test -f '$(INIT)/load_cgrid.F'; then $(CYGPATH_W) '$(INIT)/load_cgrid.F'; else $(CYGPATH_W) '$(srcdir)/$(INIT)/load_cgrid.F'; fi`
 
 $(PA)/libCCTM_a-PA_DEFN.o: $(PA)/PA_DEFN.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(PA)/libCCTM_a-PA_DEFN.o `test -f '$(PA)/PA_DEFN.F' || echo '$(srcdir)/'`$(PA)/PA_DEFN.F
@@ -2020,8 +1989,6 @@ distclean-generic:
 	-test -z "$(GAS)/$(am__dirstamp)" || rm -f $(GAS)/$(am__dirstamp)
 	-test -z "$(GRID)/$(DEPDIR)/$(am__dirstamp)" || rm -f $(GRID)/$(DEPDIR)/$(am__dirstamp)
 	-test -z "$(GRID)/$(am__dirstamp)" || rm -f $(GRID)/$(am__dirstamp)
-	-test -z "$(INIT)/$(DEPDIR)/$(am__dirstamp)" || rm -f $(INIT)/$(DEPDIR)/$(am__dirstamp)
-	-test -z "$(INIT)/$(am__dirstamp)" || rm -f $(INIT)/$(am__dirstamp)
 	-test -z "$(MECHS)/$(DEPDIR)/$(am__dirstamp)" || rm -f $(MECHS)/$(DEPDIR)/$(am__dirstamp)
 	-test -z "$(MECHS)/$(am__dirstamp)" || rm -f $(MECHS)/$(am__dirstamp)
 	-test -z "$(PA)/$(DEPDIR)/$(am__dirstamp)" || rm -f $(PA)/$(DEPDIR)/$(am__dirstamp)
@@ -2387,15 +2354,6 @@ $(libGRID)PAGRD_DEFN.$(OBJEXT) : \
 	$(libPA)PA_DEFN.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
 $(libGRID)PCGRID_DEFN.$(OBJEXT) : \
 	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
-	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
-
-# init
-$(libINIT)initscen.$(OBJEXT) : \
-	$(libGRID)HGRD_DEFN.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
-	$(libSTENEX)noop_modules.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
-$(libINIT)load_cgrid.$(OBJEXT) : $(ICL)/const/CONST.EXT \
-	$(libGRID)GRID_CONF.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
-	$(libAERO)AERO_DATA.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) \
 	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
 
 # MECHS

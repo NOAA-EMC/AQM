@@ -131,6 +131,13 @@ libCCTM_a_SOURCES += \
 	$(ICL)/filenames/FILES_CTM.EXT \
 	$(ICL)/mpi/PE_COMM.EXT
 
+# init
+INIT = $(srcdir)/CCTM/src/init/yamo
+libINIT = $(INIT)/$(libCCTM)-
+libCCTM_a_SOURCES += \
+	$(INIT)/initscen.F \
+	$(INIT)/load_cgrid.F
+
 # MECHS
 MECHS = $(CCTM)/MECHS/cb6r3_ae6_aq
 libMECHS = $(MECHS)/$(libCCTM)-
@@ -229,6 +236,7 @@ libCCTM_a_SOURCES += \
 	$(VDIFF)/VDIFF_MAP.F \
 	$(VDIFF)/vdiffproc.F
 
+#	$(VDIFF)/vdiffacmx.F
 
 libCCTM_a_CPPFLAGS  = -DSUBST_FILES_ID=\"FILES_CTM.EXT\"
 libCCTM_a_CPPFLAGS += -DSUBST_CONST=\"CONST.EXT\"
@@ -515,6 +523,15 @@ $(libGRID)PAGRD_DEFN.$(OBJEXT) : \
 	$(libPA)PA_DEFN.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
 $(libGRID)PCGRID_DEFN.$(OBJEXT) : \
 	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+
+# init
+$(libINIT)initscen.$(OBJEXT) : \
+	$(libGRID)HGRD_DEFN.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
+	$(libSTENEX)noop_modules.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libINIT)load_cgrid.$(OBJEXT) : $(ICL)/const/CONST.EXT \
+	$(libGRID)GRID_CONF.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
+	$(libAERO)AERO_DATA.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) \
 	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
 
 # MECHS

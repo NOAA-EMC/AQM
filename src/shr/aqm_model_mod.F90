@@ -3,6 +3,7 @@ module aqm_model_mod
   use aqm_rc_mod
   use aqm_types_mod
   use aqm_config_mod
+  use aqm_data_mod,     only : aqm_data_type, aqm_data_destroy
   use aqm_domain_mod,   only : aqm_domain_type
   use aqm_state_mod,    only : aqm_state_type
 
@@ -12,6 +13,7 @@ module aqm_model_mod
     type(aqm_config_type),  pointer :: config  => null()
     type(aqm_domain_type)   :: domain
     type(aqm_state_type)    :: stateIn, stateOut
+    type(aqm_data_type)     :: data
   end type aqm_model_type
 
   type(aqm_model_type), dimension(:), allocatable, target :: aqm_model
@@ -23,6 +25,7 @@ module aqm_model_mod
   public :: aqm_config_type
   public :: aqm_domain_type
   public :: aqm_state_type
+  public :: aqm_data_type
 
   public :: aqm_model_create
   public :: aqm_model_destroy
@@ -79,9 +82,14 @@ contains
 
     if (allocated(aqm_model)) then
       do de = 1, size(aqm_model)-1
+        call aqm_data_destroy(aqm_model(de) % data, rc=localrc)
+        if (aqm_rc_test((localrc /= 0), &
+          msg="Failure to allocate model data memory", &
+          file=__FILE__, line=__LINE__, rc=rc)) return
         nullify(aqm_model(de) % config)
       end do
       de = 0
+      call aqm_data_destroy(aqm_model(de) % data, rc=localrc)
       if (associated(aqm_model(de) % config)) then
         if (associated(aqm_model(de) % config % species)) then
           deallocate(aqm_model(de) % config % species, stat=localrc)
@@ -313,13 +321,14 @@ contains
 
 
   subroutine aqm_model_get(de, deCount, stateIn, stateOut, config, &
-    domain, tile, tileCount, rc)
+    data, domain, tile, tileCount, rc)
 
     integer,               optional,  intent(in)  :: de
     integer,               optional,  intent(out) :: deCount
-    type(aqm_state_type),  optional,  pointer     :: stateIn, stateOut
-    type(aqm_config_type), optional,  pointer     :: config
-    type(aqm_domain_type), optional,  pointer     :: domain
+    type(aqm_state_type), optional,  pointer     :: stateIn, stateOut
+    type(aqm_config_type),optional,  pointer     :: config
+    type(aqm_data_type),  optional,  pointer     :: data
+    type(aqm_domain_type),optional,  pointer     :: domain
     integer,               optional,  intent(out) :: tile
     integer,               optional,  intent(out) :: tileCount
     integer,               optional,  intent(out) :: rc
@@ -342,6 +351,7 @@ contains
       if (present(stateIn))     stateIn     => model % stateIn
       if (present(stateOut))    stateOut    => model % stateOut
       if (present(config))      config      => model % config
+      if (present(data))        data        => model % data
       if (present(domain))      domain      => model % domain
       if (present(tile))        tile        =  model % domain % tile
       if (present(tileCount))   tileCount   =  model % domain % tileCount

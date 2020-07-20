@@ -236,7 +236,6 @@ libCCTM_a_SOURCES += \
 	$(VDIFF)/VDIFF_MAP.F \
 	$(VDIFF)/vdiffproc.F
 
-#	$(VDIFF)/vdiffacmx.F
 
 libCCTM_a_CPPFLAGS  = -DSUBST_FILES_ID=\"FILES_CTM.EXT\"
 libCCTM_a_CPPFLAGS += -DSUBST_CONST=\"CONST.EXT\"

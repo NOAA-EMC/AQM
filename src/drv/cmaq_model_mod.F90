@@ -77,7 +77,7 @@ contains
     type(aqm_state_type),  pointer :: stateIn  => null()
     type(aqm_state_type),  pointer :: stateOut => null()
 
-    integer, save :: advanceCount = 0
+    logical, save :: first_step = .true.
 
     ! -- begin
     if (present(rc)) rc = AQM_RC_SUCCESS
@@ -88,11 +88,6 @@ contains
 
     if (deCount < 1) return
 
-    print *,'cmaq_model_advance: count = ',advanceCount
-
-    ! -- CMAQ time steps start from 1, while model time steps start from 0
-    advanceCount = advanceCount + 1
-
     ! -- run CMAQ
     ! -- NOTE: CMAQ can only run on 1DE/PET domain decomposition (DE 0)
     call aqm_model_get(config=config, &
@@ -101,8 +96,14 @@ contains
       file=__FILE__, line=__LINE__, rc=rc)) return
 
     ! -- import advected species mixing ratios
-    if (advanceCount > 1) &
-      call cmaq_import(stateIn % tr, stateIn % prl, stateIn % temp, config % species % p_aqm_beg)
+    if (config % init_conc .and. first_step) then
+      call cmaq_conc_init(jdate, jtime, tstep, rc=localrc)
+    if (aqm_rc_check(localrc, msg="Failed to initialize concentrations", &
+      file=__FILE__, line=__LINE__, rc=rc)) return
+      first_step = .false.
+    else
+      call cmaq_import(stateIn % tr, stateIn % prl, stateIn % phii, stateIn % temp, config % species % p_aqm_beg)
+    end if
 
     ! -- advance model
     call cmaq_advance(jdate, jtime, tstep, config % run_aero, rc=localrc)

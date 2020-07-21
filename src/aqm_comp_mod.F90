@@ -305,6 +305,12 @@ contains
               line=__LINE__, &
               file=__FILE__)) &
               return  ! bail
+          case ("inst_tracer_diag_aod")
+            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateOut % aod, rc=rc)
+            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+              line=__LINE__, &
+              file=__FILE__)) &
+              return  ! bail
           case default
             ! -- unused field
         end select

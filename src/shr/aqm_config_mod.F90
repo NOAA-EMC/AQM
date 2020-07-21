@@ -26,9 +26,11 @@ module aqm_config_mod
     integer                   :: ctm_runlen    = 0
     logical                   :: initial_run   = .true.
     logical                   :: biosw_yn      = .false.
+    logical                   :: ctm_aod       = .false.
     logical                   :: ctm_photodiag = .false.
     logical                   :: ctm_pmdiag    = .false.
     logical                   :: ctm_depvfile  = .false.
+    logical                   :: init_conc     = .false.
     logical                   :: run_aero      = .false.
     type(aqm_species_type), pointer :: species => null()
   end type aqm_config_type
@@ -49,20 +51,10 @@ contains
 
     ! -- local variables
     integer                    :: localrc
-    integer                    :: verbosity
-    character(len=ESMF_MAXSTR) :: name
     type(ESMF_Config)          :: cf
 
     ! -- begin
     if (present(rc)) rc = ESMF_SUCCESS
-
-    ! -- get component's information
-    call NUOPC_CompGet(model, name=name, verbosity=verbosity, rc=localrc)
-    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__,  &
-      file=__FILE__,  &
-      rcToReturn=rc)) &
-      return  ! bail out
 
     ! -- get component's configuration
     call ESMF_GridCompGet(model, config=cf, rc=localrc)
@@ -145,6 +137,24 @@ contains
       rcToReturn=rc)) &
       return  ! bail out
 
+    ! -- read start up settings
+    call ESMF_ConfigGetAttribute(cf, config % init_conc, &
+      label="init_concentrations:", default=config % initial_run, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+    ! -- read diagnostic settings
+    call ESMF_ConfigGetAttribute(cf, config % ctm_aod, &
+      label="ctm_aod:", default=.false., rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
     ! -- microphysics tracer map
     call ESMF_ConfigGetAttribute(cf, config % mp_map, &
       label="mp_tracer_map:", rc=localrc)
@@ -158,77 +168,6 @@ contains
     config % ctm_photodiag = .false.
     config % ctm_pmdiag    = .false.
     config % ctm_depvfile  = .false.
-
-    if (btest(verbosity,8)) then
-      call ESMF_LogWrite(trim(name) // ": config: read: ae_matrix_nml: " &
-        // config % ae_matrix_nml, ESMF_LOGMSG_INFO, rc=localrc)
-      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__,  &
-        file=__FILE__,  &
-        rcToReturn=rc)) &
-        return  ! bail out
-      call ESMF_LogWrite(trim(name) // ": config: read: gc_matrix_nml: " &
-        // config % gc_matrix_nml, ESMF_LOGMSG_INFO, rc=localrc)
-      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__,  &
-        file=__FILE__,  &
-        rcToReturn=rc)) &
-        return  ! bail out
-      call ESMF_LogWrite(trim(name) // ": config: read: nr_matrix_nml: " &
-        // config % nr_matrix_nml, ESMF_LOGMSG_INFO, rc=localrc)
-      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__,  &
-        file=__FILE__,  &
-        rcToReturn=rc)) &
-        return  ! bail out
-      call ESMF_LogWrite(trim(name) // ": config: read: tr_matrix_nml: " &
-        // config % tr_matrix_nml, ESMF_LOGMSG_INFO, rc=localrc)
-      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__,  &
-        file=__FILE__,  &
-        rcToReturn=rc)) &
-        return  ! bail out
-      call ESMF_LogWrite(trim(name) // ": config: read: csqy_data: " &
-        // config % csqy_data, ESMF_LOGMSG_INFO, rc=localrc)
-      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__,  &
-        file=__FILE__,  &
-        rcToReturn=rc)) &
-        return  ! bail out
-      call ESMF_LogWrite(trim(name) // ": config: read: optics_data: " &
-        // config % optics_data, ESMF_LOGMSG_INFO, rc=localrc)
-      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__,  &
-        file=__FILE__,  &
-        rcToReturn=rc)) &
-        return  ! bail out
-      call ESMF_LogWrite(trim(name) // ": config: read: omi_data: " &
-        // config % omi, ESMF_LOGMSG_INFO, rc=localrc)
-      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__,  &
-        file=__FILE__,  &
-        rcToReturn=rc)) &
-        return  ! bail out
-      if (config % run_aero) then
-        call ESMF_LogWrite(trim(name) // ": config: read: run_aerosol: true", &
-          ESMF_LOGMSG_INFO, rc=localrc)
-      else
-        call ESMF_LogWrite(trim(name) // ": config: read: run_aerosol: false", &
-          ESMF_LOGMSG_INFO, rc=localrc)
-      end if
-      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__,  &
-        file=__FILE__,  &
-        rcToReturn=rc)) &
-        return  ! bail out
-      call ESMF_LogWrite(trim(name) // ": config: read: mp_tracer_map: " &
-        // config % mp_map, ESMF_LOGMSG_INFO, rc=localrc)
-      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__,  &
-        file=__FILE__,  &
-        rcToReturn=rc)) &
-        return  ! bail out
-    end if
 
   end subroutine aqm_config_read
 
@@ -317,27 +256,13 @@ contains
 
     ! -- local variables
     integer                    :: localrc
-    integer                    :: verbosity
     integer                    :: yy, julday, h, m, s
-    character(len=ESMF_MAXSTR) :: name
-    character(len=ESMF_MAXSTR) :: msgString
-    type(ESMF_Clock)           :: clock, dclock
+    type(ESMF_Clock)           :: clock
     type(ESMF_Time)            :: currTime, startTime, stopTime
     type(ESMF_TimeInterval)    :: timeStep
 
-    character(len=10), external :: hhmmss
-    character(len=14), external :: mmddyy
-
     ! -- begin
     if (present(rc)) rc = ESMF_SUCCESS
-
-    ! -- get component's information
-    call NUOPC_CompGet(model, name=name, verbosity=verbosity, rc=localrc)
-    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__,  &
-      file=__FILE__,  &
-      rcToReturn=rc)) &
-      return  ! bail out
 
     ! -- get component's clock
     call NUOPC_ModelGet(model, modelClock=clock, rc=localrc)
@@ -387,42 +312,7 @@ contains
 
     config % initial_run = (currTime == startTime)
 
-    if (btest(verbosity,8)) then
-      call ESMF_LogWrite(trim(name) // ": config: init: start_time: " &
-        // mmddyy(config % ctm_stdate) // " " // hhmmss(config % ctm_sttime), &
-        ESMF_LOGMSG_INFO, rc=localrc)
-      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__,  &
-        file=__FILE__,  &
-        rcToReturn=rc)) &
-        return
-      call ESMF_LogWrite(trim(name) // ": config: init: time_step : " &
-        // hhmmss(config % ctm_tstep), ESMF_LOGMSG_INFO, rc=localrc)
-      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__,  &
-        file=__FILE__,  &
-        rcToReturn=rc)) &
-        return
-      call ESMF_LogWrite(trim(name) // ": config: init: run_length: " &
-        // hhmmss(config % ctm_runlen), ESMF_LOGMSG_INFO, rc=localrc)
-      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__,  &
-        file=__FILE__,  &
-        rcToReturn=rc)) &
-        return
-      write(msgString, '(a,": config: init: run_type  :")') trim(name)
-      if (config % initial_run) then
-        msgString = trim(msgString) // " initial"
-      else
-        msgString = trim(msgString) // " restart"
-      end if
-      call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=localrc)
-      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__,  &
-        file=__FILE__,  &
-        rcToReturn=rc)) &
-        return
-    end if
+    config % init_conc   = config % initial_run
 
   end subroutine aqm_config_runtime_set
 
@@ -450,6 +340,14 @@ contains
       rcToReturn=rc)) &
       return  ! bail out
 
+    ! -- set model runtime and start up mode
+    call aqm_config_runtime_set(model, config, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
     ! -- retrieve model settings
     call aqm_config_read(model, config, rc=localrc)
     if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -468,9 +366,7 @@ contains
     end if
 
     if (btest(verbosity,8)) then
-      write(msgString, '(a,": config: init: mp_tracer_map: ",a,": ",i0," tracers")') &
-        trim(name), trim(config % mp_map), config % species % p_aqm_beg - 1
-      call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=localrc)
+      call aqm_config_log(config, name, rc=localrc)
       if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
         line=__LINE__,  &
         file=__FILE__,  &
@@ -478,13 +374,156 @@ contains
         return
     end if
 
-    call aqm_config_runtime_set(model, config, rc=localrc)
+  end subroutine aqm_config_init
+
+  subroutine aqm_config_log(config, name, rc)
+
+    type(aqm_config_type), intent(in)  :: config
+    character(len=*),      intent(in)  :: name
+    integer, optional,     intent(out) :: rc
+
+    ! -- local variables
+    integer                    :: localrc
+    character(len=ESMF_MAXSTR) :: msgString
+
+    ! -- external functions
+    character(len=10), external :: hhmmss
+    character(len=14), external :: mmddyy
+
+    ! -- begin
+    if (present(rc)) rc = ESMF_SUCCESS
+
+    call ESMF_LogWrite(trim(name) // ": config: read: ae_matrix_nml: " &
+      // config % ae_matrix_nml, ESMF_LOGMSG_INFO, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+    call ESMF_LogWrite(trim(name) // ": config: read: gc_matrix_nml: " &
+      // config % gc_matrix_nml, ESMF_LOGMSG_INFO, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+    call ESMF_LogWrite(trim(name) // ": config: read: nr_matrix_nml: " &
+      // config % nr_matrix_nml, ESMF_LOGMSG_INFO, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+    call ESMF_LogWrite(trim(name) // ": config: read: tr_matrix_nml: " &
+      // config % tr_matrix_nml, ESMF_LOGMSG_INFO, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+    call ESMF_LogWrite(trim(name) // ": config: read: csqy_data: " &
+      // config % csqy_data, ESMF_LOGMSG_INFO, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+    call ESMF_LogWrite(trim(name) // ": config: read: optics_data: " &
+      // config % optics_data, ESMF_LOGMSG_INFO, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+    call ESMF_LogWrite(trim(name) // ": config: read: omi_data: " &
+      // config % omi, ESMF_LOGMSG_INFO, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+    if (config % ctm_aod) then
+      call ESMF_LogWrite(trim(name) // ": config: read: ctm_aod: true", &
+        ESMF_LOGMSG_INFO, rc=localrc)
+    else
+      call ESMF_LogWrite(trim(name) // ": config: read: ctm_aod: false", &
+        ESMF_LOGMSG_INFO, rc=localrc)
+    end if
+    if (config % run_aero) then
+      call ESMF_LogWrite(trim(name) // ": config: read: run_aerosol: true", &
+        ESMF_LOGMSG_INFO, rc=localrc)
+    else
+      call ESMF_LogWrite(trim(name) // ": config: read: run_aerosol: false", &
+        ESMF_LOGMSG_INFO, rc=localrc)
+    end if
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+    call ESMF_LogWrite(trim(name) // ": config: read: mp_tracer_map: " &
+      // config % mp_map, ESMF_LOGMSG_INFO, rc=localrc)
     if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__,  &
       file=__FILE__,  &
       rcToReturn=rc)) &
       return  ! bail out
 
-  end subroutine aqm_config_init
+    write(msgString, '(a,": config: init: mp_tracer_map: ",a,": ",i0," tracers")') &
+      trim(name), trim(config % mp_map), config % species % p_aqm_beg - 1
+    call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return
+    call ESMF_LogWrite(trim(name) // ": config: init: start_time: " &
+      // mmddyy(config % ctm_stdate) // " " // hhmmss(config % ctm_sttime), &
+      ESMF_LOGMSG_INFO, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return
+    call ESMF_LogWrite(trim(name) // ": config: init: time_step : " &
+      // hhmmss(config % ctm_tstep), ESMF_LOGMSG_INFO, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return
+    call ESMF_LogWrite(trim(name) // ": config: init: run_length: " &
+      // hhmmss(config % ctm_runlen), ESMF_LOGMSG_INFO, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return
+    write(msgString, '(a,": config: init: run_type  :")') trim(name)
+    if (config % initial_run) then
+      msgString = trim(msgString) // " initial"
+    else
+      msgString = trim(msgString) // " restart"
+    end if
+    call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return
+    write(msgString, '(a,": config: init: start_mode:")') trim(name)
+    if (config % init_conc) then
+      msgString = trim(msgString) // " cold (initialize concentrations)"
+    else
+      msgString = trim(msgString) // " warm"
+    end if
+    call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return
+
+  end subroutine aqm_config_log
 
 end module aqm_config_mod

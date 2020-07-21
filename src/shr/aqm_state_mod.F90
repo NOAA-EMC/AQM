@@ -45,6 +45,9 @@ module aqm_state_mod
 
     real(AQM_KIND_R8), dimension(:,:,:,:), pointer :: tr       => null()
 
+    ! -- diagnostics
+    real(AQM_KIND_R8), dimension(:,:),     pointer :: aod      => null()
+
   end type aqm_state_type
 
   public

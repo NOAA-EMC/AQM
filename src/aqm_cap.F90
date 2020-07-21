@@ -52,10 +52,11 @@ module AQM
       "temperature_of_soil_layer                "  &
     /)
   ! -- export fields
-  integer, parameter :: exportFieldCount = 1
+  integer, parameter :: exportFieldCount = 2
   character(len=*), dimension(exportFieldCount), parameter :: &
     exportFieldNames = (/ &
-      "inst_tracer_mass_frac                "  &
+      "inst_tracer_mass_frac                ", &
+      "inst_tracer_diag_aod                 "  &
     /)
 
   private

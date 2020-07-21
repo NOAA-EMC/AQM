@@ -2,7 +2,7 @@ module cmaq_mod
 
   use aqm_rc_mod
   use aqm_types_mod
-  use aqm_const_mod, only : rdgas
+  use aqm_const_mod, only : onebg, rdgas
   use aqm_emis_mod
   use aqm_tools_mod, only : aqm_units_conv
 
@@ -28,6 +28,7 @@ module cmaq_mod
 
   public :: cmaq_advance
   public :: cmaq_init
+  public :: cmaq_conc_init
   public :: cmaq_emis_init
   public :: cmaq_emis_print
   public :: cmaq_species_read
@@ -120,19 +121,9 @@ contains
     integer, optional, intent(out)   :: rc
 
     ! -- local variables
-    logical, save :: first_run = .true.
-    integer :: sdate, stime, nsteps
-    CHARACTER( 36 ) :: NMSG = 'After NEXTIME: returned JDATE, JTIME'
 
     ! -- external methods
     INTERFACE
-      SUBROUTINE INITSCEN ( CGRID, STDATE, STTIME, TSTEP, NSTEPS )
-        REAL, POINTER             :: CGRID( :,:,:,: )
-        INTEGER                   :: STDATE, STTIME
-        INTEGER                   :: TSTEP( 3 )
-        INTEGER                   :: NSTEPS
-      END SUBROUTINE INITSCEN
-
       SUBROUTINE VDIFF ( CGRID, JDATE, JTIME, TSTEP )
         REAL, POINTER             :: CGRID( :,:,:,: )
         INTEGER                   :: JDATE, JTIME
@@ -153,33 +144,21 @@ contains
     ! -- begin
     if (present(rc)) rc = AQM_RC_SUCCESS
 
-    SDATE = JDATE
-    STIME = JTIME
-
-    if (first_run) then
-      CALL INITSCEN ( CGRID, SDATE, STIME, TSTEP, NSTEPS )
-      first_run = .false.
-    end if
-
     ! -- advance all physical and chemical processes on a grid
     CALL VDIFF ( CGRID, JDATE, JTIME, TSTEP )
     
-!   CALL NEXTIME ( SDATE, STIME, TSTEP( 2 ) )
-
     CALL CHEM ( CGRID, JDATE, JTIME, TSTEP )
 
     if (run_aero) then
       CALL AERO ( CGRID, JDATE, JTIME, TSTEP )
     end if
 
-!   CALL NEXTIME ( JDATE, JTIME, TSTEP( 2 ) )
-    WRITE( cmaq_logdev,'(/ 5X, A, I8, I7.6)' ) NMSG, JDATE, JTIME
-
   end subroutine cmaq_advance
 
-  subroutine cmaq_import(tracers, prl, temp, start_index, rc)
+  subroutine cmaq_import(tracers, prl, phii, temp, start_index, rc)
     real(AQM_KIND_R8), intent(in)  :: tracers(:,:,:,:)
     real(AQM_KIND_R8), intent(in)  :: prl(:,:,:)
+    real(AQM_KIND_R8), intent(in)  :: phii(:,:,:)
     real(AQM_KIND_R8), intent(in)  :: temp(:,:,:)
     integer,           intent(in)  :: start_index
     integer, optional, intent(out) :: rc
@@ -242,6 +221,18 @@ contains
          end do
       end do
     end if
+
+    ! -- reciprocal Jacobian x air density for process analysis
+    spc = gc_strt - 1 + n_gc_spcd
+
+    do l = 1, nlays
+      do r = 1, my_nrows
+        do c = 1, my_ncols
+          dens = prl( c,r,l ) / ( rdgas * temp( c,r,l ) )
+          cgrid( c,r,l,spc ) = onebg * dens * ( phii( c,r,l+1 ) - phii( c,r,l ) )
+        end do
+      end do
+    end do
 
     write(cmaq_logdev,'("cmaq_import: cgrid - min/max ",2g16.6)') &
       minval(cgrid), maxval(cgrid)
@@ -319,6 +310,33 @@ contains
       minval(cgrid), maxval(cgrid)
 
   end subroutine cmaq_export
+
+  subroutine cmaq_conc_init(jdate, jtime, tstep, rc)
+
+    integer,           intent(in)  :: jdate, jtime, tstep(3)
+    integer, optional, intent(out) :: rc
+
+    ! -- external methods
+    INTERFACE
+      SUBROUTINE INITSCEN ( CGRID, STDATE, STTIME, TSTEP, NSTEPS )
+        REAL, POINTER             :: CGRID( :,:,:,: )
+        INTEGER                   :: STDATE, STTIME
+        INTEGER                   :: TSTEP( 3 )
+        INTEGER                   :: NSTEPS
+      END SUBROUTINE INITSCEN
+    END INTERFACE
+
+    ! -- local variables
+    integer :: stdate, sttime, nsteps
+
+    ! -- begin
+    if (present(rc)) rc = AQM_RC_SUCCESS
+
+    STDATE = JDATE
+    STTIME = JTIME
+    CALL INITSCEN ( CGRID, STDATE, STTIME, TSTEP, NSTEPS )
+
+  end subroutine cmaq_conc_init
 
   subroutine cmaq_emis_init(rc)
 

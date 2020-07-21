@@ -313,6 +313,8 @@ logical function envyn(name, description, defaultval, status)
       envyn = .false.
       em => aqm_emis_get("biogenic")
       if (associated(em)) envyn = (trim(em % period) == "summer")
+    case ('CTM_AOD')
+      envyn = config % ctm_aod
     case ('CTM_BIOGEMIS')
       envyn = .false.
       em => aqm_emis_get("biogenic")
@@ -1076,6 +1078,48 @@ SUBROUTINE SUBHFILE ( FNAME, GXOFF, GYOFF, &
    ENDROW = je - js + 1
 
 END SUBROUTINE SUBHFILE
+
+LOGICAL FUNCTION WRITE3_REAL2D( FNAME, VNAME, JDATE, JTIME, BUFFER )
+
+  USE M3UTILIO,      ONLY : ALLVAR3
+  USE aqm_model_mod, ONLY : aqm_state_type, &
+                            aqm_model_get
+  USE aqm_rc_mod,    ONLY : aqm_rc_check
+
+  INCLUDE SUBST_FILES_ID
+
+  CHARACTER*(*), INTENT(IN   ) :: FNAME      !  logical file name
+  CHARACTER*(*), INTENT(IN   ) :: VNAME      !  logical file name
+  INTEGER      , INTENT(IN   ) :: JDATE      !  date, formatted YYYYDDD
+  INTEGER      , INTENT(IN   ) :: JTIME      !  time, formatted HHMMSS
+  REAL         , INTENT(IN   ) :: BUFFER(:,:)  !  output buffer array
+
+  integer :: localrc
+  type(aqm_state_type), pointer :: stateOut
+
+  WRITE3_REAL2D = .TRUE.
+
+  IF ( TRIM( FNAME ) .EQ. TRIM( CTM_AOD_1 ) ) THEN
+
+    WRITE3_REAL2D = .FALSE.
+
+    IF ( TRIM( VNAME ) .EQ. TRIM( ALLVAR3 ) ) THEN
+
+      nullify(stateOut)
+      call aqm_model_get(stateOut=stateOut, rc=localrc)
+      if (aqm_rc_check(localrc, msg="Failure to retrieve model output state", &
+        file=__FILE__, line=__LINE__)) return
+
+      stateOut % aod = BUFFER
+
+    END IF
+
+    WRITE3_REAL2D = .TRUE.
+
+  END IF
+
+END FUNCTION WRITE3_REAL2D
+
 
 ! -- dummy subroutines
 

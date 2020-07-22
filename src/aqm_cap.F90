@@ -380,10 +380,18 @@ module AQM
         tile = deToTileMap(de)
 
         if (btest(verbosity,8)) then
-          write(msgString,'("localDe: ",i4," DE: ",i4, " tile=",i2," minIndexPDe=",2i4,2x," maxIndexPDe=",2i4," minIndexPTile=",2i4," maxIndexPTile=",2i4,4i4)') &
-            localDe, de-1, tile, minIndexPDe(:,de), maxIndexPDe(:,de), minIndexPTile(:,tile), maxIndexPTile(:,tile), &
+          write(msgString,'("DE[",i0,"]: domain : [",i0,",",i0,"] x [",i0,",",i0,' // &
+            '"], compute: [",i0,",",i0,"] x [",i0,",",i0,"]")') localDe, &
+            minIndexPDe(:,de), maxIndexPDe(:,de), &
             computationalLBound(:,localDe+1), computationalUBound(:,localDe+1)
-          call ESMF_LogWrite(trim(name)//": "//trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+          call ESMF_LogWrite(trim(name)//": decomp: local : "//trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+          if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, &
+            file=__FILE__)) &
+            return  ! bail out
+          write(msgString,'("DE[",i0,"]: tile[",i0,"]: [",i0,",",i0,"] x [",i0,",",i0,"]")') &
+            de-1, tile, minIndexPTile(:,tile), maxIndexPTile(:,tile)
+          call ESMF_LogWrite(trim(name)//": decomp: global: "//trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
           if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
             line=__LINE__, &
             file=__FILE__)) &
@@ -546,7 +554,7 @@ module AQM
       return  ! bail out
     
     call ESMF_TimePrint(currTime + timeStep, &
-      preString="--------------------------------> to: ", rc=rc)
+      preString="---------------------> to: ", rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
@@ -554,24 +562,11 @@ module AQM
 
     ! print field diagnostics
     if (btest(diagnostic,17)) then
-      call ESMF_GridCompGet(model, vm=vm, rc=rc)
+      call aqm_field_diagnostics(model, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
         line=__LINE__, &
         file=__FILE__)) &
         return  ! bail out
-      do item = 1, importFieldCount
-        call ESMF_StateGet(importState, field=field, &
-          itemName=trim(importFieldNames(item)), rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-          line=__LINE__, &
-          file=__FILE__)) &
-          return  ! bail out
-        call fieldPrintMinMax(field, vm=vm, rc=rc)
-        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-          line=__LINE__, &
-          file=__FILE__)) &
-          return  ! bail out
-      end do
     end if
 
     ! advance model

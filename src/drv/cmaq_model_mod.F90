@@ -58,6 +58,8 @@ contains
     if (aqm_rc_check(localrc, msg="Failed to initialize CMAQ", &
       file=__FILE__, line=__LINE__, rc=rc)) return
 
+    if (config % verbose) call cmaq_domain_log(config % name)
+
     ! -- initialize emissions
     call cmaq_emis_init(rc=localrc)
     if (aqm_rc_check(localrc, msg="Failed to initialize CMAQ", &
@@ -98,11 +100,13 @@ contains
     ! -- import advected species mixing ratios
     if (config % init_conc .and. first_step) then
       call cmaq_conc_init(jdate, jtime, tstep, rc=localrc)
-    if (aqm_rc_check(localrc, msg="Failed to initialize concentrations", &
-      file=__FILE__, line=__LINE__, rc=rc)) return
+      if (aqm_rc_check(localrc, msg="Failed to initialize concentrations", &
+        file=__FILE__, line=__LINE__, rc=rc)) return
       first_step = .false.
+      if (config % verbose) call cmaq_conc_log(trim(config % name) // ": init")
     else
       call cmaq_import(stateIn % tr, stateIn % prl, stateIn % phii, stateIn % temp, config % species % p_aqm_beg)
+      if (config % verbose) call cmaq_conc_log(trim(config % name) // ": import")
     end if
 
     ! -- advance model
@@ -112,6 +116,7 @@ contains
 
     ! -- export updated species mixing ratios
     call cmaq_export(stateOut % tr, stateIn % prl, stateIn % temp, config % species % p_aqm_beg)
+    if (config % verbose) call cmaq_conc_log(trim(config % name) // ": export")
 
   end subroutine cmaq_model_advance
 

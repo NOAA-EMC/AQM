@@ -518,14 +518,14 @@ end subroutine nameval
 logical function interpx( fname, vname, pname, &
   col0, col1, row0, row1, lay0, lay1, jdate, jtime, buffer )
 
-  use aqm_types_mod, only : AQM_KIND_R4, AQM_KIND_R8
+  use aqm_types_mod, only : AQM_KIND_R4, AQM_KIND_R8, AQM_MAXSTR
   use aqm_rc_mod,    only : aqm_rc_check, aqm_rc_test
   use aqm_emis_mod,  only : aqm_emis_read
   use aqm_model_mod, only : aqm_config_type, aqm_state_type, &
                             aqm_model_get, aqm_model_domain_get
   use aqm_const_mod, only : eps1, grav, onebg, rdgas
 
-  USE M3UTILIO,      ONLY : DESC3, NLAYS3D, VGLVS3D
+  USE M3UTILIO,      ONLY : DESC3, M3MESG, NLAYS3D, VGLVS3D
 
   implicit none
 
@@ -539,6 +539,8 @@ logical function interpx( fname, vname, pname, &
   integer :: c, r, l, k
   integer :: lbuf, lu_index
   logical :: set_non_neg
+  character(len=16)         :: varname
+  character(len=AQM_MAXSTR) :: msgString
   real,              dimension(:),     allocatable :: X3FACE_GD
   real(AQM_KIND_R8), dimension(:,:),   pointer     :: lat, lon
   real(AQM_KIND_R8), dimension(:,:),   pointer     :: p2d
@@ -907,8 +909,17 @@ logical function interpx( fname, vname, pname, &
 
   interpx = .true.
 
-  if (debug) write(6,'(a,": ",a10," - min/max ",2g20.6)') &
-    trim(fname), trim(vname), minval(buffer(1:lbuf)), maxval(buffer(1:lbuf))
+  call aqm_model_get(config=config, rc=localrc)
+  if (aqm_rc_check(localrc, msg="Failure to retrieve model configuration", &
+    file=__FILE__, line=__LINE__)) return
+
+  if (config % verbose) then
+    varname = vname
+    write(msgString, '(a,": interpx: ",a16,": ",a16,": min/max = ",2g20.8)') &
+      trim(config % name), fname, varname, &
+      minval(buffer(1:lbuf)), maxval(buffer(1:lbuf))
+    call m3mesg(msgString)
+  end if
 
 end function interpx
 

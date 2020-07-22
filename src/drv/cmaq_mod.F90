@@ -14,6 +14,7 @@ module cmaq_mod
 
   use AERO_DATA,   only : aerolist, n_aerolist
 
+  use M3UTILIO,    only : M3MESG
   use UTILIO_DEFN, only : INDEX1, INIT3, MXVARS3
 
   implicit none
@@ -29,6 +30,8 @@ module cmaq_mod
   public :: cmaq_advance
   public :: cmaq_init
   public :: cmaq_conc_init
+  public :: cmaq_conc_log
+  public :: cmaq_domain_log
   public :: cmaq_emis_init
   public :: cmaq_emis_print
   public :: cmaq_species_read
@@ -80,16 +83,6 @@ contains
     if (aqm_rc_test(.not.grid_init( nprocs, mype ), &
       msg="cmaq_init: Failure defining horizontal domain", &
       file=__FILE__, line=__LINE__, rc=rc)) return
-
-#ifdef verbose_driver
-    write( cmaq_logdev,* ) ' MYPE -> NPROCS:   ', mype, nprocs
-    write( cmaq_logdev,* ) ' MYPE -> NPCOL:    ', mype, npcol
-    write( cmaq_logdev,* ) ' MYPE -> NPROW:    ', mype, nprow
-    write( cmaq_logdev,* ) ' MYPE -> GL_NCOLS: ', mype, gl_ncols
-    write( cmaq_logdev,* ) ' MYPE -> GL_NROWS: ', mype, gl_nrows
-    write( cmaq_logdev,* ) ' MYPE -> NLAYS:    ', mype, nlays
-    write( cmaq_logdev,* ) ' MYPE -> NSPCS:    ', mype, nspcsd
-#endif
 
     ! -- set I/O flag
     IO_PE_INCLUSIVE = ( MYPE .EQ. 0 )
@@ -156,6 +149,7 @@ contains
   end subroutine cmaq_advance
 
   subroutine cmaq_import(tracers, prl, phii, temp, start_index, rc)
+
     real(AQM_KIND_R8), intent(in)  :: tracers(:,:,:,:)
     real(AQM_KIND_R8), intent(in)  :: prl(:,:,:)
     real(AQM_KIND_R8), intent(in)  :: phii(:,:,:)
@@ -234,13 +228,10 @@ contains
       end do
     end do
 
-    write(cmaq_logdev,'("cmaq_import: cgrid - min/max ",2g16.6)') &
-      minval(cgrid), maxval(cgrid)
-
   end subroutine cmaq_import
 
-
   subroutine cmaq_export(tracers, prl, temp, start_index, rc)
+
     real(AQM_KIND_R8), intent(out) :: tracers(:,:,:,:)
     real(AQM_KIND_R8), intent(in)  :: prl(:,:,:)
     real(AQM_KIND_R8), intent(in)  :: temp(:,:,:)
@@ -306,9 +297,6 @@ contains
       end do
     end if
 
-    write(cmaq_logdev,'("cmaq_export: cgrid - min/max ",2g16.6)') &
-      minval(cgrid), maxval(cgrid)
-
   end subroutine cmaq_export
 
   subroutine cmaq_conc_init(jdate, jtime, tstep, rc)
@@ -337,6 +325,58 @@ contains
     CALL INITSCEN ( CGRID, STDATE, STTIME, TSTEP, NSTEPS )
 
   end subroutine cmaq_conc_init
+
+  subroutine cmaq_conc_log(label)
+
+    character(len=*), intent(in) :: label
+
+    ! -- local variables
+    integer :: off, spc, v
+    character(len=AQM_MAXSTR) :: msgString
+
+    ! -- gas chemistry
+    if ( n_gc_spc > 0 ) then
+      off = gc_strt - 1
+      do v = 1, n_gc_trns
+         spc = off + gc_trns_map( v )
+         write(msgString, '(a,": ",a16,"[",i0,"]: min/max = ",2g20.8)') &
+           trim(label), gc_trns( v ), spc, &
+           minval(cgrid(:,:,:,spc)), maxval(cgrid(:,:,:,spc))
+         call m3mesg(msgString)
+      end do
+    end if
+
+    ! -- aerosols
+    if ( n_ae_spc > 0 ) then
+      off = ae_strt - 1
+      do v = 1, n_ae_trns
+         spc = off + ae_trns_map( v )
+         write(msgString, '(a,": ",a16,"[",i0,"]: min/max = ",2g20.8)') &
+           trim(label), ae_trns( v ), spc, &
+           minval(cgrid(:,:,:,spc)), maxval(cgrid(:,:,:,spc))
+         call m3mesg(msgString)
+      end do
+    end if
+
+    ! -- non reactive species
+    if ( n_nr_spc > 0 ) then
+      off = nr_strt - 1
+      do v = 1, n_nr_trns
+         spc = off + nr_trns_map( v )
+         write(msgString, '(a,": ",a16,"[",i0,"]: min/max = ",2g20.8)') &
+           trim(label), nr_trns( v ), spc, &
+           minval(cgrid(:,:,:,spc)), maxval(cgrid(:,:,:,spc))
+         call m3mesg(msgString)
+      end do
+    end if
+
+    ! -- reciprocal Jacobian x air density for process analysis
+    spc = gc_strt - 1 + n_gc_spcd
+    write(msgString, '(a,": RHOJ",12x,"[",i0,"]: min/max = ",2g20.8)') &
+      trim(label), spc, minval(cgrid(:,:,:,spc)), maxval(cgrid(:,:,:,spc))
+    call m3mesg(msgString)
+
+  end subroutine cmaq_conc_log
 
   subroutine cmaq_emis_init(rc)
 
@@ -463,6 +503,7 @@ contains
   end subroutine cmaq_emis_init
 
   subroutine cmaq_emis_print(etype, unit)
+
     character(len=*), intent(in) :: etype
     integer,          intent(in) :: unit
 
@@ -491,5 +532,20 @@ contains
     end if
 
   end subroutine cmaq_emis_print
+
+  subroutine cmaq_domain_log(label)
+
+    character(len=*), intent(in) :: label
+
+    ! -- local variables
+    character(len=AQM_MAXSTR) :: msgString
+
+    ! -- begin
+    write(msgString, '(a,": cgrid: init: NPCOL: ",i0,", NPROW: ",i0,' // &
+      '", GL_NCOLS: ",i0,", GL_NROWS: ",i0,", NLAYS: ",i0,", NSPCSD: ",i0)') &
+      trim(label), npcol, nprow, gl_ncols, gl_nrows, nlays, nspcsd
+    call m3mesg(msgString)
+
+  end subroutine cmaq_domain_log
 
 end module cmaq_mod

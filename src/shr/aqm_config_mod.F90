@@ -12,6 +12,7 @@ module aqm_config_mod
 
   ! -- data structure for configuration options
   type aqm_config_type
+    character(len=AQM_MAXSTR) :: name          = ""
     character(len=AQM_MAXSTR) :: ae_matrix_nml = ""
     character(len=AQM_MAXSTR) :: gc_matrix_nml = ""
     character(len=AQM_MAXSTR) :: nr_matrix_nml = ""
@@ -32,6 +33,7 @@ module aqm_config_mod
     logical                   :: ctm_depvfile  = .false.
     logical                   :: init_conc     = .false.
     logical                   :: run_aero      = .false.
+    logical                   :: verbose       = .false.
     type(aqm_species_type), pointer :: species => null()
   end type aqm_config_type
 
@@ -324,6 +326,7 @@ contains
 
     ! -- local variables
     integer                    :: localrc
+    integer                    :: diagnostic
     integer                    :: verbosity
     character(len=ESMF_MAXSTR) :: name
     character(len=ESMF_MAXSTR) :: msgString
@@ -333,7 +336,8 @@ contains
     if (present(rc)) rc = ESMF_SUCCESS
 
     ! -- get component's information
-    call NUOPC_CompGet(model, name=name, verbosity=verbosity, rc=localrc)
+    call NUOPC_CompGet(model, name=name, diagnostic=diagnostic, &
+      verbosity=verbosity, rc=localrc)
     if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__,  &
       file=__FILE__,  &
@@ -364,6 +368,10 @@ contains
         line=__LINE__, file=__FILE__, rcToReturn=rc)
       return  ! bail out
     end if
+
+    ! -- set model's name and verbosity level based on the component standard diagnostic level
+    config % name    = name
+    config % verbose = btest(diagnostic, 17)
 
     if (btest(verbosity,8)) then
       call aqm_config_log(config, name, rc=localrc)
@@ -516,6 +524,18 @@ contains
       msgString = trim(msgString) // " cold (initialize concentrations)"
     else
       msgString = trim(msgString) // " warm"
+    end if
+    call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return
+    write(msgString, '(a,": config: init: output_level:")') trim(name)
+    if (config % verbose) then
+      msgString = trim(msgString) // " verbose"
+    else
+      msgString = trim(msgString) // " normal"
     end if
     call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=localrc)
     if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &

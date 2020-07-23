@@ -7,11 +7,11 @@ libshr_a_SOURCES = aqm_config_mod.F90 aqm_const_mod.F90 \
 
 libshr_a_CPPFLAGS = -DSUBST_CONST=\"CONST.EXT\" -DSUBST_FILES_ID=\"FILES_CTM.EXT\"
 
-libshr_a_FCFLAGS  = -I $(builddir)/../io/ioapi
-libshr_a_FCFLAGS += -I $(builddir)/../io/aqmio
-libshr_a_FCFLAGS += -I $(builddir)/../CMAQ
-libshr_a_FCFLAGS += -I $(srcdir)/../CMAQ/CCTM/src/ICL/fixed/const
-libshr_a_FCFLAGS += -I $(srcdir)/../CMAQ/CCTM/src/ICL/fixed/filenames
+libshr_a_FCFLAGS  = -I $(top_builddir)/src/io/ioapi
+libshr_a_FCFLAGS += -I $(top_builddir)/src/io/aqmio
+libshr_a_FCFLAGS += -I $(top_builddir)/src/model
+libshr_a_FCFLAGS += -I $(top_srcdir)/src/model/CMAQ/CCTM/src/ICL/fixed/const
+libshr_a_FCFLAGS += -I $(top_srcdir)/src/model/CMAQ/CCTM/src/ICL/fixed/filenames
 
 include $(ESMFMKFILE)
 

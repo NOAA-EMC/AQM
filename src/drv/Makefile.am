@@ -4,12 +4,12 @@ libdrv_a_SOURCES = cmaq_model_mod.F90 cmaq_mod.F90 cmaq_methods.F90
 
 libdrv_a_CPPFLAGS = -Dverbose_driver
 
-libdrv_a_FCFLAGS  = -I $(builddir)/../shr
-libdrv_a_FCFLAGS += -I $(builddir)/../CMAQ
-libdrv_a_FCFLAGS += -I $(builddir)/../io/ioapi
-libdrv_a_FCFLAGS += -I $(builddir)/../io/aqmio
+libdrv_a_FCFLAGS  = -I $(top_builddir)/src/shr
+libdrv_a_FCFLAGS += -I $(top_builddir)/src/model
+libdrv_a_FCFLAGS += -I $(top_builddir)/src/io/ioapi
+libdrv_a_FCFLAGS += -I $(top_builddir)/src/io/aqmio
 
-libdrv_a_DEPENDENCIES = $(builddir)/../shr/libshr.a
+libdrv_a_DEPENDENCIES = $(top_builddir)/src/shr/libshr.a
 
 include $(ESMFMKFILE)
 

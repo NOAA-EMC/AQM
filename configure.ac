@@ -221,7 +221,7 @@ AC_SUBST([AQM_DEP_SHRD_LIBS])
 
 # Output Makefiles
 AC_CONFIG_FILES([Makefile
-                 src/CMAQ/Makefile
+                 src/model/Makefile
                  src/shr/Makefile
                  src/drv/Makefile
                  src/io/Makefile

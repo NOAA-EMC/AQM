@@ -5461,7 +5461,7 @@ AQM_DEP_SHRD_LIBS="`echo ${LIBS} | $SED -e's/-l//g'`"
 
 
 # Output Makefiles
-ac_config_files="$ac_config_files Makefile src/CMAQ/Makefile src/shr/Makefile src/drv/Makefile src/io/Makefile src/io/aqmio/Makefile src/io/ioapi/Makefile src/Makefile"
+ac_config_files="$ac_config_files Makefile src/model/Makefile src/shr/Makefile src/drv/Makefile src/io/Makefile src/io/aqmio/Makefile src/io/ioapi/Makefile src/Makefile"
 
 
 cat >confcache <<\_ACEOF
@@ -6214,7 +6214,7 @@ do
   case $ac_config_target in
     "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
-    "src/CMAQ/Makefile") CONFIG_FILES="$CONFIG_FILES src/CMAQ/Makefile" ;;
+    "src/model/Makefile") CONFIG_FILES="$CONFIG_FILES src/model/Makefile" ;;
     "src/shr/Makefile") CONFIG_FILES="$CONFIG_FILES src/shr/Makefile" ;;
     "src/drv/Makefile") CONFIG_FILES="$CONFIG_FILES src/drv/Makefile" ;;
     "src/io/Makefile") CONFIG_FILES="$CONFIG_FILES src/io/Makefile" ;;

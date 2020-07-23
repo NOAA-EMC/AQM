@@ -11,7 +11,7 @@ libioapi_a_FFLAGS   = $(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) $(ESMF_F90C
 
 libioapi_a_FCFLAGS  = $(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) $(ESMF_F90COMPILEFREECPP) $(ESMF_F90COMPILECPPFLAGS)
 libioapi_a_FCFLAGS += -DSUBST_FILES_ID=\"FILES_CTM.EXT\"
-libioapi_a_FCFLAGS += -I $(srcdir)/../../CMAQ/CCTM/src/ICL/fixed/filenames
+libioapi_a_FCFLAGS += -I $(top_srcdir)/src/model/CMAQ/CCTM/src/ICL/fixed/filenames
 
 .PHONY: clean-modules
 
@@ -24,5 +24,5 @@ libioapi_a-currec.$(OBJEXT) : libioapi_a-nextime.$(OBJEXT)
 libioapi_a-currstep.$(OBJEXT) : libioapi_a-currec.$(OBJEXT)
 libioapi_a-dt2str.$(OBJEXT) : libioapi_a-hhmmss.$(OBJEXT) libioapi_a-mmddyy.$(OBJEXT) libioapi_a-nextime.$(OBJEXT)
 libioapi_a-getefile.$(OBJEXT) : libioapi_a-m3utilio.$(OBJEXT) libioapi_a-junit.$(OBJEXT)
-libioapi_a-m3utilio.$(OBJEXT) : $(srcdir)/../../CMAQ/CCTM/src/ICL/fixed/filenames/FILES_CTM.EXT
+libioapi_a-m3utilio.$(OBJEXT) : $(top_srcdir)/src/model/CMAQ/CCTM/src/ICL/fixed/filenames/FILES_CTM.EXT
 libioapi_a-nextime.$(OBJEXT) : libioapi_a-time2sec.$(OBJEXT)

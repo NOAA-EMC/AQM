@@ -292,10 +292,10 @@ libshr_a_SOURCES = aqm_config_mod.F90 aqm_const_mod.F90 \
 	aqm_state_mod.F90 aqm_tools_mod.F90 aqm_types_mod.F90
 
 libshr_a_CPPFLAGS = -DSUBST_CONST=\"CONST.EXT\" -DSUBST_FILES_ID=\"FILES_CTM.EXT\"
-libshr_a_FCFLAGS = -I $(builddir)/../io/ioapi -I \
-	$(builddir)/../io/aqmio -I $(builddir)/../CMAQ -I \
-	$(srcdir)/../CMAQ/CCTM/src/ICL/fixed/const -I \
-	$(srcdir)/../CMAQ/CCTM/src/ICL/fixed/filenames \
+libshr_a_FCFLAGS = -I $(top_builddir)/src/io/ioapi -I \
+	$(top_builddir)/src/io/aqmio -I $(top_builddir)/src/model -I \
+	$(top_srcdir)/src/model/CMAQ/CCTM/src/ICL/fixed/const -I \
+	$(top_srcdir)/src/model/CMAQ/CCTM/src/ICL/fixed/filenames \
 	$(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) \
 	$(ESMF_F90COMPILEFREECPP) $(ESMF_F90COMPILECPPFLAGS)
 all: all-am

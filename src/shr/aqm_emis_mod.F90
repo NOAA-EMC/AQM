@@ -556,8 +556,11 @@ contains
         rcToReturn=rc)) &
         return
 
-      tmpSourceList = ""
-      tmpFactorList = 0._ESMF_KIND_R4
+      ! -- initialize temporary arrays
+      tmpSpeciesList = ""
+      tmpUnitsList   = ""
+      tmpSourceList  = ""
+      tmpFactorList  = 0._ESMF_KIND_R4
 
       call ESMF_ConfigFindLabel(config, trim(em % name)//"_species::", rc=localrc)
       if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -699,6 +702,12 @@ contains
           file=__FILE__,  &
           rcToReturn=rc)) &
           return
+
+        ! -- initialize arrays
+        em % species = ""
+        em % factors = 0._ESMF_KIND_R4
+        em % sources = ""
+        em % units   = ""
 
         ! -- assume emissions are provided as surface densities by default
         em % dens_flag = 0

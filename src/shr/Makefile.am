@@ -1,7 +1,7 @@
 noinst_LIBRARIES = libshr.a
 
 libshr_a_SOURCES = aqm_config_mod.F90 aqm_const_mod.F90 \
-	aqm_domain_mod.F90 aqm_emis_mod.F90 aqm_internal_mod.F90 \
+	aqm_domain_mod.F90 aqm_emis_mod.F90 aqm_fires_mod.F90 aqm_internal_mod.F90 \
 	aqm_model_mod.F90 aqm_rc_mod.F90 aqm_methods.F90 aqm_species_mod.F90 \
 	aqm_state_mod.F90 aqm_tools_mod.F90 aqm_types_mod.F90
 
@@ -31,6 +31,8 @@ libshr_a-aqm_const_mod.$(OBJEXT): libshr_a-aqm_types_mod.$(OBJEXT)
 libshr_a-aqm_domain_mod.$(OBJEXT): libshr_a-aqm_types_mod.$(OBJEXT)
 libshr_a-aqm_emis_mod.$(OBJEXT): libshr_a-aqm_internal_mod.$(OBJEXT) libshr_a-aqm_model_mod.$(OBJEXT) \
 	libshr_a-aqm_rc_mod.$(OBJEXT) libshr_a-aqm_tools_mod.$(OBJEXT) libshr_a-aqm_types_mod.$(OBJEXT)
+libshr_a-aqm_fires_mod.$(OBJEXT): libshr_a-aqm_const_mod.$(OBJEXT) libshr_a-aqm_emis_mod.$(OBJEXT) \
+	libshr_a-aqm_model_mod.$(OBJEXT) libshr_a-aqm_state_mod.$(OBJEXT) libshr_a-aqm_rc_mod.$(OBJEXT)
 libshr_a-aqm_model_mod.$(OBJEXT): \
 	libshr_a-aqm_config_mod.$(OBJEXT) libshr_a-aqm_domain_mod.$(OBJEXT) \
 	libshr_a-aqm_rc_mod.$(OBJEXT) libshr_a-aqm_species_mod.$(OBJEXT) \

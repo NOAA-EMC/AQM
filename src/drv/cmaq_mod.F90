@@ -2,8 +2,9 @@ module cmaq_mod
 
   use aqm_rc_mod
   use aqm_types_mod
-  use aqm_const_mod, only : onebg, rdgas
+  use aqm_const_mod, only : onebg, rdgas, grav, mwair
   use aqm_emis_mod
+  use aqm_fires_mod
   use aqm_tools_mod, only : aqm_units_conv
 
   use PAGRD_DEFN
@@ -12,7 +13,10 @@ module cmaq_mod
 
   use cgrid_spcs
 
-  use AERO_DATA,   only : aerolist, n_aerolist
+  use AERO_DATA,   only : aerolist, n_aerolist,  &
+                          aerospc_mw, n_emis_pm, &
+                          map_pmemis, pmem_map,  &
+                          pmem_map_name, pmem_units
 
   use M3UTILIO,    only : M3MESG
   use UTILIO_DEFN, only : INDEX1, INIT3, MXVARS3
@@ -21,7 +25,12 @@ module cmaq_mod
 
   integer :: cmaq_logdev
 
+  ! -- pointer to CMAQ concentration array
   real, pointer :: CGRID(:,:,:,:) => null()
+
+  ! -- fire emissions work arrays
+  real, allocatable :: em_buffer(:)
+  real, allocatable :: em_vfrac(:,:,:)
 
   private
 
@@ -32,7 +41,9 @@ module cmaq_mod
   public :: cmaq_conc_init
   public :: cmaq_conc_log
   public :: cmaq_domain_log
+  public :: cmaq_emis_fires
   public :: cmaq_emis_init
+  public :: cmaq_emis_finalize
   public :: cmaq_emis_print
   public :: cmaq_species_read
   public :: cmaq_export
@@ -383,17 +394,19 @@ contains
     integer, optional, intent(out) :: rc
 
     ! -- local variables
-    integer :: stat
+    integer :: localrc, stat
     integer :: item
-    integer :: area_flag, ltable, n, spc
+    integer :: ltable, n, spc
     integer, allocatable :: umap(:)
     type(aqm_internal_emis_type), pointer :: em
 
     ! -- local parameters
-    character(len=*), parameter :: etype(2) = (/ &
+    character(len=*), parameter :: etype(3) = (/ &
       "anthropogenic", &
-      "biogenic     "  &
+      "biogenic     ", &
+      "gbbepx       "  &
     /)
+    real :: f
 
     ! -- begin
     if (present(rc)) rc = AQM_RC_SUCCESS
@@ -410,7 +423,7 @@ contains
       if (associated(em)) then
 
         select case (trim(etype(item)))
-          case ("anthropogenic")
+          case ("anthropogenic", "gbbepx")
 
           ! -- check if internal emissions reference table was allocated
           if (aqm_rc_test(.not.associated(em % table), &
@@ -419,6 +432,12 @@ contains
 
           ! -- add internal units to emissions reference table
           ltable = size(em % table, dim=1)
+
+          ! -- define mapping of CMAQ aerosol and related emission species
+          call map_pmemis()
+
+          ! -- set destination units for PM emissions for all species
+          pmem_units = "G/S"
 
           ! -- gas species
           do n = 1, n_gc_spc
@@ -430,14 +449,13 @@ contains
             spc = index1( nr_emis( n ), ltable, em % table(:,1) )
             if (spc > 0) em % table(spc,2) = "MOL/S"
           end do
+          spc = index1( "NH3_FERT", ltable, em % table(:,1) )
+          if (spc > 0) em % table(spc,2) = "MOL/S"
+
           ! -- aerosol species
-          ! -- these must go last since they should override particulate sources
-          ! -- for the previous categories
-          do n = 1, n_aerolist
-            if ( aerolist( n ) % emis( 1:1 ) /= ' ' ) then
-              spc = index1( aerolist( n ) % emis, ltable, em % table(:,1) )
-              if (spc > 0) em % table(spc,2) = "G/S"
-            end if
+          do n = 1, n_emis_pm
+            spc = index1( pmem_map_name( n ), ltable, em % table(:,1) )
+            if (spc > 0) em % table(spc,2) = pmem_units
           end do
 
           allocate(umap(size(em % species)), stat=stat)
@@ -453,21 +471,29 @@ contains
 
           ! -- include conversion factors from source units to internal units
           do n = 1, size(em % species)
-            em % dens_flag(n) = 0
-            spc = index1( em % species(n), n_ae_emis, ae_emis )
-            if (spc > 0) then
-              em % factors(n) = em % factors(n) &
-                * aqm_units_conv( em % units(n), em % table(umap(n),2), ae_molwt(ae_emis_map(spc)), em % dens_flag(n) )
-            end if
-            spc = index1( em % species(n), n_gc_emis, gc_emis )
-            if (spc > 0) then
-              em % factors(n) = em % factors(n) &
-                * aqm_units_conv( em % units(n), em % table(umap(n),2), gc_molwt(gc_emis_map(spc)), em % dens_flag(n) )
-            end if
-            spc = index1( em % species(n), n_nr_emis, nr_emis )
-            if (spc > 0) then
-              em % factors(n) = em % factors(n) &
-                * aqm_units_conv( em % units(n), em % table(umap(n),2), nr_molwt(nr_emis_map(spc)), em % dens_flag(n) )
+            if ( trim(em % units(n)) == "1" ) then
+              em % dens_flag(n) = 1
+            else
+              em % dens_flag(n) = 0
+              spc = index1( em % species(n), n_gc_emis, gc_emis )
+              if (spc > 0) then
+                em % factors(n) = em % factors(n) &
+                  * aqm_units_conv( em % units(n), em % table(umap(n),2), gc_molwt(gc_emis_map(spc)), em % dens_flag(n) )
+              end if
+              if ( trim(em % species(n)) == "NH3_FERT" ) then
+                spc = index1( "NH3", n_nr_emis, nr_emis )
+              else
+                spc = index1( em % species(n), n_nr_emis, nr_emis )
+              end if
+              if (spc > 0) then
+                em % factors(n) = em % factors(n) &
+                  * aqm_units_conv( em % units(n), em % table(umap(n),2), nr_molwt(nr_emis_map(spc)), em % dens_flag(n) )
+              end if
+              spc = index1( em % species(n), n_emis_pm, pmem_map_name )
+              if (spc > 0) then
+                em % factors(n) = em % factors(n) &
+                  * aqm_units_conv( em % units(n), em % table(umap(n),2), aerospc_mw(pmem_map(spc)), em % dens_flag(n) )
+              end if
             end if
           end do
 
@@ -500,7 +526,192 @@ contains
       end if
     enddo
 
+    call cmaq_emis_fires_init("gbbepx", rc=localrc)
+    if (aqm_rc_check(localrc, msg="Failure to initialize fire emissions", &
+      file=__FILE__, line=__LINE__)) return
+
   end subroutine cmaq_emis_init
+
+  subroutine cmaq_emis_finalize(rc)
+
+    integer, optional, intent(out) :: rc
+
+    ! -- local variables
+    integer :: localrc
+
+    ! -- begin
+    if (present(rc)) rc = AQM_RC_SUCCESS
+
+    call cmaq_emis_fires_finalize(rc=localrc)
+    if (aqm_rc_check(localrc, msg="Failure to finalize fire emissions", &
+      file=__FILE__, line=__LINE__)) return
+
+  end subroutine cmaq_emis_finalize
+
+  subroutine cmaq_emis_fires_init(etype, rc)
+
+    character(len=*),  intent(in)  :: etype
+    integer, optional, intent(out) :: rc
+
+    ! -- local variables
+    integer :: localrc
+    integer :: nl, nx, ny
+    type(aqm_internal_emis_type), pointer :: em
+
+    ! -- begin
+    if (present(rc)) rc = AQM_RC_SUCCESS
+
+    nullify(em)
+
+    ! -- retrieve fire emissions
+    em => aqm_emis_get(etype)
+
+    if (associated(em)) then
+
+      nx = size(cgrid, dim=1)
+      ny = size(cgrid, dim=2)
+      nl = size(cgrid, dim=3)
+
+      ! -- allocate buffers
+      allocate(em_buffer(nx*ny), em_vfrac(nx, ny, nl), stat=localrc)
+      if (aqm_rc_test((localrc /= 0), msg="Failed to allocate memory", &
+          file=__FILE__, line=__LINE__, rc=rc)) return
+
+      ! -- initialize buffers
+      em_buffer = 0.0
+      em_vfrac  = 1.0
+
+    end if
+
+  end subroutine cmaq_emis_fires_init
+
+  subroutine cmaq_emis_fires_finalize(rc)
+
+    integer, optional, intent(out) :: rc
+
+    ! -- local variables
+    integer :: localrc
+
+    ! -- begin
+    if (present(rc)) rc = AQM_RC_SUCCESS
+
+    ! -- deallocate buffers
+    if (allocated(em_buffer)) then
+      deallocate(em_buffer, stat=localrc)
+      if (aqm_rc_test((localrc /= 0), msg="Failed to deallocate memory", &
+        file=__FILE__, line=__LINE__, rc=rc)) return
+    end if
+
+    if (allocated(em_vfrac)) then
+      deallocate(em_vfrac, stat=localrc)
+      if (aqm_rc_test((localrc /= 0), msg="Failed to deallocate memory", &
+        file=__FILE__, line=__LINE__, rc=rc)) return
+    end if
+
+  end subroutine cmaq_emis_fires_finalize
+
+  subroutine cmaq_emis_fires(etype, phii, prl, temp, verbose, rc)
+
+    character(len=*),  intent(in)  :: etype
+    real(AQM_KIND_R8), intent(in)  :: phii(:,:,:)
+    real(AQM_KIND_R8), intent(in)  :: prl(:,:,:)
+    real(AQM_KIND_R8), intent(in)  :: temp(:,:,:)
+    logical,           intent(in)  :: verbose
+    integer, optional, intent(out) :: rc
+
+    ! -- local variables
+    integer :: localrc
+    integer :: nl, nx, ny
+    integer :: c, k, l, r, v
+    integer :: frp, spc
+    real    :: conv
+    type(aqm_internal_emis_type), pointer :: em
+    character(len=AQM_MAXSTR) :: msgString
+
+    ! -- local parameters
+     real(AQM_KIND_R8), parameter :: convem = 1.e+03_AQM_KIND_R8 * grav * mwair * rdgas
+
+    ! -- begin
+    if (present(rc)) rc = AQM_RC_SUCCESS
+
+    nullify(em)
+
+    ! -- read in fire emissions
+    em => aqm_emis_get(etype)
+
+    if (associated(em)) then
+
+      nx = size(cgrid, dim=1)
+      ny = size(cgrid, dim=2)
+      nl = size(cgrid, dim=3)
+
+      ! -- initialize work buffers
+      em_buffer = 0.0
+      em_vfrac  = 1.0
+
+      ! -- compute emission injection heights, if fire radiative power (FRP)
+      ! -- data is available and plume rise is enabled
+
+      select case (trim(em % plumerise))
+        case ("sofiev")
+          frp = index1( "FRP", size(em % species), em % species )
+          if (frp > 0) then
+            ! -- read in FRP
+            em_buffer = 0.0
+            call aqm_emis_read(etype, "FRP", em_buffer, rc=localrc)
+            if (aqm_rc_check(localrc, msg="Failure while reading FRP from " // &
+              trim(etype) // " emissions", &
+                file=__FILE__, line=__LINE__)) return
+            if (verbose) then
+              write(msgString, '("AQM: ",a,": ",a16,"[",i0,"]: min/max = ",2g20.8)') &
+                trim(etype), trim(em % species(frp)), frp, &
+                minval(em_buffer), maxval(em_buffer)
+              call m3mesg(msgString)
+            end if
+            call aqm_plume_sofiev(em, em_buffer, em_vfrac, rc=localrc)
+            if (aqm_rc_check(localrc, msg="Failed to compute plume rise", &
+              file=__FILE__, line=__LINE__)) return
+          end if
+        case ("none")
+          ! -- no plume rise
+        case default
+          ! -- plume rise is disabled by default
+      end select
+
+      ! -- add to gas chemistry concentrations
+      do v = 1, n_gc_emis
+        spc = gc_strt - 1 + gc_emis_map( v )
+        ! -- read in fire emissions
+        em_buffer = 0.0
+        call aqm_emis_read(etype, gc_emis( v ), em_buffer, rc=localrc)
+        if (aqm_rc_check(localrc, msg="Failure while reading " // &
+          trim(gc_emis( v )) // " from " // trim(etype) // " emissions", &
+            file=__FILE__, line=__LINE__)) return
+        if (verbose) then
+          if (any(em_buffer > 0.)) then
+            write(msgString, '("AQM: ",a,": ",a16,"[",i0,"]: min/max = ",2g20.8)') &
+              trim(etype), trim(gc_emis( v )), v, &
+              minval(em_buffer), maxval(em_buffer)
+            call m3mesg(msgString)
+          end if
+        end if
+
+        do l = 1, nl
+          k = 0
+          do r = 1, ny
+            do c = 1, nx
+              k = k + 1
+              conv = convem * em_vfrac(c,r,l) * temp(c,r,l) / ( prl(c,r,l) * ( phii(c,r,l+1) - phii(c,r,l) ) )
+              cgrid(c,r,l,spc) = cgrid(c,r,l,spc) + conv * em_buffer(k)
+            end do
+          end do
+        end do
+
+      end do
+
+    end if
+
+  end subroutine cmaq_emis_fires
 
   subroutine cmaq_emis_print(etype, unit)
 

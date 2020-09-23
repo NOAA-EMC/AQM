@@ -193,6 +193,7 @@ contains
       em(item) % iofmt = ESMF_IOFMT_NETCDF
       em(item) % irec  = 0
       em(item) % period      = ""
+      em(item) % plumerise   = ""
       em(item) % specfile    = ""
       em(item) % specprofile = ""
       nullify(em(item) % species)
@@ -470,74 +471,98 @@ contains
        return  ! bail out
     end if
 
-    if (trim(em % type) == "biogenic") then
-      call ESMF_ConfigGetAttribute(config, value, &
-        label=trim(em % name)//"_period:", default="auto", rc=localrc)
-      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__,  &
-        file=__FILE__,  &
-        rcToReturn=rc)) &
-        return  ! bail out
-      em % period = ESMF_UtilStringLowerCase(value, rc=localrc)
-      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__,  &
-        file=__FILE__,  &
-        rcToReturn=rc)) &
-        return  ! bail out
-      select case (trim(em % period))
-        case ("summer", "winter")
-          ! -- these are valid values
-        case default
-          ! -- not implemented yet
-          call ESMF_LogSetError(ESMF_RC_NOT_IMPL, &
-            msg="- biogenic emission period: "//em % period, &
-            line=__LINE__,  &
-            file=__FILE__,  &
-            rcToReturn=rc)
+    select case (trim(em % type))
+      case ("biogenic")
+        call ESMF_ConfigGetAttribute(config, value, &
+          label=trim(em % name)//"_period:", default="auto", rc=localrc)
+        if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__,  &
+          file=__FILE__,  &
+          rcToReturn=rc)) &
           return  ! bail out
-      end select
-      if (btest(verbosity,8)) then
-       call ESMF_LogWrite(trim(name)//": "//rName//": "//pName &
-         //": period set to: "//trim(em % period), ESMF_LOGMSG_INFO, rc=localrc)
-       if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-         line=__LINE__,  &
-         file=__FILE__,  &
-         rcToReturn=rc)) &
-         return  ! bail out
-      end if
-      call ESMF_ConfigGetAttribute(config, em % specfile, &
-        label=trim(em % name)//"_speciation_file:", rc=localrc)
-      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__,  &
-        file=__FILE__,  &
-        rcToReturn=rc)) &
-        return  ! bail out
-      if (btest(verbosity,8)) then
-       call ESMF_LogWrite(trim(name)//": "//rName//": "//pName &
-         //": speciation file: "//trim(em % specfile), ESMF_LOGMSG_INFO, rc=localrc)
-       if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-         line=__LINE__,  &
-         file=__FILE__,  &
-         rcToReturn=rc)) &
-         return  ! bail out
-      end if
-      call ESMF_ConfigGetAttribute(config, em % specprofile, &
-        label=trim(em % name)//"_speciation_profile:", rc=localrc)
-      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__,  &
-        file=__FILE__,  &
-        rcToReturn=rc)) &
-        return  ! bail out
-      if (btest(verbosity,8)) then
-       call ESMF_LogWrite(trim(name)//": "//rName//": "//pName &
-         //": speciation profile: "//trim(em % specprofile), ESMF_LOGMSG_INFO, rc=localrc)
-       if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-         line=__LINE__,  &
-         file=__FILE__,  &
-         rcToReturn=rc)) &
-         return  ! bail out
-      end if
-    end if
+        em % period = ESMF_UtilStringLowerCase(value, rc=localrc)
+        if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__,  &
+          file=__FILE__,  &
+          rcToReturn=rc)) &
+          return  ! bail out
+        select case (trim(em % period))
+          case ("summer", "winter")
+            ! -- these are valid values
+          case default
+            ! -- not implemented yet
+            call ESMF_LogSetError(ESMF_RC_NOT_IMPL, &
+              msg="- biogenic emission period: "//em % period, &
+              line=__LINE__,  &
+              file=__FILE__,  &
+              rcToReturn=rc)
+            return  ! bail out
+        end select
+        if (btest(verbosity,8)) then
+         call ESMF_LogWrite(trim(name)//": "//rName//": "//pName &
+           //": period set to: "//trim(em % period), ESMF_LOGMSG_INFO, rc=localrc)
+         if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+           line=__LINE__,  &
+           file=__FILE__,  &
+           rcToReturn=rc)) &
+           return  ! bail out
+        end if
+        call ESMF_ConfigGetAttribute(config, em % specfile, &
+          label=trim(em % name)//"_speciation_file:", rc=localrc)
+        if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__,  &
+          file=__FILE__,  &
+          rcToReturn=rc)) &
+          return  ! bail out
+        if (btest(verbosity,8)) then
+         call ESMF_LogWrite(trim(name)//": "//rName//": "//pName &
+           //": speciation file: "//trim(em % specfile), ESMF_LOGMSG_INFO, rc=localrc)
+         if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+           line=__LINE__,  &
+           file=__FILE__,  &
+           rcToReturn=rc)) &
+           return  ! bail out
+        end if
+        call ESMF_ConfigGetAttribute(config, em % specprofile, &
+          label=trim(em % name)//"_speciation_profile:", rc=localrc)
+        if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__,  &
+          file=__FILE__,  &
+          rcToReturn=rc)) &
+          return  ! bail out
+        if (btest(verbosity,8)) then
+         call ESMF_LogWrite(trim(name)//": "//rName//": "//pName &
+           //": speciation profile: "//trim(em % specprofile), ESMF_LOGMSG_INFO, rc=localrc)
+         if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+           line=__LINE__,  &
+           file=__FILE__,  &
+           rcToReturn=rc)) &
+           return  ! bail out
+        end if
+      case ("gbbepx")
+        call ESMF_ConfigGetAttribute(config, value, &
+          label=trim(em % name)//"_plume_rise:", default="none", rc=localrc)
+        if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__,  &
+          file=__FILE__,  &
+          rcToReturn=rc)) &
+          return  ! bail out
+        em % plumerise = ESMF_UtilStringLowerCase(value, rc=localrc)
+        if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__,  &
+          file=__FILE__,  &
+          rcToReturn=rc)) &
+          return  ! bail out
+        if (btest(verbosity,8)) then
+         call ESMF_LogWrite(trim(name)//": "//rName//": "//pName &
+           //": plume_rise: "//trim(em % plumerise), ESMF_LOGMSG_INFO, rc=localrc)
+         if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+           line=__LINE__,  &
+           file=__FILE__,  &
+           rcToReturn=rc)) &
+           return  ! bail out
+        end if
+    end select
 
     call ESMF_ConfigGetDim(config, rowCount, columnCount, &
       label=trim(em % name)//"_species::", rc=localrc)

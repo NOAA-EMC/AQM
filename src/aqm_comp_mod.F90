@@ -209,6 +209,16 @@ contains
     ! -- begin
     rc = ESMF_SUCCESS
 
+    ! -- finalize CMAQ driver
+    call cmaq_model_finalize(rc=rc)
+    if (aqm_rc_check(rc, file=__FILE__, line=__LINE__)) then
+      call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, &
+        msg="Failed to finalize CMAQ driver", &
+        line=__LINE__, file=__FILE__, rcToReturn=rc)
+      return  ! bail out
+    end if
+
+    ! -- finalize AQM emission configuration
     call aqm_emis_finalize(model, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &

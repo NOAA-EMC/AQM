@@ -11,6 +11,7 @@ module cmaq_model_mod
 
   public :: cmaq_model_init
   public :: cmaq_model_advance
+  public :: cmaq_model_finalize
 
 contains
 
@@ -109,6 +110,11 @@ contains
       if (config % verbose) call cmaq_conc_log(trim(config % name) // ": import")
     end if
 
+    ! -- include fire emissions, if present
+    call cmaq_emis_fires("gbbepx", stateIn % phii, stateIn % prl, stateIn % temp, config % verbose, rc=localrc)
+    if (aqm_rc_check(localrc, msg="Failure while updating fire emissions", &
+      file=__FILE__, line=__LINE__, rc=rc)) return
+
     ! -- advance model
     call cmaq_advance(jdate, jtime, tstep, config % run_aero, rc=localrc)
     if (aqm_rc_check(localrc, msg="Failed to advance CMAQ on local DE", &
@@ -119,5 +125,22 @@ contains
     if (config % verbose) call cmaq_conc_log(trim(config % name) // ": export")
 
   end subroutine cmaq_model_advance
+
+
+  subroutine cmaq_model_finalize(rc)
+    integer, optional, intent(out) :: rc
+
+    ! -- local variables
+    integer :: localrc
+
+    ! -- begin
+    if (present(rc)) rc = AQM_RC_SUCCESS
+
+    ! -- finalize fire emissions
+    call cmaq_emis_finalize(rc=localrc)
+    if (aqm_rc_check(localrc, msg="Failed to finalize CMAQ emissions", &
+      file=__FILE__, line=__LINE__, rc=rc)) return
+
+  end subroutine cmaq_model_finalize
 
 end module cmaq_model_mod

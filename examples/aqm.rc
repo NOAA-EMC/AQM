@@ -5,22 +5,83 @@
 ################################################
 
 #
+#  General settings
+#
+
+#
+# CMAQ species definition namelists
+#
+# ae: aerosols; gc: gas-chemistry; nr: non-reactive; tr: tracers
+ae_matrix_nml: /scratch1/NCEPDEV/nems/Raffaele.Montuoro/dev/aqm/epa/data/AE_cb6r3_ae6_aq.nml
+gc_matrix_nml: /scratch1/NCEPDEV/nems/Raffaele.Montuoro/dev/aqm/epa/data/GC_cb6r3_ae6_aq.nml
+nr_matrix_nml: /scratch1/NCEPDEV/nems/Raffaele.Montuoro/dev/aqm/epa/data/NR_cb6r3_ae6_aq.nml
+tr_matrix_nml: /scratch1/NCEPDEV/nems/Raffaele.Montuoro/dev/aqm/epa/data/Species_Table_TR_0.nml
+
+#
+# Photochemistry
+#
+# Cross-Section and Quantum Yield data
+csqy_data:   /scratch1/NCEPDEV/nems/Raffaele.Montuoro/dev/aqm/epa/data/CSQY_DATA_cb6r3_ae6_aq
+#
+# Optical properties for cloud water and ice plus the refractive indice for aerosol species
+optics_data: /scratch1/NCEPDEV/nems/Raffaele.Montuoro/dev/aqm/epa/data/PHOT_OPTICS.dat
+#
+# Ozone Monitoring Instrument (OMI) profiles
+omi_data:    /scratch1/NCEPDEV/nems/Raffaele.Montuoro/dev/aqm/epa/data/omi_cmaq_2015_361X179.dat
+
+#
+# Species initialization
+# - set to true for cold start
+init_concentrations: true
+
+#
+# Run aerosol module
+#
+run_aerosol: true
+
+#
+# Microphysics scheme used by coupled atmospheric model
+#
+# supported options are: gfdl, thompson, zhao-carr, wsm6
+#
+mp_tracer_map: gfdl
+
+#
+# Diagnostics
+#
+# Compute and export Aerosol Optical Depth (AOD)
+ctm_aod: true
+#
+#  Compute and export PM2.5 mode fractions as diagnostic tracers
+ctm_pmdiag: true
+
+
+#
 #  Input emissions
 #
+#  List emission sources using custom names, then enter emission
+#  details for each source using keywords starting with the custom
+#  name as prefix, followed by underscore ('_'), as shown below.
+emission_sources: myemis
+
+#
+#  Emission type: anthropogenic, biogenic, gbbepx
+#
+myemis_type: anthropogenic
 
 # supported file formats are: 
 #  - binary 	(Fortran unformatted)
 #  - netcdf 	(netCDF)
 #
-emissions_format: netcdf
+myemis_format: netcdf
 
-# emissions directory
+# emissions directory (optional)
 # <tile> is replaced with the tile number in case of multitile grids, or removed otherwise
 #
-emissions_path: /scratch1/NCEPDEV/stmp2/Raffaele.Montuoro/scrub/rtgen.142473/tmp/emis/07/tile<tile>
+#myemis_path: /scratch1/NCEPDEV/stmp2/Raffaele.Montuoro/scrub/rtgen.142473/tmp/emis/07/tile<tile>
 
 # emissions file name
-emissions_file: emis.tile<tile>.nc
+myemis_file: emis.tile<tile>.nc
 
 # emissions time dependency
 # supported settings are:
@@ -32,7 +93,23 @@ emissions_file: emis.tile<tile>.nc
 #  Binary/NetCDF:
 #  - static     read data only at startup time
 #
-emissions_frequency: hourly
+myemis_frequency: hourly
+
+#
+# For biogenic emissions, set:
+# - time period (summer, winter)
+# - speciation file (file path)
+# - speciation profile (see CMAQ documentation)
+#
+#myemis_period: summer
+#myemis_speciation_file: /scratch1/NCEPDEV/nems/Raffaele.Montuoro/dev/fv3sar/data/bio/gspro_biogenics_1mar2017.txt
+#myemis_speciation_profile: B10C6
+
+#
+# For GBBEPx emissions, select plume rise scheme
+# supported schemes are: sofiev, none
+#
+#myemis_plume_rise: sofiev
 
 # list of emission species
 # input emissions can be manipulated by adding multiple
@@ -40,77 +117,80 @@ emissions_frequency: hourly
 # provided factors (positive for sources, negative for sinks).
 # For instance:
 #      
-#     NO2           MOL/S       0.750       no2_source_1
-#     NO2           MOL/S       0.250       no2_source_2
-#     NO2           MOL/S      -0.050       no2_sink_1
+#   NO2           0.75000     no2_source_1    kg/s
+#   NO2           0.25000     no2_source_2    kg/s
+#   NO2          -0.05000     no2_sink_1      kg/s
 #
-emissions_species::
-#     CMAQ          CMAQ                    Input variable (netCDF)
-#     Species       Units       Factor      or file (bin). Empty if N/A.
-#     -------------+-----------+-----------+----------
-#     ----------------- gas chemistry ----------------
-      AACD          MOL/S       1.000       e_aacd    
-      ACET          MOL/S       1.000       e_acet    
-      ACROLEIN      MOL/S       1.000       e_acro    
-      ALD2          MOL/S       1.000       e_ald2    
-      ALD2_PRIMARY  MOL/S       1.000                     
-      ALDX          MOL/S       1.000       e_aldx    
-      BENZ          MOL/S       1.000       e_benz    
-      BUTADIENE13   MOL/S       1.000       e_buta    
-      CH4           MOL/S       1.000       e_ch4     
-      CL2           MOL/S       1.000                     
-      CO            MOL/S       1.000       e_co      
-      ETH           MOL/S       1.000       e_eth     
-      ETHA          MOL/S       1.000       e_etha    
-      ETHY          MOL/S       1.000       e_ethy    
-      ETOH          MOL/S       1.000       e_etoh    
-      FACD          MOL/S       1.000       e_facd    
-      FORM          MOL/S       1.000       e_form    
-      FORM_PRIMARY  MOL/S       1.000                     
-      GLYXL         MOL/S       1.000       e_glyx    
-      HCL           MOL/S       1.000                     
-      HGIIGAS       MOL/S       1.000                     
-      HGNRVA        MOL/S       1.000                     
-      HONO          MOL/S       1.000       e_hono    
-      IOLE          MOL/S       1.000       e_iole    
-      ISOP          MOL/S       1.000                     
-      KET           MOL/S       1.000       e_ket     
-      MEOH          MOL/S       1.000       e_meoh    
-      NAPH          MOL/S       1.000       e_naph    
-      NO            MOL/S       1.000       e_no      
-      NO2           MOL/S       1.000       e_no2     
-      OLE           MOL/S       1.000       e_ole     
-      PACD          MOL/S       1.000       e_pacd    
-      PAR           MOL/S       1.000       e_par     
-      PRPA          MOL/S       1.000       e_prpa    
-      SESQ          MOL/S       1.000                     
-      SOAALK        MOL/S       1.000                     
-      SO2           MOL/S       1.000       e_so2     
-      SULF          MOL/S       1.000       e_sulf    
-      TERP          MOL/S       1.000                     
-      TOL           MOL/S       1.000       e_tol     
-      TOLU          MOL/S       1.000       e_tolu    
-      XYLMN         MOL/S       1.000       e_xyl     
-#     ----------------- particulate ----------------
-      PAL           G/S         1.000                       
-      PCA           G/S         1.000                       
-      PCL           G/S         1.000                       
-      PEC           G/S         1.000       e_pec     
-      PFE           G/S         1.000                       
-      PH2O          G/S         1.000                       
-      PK            G/S         1.000                       
-      PMC           G/S         1.000                       
-      PMG           G/S         1.000                       
-      PMN           G/S         1.000                       
-      PMOTHR        G/S         1.000                       
-      PNA           G/S         1.000                       
-      PNCOM         G/S         1.000                       
-      PNH4          G/S         1.000                       
-      PNO3          G/S         1.000                       
-      POC           G/S         1.000       e_poc     
-      PSI           G/S         1.000                       
-      PSO4          G/S         1.000                       
-      PTI           G/S         1.000                       
-#     ---------------- non reactive  ----------------
-      NH3           MOL/S       1.000       e_nh3      
+# Note that input units are automatically converted to internal
+# CMAQ units *ONLY* for anthropogenic and gbbepx emissions
+#
+myemis_species::
+#   CMAQ          Scaling     Input variable (netCDF)A     Input
+#   Species       Factor      or file (bin). Empty if N/A. Units
+#   -------------+-----------+----------------------------+-----
+    ACET          1.00000     ACET                         KG/S
+    ACROLEIN      1.00000     ACROLEIN                     KG/S
+    ALD2          1.00000     ALD2                         KG/S
+    ALD2_PRIMARY  1.00000     ALD2_PRIMARY                 KG/S
+    ALDX          1.00000     ALDX                         KG/S
+    BENZ          1.00000     BENZ                         KG/S
+    BUTADIENE13   1.00000     BUTADIENE13                  KG/S
+    CH4           1.00000     CH4                          KG/S
+    CH4_INV       1.00000     CH4_INV                      KG/S
+    CL2           1.00000     CL2                          KG/S
+    CO            1.00000     CO                           KG/S
+    CO2_INV       1.00000     CO2_INV                      KG/S
+    ETH           1.00000     ETH                          KG/S
+    ETHA          1.00000     ETHA                         KG/S
+    ETHY          1.00000     ETHY                         KG/S
+    ETOH          1.00000     ETOH                         KG/S
+    FORM          1.00000     FORM                         KG/S
+    FORM_PRIMARY  1.00000     FORM_PRIMARY                 KG/S
+    HCL           1.00000     HCL                          KG/S
+    HONO          1.00000     HONO                         KG/S
+    IOLE          1.00000     IOLE                         KG/S
+    ISOP          1.00000     ISOP                         KG/S
+    KET           1.00000     KET                          KG/S
+    MEOH          1.00000     MEOH                         KG/S
+    NAPH          1.00000     NAPH                         KG/S
+    NH3           1.00000     NH3                          KG/S
+    NH3_FERT      1.00000     NH3_FERT                     KG/S
+    NO            1.00000     NO                           KG/S
+    NO2           1.00000     NO2                          KG/S
+    OLE           1.00000     OLE                          KG/S
+    PAL           1.00000     PAL                          KG/S
+    PAR           1.00000     PAR                          KG/S
+    PCA           1.00000     PCA                          KG/S
+    PCL           1.00000     PCL                          KG/S
+    PEC           1.00000     PEC                          KG/S
+    PFE           1.00000     PFE                          KG/S
+    PH2O          1.00000     PH2O                         KG/S
+    PK            1.00000     PK                           KG/S
+    PMC           1.00000     PMC                          KG/S
+    PMG           1.00000     PMG                          KG/S
+    PMN           1.00000     PMN                          KG/S
+    PMOTHR        1.00000     PMOTHR                       KG/S
+    PNA           1.00000     PNA                          KG/S
+    PNCOM         1.00000     PNCOM                        KG/S
+    PNH4          1.00000     PNH4                         KG/S
+    PNO3          1.00000     PNO3                         KG/S
+    POC           1.00000     POC                          KG/S
+    PRPA          1.00000     PRPA                         KG/S
+    PSI           1.00000     PSI                          KG/S
+    PSO4          1.00000     PSO4                         KG/S
+    PTI           1.00000     PTI                          KG/S
+    SO2           1.00000     SO2                          KG/S
+    SOAALK        1.00000     SOAALK                       KG/S
+    SULF          1.00000     SULF                         KG/S
+    TERP          1.00000     TERP                         KG/S
+    TOL           1.00000     TOL                          KG/S
+    XYLMN         1.00000     XYLMN                        KG/S
+    AACD
+    FACD
+    GLYXL
+    HGIIGAS
+    HGNRVA
+    PACD
+    SESQ
+    TOLU
 ::

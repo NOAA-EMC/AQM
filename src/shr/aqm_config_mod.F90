@@ -157,6 +157,14 @@ contains
       rcToReturn=rc)) &
       return  ! bail out
 
+    call ESMF_ConfigGetAttribute(cf, config % ctm_pmdiag, &
+      label="ctm_pmdiag:", default=.false., rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
     ! -- microphysics tracer map
     call ESMF_ConfigGetAttribute(cf, config % mp_map, &
       label="mp_tracer_map:", rc=localrc)
@@ -168,7 +176,6 @@ contains
 
     ! -- set other default values
     config % ctm_photodiag = .false.
-    config % ctm_pmdiag    = .false.
     config % ctm_depvfile  = .false.
 
   end subroutine aqm_config_read
@@ -193,14 +200,16 @@ contains
     end if
 
     ! -- initialize species
-    config % species % p_atm_qv  = 0
-    config % species % p_atm_qc  = 0
-    config % species % p_atm_qr  = 0
-    config % species % p_atm_qi  = 0
-    config % species % p_atm_qs  = 0
-    config % species % p_atm_qg  = 0
-    config % species % p_atm_o3  = 0
-    config % species % p_aqm_beg = 0
+    config % species % p_atm_qv   = 0
+    config % species % p_atm_qc   = 0
+    config % species % p_atm_qr   = 0
+    config % species % p_atm_qi   = 0
+    config % species % p_atm_qs   = 0
+    config % species % p_atm_qg   = 0
+    config % species % p_atm_o3   = 0
+    config % species % p_aqm_beg  = 0
+    config % species % p_diag_beg = 0
+    config % species % ndiag      = 0
 
     ! -- map microphysics tracers based on the microphysics scheme
     ! -- used in the coupled atmospheric model
@@ -246,6 +255,9 @@ contains
 
     ! -- starting index for CMAQ tracers
     config % species % p_aqm_beg = config % species % p_atm_o3 + 1
+
+    ! -- initialize diagnostic tracers
+    if (config % ctm_pmdiag) config % species % ndiag = 3
 
   end subroutine aqm_config_species_init
 

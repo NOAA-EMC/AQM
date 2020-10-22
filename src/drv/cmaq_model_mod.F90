@@ -24,7 +24,7 @@ contains
     integer :: localrc
     integer :: de, deCount
     integer :: numSpecies
-    integer :: is, ie, js, je, ni, nl
+    integer :: is, ie, js, je, ni, nl, nt
     type(aqm_config_type), pointer :: config => null()
 
     ! -- begin
@@ -43,6 +43,17 @@ contains
     ! -- initialize species from namelists on DE 0
     call cmaq_species_read(numSpecies, rc=localrc)
     if (aqm_rc_check(localrc, msg="Failed to initialize CMAQ species", &
+      file=__FILE__, line=__LINE__, rc=rc)) return
+
+    ! -- verify that coupling tracer arrays are large enough to include
+    ! -- all required species
+    config % species % p_diag_beg = config % species % p_aqm_beg + numSpecies
+    numSpecies = numSpecies + config % species % ndiag
+    call aqm_model_domain_get(nt=nt, rc=localrc)
+    if (aqm_rc_check(localrc, msg="Failed to retrieve model domain on local DE", &
+      file=__FILE__, line=__LINE__, rc=rc)) return
+    if (aqm_rc_test((config % species % p_aqm_beg + numSpecies - 1 > nt), &
+      msg="Coupling tracer fields cannot hold all the required species", &
       file=__FILE__, line=__LINE__, rc=rc)) return
 
     call aqm_model_set(config=config, numTracers=numSpecies, rc=localrc)

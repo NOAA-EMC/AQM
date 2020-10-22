@@ -125,6 +125,13 @@ module m3utilio
       INTEGER      , INTENT(IN   ) :: JTIME      !  time, formatted HHMMSS
       REAL         , INTENT(IN   ) :: BUFFER(:,:)  !  output buffer array
     END FUNCTION WRITE3_REAL2D
+    LOGICAL FUNCTION WRITE3_REAL4D( FNAME, VNAME, JDATE, JTIME, BUFFER )
+      CHARACTER*(*), INTENT(IN   ) :: FNAME      !  logical file name
+      CHARACTER*(*), INTENT(IN   ) :: VNAME      !  logical file name
+      INTEGER      , INTENT(IN   ) :: JDATE      !  date, formatted YYYYDDD
+      INTEGER      , INTENT(IN   ) :: JTIME      !  time, formatted HHMMSS
+      REAL         , INTENT(IN   ) :: BUFFER(:,:,:,:)  !  output buffer array
+    END FUNCTION WRITE3_REAL4D
   END INTERFACE
 
   INTERFACE WRITE3
@@ -134,7 +141,7 @@ module m3utilio
     MODULE PROCEDURE WRITE3_REAL1D
            PROCEDURE WRITE3_REAL2D
     MODULE PROCEDURE WRITE3_REAL3D
-    MODULE PROCEDURE WRITE3_REAL4D
+           PROCEDURE WRITE3_REAL4D
   END INTERFACE
 
   public
@@ -213,15 +220,6 @@ contains
     REAL         , INTENT(IN   ) :: BUFFER(:,:,:)  !  output buffer array
     WRITE3_REAL3D = .TRUE.
   END FUNCTION WRITE3_REAL3D
-
-  LOGICAL FUNCTION WRITE3_REAL4D( FNAME, VNAME, JDATE, JTIME, BUFFER )
-    CHARACTER*(*), INTENT(IN   ) :: FNAME      !  logical file name
-    CHARACTER*(*), INTENT(IN   ) :: VNAME      !  logical file name
-    INTEGER      , INTENT(IN   ) :: JDATE      !  date, formatted YYYYDDD
-    INTEGER      , INTENT(IN   ) :: JTIME      !  time, formatted HHMMSS
-    REAL         , INTENT(IN   ) :: BUFFER(:,:,:,:)  !  output buffer array
-    WRITE3_REAL4D = .TRUE.
-  END FUNCTION WRITE3_REAL4D
 
   LOGICAL FUNCTION WRITE3_INTEGER( FNAME, VNAME, JDATE, JTIME, BUFFER )
     CHARACTER*(*), INTENT(IN   ) :: FNAME      !  logical file name

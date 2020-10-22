@@ -15,6 +15,9 @@ module aqm_species_mod
     integer :: p_atm_o3      = 0    ! O3: ozone mixing ratio (kg kg-1)
     ! -- CMAQ species
     integer :: p_aqm_beg     = 0    ! start index of CMAQ species
+    ! -- CMAQ diagnostic tracers
+    integer :: p_diag_beg    = 0    ! start index of CMAQ diagnostic species
+    integer :: ndiag         = 0    ! number of CMAQ diagnostic tracers
   end type aqm_species_type
 
   private

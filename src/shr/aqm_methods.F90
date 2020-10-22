@@ -1131,6 +1131,55 @@ LOGICAL FUNCTION WRITE3_REAL2D( FNAME, VNAME, JDATE, JTIME, BUFFER )
 
 END FUNCTION WRITE3_REAL2D
 
+LOGICAL FUNCTION WRITE3_REAL4D( FNAME, VNAME, JDATE, JTIME, BUFFER )
+
+  USE M3UTILIO,      ONLY : ALLVAR3
+  USE aqm_model_mod, ONLY : aqm_config_type, &
+                            aqm_state_type, &
+                            aqm_model_get
+  USE aqm_rc_mod,    ONLY : aqm_rc_check
+
+  INCLUDE SUBST_FILES_ID
+
+  CHARACTER*(*), INTENT(IN   ) :: FNAME      !  logical file name
+  CHARACTER*(*), INTENT(IN   ) :: VNAME      !  logical file name
+  INTEGER      , INTENT(IN   ) :: JDATE      !  date, formatted YYYYDDD
+  INTEGER      , INTENT(IN   ) :: JTIME      !  time, formatted HHMMSS
+  REAL         , INTENT(IN   ) :: BUFFER(:,:,:,:)  !  output buffer array
+
+  integer :: localrc
+  integer :: s
+  type(aqm_state_type),  pointer :: stateOut
+  type(aqm_config_type), pointer :: config
+
+  integer, parameter :: p_pm25at = 23
+
+  WRITE3_REAL4D = .TRUE.
+
+  IF ( TRIM( FNAME ) .EQ. TRIM( CTM_PMDIAG_1 ) ) THEN
+
+    WRITE3_REAL4D = .FALSE.
+
+    IF ( TRIM( VNAME ) .EQ. TRIM( ALLVAR3 ) ) THEN
+
+      nullify(config)
+      nullify(stateOut)
+      call aqm_model_get(config=config, stateOut=stateOut, rc=localrc)
+      if (aqm_rc_check(localrc, msg="Failure to retrieve model output state", &
+        file=__FILE__, line=__LINE__)) return
+
+      do s = 0, config % species % ndiag - 1
+        stateOut % tr(:,:,:,config % species % p_diag_beg + s) = &
+          buffer(:,:,:,p_pm25at + s)
+      end do
+
+    END IF
+
+    WRITE3_REAL4D = .TRUE.
+
+  END IF
+
+END FUNCTION WRITE3_REAL4D
 
 ! -- dummy subroutines
 

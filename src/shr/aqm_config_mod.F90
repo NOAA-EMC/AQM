@@ -263,7 +263,6 @@ contains
 
   subroutine aqm_config_runtime_set(model, config, rc)
 
-!   type(ESMF_GridComp),   intent(in)    :: model
     type(ESMF_GridComp)                  :: model
     type(aqm_config_type), intent(inout) :: config
     integer, optional,     intent(out)   :: rc

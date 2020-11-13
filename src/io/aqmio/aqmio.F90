@@ -1199,6 +1199,13 @@ contains
         file=__FILE__, &
         rcToReturn=rc)) return  ! bail out
       buf_r8 = 0._ESMF_KIND_R8
+    else
+      call ESMF_LogSetError(ESMF_RC_NOT_IMPL, &
+        msg="Field: "//trim(fieldName)//" - typekind not supported", &
+        line=__LINE__, &
+        file=__FILE__, &
+        rcToReturn=rc)
+      return  ! bail out
     end if
 
     call ESMF_GridCompGet(IO % IOLayout(lde) % taskComp, vm=vm, rc=localrc)
@@ -1236,6 +1243,12 @@ contains
           xtype=xtype, ndims=ndims)
         if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
           msg="Error inquiring variable "//trim(fieldName)//" in "//trim(dataSetName), &
+          line=__LINE__, &
+          file=__FILE__, &
+          rcToReturn=rc)) return  ! bail out
+
+        call AQMIO_VariableCheckType(fieldName, xtype, typekind, rc=localrc)
+        if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
           line=__LINE__, &
           file=__FILE__, &
           rcToReturn=rc)) return  ! bail out
@@ -1316,15 +1329,6 @@ contains
 
         if      (typekind == ESMF_TYPEKIND_I4) then
 
-          if (xtype /= NF90_INT) then
-            call ESMF_LogSetError(ESMF_RC_NOT_IMPL, &
-              msg="Variable "//trim(fieldName)//" has different typekind than Field", &
-              line=__LINE__, &
-              file=__FILE__, &
-              rcToReturn=rc)
-            return  ! bail out
-          end if
-
           ncStatus = nf90_get_var(IO % IOLayout(lde) % ncid, varId, buf_i4, &
             start=elemStart, count=elemCount)
           if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
@@ -1334,15 +1338,6 @@ contains
             rcToReturn=rc)) return  ! bail out
 
         else if (typekind == ESMF_TYPEKIND_R4) then
-
-          if (xtype /= NF90_FLOAT) then
-            call ESMF_LogSetError(ESMF_RC_NOT_IMPL, &
-              msg="Variable "//trim(fieldName)//" has different typekind than Field", &
-              line=__LINE__, &
-              file=__FILE__, &
-              rcToReturn=rc)
-            return  ! bail out
-          end if
 
           ncStatus = nf90_get_var(IO % IOLayout(lde) % ncid, varId, buf_r4, &
             start=elemStart, count=elemCount)
@@ -1354,15 +1349,6 @@ contains
 
         else if (typekind == ESMF_TYPEKIND_R8) then
 
-          if (xtype /= NF90_DOUBLE) then
-            call ESMF_LogSetError(ESMF_RC_NOT_IMPL, &
-              msg="Variable "//trim(fieldName)//" has different typekind than Field", &
-              line=__LINE__, &
-              file=__FILE__, &
-              rcToReturn=rc)
-            return  ! bail out
-          end if
-
           ncStatus = nf90_get_var(IO % IOLayout(lde) % ncid, varId, buf_r8, &
             start=elemStart, count=elemCount)
           if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
@@ -1370,15 +1356,6 @@ contains
             line=__LINE__, &
             file=__FILE__, &
             rcToReturn=rc)) return  ! bail out
-
-        else
-
-          call ESMF_LogSetError(ESMF_RC_NOT_IMPL, &
-            msg="Field: "//trim(fieldName)//" - typekind not supported", &
-            line=__LINE__, &
-            file=__FILE__, &
-            rcToReturn=rc)
-          return  ! bail out
 
         end if
 
@@ -1428,14 +1405,6 @@ contains
               rcToReturn=rc)
             return  ! bail out
           end if
-        else
-          call ESMF_LogSetError(ESMF_RC_NOT_IMPL, &
-            msg="Field: "//trim(fieldName)//" - typekind not supported", &
-            line=__LINE__, &
-            file=__FILE__, &
-            rcToReturn=rc)
-          return  ! bail out
-
         end if
       end if
     end if
@@ -2786,6 +2755,90 @@ contains
     if (present(varId)) varId = lvarId
 
   end subroutine AQMIO_VariableCreate
+
+  subroutine AQMIO_VariableCheckType(name, xtype, typekind, rc)
+    character(len=*),         intent(in)  :: name
+    integer,                  intent(in)  :: xtype
+    type(ESMF_TypeKind_Flag), intent(in)  :: typekind
+    integer, optional,        intent(out) :: rc
+
+    ! -- local variables
+    integer          :: localrc
+    logical          :: supported
+    character(len=7) :: xtype_name, typekind_name
+
+    ! -- begin
+    if (present(rc)) rc = ESMF_SUCCESS
+
+    ! -- identify NetCDF data type
+    supported = .false.
+    select case (xtype)
+      case (NF90_BYTE)
+        xtype_name = "byte"
+      case (NF90_CHAR)
+        xtype_name = "char"
+      case (NF90_SHORT)
+        xtype_name = "short"
+        supported = .true.
+      case (NF90_INT)
+        xtype_name = "int"
+        supported = .true.
+      case (NF90_FLOAT)
+        xtype_name = "float"
+        supported = .true.
+      case (NF90_DOUBLE)
+        xtype_name = "double"
+        supported = .true.
+      case default
+        xtype_name = "unknown"
+    end select
+
+    if (.not.supported) then
+      call ESMF_LogSetError(ESMF_RC_NOT_IMPL, msg="Unsupported NetCDF data type", &
+        line=__LINE__, &
+        file=__FILE__, &
+        rcToReturn=rc)
+      return  ! bail out
+    end if
+
+    ! -- identify ESMF typekind
+    supported = .true.
+    if      (typekind == ESMF_TYPEKIND_I4) then
+      typekind_name = "int"
+    else if (typekind == ESMF_TYPEKIND_R4) then
+      typekind_name = "float"
+    else if (typekind == ESMF_TYPEKIND_R8) then
+      typekind_name = "double"
+    else
+      typekind_name = "unknown"
+      supported = .false.
+    end if
+
+    if (.not.supported) then
+      call ESMF_LogSetError(ESMF_RC_NOT_IMPL, msg="Unsupported ESMF typekind", &
+        line=__LINE__, &
+        file=__FILE__, &
+        rcToReturn=rc)
+      return  ! bail out
+    end if
+
+    ! -- if not matching, issue warning
+    if (xtype_name /= typekind_name) then
+      call ESMF_LogWrite("Type mismatch for variable "//trim(name) &
+        //" - found: "//trim(xtype_name)//", expected: "//trim(typekind_name) &
+        //". Attempting automatic conversion ...", &
+        logmsgFlag=ESMF_LOGMSG_WARNING, &
+        line=__LINE__, &
+        file=__FILE__, &
+        rc=localrc)
+      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__, &
+        file=__FILE__, &
+        rcToReturn=rc)) return  ! bail out
+    end if
+
+  end subroutine AQMIO_VariableCheckType
+
 #endif
 
 !------------------------------------------------------------------------------

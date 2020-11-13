@@ -439,7 +439,7 @@ contains
               file=__FILE__)) &
               return  ! bail
           case ("inst_merid_wind_levels")
-            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % uwind, rc=rc)
+            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % vwind, rc=rc)
             if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
               line=__LINE__, &
               file=__FILE__)) &
@@ -543,7 +543,7 @@ contains
               file=__FILE__)) &
               return  ! bail
           case ("inst_zonal_wind_levels")
-            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % vwind, rc=rc)
+            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % uwind, rc=rc)
             if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
               line=__LINE__, &
               file=__FILE__)) &

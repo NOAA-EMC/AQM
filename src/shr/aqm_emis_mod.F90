@@ -252,6 +252,14 @@ contains
     ! -- begin
     if (present(rc)) rc = ESMF_SUCCESS
 
+    ! -- get component's information
+    call NUOPC_CompGet(model, name=name, verbosity=verbosity, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
     ! -- initialize
     if (len_trim(em % name) == 0) then
       if (btest(verbosity,8)) then
@@ -266,14 +274,6 @@ contains
       end if
       return
     end if
-
-    ! -- get component's information
-    call NUOPC_CompGet(model, name=name, verbosity=verbosity, rc=localrc)
-    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__,  &
-      file=__FILE__,  &
-      rcToReturn=rc)) &
-      return  ! bail out
 
     ! -- get component's configuration
     call ESMF_GridCompGet(model, clock=clock, config=config, grid=grid, rc=localrc)

@@ -112,6 +112,10 @@ contains
       end if
 
       do item = 1, emisCount
+        ! -- set default log prefix label and verbosity
+        is % wrap % emis(item) % logprefix = trim(name)//": "//rName
+        is % wrap % emis(item) % verbose   = btest(verbosity,8)
+        ! -- initialize emission sources from config
         call aqm_emis_src_init(model, is % wrap % emis(item), rc=localrc)
         if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
           line=__LINE__,  &
@@ -192,6 +196,8 @@ contains
       em(item) % format = "netcdf"
       em(item) % iofmt = ESMF_IOFMT_NETCDF
       em(item) % irec  = 0
+      em(item) % verbose     = .false.
+      em(item) % logprefix   = ""
       em(item) % period      = ""
       em(item) % plumerise   = ""
       em(item) % specfile    = ""
@@ -227,12 +233,10 @@ contains
 
     ! -- local variables
     integer                    :: localrc, stat
-    integer                    :: verbosity
     integer                    :: columnCount, rowCount
     integer                    :: fieldCount, spcsCount, item
     integer                    :: aqm_emis_num
     logical                    :: eolFlag
-    character(len=ESMF_MAXSTR) :: name
     character(len=ESMF_MAXSTR) :: value
     character(len=ESMF_MAXSTR) :: msgString
     character(len=ESMF_MAXSTR), allocatable :: tmpSourceList(:)
@@ -252,19 +256,11 @@ contains
     ! -- begin
     if (present(rc)) rc = ESMF_SUCCESS
 
-    ! -- get component's information
-    call NUOPC_CompGet(model, name=name, verbosity=verbosity, rc=localrc)
-    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__,  &
-      file=__FILE__,  &
-      rcToReturn=rc)) &
-      return  ! bail out
-
     ! -- initialize
     if (len_trim(em % name) == 0) then
-      if (btest(verbosity,8)) then
+      if (em % verbose) then
         write(msgString,'(a,": ",a,": ",a,": no emission name")') &
-          trim(name), trim(rName), trim(pName)
+          trim(em % logprefix), trim(pName)
         call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=localrc)
         if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
           line=__LINE__,  &
@@ -324,14 +320,14 @@ contains
           rcToReturn=rc)
         return
     end select
-    if (btest(verbosity,8)) then
-     call ESMF_LogWrite(trim(name)//": "//rName//": "//pName//": set format to "&
-       //trim(em % format), ESMF_LOGMSG_INFO, rc=localrc)
-     if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-       line=__LINE__,  &
-       file=__FILE__,  &
-       rcToReturn=rc)) &
-       return  ! bail out
+    if (em % verbose) then
+      call ESMF_LogWrite(trim(em % logprefix)//": "//pName//": set format to "&
+        //trim(em % format), ESMF_LOGMSG_INFO, rc=localrc)
+      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__,  &
+        file=__FILE__,  &
+        rcToReturn=rc)) &
+        return  ! bail out
     end if
 
     call ESMF_ConfigGetAttribute(config, em % path, &
@@ -341,14 +337,14 @@ contains
       file=__FILE__,  &
       rcToReturn=rc)) &
       return  ! bail out
-    if (btest(verbosity,8)) then
-     call ESMF_LogWrite(trim(name)//": "//rName//": "//pName &
-       //": path: "//trim(em % path), ESMF_LOGMSG_INFO, rc=localrc)
-     if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-       line=__LINE__,  &
-       file=__FILE__,  &
-       rcToReturn=rc)) &
-       return  ! bail out
+    if (em % verbose) then
+      call ESMF_LogWrite(trim(em % logprefix)//": "//pName &
+        //": path: "//trim(em % path), ESMF_LOGMSG_INFO, rc=localrc)
+      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__,  &
+        file=__FILE__,  &
+        rcToReturn=rc)) &
+        return  ! bail out
     end if
 
     if (trim(em % format) == "netcdf") then
@@ -359,15 +355,15 @@ contains
         file=__FILE__,  &
         rcToReturn=rc)) &
         return  ! bail out
-      if (btest(verbosity,8)) then
-       call ESMF_LogWrite(trim(name)//": "//rName//": "//pName &
-         //": netCDF dataset: "//trim(em % file), ESMF_LOGMSG_INFO, rc=localrc)
-       if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-         line=__LINE__,  &
-         file=__FILE__,  &
-         rcToReturn=rc)) &
-         return  ! bail out
-      end if
+      if (em % verbose) then
+        call ESMF_LogWrite(trim(em % logprefix)//": "//pName &
+          //": netCDF dataset: "//trim(em % file), ESMF_LOGMSG_INFO, rc=localrc)
+        if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__,  &
+          file=__FILE__,  &
+          rcToReturn=rc)) &
+          return  ! bail out
+       end if
     end if
 
     call ESMF_ConfigGetAttribute(config, value, &
@@ -387,8 +383,8 @@ contains
     if (em % iofmt == ESMF_IOFMT_BIN) then
       if (trim(em % frequency) /= "static") then
         em % frequency = "static"
-        if (btest(verbosity,8)) then
-          call ESMF_LogWrite(trim(name)//": "//rName//": "//pName &
+        if (em % verbose) then
+          call ESMF_LogWrite(trim(em % logprefix)//": "//pName &
           //": frequency set to static for binary input", &
           ESMF_LOGMSG_WARNING, rc=localrc)
           if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -460,15 +456,15 @@ contains
       file=__FILE__,  &
       rcToReturn=rc)) &
       return  ! bail out
-    if (btest(verbosity,8)) then
-     call ESMF_LogWrite(trim(name)//": "//rName//": "//pName//": set to "&
-       //trim(em % frequency)//" input", &
-       ESMF_LOGMSG_INFO, rc=localrc)
-     if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-       line=__LINE__,  &
-       file=__FILE__,  &
-       rcToReturn=rc)) &
-       return  ! bail out
+    if (em % verbose) then
+      call ESMF_LogWrite(trim(em % logprefix)//": "//pName//": set to "&
+        //trim(em % frequency)//" input", &
+        ESMF_LOGMSG_INFO, rc=localrc)
+      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__,  &
+        file=__FILE__,  &
+        rcToReturn=rc)) &
+        return  ! bail out
     end if
 
     select case (trim(em % type))
@@ -498,14 +494,14 @@ contains
               rcToReturn=rc)
             return  ! bail out
         end select
-        if (btest(verbosity,8)) then
-         call ESMF_LogWrite(trim(name)//": "//rName//": "//pName &
-           //": period set to: "//trim(em % period), ESMF_LOGMSG_INFO, rc=localrc)
-         if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-           line=__LINE__,  &
-           file=__FILE__,  &
-           rcToReturn=rc)) &
-           return  ! bail out
+        if (em % verbose) then
+          call ESMF_LogWrite(trim(em % logprefix)//": "//pName &
+            //": period set to: "//trim(em % period), ESMF_LOGMSG_INFO, rc=localrc)
+          if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__,  &
+            file=__FILE__,  &
+            rcToReturn=rc)) &
+            return  ! bail out
         end if
         call ESMF_ConfigGetAttribute(config, em % specfile, &
           label=trim(em % name)//"_speciation_file:", rc=localrc)
@@ -514,14 +510,14 @@ contains
           file=__FILE__,  &
           rcToReturn=rc)) &
           return  ! bail out
-        if (btest(verbosity,8)) then
-         call ESMF_LogWrite(trim(name)//": "//rName//": "//pName &
-           //": speciation file: "//trim(em % specfile), ESMF_LOGMSG_INFO, rc=localrc)
-         if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-           line=__LINE__,  &
-           file=__FILE__,  &
-           rcToReturn=rc)) &
-           return  ! bail out
+        if (em % verbose) then
+          call ESMF_LogWrite(trim(em % logprefix)//": "//pName &
+            //": speciation file: "//trim(em % specfile), ESMF_LOGMSG_INFO, rc=localrc)
+          if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__,  &
+            file=__FILE__,  &
+            rcToReturn=rc)) &
+            return  ! bail out
         end if
         call ESMF_ConfigGetAttribute(config, em % specprofile, &
           label=trim(em % name)//"_speciation_profile:", rc=localrc)
@@ -530,14 +526,14 @@ contains
           file=__FILE__,  &
           rcToReturn=rc)) &
           return  ! bail out
-        if (btest(verbosity,8)) then
-         call ESMF_LogWrite(trim(name)//": "//rName//": "//pName &
-           //": speciation profile: "//trim(em % specprofile), ESMF_LOGMSG_INFO, rc=localrc)
-         if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-           line=__LINE__,  &
-           file=__FILE__,  &
-           rcToReturn=rc)) &
-           return  ! bail out
+        if (em % verbose) then
+          call ESMF_LogWrite(trim(em % logprefix)//": "//pName &
+            //": speciation profile: "//trim(em % specprofile), ESMF_LOGMSG_INFO, rc=localrc)
+          if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__,  &
+            file=__FILE__,  &
+            rcToReturn=rc)) &
+            return  ! bail out
         end if
       case ("gbbepx")
         call ESMF_ConfigGetAttribute(config, value, &
@@ -553,14 +549,14 @@ contains
           file=__FILE__,  &
           rcToReturn=rc)) &
           return  ! bail out
-        if (btest(verbosity,8)) then
-         call ESMF_LogWrite(trim(name)//": "//rName//": "//pName &
-           //": plume_rise: "//trim(em % plumerise), ESMF_LOGMSG_INFO, rc=localrc)
-         if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-           line=__LINE__,  &
-           file=__FILE__,  &
-           rcToReturn=rc)) &
-           return  ! bail out
+        if (em % verbose) then
+          call ESMF_LogWrite(trim(em % logprefix)//": "//pName &
+            //": plume_rise: "//trim(em % plumerise), ESMF_LOGMSG_INFO, rc=localrc)
+          if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__,  &
+            file=__FILE__,  &
+            rcToReturn=rc)) &
+            return  ! bail out
         end if
     end select
 
@@ -658,7 +654,7 @@ contains
             return  ! bail out
         end if
         if (.not.eolFlag) fieldCount = fieldCount + 1
-        if (btest(verbosity,8)) then
+        if (em % verbose) then
           if (eolFlag) then
             write(msgString, '("[",i0,"]: ",a," (not provided)")') &
               item, trim(tmpSpeciesList(item))
@@ -667,7 +663,7 @@ contains
               item, trim(tmpSpeciesList(item)), trim(tmpSourceList(item)), &
               trim(tmpUnitsList(item)), tmpFactorList(item)
           end if
-          call ESMF_LogWrite(trim(name)//": "//rName//": "//pName &
+          call ESMF_LogWrite(trim(em % logprefix)//": "//pName &
             //": species"//trim(msgString), ESMF_LOGMSG_INFO, rc=localrc)
           if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
             line=__LINE__,  &
@@ -685,8 +681,8 @@ contains
           file=__FILE__,  &
           rcToReturn=rc)) &
           return  ! bail out
-        if (btest(verbosity,8)) then
-          call ESMF_LogWrite(trim(name)//": "//rName//": "//pName &
+        if (em % verbose) then
+          call ESMF_LogWrite(trim(em % logprefix)//": "//pName &
             //": created I/O component", ESMF_LOGMSG_INFO, rc=localrc)
           if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
             line=__LINE__,  &
@@ -704,8 +700,8 @@ contains
             file=__FILE__,  &
             rcToReturn=rc)) &
             return  ! bail out
-          if (btest(verbosity,8)) then
-            call ESMF_LogWrite(trim(name)//": "//rName//": "//pName &
+          if (em % verbose) then
+            call ESMF_LogWrite(trim(em % logprefix)//": "//pName &
               //": opened: "//trim(em % file), ESMF_LOGMSG_INFO, rc=localrc)
             if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
               line=__LINE__,  &
@@ -936,8 +932,8 @@ contains
           file=__FILE__,  &
           rcToReturn=rc)) &
           return  ! bail out
-        if (btest(verbosity,8)) then
-          call ESMF_LogWrite(trim(name)//": "//rName//": "//pName &
+        if (em % verbose) then
+          call ESMF_LogWrite(trim(em % logprefix)//": "//pName &
             //": released resources for dataset: "//trim(em % name), &
             ESMF_LOGMSG_INFO, rc=localrc)
           if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -975,10 +971,8 @@ contains
 
     ! -- local variables
     integer                       :: localrc
-    integer                       :: verbosity
     integer                       :: item, n
     logical                       :: isRinging
-    character(len=ESMF_MAXSTR)    :: name
     character(len=ESMF_MAXSTR)    :: timeString
     type(ESMF_Clock)              :: clock
     type(ESMF_Time)               :: currTime
@@ -987,14 +981,6 @@ contains
 
     ! -- begin
     if (present(rc)) rc = ESMF_SUCCESS
-
-    ! -- get component's information
-    call NUOPC_CompGet(model, name=name, verbosity=verbosity, rc=localrc)
-    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__,  &
-      file=__FILE__,  &
-      rcToReturn=rc)) &
-      return  ! bail out
 
     ! -- get component's configuration
     call ESMF_GridCompGet(model, clock=clock, rc=localrc)
@@ -1041,8 +1027,8 @@ contains
           file=__FILE__,  &
           rcToReturn=rc)) &
           return  ! bail out
-        if (btest(verbosity,8)) then
-          call ESMF_LogWrite(trim(name)//": "//rName//": reading "//&
+        if (em % verbose) then
+          call ESMF_LogWrite(trim(em % logprefix)//": reading "//&
             trim(em % name)//" @ "//trim(timeString), ESMF_LOGMSG_INFO, rc=localrc)
           if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
             line=__LINE__,  &
@@ -1141,6 +1127,7 @@ contains
     integer :: localrc
     integer :: item, i, j, k
     integer, dimension(2) :: lb, ub
+    character(len=ESMF_MAXSTR)    :: msgString
     real(ESMF_KIND_R4),   pointer :: fptr(:,:)
     type(aqm_state_type), pointer :: stateIn
     type(aqm_internal_emis_type), pointer :: em
@@ -1205,7 +1192,25 @@ contains
                 buffer(k) = buffer(k) + em % factors(item) * fptr(i,j)
               end do
             end do
+          case default
+            ! -- this case should never occur
+            call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, &
+              msg="uncategorized emission source", &
+              line=__LINE__, &
+              file=__FILE__, &
+              rcToReturn=rc)
+            return
         end select
+        if (em % verbose) then
+          write(msgString, '(a12,": read",12x,": ",a16,": min/max = ",2g20.8)') &
+            em % logprefix, spcname, minval(fptr), maxval(fptr)
+          call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=localrc)
+          if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__,  &
+            file=__FILE__,  &
+            rcToReturn=rc)) &
+            return  ! bail out
+        end if
       end if
     end do
 

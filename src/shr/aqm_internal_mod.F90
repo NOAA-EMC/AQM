@@ -11,11 +11,13 @@ module aqm_internal_mod
     character(len=ESMF_MAXPATHLEN) :: path
     character(len=ESMF_MAXSTR)     :: file
     character(len=ESMF_MAXSTR)     :: frequency
+    character(len=ESMF_MAXSTR)     :: logprefix
     character(len=ESMF_MAXSTR)     :: plumerise
     character(len=ESMF_MAXSTR)     :: specfile
     character(len=ESMF_MAXSTR)     :: specprofile
     character(len=6)               :: period
     integer                        :: irec
+    logical                        :: verbose
     type(ESMF_IOFmt_flag)          :: iofmt
     type(ESMF_GridComp)            :: IO
     type(ESMF_Alarm)               :: alarm

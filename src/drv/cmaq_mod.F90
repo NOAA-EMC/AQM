@@ -406,7 +406,6 @@ contains
       "biogenic     ", &
       "gbbepx       "  &
     /)
-    real :: f
 
     ! -- begin
     if (present(rc)) rc = AQM_RC_SUCCESS
@@ -439,47 +438,58 @@ contains
           ! -- set destination units for PM emissions for all species
           pmem_units = "G/S"
 
-          ! -- gas species
+          ! -- set internal units for all species
+          ! -- (a) gas species
           do n = 1, n_gc_spc
             spc = index1( gc_emis( n ), ltable, em % table(:,1) )
             if (spc > 0) em % table(spc,2) = "MOL/S"
           end do
-          ! -- non reactive
+          ! -- (b) non reactive
           do n = 1, n_nr_spc
             spc = index1( nr_emis( n ), ltable, em % table(:,1) )
             if (spc > 0) em % table(spc,2) = "MOL/S"
           end do
           spc = index1( "NH3_FERT", ltable, em % table(:,1) )
           if (spc > 0) em % table(spc,2) = "MOL/S"
-
-          ! -- aerosol species
+          ! -- (c) aerosols
           do n = 1, n_emis_pm
             spc = index1( pmem_map_name( n ), ltable, em % table(:,1) )
             if (spc > 0) em % table(spc,2) = pmem_units
           end do
 
+          ! -- perform unit conversion for input species, if needed
+          ! -- (a) map input species to internal species
           allocate(umap(size(em % species)), stat=stat)
           if (aqm_rc_test(stat /= 0, &
             msg="cmaq_emis_init: unable to allocate memory", &
             file=__FILE__, line=__LINE__, rc=rc)) return
-          umap = 0
 
           do n = 1, size(em % species)
-            spc = index1( em % species( n ), ltable, em % table(:,1) )
-            if (spc > 0) umap(n) = spc
-          end do
-
-          ! -- include conversion factors from source units to internal units
-          do n = 1, size(em % species)
+            umap(n) = 0
             if ( trim(em % units(n)) == "1" ) then
               em % dens_flag(n) = 1
             else
               em % dens_flag(n) = 0
+              spc = index1( em % species( n ), ltable, em % table(:,1) )
+              if (spc > 0) umap(n) = spc
+            end if
+          end do
+
+          ! -- (b) perform unit conversion for input species
+          ! ---    1. gas species
+          do n = 1, size(em % species)
+            if (umap(n) > 0) then
               spc = index1( em % species(n), n_gc_emis, gc_emis )
               if (spc > 0) then
                 em % factors(n) = em % factors(n) &
                   * aqm_units_conv( em % units(n), em % table(umap(n),2), gc_molwt(gc_emis_map(spc)), em % dens_flag(n) )
+                umap(n) = 0
               end if
+            end if
+          end do
+          ! ---    2. non reactive
+          do n = 1, size(em % species)
+            if (umap(n) > 0) then
               if ( trim(em % species(n)) == "NH3_FERT" ) then
                 spc = index1( "NH3", n_nr_emis, nr_emis )
               else
@@ -488,17 +498,25 @@ contains
               if (spc > 0) then
                 em % factors(n) = em % factors(n) &
                   * aqm_units_conv( em % units(n), em % table(umap(n),2), nr_molwt(nr_emis_map(spc)), em % dens_flag(n) )
+                umap(n) = 0
               end if
+            end if
+          end do
+          ! ---    3. aerosols
+          do n = 1, size(em % species)
+            if (umap(n) > 0) then
               spc = index1( em % species(n), n_emis_pm, pmem_map_name )
               if (spc > 0) then
                 em % factors(n) = em % factors(n) &
                   * aqm_units_conv( em % units(n), em % table(umap(n),2), aerospc_mw(pmem_map(spc)), em % dens_flag(n) )
+                umap(n) = 0
               end if
             end if
           end do
 
           nullify(em)
 
+          ! -- (c) free up memory
           deallocate(umap, stat=stat)
           if (aqm_rc_test(stat /= 0, &
             msg="cmaq_emis_init: unable to deallocate memory", &

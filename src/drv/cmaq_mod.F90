@@ -64,11 +64,11 @@ contains
     ! -- This is done only on DE 0 and shared with other DEs on this PET
     nspecies = 0
     if (aqm_rc_test(.not.cgrid_spcs_init(), &
-      msg="cmaq_init: Error in CGRID_SPCS:CGRID_SPCS_INIT", &
+      msg="Error in CGRID_SPCS:CGRID_SPCS_INIT", &
       file=__FILE__, line=__LINE__, rc=rc)) return
 
     if (aqm_rc_test(( nspcsd > mxvars3 ), &
-      msg="cmaq_init: Number of species exceeds MXVARS3", &
+      msg="Number of species exceeds MXVARS3", &
       file=__FILE__, line=__LINE__, rc=rc)) return
 
     nspecies = n_gc_trns + n_ae_trns + n_nr_trns
@@ -92,7 +92,7 @@ contains
     mype   = 0
     nprocs = 1
     if (aqm_rc_test(.not.grid_init( nprocs, mype ), &
-      msg="cmaq_init: Failure defining horizontal domain", &
+      msg="Failure defining horizontal domain", &
       file=__FILE__, line=__LINE__, rc=rc)) return
 
     ! -- set I/O flag
@@ -104,14 +104,14 @@ contains
     ! -- Set up horizontal domain and calculate processor-to-subdomain maps for
     ! -- process analysis, if required
     IF ( LIPR .OR. LIRR ) THEN
-      IF (aqm_rc_test( .NOT. PAGRD_INIT( NPROCS, MYPE ),      &
-        msg = 'cmaq_init: *** Failure defining PA domain configuration', &
+      IF (aqm_rc_test( .NOT. PAGRD_INIT( NPROCS, MYPE ), &
+        msg="Failure defining PA domain configuration",  &
         FILE=__FILE__, LINE=__LINE__, rc=rc)) RETURN
     END IF
 
     ! -- Initialize PCGRID
     if (aqm_rc_test(.not.pcgrid_init(), &
-      msg="cmaq_init: Failure defining horizontal domain", &
+      msg="Failure defining horizontal domain", &
       file=__FILE__, line=__LINE__, rc=rc)) return
 
     CGRID => PCGRID( 1:MY_NCOLS,1:MY_NROWS,:,: )   ! required for PinG
@@ -426,7 +426,7 @@ contains
 
           ! -- check if internal emissions reference table was allocated
           if (aqm_rc_test(.not.associated(em % table), &
-            msg="cmaq_emis_init: internal emissions table not allocated", &
+            msg="Internal emissions table not allocated", &
             file=__FILE__, line=__LINE__, rc=rc)) return
 
           ! -- add internal units to emissions reference table
@@ -461,7 +461,7 @@ contains
           ! -- (a) map input species to internal species
           allocate(umap(size(em % species)), stat=stat)
           if (aqm_rc_test(stat /= 0, &
-            msg="cmaq_emis_init: unable to allocate memory", &
+            msg="Unable to allocate memory", &
             file=__FILE__, line=__LINE__, rc=rc)) return
 
           do n = 1, size(em % species)
@@ -484,7 +484,7 @@ contains
                 em % factors(n) = em % factors(n) &
                   * aqm_units_conv( em % units(n), em % table(umap(n),2), gc_molwt(gc_emis_map(spc)), em % dens_flag(n) )
                 if (aqm_rc_test(em % factors(n) == 0._AQM_KIND_R4, &
-                  msg="cmaq_emis_init: "//trim(em % species(n))//": invalid input units ("//trim(em % units(n))//")", &
+                  msg=trim(em % species(n))//": invalid input units ("//trim(em % units(n))//")", &
                   file=__FILE__, line=__LINE__, rc=rc)) return
                 umap(n) = 0
               end if
@@ -502,7 +502,7 @@ contains
                 em % factors(n) = em % factors(n) &
                   * aqm_units_conv( em % units(n), em % table(umap(n),2), nr_molwt(nr_emis_map(spc)), em % dens_flag(n) )
                 if (aqm_rc_test(em % factors(n) == 0._AQM_KIND_R4, &
-                  msg="cmaq_emis_init: "//trim(em % species(n))//": invalid input units ("//trim(em % units(n))//")", &
+                  msg=trim(em % species(n))//": invalid input units ("//trim(em % units(n))//")", &
                   file=__FILE__, line=__LINE__, rc=rc)) return
                 umap(n) = 0
               end if
@@ -516,7 +516,7 @@ contains
                 em % factors(n) = em % factors(n) &
                   * aqm_units_conv( em % units(n), em % table(umap(n),2), aerospc_mw(pmem_map(spc)), em % dens_flag(n) )
                 if (aqm_rc_test(em % factors(n) == 0._AQM_KIND_R4, &
-                  msg="cmaq_emis_init: "//trim(em % species(n))//": invalid input units ("//trim(em % units(n))//")", &
+                  msg=trim(em % species(n))//": invalid input units ("//trim(em % units(n))//")", &
                   file=__FILE__, line=__LINE__, rc=rc)) return
                 umap(n) = 0
               end if
@@ -528,7 +528,7 @@ contains
           ! -- (c) free up memory
           deallocate(umap, stat=stat)
           if (aqm_rc_test(stat /= 0, &
-            msg="cmaq_emis_init: unable to deallocate memory", &
+            msg="Unable to deallocate memory", &
             file=__FILE__, line=__LINE__, rc=rc)) return
 
           case ("biogenic")
@@ -543,7 +543,7 @@ contains
                 em % dens_flag(n) = 1
               case default
                 call aqm_rc_set(AQM_RC_SUCCESS, &
-                  msg="cmaq_emis_init: biogenics: unknown units: "//trim(em % units(n)), &
+                  msg="Biogenics: unknown units: "//trim(em % units(n)), &
                   file=__FILE__, line=__LINE__, rc=rc)
                 return
             end select

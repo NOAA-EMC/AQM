@@ -47,6 +47,7 @@ contains
     !   -1        to convert from src to dst, divide by area
     areaFlag         = 0
 
+    ! this function returns 0 if src units are invalid
     aqm_units_conv = 1._AQM_KIND_R4
 
     if (trim(fromUnits) == trim(toUnits)) return
@@ -58,6 +59,7 @@ contains
     pdst = 1
     call get_index(srcUnits, dstUnits, massUnits, isrc, idst, psrc, pdst)
 
+    ! -- check mass
     if (isrc /= 0 .and. idst /= 0) then
       aqm_units_conv = aqm_units_conv * massMatrix(isrc,idst)
       if (aqm_units_conv < 0.) then
@@ -67,6 +69,9 @@ contains
           aqm_units_conv = -aqm_units_conv / molWeight
         end if
       end if
+    else
+      aqm_units_conv = 0._AQM_KIND_R4
+      return
     end if
 
     ! -- check area
@@ -75,8 +80,18 @@ contains
 
     ! -- check time
     call get_index(srcUnits, dstUnits, timeUnits, isrc, idst, psrc, pdst)
-    if (isrc /= 0 .and. idst /= 0) &
+    if (isrc /= 0 .and. idst /= 0) then
       aqm_units_conv = aqm_units_conv * timeMatrix(isrc,idst)
+    else
+      aqm_units_conv = 0._AQM_KIND_R4
+      return
+    end if
+
+    ! -- check if src units include unparsed items (invalid)
+    if (psrc <= len_trim(srcUnits)) then
+      aqm_units_conv = 0._AQM_KIND_R4
+      return
+    end if
 
   end function aqm_units_conv
 

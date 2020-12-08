@@ -483,6 +483,9 @@ contains
               if (spc > 0) then
                 em % factors(n) = em % factors(n) &
                   * aqm_units_conv( em % units(n), em % table(umap(n),2), gc_molwt(gc_emis_map(spc)), em % dens_flag(n) )
+                if (aqm_rc_test(em % factors(n) == 0._AQM_KIND_R4, &
+                  msg="cmaq_emis_init: "//trim(em % species(n))//": invalid input units ("//trim(em % units(n))//")", &
+                  file=__FILE__, line=__LINE__, rc=rc)) return
                 umap(n) = 0
               end if
             end if
@@ -498,6 +501,9 @@ contains
               if (spc > 0) then
                 em % factors(n) = em % factors(n) &
                   * aqm_units_conv( em % units(n), em % table(umap(n),2), nr_molwt(nr_emis_map(spc)), em % dens_flag(n) )
+                if (aqm_rc_test(em % factors(n) == 0._AQM_KIND_R4, &
+                  msg="cmaq_emis_init: "//trim(em % species(n))//": invalid input units ("//trim(em % units(n))//")", &
+                  file=__FILE__, line=__LINE__, rc=rc)) return
                 umap(n) = 0
               end if
             end if
@@ -509,6 +515,9 @@ contains
               if (spc > 0) then
                 em % factors(n) = em % factors(n) &
                   * aqm_units_conv( em % units(n), em % table(umap(n),2), aerospc_mw(pmem_map(spc)), em % dens_flag(n) )
+                if (aqm_rc_test(em % factors(n) == 0._AQM_KIND_R4, &
+                  msg="cmaq_emis_init: "//trim(em % species(n))//": invalid input units ("//trim(em % units(n))//")", &
+                  file=__FILE__, line=__LINE__, rc=rc)) return
                 umap(n) = 0
               end if
             end if

@@ -398,6 +398,7 @@ contains
     integer :: item
     integer :: ltable, n, spc
     integer, allocatable :: umap(:)
+    real(AQM_KIND_R4)    :: ucnv
     type(aqm_internal_emis_type), pointer :: em
 
     ! -- local parameters
@@ -481,11 +482,11 @@ contains
             if (umap(n) > 0) then
               spc = index1( em % species(n), n_gc_emis, gc_emis )
               if (spc > 0) then
-                em % factors(n) = em % factors(n) &
-                  * aqm_units_conv( em % units(n), em % table(umap(n),2), gc_molwt(gc_emis_map(spc)), em % dens_flag(n) )
-                if (aqm_rc_test(em % factors(n) == 0._AQM_KIND_R4, &
+                ucnv = aqm_units_conv( em % units(n), em % table(umap(n),2), gc_molwt(gc_emis_map(spc)), em % dens_flag(n) )
+                if (aqm_rc_test(ucnv == 0._AQM_KIND_R4, &
                   msg=trim(em % species(n))//": invalid input units ("//trim(em % units(n))//")", &
                   file=__FILE__, line=__LINE__, rc=rc)) return
+                em % factors(n) = ucnv * em % factors(n)
                 umap(n) = 0
               end if
             end if
@@ -499,11 +500,11 @@ contains
                 spc = index1( em % species(n), n_nr_emis, nr_emis )
               end if
               if (spc > 0) then
-                em % factors(n) = em % factors(n) &
-                  * aqm_units_conv( em % units(n), em % table(umap(n),2), nr_molwt(nr_emis_map(spc)), em % dens_flag(n) )
-                if (aqm_rc_test(em % factors(n) == 0._AQM_KIND_R4, &
+                ucnv = aqm_units_conv( em % units(n), em % table(umap(n),2), nr_molwt(nr_emis_map(spc)), em % dens_flag(n) )
+                if (aqm_rc_test(ucnv == 0._AQM_KIND_R4, &
                   msg=trim(em % species(n))//": invalid input units ("//trim(em % units(n))//")", &
                   file=__FILE__, line=__LINE__, rc=rc)) return
+                em % factors(n) = ucnv * em % factors(n)
                 umap(n) = 0
               end if
             end if
@@ -513,11 +514,11 @@ contains
             if (umap(n) > 0) then
               spc = index1( em % species(n), n_emis_pm, pmem_map_name )
               if (spc > 0) then
-                em % factors(n) = em % factors(n) &
-                  * aqm_units_conv( em % units(n), em % table(umap(n),2), aerospc_mw(pmem_map(spc)), em % dens_flag(n) )
-                if (aqm_rc_test(em % factors(n) == 0._AQM_KIND_R4, &
+                ucnv = aqm_units_conv( em % units(n), em % table(umap(n),2), aerospc_mw(pmem_map(spc)), em % dens_flag(n) )
+                if (aqm_rc_test(ucnv == 0._AQM_KIND_R4, &
                   msg=trim(em % species(n))//": invalid input units ("//trim(em % units(n))//")", &
                   file=__FILE__, line=__LINE__, rc=rc)) return
+                em % factors(n) = ucnv * em % factors(n)
                 umap(n) = 0
               end if
             end if

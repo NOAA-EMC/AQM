@@ -2,7 +2,7 @@ module cmaq_mod
 
   use aqm_rc_mod
   use aqm_types_mod
-  use aqm_const_mod, only : onebg, rdgas, grav, mwair
+  use aqm_const_mod, only : onebg, rdgas, grav, mwair, zero
   use aqm_emis_mod
   use aqm_fires_mod
   use aqm_tools_mod, only : aqm_units_conv
@@ -186,7 +186,7 @@ contains
          do l = 1, nlays
             do r = 1, my_nrows
                do c = 1, my_ncols
-                  cgrid( c,r,l,spc ) = tracers( c,r,l,n )
+                  cgrid( c,r,l,spc ) = max( zero, tracers( c,r,l,n ) )
                end do
             end do
          end do
@@ -204,7 +204,7 @@ contains
             do r = 1, my_nrows
                do c = 1, my_ncols
                   dens = prl( c,r,l ) / ( rdgas * temp( c,r,l ) )
-                  cgrid( c,r,l,spc ) = dens * tracers( c,r,l,n )
+                  cgrid( c,r,l,spc ) = dens * max( zero, tracers( c,r,l,n ) )
                end do
             end do
          end do
@@ -220,7 +220,7 @@ contains
          do l = 1, nlays
             do r = 1, my_nrows
                do c = 1, my_ncols
-                  cgrid( c,r,l,spc ) = tracers( c,r,l,n )
+                  cgrid( c,r,l,spc ) = max( zero, tracers( c,r,l,n ) )
                end do
             end do
          end do

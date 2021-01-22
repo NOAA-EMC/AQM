@@ -286,7 +286,7 @@
 
         rewind( tmunit )
         ! skip header records
-        do it = 1, 3
+        do i = 1, 3
           read( tmunit, * )
         end do
    

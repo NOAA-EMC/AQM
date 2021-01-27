@@ -242,7 +242,8 @@ libCCTM_a_SOURCES += \
 # local replacements for CCTM files
 liblocalCCTM = $(localCCTM)/$(libCCTM)-
 libCCTM_a_SOURCES += \
-	$(localCCTM)/o3totcol.f
+	$(localCCTM)/o3totcol.f \
+	$(localCCTM)/vdiffacmx.F
 
 
 libCCTM_a_CPPFLAGS  = -DSUBST_FILES_ID=\"FILES_CTM.EXT\"
@@ -660,11 +661,6 @@ $(libVDIFF)SEDIMENTATION.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/filenames/FIL
 	$(libVDIFF)VDIFF_DIAG.$(OBJEXT) $(libVDIFF)VDIFF_MAP.$(OBJEXT)
 $(libVDIFF)tri.$(OBJEXT) : \
 	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT)
-$(libVDIFF)vdiffacmx.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
-	$(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libDEPV)BIDI_MOD.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
-	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libDEPV)DEPV_DEFN.$(OBJEXT) $(libEMIS)EMIS_DEFN.$(OBJEXT) \
-	$(libGRID)GRID_CONF.$(OBJEXT) $(libDEPV)LSM_MOD.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT) \
-	$(libVDIFF)VDIFF_DIAG.$(OBJEXT) $(libVDIFF)VDIFF_MAP.$(OBJEXT)
 $(libVDIFF)VDIFF_DIAG.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
 	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
 	$(libSTENEX)noop_modules.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
@@ -683,3 +679,8 @@ $(libVDIFF)vdiffproc.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
 # local replacements
 $(liblocalCCTM)o3totcol.$(OBJEXT) : \
 	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(liblocalCCTM)vdiffacmx.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
+	$(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libDEPV)BIDI_MOD.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
+	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libDEPV)DEPV_DEFN.$(OBJEXT) $(libEMIS)EMIS_DEFN.$(OBJEXT) \
+	$(libGRID)GRID_CONF.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT) \
+	$(libVDIFF)VDIFF_MAP.$(OBJEXT)

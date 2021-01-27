@@ -98,7 +98,7 @@ am__v_AR_1 =
 libdrv_a_AR = $(AR) $(ARFLAGS)
 libdrv_a_LIBADD =
 am_libdrv_a_OBJECTS = libdrv_a-cmaq_model_mod.$(OBJEXT) \
-	libdrv_a-cmaq_mod.$(OBJEXT) libdrv_a-cmaq_methods.$(OBJEXT)
+	libdrv_a-cmaq_mod.$(OBJEXT)
 libdrv_a_OBJECTS = $(am_libdrv_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -277,7 +277,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 noinst_LIBRARIES = libdrv.a
-libdrv_a_SOURCES = cmaq_model_mod.F90 cmaq_mod.F90 cmaq_methods.F90
+libdrv_a_SOURCES = cmaq_model_mod.F90 cmaq_mod.F90
 libdrv_a_CPPFLAGS = -Dverbose_driver
 libdrv_a_FCFLAGS = -I $(top_builddir)/src/shr -I \
 	$(top_builddir)/src/model -I $(top_builddir)/src/io/ioapi -I \
@@ -351,12 +351,6 @@ libdrv_a-cmaq_mod.o: cmaq_mod.F90
 
 libdrv_a-cmaq_mod.obj: cmaq_mod.F90
 	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libdrv_a_CPPFLAGS) $(CPPFLAGS) $(libdrv_a_FCFLAGS) $(FCFLAGS) -c -o libdrv_a-cmaq_mod.obj `if test -f 'cmaq_mod.F90'; then $(CYGPATH_W) 'cmaq_mod.F90'; else $(CYGPATH_W) '$(srcdir)/cmaq_mod.F90'; fi`
-
-libdrv_a-cmaq_methods.o: cmaq_methods.F90
-	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libdrv_a_CPPFLAGS) $(CPPFLAGS) $(libdrv_a_FCFLAGS) $(FCFLAGS) -c -o libdrv_a-cmaq_methods.o `test -f 'cmaq_methods.F90' || echo '$(srcdir)/'`cmaq_methods.F90
-
-libdrv_a-cmaq_methods.obj: cmaq_methods.F90
-	$(AM_V_PPFC)$(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libdrv_a_CPPFLAGS) $(CPPFLAGS) $(libdrv_a_FCFLAGS) $(FCFLAGS) -c -o libdrv_a-cmaq_methods.obj `if test -f 'cmaq_methods.F90'; then $(CYGPATH_W) 'cmaq_methods.F90'; else $(CYGPATH_W) '$(srcdir)/cmaq_methods.F90'; fi`
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique

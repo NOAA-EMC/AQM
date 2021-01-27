@@ -648,7 +648,7 @@ libshr_a-aqm_domain_mod.$(OBJEXT): libshr_a-aqm_types_mod.$(OBJEXT)
 libshr_a-aqm_emis_mod.$(OBJEXT): libshr_a-aqm_internal_mod.$(OBJEXT) libshr_a-aqm_model_mod.$(OBJEXT) \
 	libshr_a-aqm_rc_mod.$(OBJEXT) libshr_a-aqm_tools_mod.$(OBJEXT) libshr_a-aqm_types_mod.$(OBJEXT)
 libshr_a-aqm_fires_mod.$(OBJEXT): libshr_a-aqm_const_mod.$(OBJEXT) libshr_a-aqm_emis_mod.$(OBJEXT) \
-	libshr_a-aqm_model_mod.$(OBJEXT) libshr_a-aqm_rc_mod.$(OBJEXT)
+	libshr_a-aqm_model_mod.$(OBJEXT) libshr_a-aqm_state_mod.$(OBJEXT) libshr_a-aqm_rc_mod.$(OBJEXT)
 libshr_a-aqm_model_mod.$(OBJEXT): \
 	libshr_a-aqm_config_mod.$(OBJEXT) libshr_a-aqm_domain_mod.$(OBJEXT) \
 	libshr_a-aqm_rc_mod.$(OBJEXT) libshr_a-aqm_species_mod.$(OBJEXT) \

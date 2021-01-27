@@ -12,8 +12,9 @@ module aqm_emis_mod
   implicit none
 
   ! -- parameters
-  integer,          parameter :: emRefLen = 16
-  character(len=*), parameter :: rName    = "emissions"
+  integer,            parameter :: emRefLen = 16
+  real(ESMF_KIND_R4), parameter :: emAccept = 1.e+15_ESMF_KIND_R4
+  character(len=*),   parameter :: rName    = "emissions"
 
   ! -- internal variables
   type(aqm_internal_emis_type), pointer :: aqm_emis_data(:) => null()
@@ -1166,10 +1167,11 @@ contains
             do j = lb(2), ub(2)
               do i = lb(1), ub(1)
                 k = k + 1
-                if (abs(fptr(i,j)) < 1.e+15) & !! TEST
-                buffer(k) = buffer(k) &
-                  + em % factors(item) * fptr(i,j) / stateIn % area(i,j) &
-                                                   / stateIn % area(i,j)
+                if (abs(fptr(i,j)) < emAccept) then
+                  buffer(k) = buffer(k) &
+                    + em % factors(item) * fptr(i,j) / stateIn % area(i,j) &
+                                                     / stateIn % area(i,j)
+                end if
               end do
             end do
           case (0)
@@ -1178,8 +1180,10 @@ contains
             do j = lb(2), ub(2)
               do i = lb(1), ub(1)
                 k = k + 1
-                if (abs(fptr(i,j)) < 1.e+15) & !! TEST
-                buffer(k) = buffer(k) + em % factors(item) * fptr(i,j) / stateIn % area(i,j)
+                if (abs(fptr(i,j)) < emAccept) then
+                  buffer(k) = buffer(k) &
+                    + em % factors(item) * fptr(i,j) / stateIn % area(i,j)
+                end if
               end do
             end do
           case (1:)
@@ -1188,8 +1192,10 @@ contains
             do j = lb(2), ub(2)
               do i = lb(1), ub(1)
                 k = k + 1
-                if (abs(fptr(i,j)) < 1.e+15) & !! TEST
-                buffer(k) = buffer(k) + em % factors(item) * fptr(i,j)
+                if (abs(fptr(i,j)) < emAccept) then
+                  buffer(k) = buffer(k) &
+                    + em % factors(item) * fptr(i,j)
+                end if
               end do
             end do
           case default

@@ -227,7 +227,7 @@ contains
       end do
     end if
 
-    ! -- reciprocal Jacobian x air density for process analysis
+    ! -- Jacobian x air density for process analysis
     spc = gc_strt - 1 + n_gc_spcd
 
     do l = 1, nlays

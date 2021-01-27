@@ -541,7 +541,6 @@ logical function interpx( fname, vname, pname, &
   logical :: set_non_neg
   character(len=16)         :: varname
   character(len=AQM_MAXSTR) :: msgString
-  real,              dimension(:),     allocatable :: X3FACE_GD
   real(AQM_KIND_R8), dimension(:,:),   pointer     :: lat, lon
   real(AQM_KIND_R8), dimension(:,:),   pointer     :: p2d
   real(AQM_KIND_R8), dimension(:,:,:), pointer     :: p3d

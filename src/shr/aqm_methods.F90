@@ -769,7 +769,11 @@ logical function interpx( fname, vname, pname, &
           do r = row0, row1
             do c = col0, col1
               k = k + 1
-              buffer(k) = onebg * (stateIn % phii(c,r,l+1) - stateIn % phii(c,r,l))
+              if (l < NLAYS3D) then
+                buffer(k) = onebg * (stateIn % phil(c,r,l+1) - stateIn % phil(c,r,l))
+              else
+                buffer(k) = onebg * (stateIn % phil(c,r,l) - stateIn % phil(c,r,l-1))
+              end if
             end do
           end do
         end do
@@ -845,7 +849,7 @@ logical function interpx( fname, vname, pname, &
           do r = row0, row1
             do c = col0, col1
               k = k + 1
-              buffer(k) = onebg * stateIn % phil(c,r,l)
+              buffer(k) = onebg * stateIn % phii(c,r,l+1)
             end do
           end do
         end do
@@ -856,7 +860,7 @@ logical function interpx( fname, vname, pname, &
           do r = row0, row1
             do c = col0, col1
               k = k + 1
-              buffer(k) = onebg * stateIn % phii(c,r,l)
+              buffer(k) = onebg * stateIn % phil(c,r,l)
             end do
           end do
         end do

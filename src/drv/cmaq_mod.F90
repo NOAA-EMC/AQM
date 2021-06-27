@@ -4,7 +4,6 @@ module cmaq_mod
   use aqm_types_mod
   use aqm_const_mod, only : onebg, rdgas, grav, mwair, zero
   use aqm_emis_mod
-  use aqm_fires_mod
   use aqm_tools_mod, only : aqm_units_conv
 
   use PAGRD_DEFN
@@ -41,7 +40,6 @@ module cmaq_mod
   public :: cmaq_conc_init
   public :: cmaq_conc_log
   public :: cmaq_domain_log
-  public :: cmaq_emis_fires
   public :: cmaq_emis_init
   public :: cmaq_emis_finalize
   public :: cmaq_emis_print
@@ -554,10 +552,6 @@ contains
       end if
     enddo
 
-    call cmaq_emis_fires_init("gbbepx", rc=localrc)
-    if (aqm_rc_check(localrc, msg="Failure to initialize fire emissions", &
-      file=__FILE__, line=__LINE__)) return
-
   end subroutine cmaq_emis_init
 
   subroutine cmaq_emis_finalize(rc)
@@ -570,176 +564,7 @@ contains
     ! -- begin
     if (present(rc)) rc = AQM_RC_SUCCESS
 
-    call cmaq_emis_fires_finalize(rc=localrc)
-    if (aqm_rc_check(localrc, msg="Failure to finalize fire emissions", &
-      file=__FILE__, line=__LINE__)) return
-
   end subroutine cmaq_emis_finalize
-
-  subroutine cmaq_emis_fires_init(etype, rc)
-
-    character(len=*),  intent(in)  :: etype
-    integer, optional, intent(out) :: rc
-
-    ! -- local variables
-    integer :: localrc
-    integer :: nl, nx, ny
-    type(aqm_internal_emis_type), pointer :: em
-
-    ! -- begin
-    if (present(rc)) rc = AQM_RC_SUCCESS
-
-    nullify(em)
-
-    ! -- retrieve fire emissions
-    em => aqm_emis_get(etype)
-
-    if (associated(em)) then
-
-      nx = size(cgrid, dim=1)
-      ny = size(cgrid, dim=2)
-      nl = size(cgrid, dim=3)
-
-      ! -- allocate buffers
-      allocate(em_buffer(nx*ny), em_vfrac(nx, ny, nl), stat=localrc)
-      if (aqm_rc_test((localrc /= 0), msg="Failed to allocate memory", &
-          file=__FILE__, line=__LINE__, rc=rc)) return
-
-      ! -- initialize buffers
-      em_buffer = 0.0
-      em_vfrac  = 1.0
-
-    end if
-
-  end subroutine cmaq_emis_fires_init
-
-  subroutine cmaq_emis_fires_finalize(rc)
-
-    integer, optional, intent(out) :: rc
-
-    ! -- local variables
-    integer :: localrc
-
-    ! -- begin
-    if (present(rc)) rc = AQM_RC_SUCCESS
-
-    ! -- deallocate buffers
-    if (allocated(em_buffer)) then
-      deallocate(em_buffer, stat=localrc)
-      if (aqm_rc_test((localrc /= 0), msg="Failed to deallocate memory", &
-        file=__FILE__, line=__LINE__, rc=rc)) return
-    end if
-
-    if (allocated(em_vfrac)) then
-      deallocate(em_vfrac, stat=localrc)
-      if (aqm_rc_test((localrc /= 0), msg="Failed to deallocate memory", &
-        file=__FILE__, line=__LINE__, rc=rc)) return
-    end if
-
-  end subroutine cmaq_emis_fires_finalize
-
-  subroutine cmaq_emis_fires(etype, phii, prl, temp, verbose, rc)
-
-    character(len=*),  intent(in)  :: etype
-    real(AQM_KIND_R8), intent(in)  :: phii(:,:,:)
-    real(AQM_KIND_R8), intent(in)  :: prl(:,:,:)
-    real(AQM_KIND_R8), intent(in)  :: temp(:,:,:)
-    logical,           intent(in)  :: verbose
-    integer, optional, intent(out) :: rc
-
-    ! -- local variables
-    integer :: localrc
-    integer :: nl, nx, ny
-    integer :: c, k, l, r, v
-    integer :: frp, spc
-    real    :: conv
-    type(aqm_internal_emis_type), pointer :: em
-    character(len=AQM_MAXSTR) :: msgString
-
-    ! -- local parameters
-     real(AQM_KIND_R8), parameter :: convem = 1.e+03_AQM_KIND_R8 * grav * mwair * rdgas
-
-    ! -- begin
-    if (present(rc)) rc = AQM_RC_SUCCESS
-
-    nullify(em)
-
-    ! -- read in fire emissions
-    em => aqm_emis_get(etype)
-
-    if (associated(em)) then
-
-      nx = size(cgrid, dim=1)
-      ny = size(cgrid, dim=2)
-      nl = size(cgrid, dim=3)
-
-      ! -- initialize work buffers
-      em_buffer = 0.0
-      em_vfrac  = 1.0
-
-      ! -- compute emission injection heights, if fire radiative power (FRP)
-      ! -- data is available and plume rise is enabled
-
-      select case (trim(em % plumerise))
-        case ("sofiev")
-          frp = index1( "FRP", size(em % species), em % species )
-          if (frp > 0) then
-            ! -- read in FRP
-            em_buffer = 0.0
-            call aqm_emis_read(etype, "FRP", em_buffer, rc=localrc)
-            if (aqm_rc_check(localrc, msg="Failure while reading FRP from " // &
-              trim(etype) // " emissions", &
-                file=__FILE__, line=__LINE__)) return
-            if (verbose) then
-              write(msgString, '("AQM: ",a,": ",a16,"[",i0,"]: min/max = ",2g20.8)') &
-                trim(etype), trim(em % species(frp)), frp, &
-                minval(em_buffer), maxval(em_buffer)
-              call m3mesg(msgString)
-            end if
-            call aqm_plume_sofiev(em, em_buffer, em_vfrac, rc=localrc)
-            if (aqm_rc_check(localrc, msg="Failed to compute plume rise", &
-              file=__FILE__, line=__LINE__)) return
-          end if
-        case ("none")
-          ! -- no plume rise
-        case default
-          ! -- plume rise is disabled by default
-      end select
-
-      ! -- add to gas chemistry concentrations
-      do v = 1, n_gc_emis
-        spc = gc_strt - 1 + gc_emis_map( v )
-        ! -- read in fire emissions
-        em_buffer = 0.0
-        call aqm_emis_read(etype, gc_emis( v ), em_buffer, rc=localrc)
-        if (aqm_rc_check(localrc, msg="Failure while reading " // &
-          trim(gc_emis( v )) // " from " // trim(etype) // " emissions", &
-            file=__FILE__, line=__LINE__)) return
-        if (verbose) then
-          if (any(em_buffer > 0.)) then
-            write(msgString, '("AQM: ",a,": ",a16,"[",i0,"]: min/max = ",2g20.8)') &
-              trim(etype), trim(gc_emis( v )), v, &
-              minval(em_buffer), maxval(em_buffer)
-            call m3mesg(msgString)
-          end if
-        end if
-
-        do l = 1, nl
-          k = 0
-          do r = 1, ny
-            do c = 1, nx
-              k = k + 1
-              conv = convem * em_vfrac(c,r,l) * temp(c,r,l) / ( prl(c,r,l) * ( phii(c,r,l+1) - phii(c,r,l) ) )
-              cgrid(c,r,l,spc) = cgrid(c,r,l,spc) + conv * em_buffer(k)
-            end do
-          end do
-        end do
-
-      end do
-
-    end if
-
-  end subroutine cmaq_emis_fires
 
   subroutine cmaq_emis_print(etype, unit)
 

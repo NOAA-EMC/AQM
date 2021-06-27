@@ -86,9 +86,6 @@ libCCTM_a_SOURCES += \
 	$(EMIS)/MGEMIS.F \
 	$(EMIS)/opemis.F \
 	$(EMIS)/PTBILIN.F \
-	$(EMIS)/PTMAP.F \
-	$(EMIS)/PTMET.F \
-	$(EMIS)/PT3D_DEFN.F \
 	$(EMIS)/SSEMIS.F \
 	$(EMIS)/STK_EMIS.F \
 	$(EMIS)/STK_PRMS.F \
@@ -243,7 +240,9 @@ libCCTM_a_SOURCES += \
 liblocalCCTM = $(localCCTM)/$(libCCTM)-
 libCCTM_a_SOURCES += \
 	$(localCCTM)/o3totcol.f \
-	$(localCCTM)/vdiffacmx.F
+	$(localCCTM)/vdiffacmx.F \
+	$(localCCTM)/PTMAP.F \
+	$(localCCTM)/PT3D_DEFN.F
 
 
 libCCTM_a_CPPFLAGS  = -DSUBST_FILES_ID=\"FILES_CTM.EXT\"
@@ -263,10 +262,15 @@ libCCTM_a_CPPFLAGS += -Dmpas -D_AQM_
 libCCTM_a_FFLAGS = $(CCTM_FFLAGS)
 libCCTM_a_FFLAGS += \
 	-I $(ICL)/filenames -I $(ICL)/const -I $(ICL)/emctrl -I$(ICL)/mpi \
-	-I $(top_builddir)/src/io/ioapi
+	-I $(top_builddir)/src/io/ioapi -I $(top_builddir)/src/shr \
+	-I $(top_builddir)/src/io/aqmio
 
 libCCTM_a_FCFLAGS  = $(CCTM_FCFLAGS)
 libCCTM_a_FCFLAGS += -I $(top_builddir)/src/io/ioapi
+
+include $(ESMFMKFILE)
+
+libCCTM_a_FFLAGS += $(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) $(ESMF_F90COMPILEFREECPP) $(ESMF_F90COMPILECPPFLAGS)
 
 .PHONY : clean-modules
 
@@ -300,7 +304,7 @@ $(libAERO)AERO_EMIS.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/filenames/FILES_CT
 	$(libAERO)AERO_DATA.$(OBJEXT) $(libVDIFF)ASX_DATA_MOD.$(OBJEXT) \
 	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libEMIS)DUST_EMIS.$(OBJEXT) \
 	$(libGRID)GRID_CONF.$(OBJEXT) $(libAERO)PRECURSOR_DATA.$(OBJEXT) \
-	$(libEMIS)PT3D_DEFN.$(OBJEXT) $(libEMIS)PTMAP.$(OBJEXT) \
+	$(liblocalCCTM)PT3D_DEFN.$(OBJEXT) $(liblocalCCTM)PTMAP.$(OBJEXT) \
 	$(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libEMIS)SSEMIS.$(OBJEXT) \
 	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
 $(libAERO)AEROMET_DATA.$(OBJEXT) : $(ICL)/const/CONST.EXT
@@ -426,7 +430,7 @@ $(libEMIS)EMIS_DEFN.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/filenames/FILES_CT
 	$(libEMIS)BIOG_EMIS.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
 	$(libDEPV)DEPV_DEFN.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
 	$(libEMIS)LTNG_DEFN.$(OBJEXT) $(libEMIS)MGEMIS.$(OBJEXT) \
-	$(libEMIS)PT3D_DEFN.$(OBJEXT) $(libEMIS)PTMAP.$(OBJEXT) \
+	$(liblocalCCTM)PT3D_DEFN.$(OBJEXT) $(liblocalCCTM)PTMAP.$(OBJEXT) \
 	$(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libEMIS)STK_EMIS.$(OBJEXT) \
 	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
 $(libEMIS)LTNG_DEFN.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
@@ -446,21 +450,6 @@ $(libEMIS)opemis.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
 $(libEMIS)PTBILIN.$(OBJEXT) : \
 	$(libGRID)HGRD_DEFN.$(OBJEXT) $(libEMIS)STK_PRMS.$(OBJEXT) \
 	$(libEMIS)UDTYPES.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT)
-$(libEMIS)PTMAP.$(OBJEXT) : \
-	$(libAERO)AERO_DATA.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
-	$(libEMIS)STK_EMIS.$(OBJEXT) $(libEMIS)UDTYPES.$(OBJEXT) \
-	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
-$(libEMIS)PTMET.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
-	$(libUTIL)bmatvec.$(OBJEXT) $(libEMIS)PTBILIN.$(OBJEXT) \
-	$(libEMIS)STK_PRMS.$(OBJEXT) $(libEMIS)UDTYPES.$(OBJEXT) \
-	$(libUTIL)UTILIO_DEFN.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT)
-$(libEMIS)PT3D_DEFN.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/filenames/FILES_CTM.EXT \
-	$(libUTIL)bmatvec.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
-	$(libGRID)GRID_CONF.$(OBJEXT) $(libEMIS)PTBILIN.$(OBJEXT) \
-	$(libEMIS)PTMAP.$(OBJEXT) $(libEMIS)PTMET.$(OBJEXT) \
-	$(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libEMIS)STK_EMIS.$(OBJEXT) \
-	$(libEMIS)STK_PRMS.$(OBJEXT) $(libEMIS)UDTYPES.$(OBJEXT) \
-	$(libUTIL)UTILIO_DEFN.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT)
 $(libEMIS)SSEMIS.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
 	$(libAERO)AERO_DATA.$(OBJEXT) $(libAERO)AEROMET_DATA.$(OBJEXT) \
 	$(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
@@ -684,3 +673,9 @@ $(liblocalCCTM)vdiffacmx.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
 	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libDEPV)DEPV_DEFN.$(OBJEXT) $(libEMIS)EMIS_DEFN.$(OBJEXT) \
 	$(libGRID)GRID_CONF.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT) \
 	$(libVDIFF)VDIFF_MAP.$(OBJEXT)
+$(liblocalCCTM)PTMAP.$(OBJEXT) : $(libAERO)AERO_DATA.$(OBJEXT) \
+	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(liblocalCCTM)PT3D_DEFN.$(OBJEXT) : $(libAERO)AERO_DATA.$(OBJEXT) \
+	$(libGRID)GRID_CONF.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
+	$(liblocalCCTM)PTMAP.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) \
+	$(libEMIS)STK_EMIS.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)

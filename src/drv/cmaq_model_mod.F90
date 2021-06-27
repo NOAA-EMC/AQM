@@ -121,11 +121,6 @@ contains
       if (config % verbose) call cmaq_conc_log(trim(config % name) // ": import")
     end if
 
-    ! -- include fire emissions, if present
-    call cmaq_emis_fires("gbbepx", stateIn % phii, stateIn % prl, stateIn % temp, config % verbose, rc=localrc)
-    if (aqm_rc_check(localrc, msg="Failure while updating fire emissions", &
-      file=__FILE__, line=__LINE__, rc=rc)) return
-
     ! -- advance model
     call cmaq_advance(jdate, jtime, tstep, config % run_aero, rc=localrc)
     if (aqm_rc_check(localrc, msg="Failed to advance CMAQ on local DE", &

@@ -325,6 +325,9 @@ logical function envyn(name, description, defaultval, status)
       envyn = config % ctm_pmdiag
     case ('CTM_PHOTODIAG')
       envyn = config % ctm_photodiag
+    case ('CTM_PT3DEMIS')
+      em => aqm_emis_get("gbbepx")
+      envyn = associated(em)
     case ('CTM_GRAV_SETL')
       envyn = .false.
     case ('INITIAL_RUN')
@@ -338,7 +341,9 @@ end function envyn
 
 integer function envint(name, description, defaultval, status)
 
-  use aqm_model_mod, only : aqm_config_type, aqm_model_get
+  use aqm_emis_mod,  only : aqm_internal_emis_type, aqm_emis_get
+  use aqm_model_mod, only : aqm_config_type, aqm_model_get, &
+                            aqm_model_domain_get
   use aqm_rc_mod,    only : aqm_rc_check
   use m3utilio,      only : xstat0
 
@@ -352,6 +357,7 @@ integer function envint(name, description, defaultval, status)
   ! -- local variables
   integer :: deCount, localrc
   type(aqm_config_type), pointer :: config
+  type(aqm_internal_emis_type), pointer :: em
 
   ! -- begin
 
@@ -373,6 +379,14 @@ integer function envint(name, description, defaultval, status)
       envint = config % ctm_tstep
     case ('CTM_EMLAYS')
       envint = 1
+      em => aqm_emis_get("gbbepx")
+      if (associated(em)) then
+        if (trim(em % plumerise) /= "none") then
+          call aqm_model_domain_get(nl=envint, rc=localrc)
+          if (aqm_rc_check(localrc, msg="Failure to retrieve model coordinates", &
+            file=__FILE__, line=__LINE__)) return
+        end if
+      end if
     case default
       ! -- use default
   end select

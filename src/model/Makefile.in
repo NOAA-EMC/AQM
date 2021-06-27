@@ -150,9 +150,6 @@ am_libCCTM_a_OBJECTS = $(AERO)/libCCTM_a-AERO_DATA.$(OBJEXT) \
 	$(EMIS)/libCCTM_a-MGEMIS.$(OBJEXT) \
 	$(EMIS)/libCCTM_a-opemis.$(OBJEXT) \
 	$(EMIS)/libCCTM_a-PTBILIN.$(OBJEXT) \
-	$(EMIS)/libCCTM_a-PTMAP.$(OBJEXT) \
-	$(EMIS)/libCCTM_a-PTMET.$(OBJEXT) \
-	$(EMIS)/libCCTM_a-PT3D_DEFN.$(OBJEXT) \
 	$(EMIS)/libCCTM_a-SSEMIS.$(OBJEXT) \
 	$(EMIS)/libCCTM_a-STK_EMIS.$(OBJEXT) \
 	$(EMIS)/libCCTM_a-STK_PRMS.$(OBJEXT) \
@@ -238,7 +235,9 @@ am_libCCTM_a_OBJECTS = $(AERO)/libCCTM_a-AERO_DATA.$(OBJEXT) \
 	$(VDIFF)/libCCTM_a-VDIFF_MAP.$(OBJEXT) \
 	$(VDIFF)/libCCTM_a-vdiffproc.$(OBJEXT) \
 	$(localCCTM)/libCCTM_a-o3totcol.$(OBJEXT) \
-	$(localCCTM)/libCCTM_a-vdiffacmx.$(OBJEXT)
+	$(localCCTM)/libCCTM_a-vdiffacmx.$(OBJEXT) \
+	$(localCCTM)/libCCTM_a-PTMAP.$(OBJEXT) \
+	$(localCCTM)/libCCTM_a-PT3D_DEFN.$(OBJEXT)
 libCCTM_a_OBJECTS = $(am_libCCTM_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -471,8 +470,7 @@ libCCTM_a_SOURCES = $(AERO)/AERO_DATA.F $(AERO)/aero_depv.F \
 	$(EMIS)/BEIS_DEFN.F $(EMIS)/BIOG_EMIS.F $(EMIS)/cropcal.F \
 	$(EMIS)/DUST_EMIS.F $(EMIS)/EMIS_DEFN.F $(EMIS)/LTNG_DEFN.F \
 	$(EMIS)/LUS_DEFN.F $(EMIS)/MGEMIS.F $(EMIS)/opemis.F \
-	$(EMIS)/PTBILIN.F $(EMIS)/PTMAP.F $(EMIS)/PTMET.F \
-	$(EMIS)/PT3D_DEFN.F $(EMIS)/SSEMIS.F $(EMIS)/STK_EMIS.F \
+	$(EMIS)/PTBILIN.F $(EMIS)/SSEMIS.F $(EMIS)/STK_EMIS.F \
 	$(EMIS)/STK_PRMS.F $(EMIS)/tfabove.F $(EMIS)/tfbelow.F \
 	$(EMIS)/UDTYPES.F $(GAS)/degrade_data.F $(GAS)/degrade.F \
 	$(GAS)/DEGRADE_SETUP_TOX.F $(GAS)/final_degrade.F \
@@ -511,7 +509,8 @@ libCCTM_a_SOURCES = $(AERO)/AERO_DATA.F $(AERO)/aero_depv.F \
 	$(VDIFF)/opddep_fst.F $(VDIFF)/opddep_mos.F $(VDIFF)/rddepv.F \
 	$(VDIFF)/SEDIMENTATION.F $(VDIFF)/tri.F $(VDIFF)/VDIFF_DIAG.F \
 	$(VDIFF)/VDIFF_MAP.F $(VDIFF)/vdiffproc.F \
-	$(localCCTM)/o3totcol.f $(localCCTM)/vdiffacmx.F
+	$(localCCTM)/o3totcol.f $(localCCTM)/vdiffacmx.F \
+	$(localCCTM)/PTMAP.F $(localCCTM)/PT3D_DEFN.F
 
 # local version of CCTM source files
 localCCTM = $(builddir)/src
@@ -596,7 +595,10 @@ libCCTM_a_CPPFLAGS = -DSUBST_FILES_ID=\"FILES_CTM.EXT\" \
 	-DWR_INIT=DUMMY_WR_INIT -Dverbose_aero -Dverbose_gas -Dmpas \
 	-D_AQM_
 libCCTM_a_FFLAGS = $(CCTM_FFLAGS) -I $(ICL)/filenames -I $(ICL)/const \
-	-I $(ICL)/emctrl -I$(ICL)/mpi -I $(top_builddir)/src/io/ioapi
+	-I $(ICL)/emctrl -I$(ICL)/mpi -I $(top_builddir)/src/io/ioapi \
+	-I $(top_builddir)/src/shr -I $(top_builddir)/src/io/aqmio \
+	$(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) \
+	$(ESMF_F90COMPILEFREECPP) $(ESMF_F90COMPILECPPFLAGS)
 libCCTM_a_FCFLAGS = $(CCTM_FCFLAGS) -I $(top_builddir)/src/io/ioapi
 all: all-am
 
@@ -768,12 +770,6 @@ $(EMIS)/libCCTM_a-MGEMIS.$(OBJEXT): $(EMIS)/$(am__dirstamp) \
 $(EMIS)/libCCTM_a-opemis.$(OBJEXT): $(EMIS)/$(am__dirstamp) \
 	$(EMIS)/$(DEPDIR)/$(am__dirstamp)
 $(EMIS)/libCCTM_a-PTBILIN.$(OBJEXT): $(EMIS)/$(am__dirstamp) \
-	$(EMIS)/$(DEPDIR)/$(am__dirstamp)
-$(EMIS)/libCCTM_a-PTMAP.$(OBJEXT): $(EMIS)/$(am__dirstamp) \
-	$(EMIS)/$(DEPDIR)/$(am__dirstamp)
-$(EMIS)/libCCTM_a-PTMET.$(OBJEXT): $(EMIS)/$(am__dirstamp) \
-	$(EMIS)/$(DEPDIR)/$(am__dirstamp)
-$(EMIS)/libCCTM_a-PT3D_DEFN.$(OBJEXT): $(EMIS)/$(am__dirstamp) \
 	$(EMIS)/$(DEPDIR)/$(am__dirstamp)
 $(EMIS)/libCCTM_a-SSEMIS.$(OBJEXT): $(EMIS)/$(am__dirstamp) \
 	$(EMIS)/$(DEPDIR)/$(am__dirstamp)
@@ -1019,6 +1015,11 @@ $(localCCTM)/libCCTM_a-o3totcol.$(OBJEXT):  \
 	$(localCCTM)/$(am__dirstamp) \
 	$(localCCTM)/$(DEPDIR)/$(am__dirstamp)
 $(localCCTM)/libCCTM_a-vdiffacmx.$(OBJEXT):  \
+	$(localCCTM)/$(am__dirstamp) \
+	$(localCCTM)/$(DEPDIR)/$(am__dirstamp)
+$(localCCTM)/libCCTM_a-PTMAP.$(OBJEXT): $(localCCTM)/$(am__dirstamp) \
+	$(localCCTM)/$(DEPDIR)/$(am__dirstamp)
+$(localCCTM)/libCCTM_a-PT3D_DEFN.$(OBJEXT):  \
 	$(localCCTM)/$(am__dirstamp) \
 	$(localCCTM)/$(DEPDIR)/$(am__dirstamp)
 
@@ -1313,24 +1314,6 @@ $(EMIS)/libCCTM_a-PTBILIN.o: $(EMIS)/PTBILIN.F
 
 $(EMIS)/libCCTM_a-PTBILIN.obj: $(EMIS)/PTBILIN.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-PTBILIN.obj `if test -f '$(EMIS)/PTBILIN.F'; then $(CYGPATH_W) '$(EMIS)/PTBILIN.F'; else $(CYGPATH_W) '$(srcdir)/$(EMIS)/PTBILIN.F'; fi`
-
-$(EMIS)/libCCTM_a-PTMAP.o: $(EMIS)/PTMAP.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-PTMAP.o `test -f '$(EMIS)/PTMAP.F' || echo '$(srcdir)/'`$(EMIS)/PTMAP.F
-
-$(EMIS)/libCCTM_a-PTMAP.obj: $(EMIS)/PTMAP.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-PTMAP.obj `if test -f '$(EMIS)/PTMAP.F'; then $(CYGPATH_W) '$(EMIS)/PTMAP.F'; else $(CYGPATH_W) '$(srcdir)/$(EMIS)/PTMAP.F'; fi`
-
-$(EMIS)/libCCTM_a-PTMET.o: $(EMIS)/PTMET.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-PTMET.o `test -f '$(EMIS)/PTMET.F' || echo '$(srcdir)/'`$(EMIS)/PTMET.F
-
-$(EMIS)/libCCTM_a-PTMET.obj: $(EMIS)/PTMET.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-PTMET.obj `if test -f '$(EMIS)/PTMET.F'; then $(CYGPATH_W) '$(EMIS)/PTMET.F'; else $(CYGPATH_W) '$(srcdir)/$(EMIS)/PTMET.F'; fi`
-
-$(EMIS)/libCCTM_a-PT3D_DEFN.o: $(EMIS)/PT3D_DEFN.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-PT3D_DEFN.o `test -f '$(EMIS)/PT3D_DEFN.F' || echo '$(srcdir)/'`$(EMIS)/PT3D_DEFN.F
-
-$(EMIS)/libCCTM_a-PT3D_DEFN.obj: $(EMIS)/PT3D_DEFN.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-PT3D_DEFN.obj `if test -f '$(EMIS)/PT3D_DEFN.F'; then $(CYGPATH_W) '$(EMIS)/PT3D_DEFN.F'; else $(CYGPATH_W) '$(srcdir)/$(EMIS)/PT3D_DEFN.F'; fi`
 
 $(EMIS)/libCCTM_a-SSEMIS.o: $(EMIS)/SSEMIS.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-SSEMIS.o `test -f '$(EMIS)/SSEMIS.F' || echo '$(srcdir)/'`$(EMIS)/SSEMIS.F
@@ -1709,6 +1692,18 @@ $(localCCTM)/libCCTM_a-vdiffacmx.o: $(localCCTM)/vdiffacmx.F
 
 $(localCCTM)/libCCTM_a-vdiffacmx.obj: $(localCCTM)/vdiffacmx.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(localCCTM)/libCCTM_a-vdiffacmx.obj `if test -f '$(localCCTM)/vdiffacmx.F'; then $(CYGPATH_W) '$(localCCTM)/vdiffacmx.F'; else $(CYGPATH_W) '$(srcdir)/$(localCCTM)/vdiffacmx.F'; fi`
+
+$(localCCTM)/libCCTM_a-PTMAP.o: $(localCCTM)/PTMAP.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(localCCTM)/libCCTM_a-PTMAP.o `test -f '$(localCCTM)/PTMAP.F' || echo '$(srcdir)/'`$(localCCTM)/PTMAP.F
+
+$(localCCTM)/libCCTM_a-PTMAP.obj: $(localCCTM)/PTMAP.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(localCCTM)/libCCTM_a-PTMAP.obj `if test -f '$(localCCTM)/PTMAP.F'; then $(CYGPATH_W) '$(localCCTM)/PTMAP.F'; else $(CYGPATH_W) '$(srcdir)/$(localCCTM)/PTMAP.F'; fi`
+
+$(localCCTM)/libCCTM_a-PT3D_DEFN.o: $(localCCTM)/PT3D_DEFN.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(localCCTM)/libCCTM_a-PT3D_DEFN.o `test -f '$(localCCTM)/PT3D_DEFN.F' || echo '$(srcdir)/'`$(localCCTM)/PT3D_DEFN.F
+
+$(localCCTM)/libCCTM_a-PT3D_DEFN.obj: $(localCCTM)/PT3D_DEFN.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(localCCTM)/libCCTM_a-PT3D_DEFN.obj `if test -f '$(localCCTM)/PT3D_DEFN.F'; then $(CYGPATH_W) '$(localCCTM)/PT3D_DEFN.F'; else $(CYGPATH_W) '$(srcdir)/$(localCCTM)/PT3D_DEFN.F'; fi`
 .F.f:
 	$(F77COMPILE) -F $<
 
@@ -2150,6 +2145,8 @@ uninstall-am:
 	tags tags-am uninstall uninstall-am
 
 
+include $(ESMFMKFILE)
+
 .PHONY : clean-modules
 
 clean-modules:
@@ -2182,7 +2179,7 @@ $(libAERO)AERO_EMIS.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/filenames/FILES_CT
 	$(libAERO)AERO_DATA.$(OBJEXT) $(libVDIFF)ASX_DATA_MOD.$(OBJEXT) \
 	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libEMIS)DUST_EMIS.$(OBJEXT) \
 	$(libGRID)GRID_CONF.$(OBJEXT) $(libAERO)PRECURSOR_DATA.$(OBJEXT) \
-	$(libEMIS)PT3D_DEFN.$(OBJEXT) $(libEMIS)PTMAP.$(OBJEXT) \
+	$(liblocalCCTM)PT3D_DEFN.$(OBJEXT) $(liblocalCCTM)PTMAP.$(OBJEXT) \
 	$(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libEMIS)SSEMIS.$(OBJEXT) \
 	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
 $(libAERO)AEROMET_DATA.$(OBJEXT) : $(ICL)/const/CONST.EXT
@@ -2308,7 +2305,7 @@ $(libEMIS)EMIS_DEFN.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/filenames/FILES_CT
 	$(libEMIS)BIOG_EMIS.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
 	$(libDEPV)DEPV_DEFN.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
 	$(libEMIS)LTNG_DEFN.$(OBJEXT) $(libEMIS)MGEMIS.$(OBJEXT) \
-	$(libEMIS)PT3D_DEFN.$(OBJEXT) $(libEMIS)PTMAP.$(OBJEXT) \
+	$(liblocalCCTM)PT3D_DEFN.$(OBJEXT) $(liblocalCCTM)PTMAP.$(OBJEXT) \
 	$(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libEMIS)STK_EMIS.$(OBJEXT) \
 	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
 $(libEMIS)LTNG_DEFN.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
@@ -2328,21 +2325,6 @@ $(libEMIS)opemis.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
 $(libEMIS)PTBILIN.$(OBJEXT) : \
 	$(libGRID)HGRD_DEFN.$(OBJEXT) $(libEMIS)STK_PRMS.$(OBJEXT) \
 	$(libEMIS)UDTYPES.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT)
-$(libEMIS)PTMAP.$(OBJEXT) : \
-	$(libAERO)AERO_DATA.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
-	$(libEMIS)STK_EMIS.$(OBJEXT) $(libEMIS)UDTYPES.$(OBJEXT) \
-	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
-$(libEMIS)PTMET.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
-	$(libUTIL)bmatvec.$(OBJEXT) $(libEMIS)PTBILIN.$(OBJEXT) \
-	$(libEMIS)STK_PRMS.$(OBJEXT) $(libEMIS)UDTYPES.$(OBJEXT) \
-	$(libUTIL)UTILIO_DEFN.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT)
-$(libEMIS)PT3D_DEFN.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/filenames/FILES_CTM.EXT \
-	$(libUTIL)bmatvec.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
-	$(libGRID)GRID_CONF.$(OBJEXT) $(libEMIS)PTBILIN.$(OBJEXT) \
-	$(libEMIS)PTMAP.$(OBJEXT) $(libEMIS)PTMET.$(OBJEXT) \
-	$(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libEMIS)STK_EMIS.$(OBJEXT) \
-	$(libEMIS)STK_PRMS.$(OBJEXT) $(libEMIS)UDTYPES.$(OBJEXT) \
-	$(libUTIL)UTILIO_DEFN.$(OBJEXT) $(libGRID)VGRD_DEFN.$(OBJEXT)
 $(libEMIS)SSEMIS.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
 	$(libAERO)AERO_DATA.$(OBJEXT) $(libAERO)AEROMET_DATA.$(OBJEXT) \
 	$(libVDIFF)ASX_DATA_MOD.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
@@ -2566,6 +2548,12 @@ $(liblocalCCTM)vdiffacmx.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
 	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libDEPV)DEPV_DEFN.$(OBJEXT) $(libEMIS)EMIS_DEFN.$(OBJEXT) \
 	$(libGRID)GRID_CONF.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT) \
 	$(libVDIFF)VDIFF_MAP.$(OBJEXT)
+$(liblocalCCTM)PTMAP.$(OBJEXT) : $(libAERO)AERO_DATA.$(OBJEXT) \
+	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(liblocalCCTM)PT3D_DEFN.$(OBJEXT) : $(libAERO)AERO_DATA.$(OBJEXT) \
+	$(libGRID)GRID_CONF.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
+	$(liblocalCCTM)PTMAP.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) \
+	$(libEMIS)STK_EMIS.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

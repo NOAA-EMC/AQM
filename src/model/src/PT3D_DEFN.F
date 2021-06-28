@@ -27,6 +27,9 @@ C Gas-phase Namelist emissions factors
 C Emission type
       CHARACTER( * ),  PARAMETER :: ETYPE = 'gbbepx'
 
+C Species name for Fire Radiative Power
+      CHARACTER( * ),  PARAMETER :: EMFRP = 'FRP'
+
       CONTAINS
 
 C=======================================================================
@@ -243,8 +246,10 @@ C        ... initialize emission arrays ...
          PMEMIS_PT      = 0.0   ! array assignment
 
 C        ... initialize vertical fraction arrays ...
+C        ... fire emissions are added to surface only by default ...
 
-         VFRAC = 1.0
+         VFRAC        = 0.0
+         VFRAC(:,:,1) = 1.0
 
 C Retrieve fire emissions and distribute according to plume-rise algorithm
 
@@ -252,11 +257,11 @@ C        ... plumerise   ...
 
          SELECT CASE ( TRIM( EM % PLUMERISE ) )
             CASE ( "sofiev" )
-               N = INDEX1( "frp", SIZE( EM % SPECIES ), EM % SPECIES )
+               N = INDEX1( EMFRP, SIZE( EM % SPECIES ), EM % SPECIES )
                IF ( N > 0 ) THEN
 C                 read in frp
                   BUFFER = 0.0
-                  CALL AQM_EMIS_READ( ETYPE, "frp", BUFFER, RC=LOCALRC )
+                  CALL AQM_EMIS_READ( ETYPE, EMFRP, BUFFER, RC=LOCALRC )
                   IF ( AQM_RC_CHECK( LOCALRC,
      &               MSG="failure while reading frp from " //
      &               TRIM( ETYPE ) // " emissions",
@@ -265,6 +270,10 @@ C                 read in frp
                   IF ( AQM_RC_CHECK( LOCALRC,
      &               MSG="failed to compute plume rise",
      &               FILE=__FILE__, LINE=__LINE__ ) ) RETURN
+               ELSE
+                  CALL M3WARN( PNAME, JDATE, JTIME,
+     &               EMFRP // "species not found. " //
+     &               "Adding fire emissions to surface only" )
                END IF
             CASE ( "none" )
 C                no plume rise

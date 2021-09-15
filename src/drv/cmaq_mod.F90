@@ -547,6 +547,10 @@ contains
           end do
 
         end select
+
+        ! -- log final scaling factors, if requested
+        if (em % verbose) call cmaq_emis_log(em)
+
       end if
     enddo
 
@@ -563,6 +567,34 @@ contains
     if (present(rc)) rc = AQM_RC_SUCCESS
 
   end subroutine cmaq_emis_finalize
+
+  subroutine cmaq_emis_log(em)
+
+    type(aqm_internal_emis_type), intent(in) :: em
+
+    ! -- local variables
+    integer :: maxlen, n
+    character(len=AQM_MAXSTR) :: msgString
+
+    ! -- begin
+    ! -- determine species label's maximum length
+    maxlen = 0
+    do n = 1, size(em % species)
+      maxlen = max(maxlen, len_trim(em % species( n )))
+    end do
+
+    ! -- write header
+    call m3mesg(trim(em % logprefix) // ": compute from sources as follows:")
+
+    ! -- write emission species, sources, and scaling factors
+    do n = 1, size(em % species)
+      write(msgString, '(a,": ",a,"[",i0,"] = ",g16.8," x [",a,"]")') &
+        trim(em % logprefix), em % species( n )(1:maxlen), n, &
+        em % factors( n ), trim(em % sources( n ))
+      call m3mesg(msgString)
+    end do
+
+  end subroutine cmaq_emis_log
 
   subroutine cmaq_emis_print(etype, unit)
 

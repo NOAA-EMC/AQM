@@ -522,8 +522,6 @@ contains
             end if
           end do
 
-          nullify(em)
-
           ! -- (c) free up memory
           deallocate(umap, stat=stat)
           if (aqm_rc_test(stat /= 0, &

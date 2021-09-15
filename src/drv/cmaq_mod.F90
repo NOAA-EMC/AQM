@@ -439,12 +439,12 @@ contains
 
           ! -- set internal units for all species
           ! -- (a) gas species
-          do n = 1, n_gc_spc
+          do n = 1, n_gc_emis
             spc = index1( gc_emis( n ), ltable, em % table(:,1) )
             if (spc > 0) em % table(spc,2) = "MOL/S"
           end do
           ! -- (b) non reactive
-          do n = 1, n_nr_spc
+          do n = 1, n_nr_emis
             spc = index1( nr_emis( n ), ltable, em % table(:,1) )
             if (spc > 0) em % table(spc,2) = "MOL/S"
           end do

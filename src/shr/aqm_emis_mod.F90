@@ -114,7 +114,8 @@ contains
 
       do item = 1, emisCount
         ! -- set default log prefix label and verbosity
-        is % wrap % emis(item) % logprefix = trim(name)//": "//rName
+        is % wrap % emis(item) % logprefix = trim(name)//": "//rName &
+          // ": " // is % wrap % emis(item) % name
         is % wrap % emis(item) % verbose   = btest(verbosity,8)
         ! -- initialize emission sources from config
         call aqm_emis_src_init(model, is % wrap % emis(item), rc=localrc)

@@ -20,7 +20,6 @@ C Stack emissions for sources within domain
 
 C Gas-phase Namelist emissions factors
       REAL,    ALLOCATABLE, SAVE :: EMIS_FAC( : )  ! per species scaling factor
-      INTEGER,              SAVE :: N_EMIS_GAS_SPC ! number of gas-phase emissions species
 
       CHARACTER( 240 )           :: XMSG = ' '
 
@@ -107,17 +106,12 @@ C check if emissions are being provided
 
 C get number of different file groups (sectors)
 
-c        NPTGRPS = 1
          NPTGRPS = 0
 
 C create point source internal array
 
          ALLOCATE( STKSPC( NPTGRPS ), STAT = IOS )
          CALL CHECKMEM( IOS, 'STKSPC', PNAME )
-c        STKSPC( 1 )%LEN = SIZE( EM % SPECIES )
-c        ALLOCATE( STKSPC( 1 )%ARRY( STKSPC( 1 )%LEN ), STAT = IOS )
-c        CALL CHECKMEM( IOS, 'STKSPC%ARRY', PNAME )
-c        STKSPC( 1 )%ARRY = EM % SPECIES
 
 C set number of emissions layers depending on whether plumerise is on
 
@@ -140,19 +134,13 @@ C get point source emission mapping
 
 C allocate emission arrays
 
-         ALLOCATE ( VDEMIS_PT( NCOLS,NROWS,EMLYRS,N_GSPC_EMIS ), STAT = IOS )
+         ALLOCATE ( VDEMIS_PT( NCOLS,NROWS,EMLYRS,N_SPC_PTEM ), STAT = IOS )
          CALL CHECKMEM( IOS, 'VDEMIS_PT', PNAME )
          VDEMIS_PT = 0.0   ! array assignment
 
-         ALLOCATE ( VDEMIS_PT_FIRE( NCOLS,NROWS,EMLYRS,N_GSPC_EMIS), STAT = IOS )
+         ALLOCATE ( VDEMIS_PT_FIRE( NCOLS,NROWS,EMLYRS,N_SPC_PTEM ), STAT = IOS )
          CALL CHECKMEM( IOS, 'VDEMIS_PT_FIRE', PNAME )
          VDEMIS_PT_FIRE = 0.0   ! array assignment
-
-         N_EMIS_GAS_SPC = N_GC_EMIS + N_NR_EMIS + N_TR_EMIS
-
-         ALLOCATE ( SPC_PTEM_FAC( N_EMIS_GAS_SPC ), STAT = IOS )
-         CALL CHECKMEM( IOS, 'SPC_PTEM_FAC', PNAME )
-         SPC_PTEM_FAC = 1.0   ! array assignment (default)
 
          ALLOCATE ( PMEMIS_PT( NCOLS,NROWS,EMLYRS,N_SPC_PTPM ), STAT = IOS )
          CALL CHECKMEM( IOS, 'PMEMIS_PT', PNAME )
@@ -285,22 +273,21 @@ C        ... gas species ...
 
          IS_NOT_NVPOA = ( INDEX( MECHNAME, 'NVPOA' ) .EQ. 0 )
 
-         DO S = 1, N_EMIS_GAS_SPC
-            V = SPC_PTEM_MAP( S )
+         DO S = 1, N_GSPC_EMIS
             N = PTEM_MAP( S )
-            IF ( V .GT. 0 ) THEN
+            IF ( N .GT. 0 ) THEN
                BUFFER = 0.0
-               CALL AQM_EMIS_READ( ETYPE, EM % SPECIES( N ), BUFFER, RC=LOCALRC )
+               CALL AQM_EMIS_READ( ETYPE, EM % TABLE( N, 1 ), BUFFER, RC=LOCALRC )
                IF ( AQM_RC_CHECK( LOCALRC, MSG="Failure while reading " //
-     &            TRIM( PMEM_MAP_NAME( V ) ) // " from " // TRIM( ETYPE ) // " emissions",
+     &            TRIM( EM % TABLE( N, 1 ) ) // " from " // TRIM( ETYPE ) // " emissions",
      &            FILE=__FILE__, LINE=__LINE__)) RETURN
 C              Read Non-Carbon Organic Matter too if POC is Requested
                SAVE_POC = .FALSE.
-               IF ( IS_NOT_NVPOA .AND. EM % SPECIES( N ) .EQ. 'POC' ) THEN
+               IF ( IS_NOT_NVPOA .AND. EM % TABLE( N, 1 ) .EQ. 'POC' ) THEN
                   CALL AQM_EMIS_READ( ETYPE, 'PNCOM', BUFFER, RC=LOCALRC )
                   IF ( AQM_RC_CHECK( LOCALRC,
-     &               MSG="Failure while reading " //
-     &               TRIM( PMEM_MAP_NAME( V ) ) // " from " // TRIM( ETYPE ) // " emissions",
+     &               MSG="Failure while reading PNCOM" //
+     &               " from " // TRIM( ETYPE ) // " emissions",
      &               FILE=__FILE__, LINE=__LINE__)) RETURN
                   SAVE_POC = IS_NOT_NVPOA
                END IF
@@ -309,8 +296,7 @@ C              Read Non-Carbon Organic Matter too if POC is Requested
                   DO R = 1, MY_NROWS
                      DO C = 1, MY_NCOLS
                         K = K + 1
-                        VDEMIS_PT( C,R,L,N ) = VDEMIS_PT( C,R,L,N ) 
-     &                                       + VFRAC( C,R,L ) * BUFFER( K )
+                        VDEMIS_PT( C,R,L,N ) = VFRAC( C,R,L ) * BUFFER( K )
                      END DO
                   END DO
                END DO
@@ -320,8 +306,7 @@ C              Read Non-Carbon Organic Matter too if POC is Requested
                      DO R = 1, MY_NROWS
                         DO C = 1, MY_NCOLS
                            K = K + 1
-                           VDEMIS_PT_FIRE( C,R,L,N ) = VDEMIS_PT_FIRE( C,R,L,N ) 
-     &                                               + VFRAC( C,R,L ) * BUFFER( K )
+                           VDEMIS_PT_FIRE( C,R,L,N ) = VDEMIS_PT( C,R,L,N )
                         END DO
                      END DO
                   END DO
@@ -343,8 +328,7 @@ C        ... aerosol species ...
                DO R = 1, MY_NROWS
                   DO C = 1, MY_NCOLS
                      K = K + 1
-                     PMEMIS_PT( C,R,L,S ) = PMEMIS_PT( C,R,L,S ) 
-     &                                    + VFRAC( C,R,L ) * BUFFER( K )
+                     PMEMIS_PT( C,R,L,S ) = VFRAC( C,R,L ) * BUFFER( K )
                   END DO
                END DO
             END DO

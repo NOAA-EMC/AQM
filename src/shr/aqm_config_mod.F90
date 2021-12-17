@@ -28,9 +28,10 @@ module aqm_config_mod
     logical                   :: initial_run   = .true.
     logical                   :: biosw_yn      = .false.
     logical                   :: ctm_aod       = .false.
+    logical                   :: ctm_depvfile  = .false.
     logical                   :: ctm_photodiag = .false.
     logical                   :: ctm_pmdiag    = .false.
-    logical                   :: ctm_depvfile  = .false.
+    logical                   :: ctm_wb_dust   = .false.
     logical                   :: init_conc     = .false.
     logical                   :: run_aero      = .false.
     logical                   :: verbose       = .false.
@@ -165,6 +166,14 @@ contains
       rcToReturn=rc)) &
       return  ! bail out
 
+    call ESMF_ConfigGetAttribute(cf, config % ctm_wb_dust, &
+      label="ctm_wb_dust:", default=.true., rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
     ! -- microphysics tracer map
     call ESMF_ConfigGetAttribute(cf, config % mp_map, &
       label="mp_tracer_map:", rc=localrc)
@@ -175,8 +184,8 @@ contains
       return  ! bail out
 
     ! -- set other default values
-    config % ctm_photodiag = .false.
     config % ctm_depvfile  = .false.
+    config % ctm_photodiag = .false.
 
   end subroutine aqm_config_read
 
@@ -466,6 +475,13 @@ contains
         ESMF_LOGMSG_INFO, rc=localrc)
     else
       call ESMF_LogWrite(trim(name) // ": config: read: ctm_aod: false", &
+        ESMF_LOGMSG_INFO, rc=localrc)
+    end if
+    if (config % ctm_wb_dust) then
+      call ESMF_LogWrite(trim(name) // ": config: read: ctm_wb_dust: true", &
+        ESMF_LOGMSG_INFO, rc=localrc)
+    else
+      call ESMF_LogWrite(trim(name) // ": config: read: ctm_wb_dust: false", &
         ESMF_LOGMSG_INFO, rc=localrc)
     end if
     if (config % run_aero) then

@@ -133,7 +133,7 @@ libCCTM_a_SOURCES += \
 	$(ICL)/mpi/PE_COMM.EXT
 
 # init
-INIT = $(srcCCTM)/init/yamo
+INIT = $(CCTM)/init/yamo
 libINIT = $(INIT)/$(libCCTM)-
 libCCTM_a_SOURCES += \
 	$(INIT)/initscen.F \

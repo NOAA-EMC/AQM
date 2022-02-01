@@ -547,7 +547,7 @@ libGRID = $(GRID)/$(libCCTM)-
 ICL = $(srcCCTM)/ICL/fixed
 
 # init
-INIT = $(srcCCTM)/init/yamo
+INIT = $(CCTM)/init/yamo
 libINIT = $(INIT)/$(libCCTM)-
 
 # MECHS

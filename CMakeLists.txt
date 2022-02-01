@@ -34,6 +34,7 @@ ExternalProject_Add (aqm_gnu
                          --prefix=${aqm_dir} --libdir=${aqm_dir} --includedir=${aqm_dir}
                          FC=${CMAKE_Fortran_COMPILER} F77=${CMAKE_Fortran_COMPILER} CC=${CMAKE_C_COMPILER}
                          ${configure_options}
+  BUILD_ALWAYS       True
 )
 
 # create target

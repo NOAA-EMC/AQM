@@ -120,6 +120,18 @@ C-------------------------------------------------------------------------------
          Logical, Allocatable :: CONVCT   ( :,: )  ! convection flag
          Real,    Allocatable :: PBL      ( :,: )  ! pbl height (m)
          Real,    Allocatable :: NACL_EMIS( :,: )  ! NACL mass emission rate of particles with d <10 um (g/m2/s)
+!> Inline Canopy Processes
+         Real,    Allocatable :: FCH      ( :,: )  ! Forest Canopy Height (m)
+         Real,    Allocatable :: FRT      ( :,: )  ! Forest Fraction
+         Real,    Allocatable :: CLU      ( :,: )  ! Clumping Index
+         Real,    Allocatable :: POPU     ( :,: )  ! Population Density (people/10km2)
+         Real,    Allocatable :: LAIE     ( :,: )  ! ECCC BELD3 Derived LAI (m2/m2)
+         Real,    Allocatable :: C1R      ( :,: )  ! cumulative LAI fraction hc to 0.75 * hc
+         Real,    Allocatable :: C2R      ( :,: )  ! cumulative LAI fraction hc to 0.50 * hc
+         Real,    Allocatable :: C3R      ( :,: )  ! cumulative LAI fraction hc to 0.35 * hc
+         Real,    Allocatable :: C4R      ( :,: )  ! cumulative LAI fraction hc to 0.20 * hc
+
+
 !> U and V wind components on the cross grid points
          Real,    Allocatable :: UWIND    ( :,:,: )  ! [m/s]
          Real,    Allocatable :: VWIND    ( :,:,: )  ! [m/s]                    
@@ -550,6 +562,21 @@ C-----------------------------------------------------------------------
             Grid_Data%WFC     = 0.0
             Grid_Data%WRES    = 0.0
             Grid_Data%BSLP    = 0.0
+
+            ALLOCATE( Met_Data%FCH    ( NCOLS,NROWS ),
+     &                Met_Data%FRT    ( NCOLS,NROWS ),
+     &                Met_Data%CLU    ( NCOLS,NROWS ),
+     &                Met_Data%POPU   ( NCOLS,NROWS ),
+     &                Met_Data%LAIE   ( NCOLS,NROWS ),
+     &                Met_Data%C1R    ( NCOLS,NROWS ),
+     &                Met_Data%C2R    ( NCOLS,NROWS ),
+     &                Met_Data%C3R    ( NCOLS,NROWS ),
+     &                Met_Data%C4R    ( NCOLS,NROWS ),
+     &                STAT = ALLOCSTAT )
+            If ( ALLOCSTAT .Ne. 0 ) Then
+               XMSG = 'Failure allocating Canopy Shade variables'
+               Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+            End If
 
             ALLOCATE( Mosaic_Data%USTAR   ( NCOLS,NROWS,n_lufrac ),
      &                Mosaic_Data%LAI     ( NCOLS,NROWS,n_lufrac ),
@@ -1022,6 +1049,79 @@ C Vegetation and surface vars
          If ( .Not. INTERPX( MET_CRO_2D, VNAME, PNAME,
      &                       STRTCOLMC2,ENDCOLMC2, STRTROWMC2,ENDROWMC2, 1,1,
      &                       JDATE, JTIME, Met_Data%Z0 ) ) Then
+            XMSG = MSG1 // TRIM( VNAME ) // ' from ' // MET_CRO_2D
+            Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+         End If
+
+C Canopy vars
+        VNAME = 'FCH'
+         If ( .Not. INTERPX( MET_CRO_2D, VNAME, PNAME,
+     &                       STRTCOLMC2,ENDCOLMC2, STRTROWMC2,ENDROWMC2,1,1,
+     &                       JDATE, JTIME, Met_Data%FCH ) ) Then
+            XMSG = MSG1 // TRIM( VNAME ) // ' from ' // MET_CRO_2D
+            Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+         End If
+
+        VNAME = 'FRT'
+         If ( .Not. INTERPX( MET_CRO_2D, VNAME, PNAME,
+     &                       STRTCOLMC2,ENDCOLMC2,STRTROWMC2,ENDROWMC2,1,1,
+     &                       JDATE, JTIME, Met_Data%FRT ) ) Then
+            XMSG = MSG1 // TRIM( VNAME ) // ' from ' // MET_CRO_2D
+            Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+         End If
+
+        VNAME = 'CLU'
+         If ( .Not. INTERPX( MET_CRO_2D, VNAME, PNAME,
+     &                       STRTCOLMC2,ENDCOLMC2,STRTROWMC2,ENDROWMC2,1,1,
+     &                       JDATE, JTIME, Met_Data%CLU ) ) Then
+            XMSG = MSG1 // TRIM( VNAME ) // ' from ' // MET_CRO_2D
+            Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+         End If
+
+        VNAME = 'POPU'
+         If ( .Not. INTERPX( MET_CRO_2D, VNAME, PNAME,
+     &                       STRTCOLMC2,ENDCOLMC2,STRTROWMC2,ENDROWMC2,1,1,
+     &                       JDATE, JTIME, Met_Data%POPU ) ) Then
+            XMSG = MSG1 // TRIM( VNAME ) // ' from ' // MET_CRO_2D
+            Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+         End If
+
+        VNAME = 'LAIE'
+         If ( .Not. INTERPX( MET_CRO_2D, VNAME, PNAME,
+     &                       STRTCOLMC2,ENDCOLMC2,STRTROWMC2,ENDROWMC2,1,1,
+     &                       JDATE, JTIME, Met_Data%LAIE ) ) Then
+            XMSG = MSG1 // TRIM( VNAME ) // ' from ' // MET_CRO_2D
+            Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+         End If
+
+        VNAME = 'C1R'
+         If ( .Not. INTERPX( MET_CRO_2D, VNAME, PNAME,
+     &                       STRTCOLMC2,ENDCOLMC2,STRTROWMC2,ENDROWMC2,1,1,
+     &                       JDATE, JTIME, Met_Data%C1R ) ) Then
+            XMSG = MSG1 // TRIM( VNAME ) // ' from ' // MET_CRO_2D
+            Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+         End If
+
+        VNAME = 'C2R'
+         If ( .Not. INTERPX( MET_CRO_2D, VNAME, PNAME,
+     &                       STRTCOLMC2,ENDCOLMC2,STRTROWMC2,ENDROWMC2,1,1,
+     &                       JDATE, JTIME, Met_Data%C2R ) ) Then
+            XMSG = MSG1 // TRIM( VNAME ) // ' from ' // MET_CRO_2D
+            Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+         End If
+
+        VNAME = 'C3R'
+         If ( .Not. INTERPX( MET_CRO_2D, VNAME, PNAME,
+     &                       STRTCOLMC2,ENDCOLMC2,STRTROWMC2,ENDROWMC2,1,1,
+     &                       JDATE, JTIME, Met_Data%C3R ) ) Then
+            XMSG = MSG1 // TRIM( VNAME ) // ' from ' // MET_CRO_2D
+            Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+         End If
+
+        VNAME = 'C4R'
+         If ( .Not. INTERPX( MET_CRO_2D, VNAME, PNAME,
+     &                       STRTCOLMC2,ENDCOLMC2,STRTROWMC2,ENDROWMC2,1,1,
+     &                       JDATE, JTIME, Met_Data%C4R ) ) Then
             XMSG = MSG1 // TRIM( VNAME ) // ' from ' // MET_CRO_2D
             Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          End If

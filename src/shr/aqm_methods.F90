@@ -736,6 +736,98 @@ logical function interpx( fname, vname, pname, &
            buffer(k) = 0.01 * stateIn % zorl(c,r)
          end do
         end do
+
+      ! canopy variables
+      case ("FCH")
+      !test forest canopy height set to 10 m
+      ! p2d => stateIn % cfch
+        k = 0
+        do r = row0, row1
+         do c = col0, col1
+           k = k + 1
+           buffer(k) = ( 0.0 * stateIn % zorl(c,r) ) + 10.0 
+         end do
+        end do
+      case ("FRT")
+      !test grid cell forest fraction to 0.5
+      ! p2d => stateIn % cfrt
+        k = 0
+        do r = row0, row1
+         do c = col0, col1
+           k = k + 1
+           buffer(k) = ( 0.0 * stateIn % zorl(c,r) ) + 0.5 
+         end do
+        end do
+      case ("CLU")
+      !test forest clumping index set to 0.5 (spherical leaf distribution)
+      ! p2d => stateIn % cclu
+        k = 0
+        do r = row0, row1
+         do c = col0, col1
+           k = k + 1
+           buffer(k) = ( 0.0 * stateIn % zorl(c,r) ) + 0.5 !test set to 0.5
+         end do
+        end do
+      case ("POPU")
+      !test pop. density set to 10000 people/10km2
+      ! p2d => stateIn % cpopu
+        k = 0
+        do r = row0, row1
+         do c = col0, col1
+           k = k + 1
+           buffer(k) = ( 0.0 * stateIn % zorl(c,r) ) + 10000.0
+         end do
+        end do
+      case ("LAIE")
+      !test new ECCC LAI set to 4
+      ! p2d => stateIn % claie
+        k = 0
+        do r = row0, row1
+         do c = col0, col1
+           k = k + 1
+           buffer(k) = ( 0.0 * stateIn % zorl(c,r) ) + 4.0
+         end do
+        end do
+      case ("C1R")
+      !test new ECCC cumulative LAI fraction 1 (FCH to 0.75FCH) set to 0.5
+      ! p2d => stateIn % cc1r
+        k = 0
+        do r = row0, row1
+         do c = col0, col1
+           k = k + 1
+           buffer(k) = ( 0.0 * stateIn % zorl(c,r) ) + 0.5
+         end do
+        end do
+      case ("C2R")
+      !test new ECCC cumulative LAI fraction 2 (FCH to 0.5FCH) set to 0.7
+      ! p2d => stateIn % cc2r
+        k = 0
+        do r = row0, row1
+         do c = col0, col1
+           k = k + 1
+           buffer(k) = ( 0.0 * stateIn % zorl(c,r) ) + 0.7
+         end do
+        end do
+      case ("C3R")
+      !test new ECCC cumulative LAI fraction 3 (FCH to 0.35FCH) set to 0.9
+      ! p2d => stateIn % cc3r
+        k = 0
+        do r = row0, row1
+         do c = col0, col1
+           k = k + 1
+           buffer(k) = ( 0.0 * stateIn % zorl(c,r) ) + 0.9
+         end do
+        end do
+      case ("C4R")
+      !test new ECCC cumulative LAI fraction 4 (FCH to 0.20FCH) set to 0.95
+      ! p2d => stateIn % cc4r
+        k = 0
+        do r = row0, row1
+         do c = col0, col1
+           k = k + 1
+           buffer(k) = ( 0.0 * stateIn % zorl(c,r) ) + 0.95
+         end do
+        end do
       case default
     !   return
     end select

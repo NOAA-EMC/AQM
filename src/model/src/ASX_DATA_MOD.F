@@ -287,6 +287,11 @@ C Land use information:
       Real, Pointer, Private :: BUFF2D( :,: )   ! 2D temp var
       Real, Pointer, Private :: BUFF3D( :,:,: ) ! 3D temp var
 
+! Canopy in-line control
+      CHARACTER( 20 ), SAVE :: CTM_CANOPY_SHADE = 'CTM_CANOPY_SHADE    '! env var for in-line
+      LOGICAL,         PUBLIC, SAVE :: CANOPY_SHADE     ! flag in-lining canopy shading
+      INTEGER                          IOSX             ! i/o and allocate memory status
+
       DATA subname(  1), dif0(  1), ar(  1), meso(  1), lebas(  1) / 'SO2             ', 0.1089,   10.0,      0.0,  35.0/
       DATA subname(  2), dif0(  2), ar(  2), meso(  2), lebas(  2) / 'H2SO4           ', 0.1091, 8000.0,      0.0,  49.0/
       DATA subname(  3), dif0(  3), ar(  3), meso(  3), lebas(  3) / 'NO2             ', 0.1361,    2.0,      0.1,  21.0/
@@ -393,14 +398,6 @@ C Land use information:
       DATA subname(104), dif0(104), ar(104), meso(104), lebas(104) / 'ACETONITRILE    ',0.1280,    5.0,      0.0,  52.3/ 
       DATA subname(105), dif0(105), ar(105), meso(105), lebas(105) / '6_NITRO_O_CRESOL',0.0664,   16.0,      0.0, 155.0/ ! dif0, equation 9-22. Scwarzenbach et. (1993) Env. Org. Chem.
 
-! Canopy in-line control
-      CHARACTER( 20 ), SAVE :: CTM_CANOPY_SHADE = 'CTM_CANOPY_SHADE    '! env var for in-line
-      LOGICAL,         SAVE :: CANOPY_SHADE                             ! flag in-lining canopy shading
-      PUBLIC CANOPY_SHADE
-      PRIVATE
-
-      INTEGER          IOS            ! i/o and allocate memory status
-
       CONTAINS
 
 C=======================================================================
@@ -448,20 +445,6 @@ C for INTERPX
          Integer ALLOCSTAT
 
 C-----------------------------------------------------------------------
-
-C In-line canopy shading option? (default = false)
-
-         CANOPY_SHADE = ENVYN( 'CTM_CANOPY_SHADE',
-     &                   'Flag for in-line canopy shading',
-     &                   .FALSE., IOS )
-
-         IF ( CANOPY_SHADE ) THEN
-            XMSG = 'Using in-line canopy shading option'
-            CALL M3MSG2( XMSG )
-         ELSE
-            RETURN
-         END IF
-
 
          LOGDEV = INIT3()
 
@@ -584,6 +567,17 @@ C In-line canopy shading option? (default = false)
             Grid_Data%WFC     = 0.0
             Grid_Data%WRES    = 0.0
             Grid_Data%BSLP    = 0.0
+
+         CANOPY_SHADE = ENVYN( 'CTM_CANOPY_SHADE',
+     &                   'Flag for in-line canopy shading',
+     &                   .FALSE., IOSX )
+
+         IF ( CANOPY_SHADE ) THEN
+            XMSG = 'Using in-line canopy shading option'
+            CALL M3MSG2( XMSG )
+         ELSE
+            RETURN
+         END IF
 
          If ( CANOPY_SHADE  ) Then
             ALLOCATE( Met_Data%FCH    ( NCOLS,NROWS ),

@@ -339,7 +339,7 @@ C...modules
       REAL, ALLOCATABLE, SAVE :: TAU_AERO  ( :,:,:,: ) ! aerosol optical depth
       REAL, ALLOCATABLE, SAVE :: ACTINIC_FX( :,:,:,: ) ! net actinic flux [watts/m**2]
 
-      INTEGER          IOS            ! i/o and allocate memory status
+      INTEGER          IOSX            ! i/o and allocate memory status
 
       INTERFACE
          SUBROUTINE O3TOTCOL ( LATITUDE, LONGITUDE, JDATE, OZONE )
@@ -358,7 +358,7 @@ C In-line canopy shading option? (default = false)
 
          CANOPY_SHADE = ENVYN( 'CTM_CANOPY_SHADE',
      &                   'Flag for in-line canopy shading',
-     &                   .FALSE., IOS )
+     &                   .FALSE., IOSX )
 
          IF ( CANOPY_SHADE ) THEN
             XMSG = 'Using in-line canopy shading option'

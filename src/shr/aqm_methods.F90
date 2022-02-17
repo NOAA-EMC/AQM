@@ -332,8 +332,6 @@ logical function envyn(name, description, defaultval, status)
       envyn = .false.
     case ('CTM_CANOPY_SHADE')
       envyn = config % canopy_yn !default (false)
-!     Just hard code to true right now...wait for runtime capability
-      envyn = .true.
     case ('INITIAL_RUN')
       envyn = .true.
     case default
@@ -742,6 +740,7 @@ logical function interpx( fname, vname, pname, &
         end do
 
       ! canopy variables
+     if (config % ctm_wb_dust) then
       case ("FCH")
       !test forest canopy height set to 10 m
       ! p2d => stateIn % cfch
@@ -832,6 +831,7 @@ logical function interpx( fname, vname, pname, &
            buffer(k) = ( 0.0 * stateIn % zorl(c,r) ) + 0.95
          end do
         end do
+     end if
       case default
     !   return
     end select

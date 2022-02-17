@@ -293,6 +293,11 @@ C...modules
       LOGICAL                    :: NEW_PROFILE    ! Has atmospheric temperature and density profile changed?
       LOGICAL                    :: DARK           ! Are this processor's cells in darkness?
 
+! Canopy in-line control
+      CHARACTER( 20 ), SAVE :: CTM_CANOPY_SHADE = 'CTM_CANOPY_SHADE    ' ! env var for in-line
+      LOGICAL,         SAVE :: CANOPY_SHADE   ! flag in-lining canopy shading
+      PUBLIC CANOPY_SHADE
+      PRIVATE 
 ! Canopy arrays
       REAL, ALLOCATABLE  :: RJ_CORR_C1R ( :, :)    ! canopy shading correction to J-values (hc to 0.75*hc)
       REAL, ALLOCATABLE  :: RJ_CORR_C2R ( :, :)    ! canopy shading correction to J-values (hc to 0.50*hc)
@@ -349,6 +354,19 @@ C...modules
 
       IF ( FIRSTIME ) THEN
 
+C In-line canopy shading option? (default = false)
+
+         CANOPY_SHADE = ENVYN( 'CTM_CANOPY_SHADE',
+     &                   'Flag for in-line canopy shading',
+     &                   .FALSE., IOS )
+
+         IF ( CANOPY_SHADE ) THEN
+            XMSG = 'Using in-line canopy shading option'
+            CALL M3MSG2( XMSG )
+         ELSE
+            RETURN
+         END IF
+
          FIRSTIME = .FALSE.
          LOGDEV   = INIT3()
 
@@ -397,10 +415,11 @@ C...modules
          CALL INIT_CLOUD_OPTICS(  )
 
 !...Allocate and initialize new canopy arrays
-        ALLOCATE( RJ_CORRX     ( MAXCAN ) )
-        ALLOCATE( ZCANX        ( MAXCAN ) )
+        IF ( CANOPY_SHADE ) THEN
+           ALLOCATE( RJ_CORRX     ( MAXCAN ) )
+           ALLOCATE( ZCANX        ( MAXCAN ) )
 
-        ALLOCATE( RJ_CORR_C1R  ( NCOLS, NROWS ),
+           ALLOCATE( RJ_CORR_C1R  ( NCOLS, NROWS ),
      &            RJ_CORR_C2R  ( NCOLS, NROWS ),
      &            RJ_CORR_C3R  ( NCOLS, NROWS ),
      &            RJ_CORR_C4R  ( NCOLS, NROWS ),
@@ -419,6 +438,7 @@ C...modules
            RJ_CORR_C4R=0.0
            RJ_CORR_BOT=0.0
            RJ_CORR=0.0
+        END IF
 
 !...Initialize Surface albedo method
 
@@ -997,6 +1017,7 @@ C...modules
 !Makar, P., Staebler, R., Akingunola, A. et al. The effects of forest canopy shading and turbulence on boundary layer ozone.
 !Nat Commun 8, 15243 (2017). https://doi.org/10.1038/ncomms15243
 
+                        IF ( CANOPY_SHADE ) THEN ! compute canopy shade reduction factor (RJ_CORR)
                             !conditions for grid cells that do NOT have
                             !a continuous forest canopy
                             IF ( Met_Data%LAIE( COL,ROW ) .LT. 0.1
@@ -1102,6 +1123,7 @@ C...modules
 !                                RJ( COL,ROW, 1, : ) = ( RJ( COL,ROW, 1, : )
 !     &                                            + (RJ( COL,ROW, 1, : )*RJ_CORR( COL,ROW )) )/2.0
                             END IF !contigous canopy conditions
+                        END IF        !canopy shade 
 
                IF ( JTIME_CHK ) THEN ! compute clear sky reflection and transmission coefficients
                   IF ( ANY( CLOUDS ) ) THEN

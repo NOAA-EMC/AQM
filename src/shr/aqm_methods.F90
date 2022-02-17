@@ -330,6 +330,10 @@ logical function envyn(name, description, defaultval, status)
       envyn = associated(em)
     case ('CTM_GRAV_SETL')
       envyn = .false.
+    case ('CTM_CANOPY_SHADE')
+      envyn = config % canopy_yn !default (false)
+!     Just hard code to true right now...wait for runtime capability
+      envyn = .true.
     case ('INITIAL_RUN')
       envyn = .true.
     case default

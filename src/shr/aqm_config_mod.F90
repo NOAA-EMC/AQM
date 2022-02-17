@@ -35,6 +35,7 @@ module aqm_config_mod
     logical                   :: init_conc     = .false.
     logical                   :: run_aero      = .false.
     logical                   :: verbose       = .false.
+    logical                   :: canopy_yn     = .false.
     type(aqm_species_type), pointer :: species => null()
   end type aqm_config_type
 

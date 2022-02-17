@@ -120,6 +120,13 @@ C-------------------------------------------------------------------------------
          Logical, Allocatable :: CONVCT   ( :,: )  ! convection flag
          Real,    Allocatable :: PBL      ( :,: )  ! pbl height (m)
          Real,    Allocatable :: NACL_EMIS( :,: )  ! NACL mass emission rate of particles with d <10 um (g/m2/s)
+
+! Canopy in-line control
+      CHARACTER( 20 ), SAVE :: CTM_CANOPY_SHADE = 'CTM_CANOPY_SHADE    '  ! env var for in-line
+      LOGICAL,         SAVE :: CANOPY_SHADE   ! flag in-lining canopy shading
+      PUBLIC CANOPY_SHADE
+      PRIVATE
+
 !> Inline Canopy Processes
          Real,    Allocatable :: FCH      ( :,: )  ! Forest Canopy Height (m)
          Real,    Allocatable :: FRT      ( :,: )  ! Forest Fraction
@@ -441,6 +448,20 @@ C for INTERPX
 
 C-----------------------------------------------------------------------
 
+C In-line canopy shading option? (default = false)
+
+         CANOPY_SHADE = ENVYN( 'CTM_CANOPY_SHADE',
+     &                   'Flag for in-line canopy shading',
+     &                   .FALSE., IOS )
+
+         IF ( CANOPY_SHADE ) THEN
+            XMSG = 'Using in-line canopy shading option'
+            CALL M3MSG2( XMSG )
+         ELSE
+            RETURN
+         END IF
+
+
          LOGDEV = INIT3()
 
          If( MET_INITIALIZED )Return
@@ -563,6 +584,7 @@ C-----------------------------------------------------------------------
             Grid_Data%WRES    = 0.0
             Grid_Data%BSLP    = 0.0
 
+         If ( CANOPY_SHADE  ) Then
             ALLOCATE( Met_Data%FCH    ( NCOLS,NROWS ),
      &                Met_Data%FRT    ( NCOLS,NROWS ),
      &                Met_Data%CLU    ( NCOLS,NROWS ),
@@ -577,6 +599,7 @@ C-----------------------------------------------------------------------
                XMSG = 'Failure allocating Canopy Shade variables'
                Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
             End If
+         End If
 
             ALLOCATE( Mosaic_Data%USTAR   ( NCOLS,NROWS,n_lufrac ),
      &                Mosaic_Data%LAI     ( NCOLS,NROWS,n_lufrac ),
@@ -1054,6 +1077,7 @@ C Vegetation and surface vars
          End If
 
 C Canopy vars
+       If ( CANOPY_SHADE ) Then
         VNAME = 'FCH'
          If ( .Not. INTERPX( MET_CRO_2D, VNAME, PNAME,
      &                       STRTCOLMC2,ENDCOLMC2, STRTROWMC2,ENDROWMC2,1,1,
@@ -1125,7 +1149,7 @@ C Canopy vars
             XMSG = MSG1 // TRIM( VNAME ) // ' from ' // MET_CRO_2D
             Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          End If
-
+       End If
 C Soil vars
          VNAME = 'SOIM1'
          If ( .Not. INTERPX( MET_CRO_2D, VNAME, PNAME,

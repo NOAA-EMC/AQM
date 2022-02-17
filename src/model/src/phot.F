@@ -296,8 +296,6 @@ C...modules
 ! Canopy in-line control
       CHARACTER( 20 ), SAVE :: CTM_CANOPY_SHADE = 'CTM_CANOPY_SHADE    ' ! env var for in-line
       LOGICAL,         SAVE :: CANOPY_SHADE   ! flag in-lining canopy shading
-      PUBLIC CANOPY_SHADE
-      PRIVATE 
 ! Canopy arrays
       REAL, ALLOCATABLE  :: RJ_CORR_C1R ( :, :)    ! canopy shading correction to J-values (hc to 0.75*hc)
       REAL, ALLOCATABLE  :: RJ_CORR_C2R ( :, :)    ! canopy shading correction to J-values (hc to 0.50*hc)
@@ -340,6 +338,8 @@ C...modules
       REAL, ALLOCATABLE, SAVE :: TAU       ( :,:,:,: ) ! optical depth
       REAL, ALLOCATABLE, SAVE :: TAU_AERO  ( :,:,:,: ) ! aerosol optical depth
       REAL, ALLOCATABLE, SAVE :: ACTINIC_FX( :,:,:,: ) ! net actinic flux [watts/m**2]
+
+      INTEGER          IOS            ! i/o and allocate memory status
 
       INTERFACE
          SUBROUTINE O3TOTCOL ( LATITUDE, LONGITUDE, JDATE, OZONE )

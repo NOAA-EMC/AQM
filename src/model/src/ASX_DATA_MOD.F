@@ -121,12 +121,6 @@ C-------------------------------------------------------------------------------
          Real,    Allocatable :: PBL      ( :,: )  ! pbl height (m)
          Real,    Allocatable :: NACL_EMIS( :,: )  ! NACL mass emission rate of particles with d <10 um (g/m2/s)
 
-! Canopy in-line control
-      CHARACTER( 20 ), SAVE :: CTM_CANOPY_SHADE = 'CTM_CANOPY_SHADE    '  ! env var for in-line
-      LOGICAL,         SAVE :: CANOPY_SHADE   ! flag in-lining canopy shading
-      PUBLIC CANOPY_SHADE
-      PRIVATE
-
 !> Inline Canopy Processes
          Real,    Allocatable :: FCH      ( :,: )  ! Forest Canopy Height (m)
          Real,    Allocatable :: FRT      ( :,: )  ! Forest Fraction
@@ -137,7 +131,6 @@ C-------------------------------------------------------------------------------
          Real,    Allocatable :: C2R      ( :,: )  ! cumulative LAI fraction hc to 0.50 * hc
          Real,    Allocatable :: C3R      ( :,: )  ! cumulative LAI fraction hc to 0.35 * hc
          Real,    Allocatable :: C4R      ( :,: )  ! cumulative LAI fraction hc to 0.20 * hc
-
 
 !> U and V wind components on the cross grid points
          Real,    Allocatable :: UWIND    ( :,:,: )  ! [m/s]
@@ -399,6 +392,14 @@ C Land use information:
       DATA subname(103), dif0(103), ar(103), meso(103), lebas(103) / 'CARBSULFIDE     ',0.1240,    5.0,      0.0,  51.5/ 
       DATA subname(104), dif0(104), ar(104), meso(104), lebas(104) / 'ACETONITRILE    ',0.1280,    5.0,      0.0,  52.3/ 
       DATA subname(105), dif0(105), ar(105), meso(105), lebas(105) / '6_NITRO_O_CRESOL',0.0664,   16.0,      0.0, 155.0/ ! dif0, equation 9-22. Scwarzenbach et. (1993) Env. Org. Chem.
+
+! Canopy in-line control
+      CHARACTER( 20 ), SAVE :: CTM_CANOPY_SHADE = 'CTM_CANOPY_SHADE    '! env var for in-line
+      LOGICAL,         SAVE :: CANOPY_SHADE                             ! flag in-lining canopy shading
+      PUBLIC CANOPY_SHADE
+      PRIVATE
+
+      INTEGER          IOS            ! i/o and allocate memory status
 
       CONTAINS
 

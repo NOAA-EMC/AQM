@@ -364,7 +364,6 @@ C In-line canopy shading option? (default = false)
             XMSG = 'Using in-line canopy shading option'
             CALL M3MSG2( XMSG )
          ELSE
-            RETURN
          END IF
 
          FIRSTIME = .FALSE.
@@ -1018,6 +1017,12 @@ C In-line canopy shading option? (default = false)
 !Nat Commun 8, 15243 (2017). https://doi.org/10.1038/ncomms15243
 
                         IF ( CANOPY_SHADE ) THEN ! compute canopy shade reduction factor (RJ_CORR)
+                                WRITE(*,*) 'LAIE      = ', Met_Data%LAIE( COL,ROW ) ,
+     &                                     'FCH       = ', Met_Data%FCH( COL,ROW ),
+     &                                     'FRT       = ', Met_Data%FRT( COL,ROW),
+     &                                     'POPU      = ', Met_Data%POPU( COL,ROW),
+     &                                     'CLU       = ', Met_Data%CLU( COL,ROW)
+
                             !conditions for grid cells that do NOT have
                             !a continuous forest canopy
                             IF ( Met_Data%LAIE( COL,ROW ) .LT. 0.1
@@ -1106,17 +1111,17 @@ C In-line canopy shading option? (default = false)
                                      RJ_CORRX (COUNTCAN) = interp_linear1_internal(XCAN,YCAN,XCANOUT)
                                    END IF
                                    ZCAN = ZCAN-0.5  !step down in-canopy resolution of 0.5 m
-!                                WRITE(*,*) 'Met_Data%FCH = ', Met_Data%FCH( COL,ROW ),
-!     &                                     'ZCANX (COUNTCAN) = ', ZCANX (COUNTCAN),
-!     &                                     'RJ_CORRX (COUNTCAN) = ', RJ_CORRX (COUNTCAN)
+                                WRITE(*,*) 'Met_Data%FCH = ', Met_Data%FCH( COL,ROW ),
+     &                                     'ZCANX (COUNTCAN) = ', ZCANX (COUNTCAN),
+     &                                     'RJ_CORRX (COUNTCAN) = ', RJ_CORRX (COUNTCAN)
                                 END DO !end loop on canopy layers
 
 !Integrate to get best attenuation value to use within canopy
                                 RJ_CORR( COL,ROW ) = IntegrateTrapezoid(ZCANX(COUNTCAN:1:-1),RJ_CORRX(COUNTCAN:1:-1)) /
      &                                               ZFL
-!                                WRITE(*,*) 'RJ_CORRX      = ', RJ_CORRX(COUNTCAN:1:-1),
-!     &                                     'ZCANX         = ', ZCANX(COUNTCAN:1:-1),
-!     &                                     'RJ_CORR (int) = ', RJ_CORR( COL,ROW )
+                                WRITE(*,*) 'RJ_CORRX      = ', RJ_CORRX(COUNTCAN:1:-1),
+     &                                     'ZCANX         = ', ZCANX(COUNTCAN:1:-1),
+     &                                     'RJ_CORR (int) = ', RJ_CORR( COL,ROW )
 !Apply attenuation factors above and below canopy
                                 RJ( COL,ROW, 1, : ) = RJ( COL,ROW, 1, : )*RJ_CORR( COL,ROW )
 !Apply attenuation value within canopy and take average above and within canopy values

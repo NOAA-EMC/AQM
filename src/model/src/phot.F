@@ -363,7 +363,6 @@ C In-line canopy shading option? (default = false)
          IF ( CANOPY_SHADE ) THEN
             XMSG = 'Using in-line canopy shading option'
             CALL M3MSG2( XMSG )
-         ELSE
          END IF
 
          FIRSTIME = .FALSE.

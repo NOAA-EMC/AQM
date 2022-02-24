@@ -575,7 +575,6 @@ C-----------------------------------------------------------------------
          IF ( CANOPY_SHADE ) THEN
             XMSG = 'Using in-line canopy shading option'
             CALL M3MSG2( XMSG )
-         ELSE
          END IF
 
          If ( CANOPY_SHADE  ) Then

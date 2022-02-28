@@ -644,6 +644,7 @@ logical function interpx( fname, vname, pname, &
       file=__FILE__, line=__LINE__)) return
 
     select case (trim(vname))
+      print*,'vname_diag_test = ', vname
       case ("HFX")
         p2d => stateIn % hfx
       case ("LAI")
@@ -748,6 +749,7 @@ logical function interpx( fname, vname, pname, &
          do c = col0, col1
            k = k + 1
            buffer(k) = ( 0.0 * stateIn % zorl(c,r) ) + 10.0 
+           print*,'diag_fch_test = ', buffer(k)
          end do
         end do
       case ("FRT")

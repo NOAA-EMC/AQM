@@ -148,7 +148,7 @@ LOGICAL FUNCTION DESC3( FNAME )
 
   ELSE IF ( TRIM( FNAME ) .EQ. TRIM( MET_CRO_2D ) ) THEN
 
-    NVARS3D = 31
+    NVARS3D = 40
     VNAME3D( 1:NVARS3D ) = &
     (/ 'PRSFC           ', 'USTAR           ',            &
        'WSTAR           ', 'PBL             ',            &
@@ -165,7 +165,12 @@ LOGICAL FUNCTION DESC3( FNAME )
        'SLTYP           ', 'Q2              ',            &
        'SEAICE          ', 'SOIM1           ',            &
        'SOIM2           ', 'SOIT1           ',            &
-       'SOIT2           ', 'LH              ' /)
+       'SOIT2           ', 'LH              ',            &
+       'FCH             ', 'FRT             ',            &
+       'CLU             ', 'POPU            ',            &
+       'LAIE            ', 'C1R             ',            &
+       'C2R             ', 'C3R             ',            &
+       'C4R             '                     /)
     UNITS3D( 1:NVARS3D ) = &
     (/ 'Pascal          ', 'M/S             ',            &
        'M/S             ', 'M               ',            &
@@ -182,7 +187,12 @@ LOGICAL FUNCTION DESC3( FNAME )
        '-               ', 'KG/KG           ',            &
        'FRACTION        ', 'M**3/M**3       ',            &
        'M**3/M**3       ', 'K               ',            &
-       'K               ', 'WATTS/M**2      ' /)
+       'K               ', 'WATTS/M**2      ',            &
+       'M               ', 'NO UNIT         ',            &
+       'NO UNIT         ', 'PEOPLE/KM**2    ',            &
+       'NO UNIT         ', 'NO UNIT         ',            &
+       'NO UNIT         ', 'NO UNIT         ',            &
+       'NO UNIT         '                     /)
 
   ELSE IF ( TRIM( FNAME ) .EQ. TRIM( MET_CRO_3D ) ) THEN
 
@@ -644,7 +654,6 @@ logical function interpx( fname, vname, pname, &
       file=__FILE__, line=__LINE__)) return
 
     select case (trim(vname))
-      print*,'vname_diag_test = ', vname
       case ("HFX")
         p2d => stateIn % hfx
       case ("LAI")
@@ -749,7 +758,6 @@ logical function interpx( fname, vname, pname, &
          do c = col0, col1
            k = k + 1
            buffer(k) = ( 0.0 * stateIn % zorl(c,r) ) + 10.0 
-           print*,'diag_fch_test = ', buffer(k)
          end do
         end do
       case ("FRT")

@@ -576,7 +576,7 @@ C-----------------------------------------------------------------------
             XMSG = 'Using in-line canopy shading option'
             CALL M3MSG2( XMSG )
          END IF
-
+         WRITE(*,*) 'CANOPY_SHADE_Check      = ', CANOPY_SHADE
          If ( CANOPY_SHADE  ) Then
             ALLOCATE( Met_Data%FCH    ( NCOLS,NROWS ),
      &                Met_Data%FRT    ( NCOLS,NROWS ),

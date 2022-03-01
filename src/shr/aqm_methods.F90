@@ -758,6 +758,7 @@ logical function interpx( fname, vname, pname, &
          do c = col0, col1
            k = k + 1
            buffer(k) = ( 0.0 * stateIn % zorl(c,r) ) + 10.0 
+           WRITE(*,*) 'FCH_Check      = ', buffer(k) 
          end do
         end do
       case ("FRT")

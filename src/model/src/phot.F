@@ -295,7 +295,7 @@ C...modules
 
 ! Canopy in-line control
       CHARACTER( 20 ), SAVE :: CTM_CANOPY_SHADE = 'CTM_CANOPY_SHADE    ' ! env var for in-line
-      LOGICAL,         PUBLIC, SAVE :: CANOPY_SHADE   ! flag in-lining canopy shading
+      LOGICAL,         SAVE :: CANOPY_SHADE   ! flag in-lining canopy shading
 
 ! Canopy arrays
       REAL, ALLOCATABLE  :: RJ_CORR_C1R ( :, :)    ! canopy shading correction to J-values (hc to 0.75*hc)
@@ -353,8 +353,6 @@ C...modules
 
 ! ----------------------------------------------------------------------
 
-      IF ( FIRSTIME ) THEN
-
 C In-line canopy shading option? (default = false)
 
          CANOPY_SHADE = ENVYN( 'CTM_CANOPY_SHADE',
@@ -365,6 +363,8 @@ C In-line canopy shading option? (default = false)
             XMSG = 'Using in-line canopy shading option-phot'
             CALL M3MSG2( XMSG )
          END IF
+
+      IF ( FIRSTIME ) THEN
 
          FIRSTIME = .FALSE.
          LOGDEV   = INIT3()

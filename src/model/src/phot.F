@@ -295,7 +295,8 @@ C...modules
 
 ! Canopy in-line control
       CHARACTER( 20 ), SAVE :: CTM_CANOPY_SHADE = 'CTM_CANOPY_SHADE    ' ! env var for in-line
-      LOGICAL,         SAVE :: CANOPY_SHADE   ! flag in-lining canopy shading
+      LOGICAL,         PUBLIC, SAVE :: CANOPY_SHADE   ! flag in-lining canopy shading
+
 ! Canopy arrays
       REAL, ALLOCATABLE  :: RJ_CORR_C1R ( :, :)    ! canopy shading correction to J-values (hc to 0.75*hc)
       REAL, ALLOCATABLE  :: RJ_CORR_C2R ( :, :)    ! canopy shading correction to J-values (hc to 0.50*hc)
@@ -361,7 +362,7 @@ C In-line canopy shading option? (default = false)
      &                   .FALSE., IOSX )
 
          IF ( CANOPY_SHADE ) THEN
-            XMSG = 'Using in-line canopy shading option'
+            XMSG = 'Using in-line canopy shading option-phot'
             CALL M3MSG2( XMSG )
          END IF
 

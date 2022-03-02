@@ -746,6 +746,7 @@ logical function interpx( fname, vname, pname, &
          do c = col0, col1
            k = k + 1
            buffer(k) = 0.01 * stateIn % zorl(c,r)
+           WRITE(*,*) 'ZRUF_Check      = ', buffer(k)
          end do
         end do
 

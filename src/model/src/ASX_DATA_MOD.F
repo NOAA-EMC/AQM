@@ -573,10 +573,10 @@ C-----------------------------------------------------------------------
      &                   .FALSE., IOSX )
 
          IF ( CANOPY_SHADE ) THEN
-            XMSG = 'Using in-line canopy shading option-ASX_DATA_MOD'
+            XMSG = 'Using in-line canopy shading option-ASX_DATA_MOD.F'
             CALL M3MSG2( XMSG )
          END IF
-         If ( CANOPY_SHADE  ) Then
+!         If ( CANOPY_SHADE  ) Then
             ALLOCATE( Met_Data%FCH    ( NCOLS,NROWS ),
      &                Met_Data%FRT    ( NCOLS,NROWS ),
      &                Met_Data%CLU    ( NCOLS,NROWS ),
@@ -591,7 +591,7 @@ C-----------------------------------------------------------------------
                XMSG = 'Failure allocating Canopy Shade variables'
                Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
             End If
-         End If
+!         End If
 
             ALLOCATE( Mosaic_Data%USTAR   ( NCOLS,NROWS,n_lufrac ),
      &                Mosaic_Data%LAI     ( NCOLS,NROWS,n_lufrac ),
@@ -1069,7 +1069,7 @@ C Vegetation and surface vars
          End If
 
 C Canopy vars
-       If ( CANOPY_SHADE ) Then
+!       If ( CANOPY_SHADE ) Then
         VNAME = 'FCH'
          If ( .Not. INTERPX( MET_CRO_2D, VNAME, PNAME,
      &                       STRTCOLMC2,ENDCOLMC2, STRTROWMC2,ENDROWMC2,1,1,
@@ -1141,7 +1141,7 @@ C Canopy vars
             XMSG = MSG1 // TRIM( VNAME ) // ' from ' // MET_CRO_2D
             Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          End If
-       End If
+!       End If
 C Soil vars
          VNAME = 'SOIM1'
          If ( .Not. INTERPX( MET_CRO_2D, VNAME, PNAME,

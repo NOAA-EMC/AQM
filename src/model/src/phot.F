@@ -353,6 +353,8 @@ C...modules
 
 ! ----------------------------------------------------------------------
 
+      IF ( FIRSTIME ) THEN
+
 C In-line canopy shading option? (default = false)
 
          CANOPY_SHADE = ENVYN( 'CTM_CANOPY_SHADE',
@@ -360,11 +362,9 @@ C In-line canopy shading option? (default = false)
      &                   .FALSE., IOSX )
 
          IF ( CANOPY_SHADE ) THEN
-            XMSG = 'Using in-line canopy shading option-phot'
+            XMSG = 'Using in-line canopy shading option-phot.F'
             CALL M3MSG2( XMSG )
          END IF
-
-      IF ( FIRSTIME ) THEN
 
          FIRSTIME = .FALSE.
          LOGDEV   = INIT3()

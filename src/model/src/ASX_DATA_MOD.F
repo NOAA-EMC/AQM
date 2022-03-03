@@ -289,7 +289,7 @@ C Land use information:
 
 ! Canopy in-line control
       CHARACTER( 20 ), SAVE :: CTM_CANOPY_SHADE = 'CTM_CANOPY_SHADE    '! env var for in-line
-      LOGICAL,         PUBLIC, SAVE :: CANOPY_SHADE     ! flag in-lining canopy shading
+      LOGICAL,         SAVE :: CANOPY_SHADE     ! flag in-lining canopy shading
       INTEGER                          IOSX             ! i/o and allocate memory status
 
       DATA subname(  1), dif0(  1), ar(  1), meso(  1), lebas(  1) / 'SO2             ', 0.1089,   10.0,      0.0,  35.0/
@@ -568,14 +568,14 @@ C-----------------------------------------------------------------------
             Grid_Data%WRES    = 0.0
             Grid_Data%BSLP    = 0.0
 
-         CANOPY_SHADE = ENVYN( 'CTM_CANOPY_SHADE',
-     &                   'Flag for in-line canopy shading',
-     &                   .FALSE., IOSX )
-
-         IF ( CANOPY_SHADE ) THEN
-            XMSG = 'Using in-line canopy shading option-ASX_DATA_MOD.F'
-            CALL M3MSG2( XMSG )
-         END IF
+!         CANOPY_SHADE = ENVYN( 'CTM_CANOPY_SHADE',
+!     &                   'Flag for in-line canopy shading',
+!     &                   .FALSE., IOSX )
+!
+!         IF ( CANOPY_SHADE ) THEN
+!            XMSG = 'Using in-line canopy shading option-ASX_DATA_MOD.F'
+!            CALL M3MSG2( XMSG )
+!         END IF
 !         If ( CANOPY_SHADE  ) Then
             ALLOCATE( Met_Data%FCH    ( NCOLS,NROWS ),
      &                Met_Data%FRT    ( NCOLS,NROWS ),

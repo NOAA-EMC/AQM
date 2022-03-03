@@ -757,8 +757,7 @@ logical function interpx( fname, vname, pname, &
         do r = row0, row1
          do c = col0, col1
            k = k + 1
-!           buffer(k) = ( 0.0 * stateIn % zorl(c,r) ) + 10.0 
-           buffer(k) = 10.0
+           buffer(k) = ( 0.0 * stateIn % zorl(c,r) ) + 10.0 
          end do
         end do
       case ("FRT")
@@ -778,7 +777,7 @@ logical function interpx( fname, vname, pname, &
         do r = row0, row1
          do c = col0, col1
            k = k + 1
-           buffer(k) = ( 0.0 * stateIn % zorl(c,r) ) + 0.5 !test set to 0.5
+           buffer(k) = ( 0.0 * stateIn % zorl(c,r) ) + 0.5 
          end do
         end do
       case ("POPU")

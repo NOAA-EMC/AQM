@@ -289,7 +289,7 @@ C Land use information:
 
 ! Canopy in-line control
       CHARACTER( 20 ), SAVE :: CTM_CANOPY_SHADE = 'CTM_CANOPY_SHADE    '! env var for in-line
-      LOGICAL,         SAVE :: CANOPY_SHADE     ! flag in-lining canopy shading
+      LOGICAL,         PUBLIC, SAVE :: CANOPY_SHADE     ! flag in-lining canopy shading
       INTEGER                          IOSX             ! i/o and allocate memory status
 
       DATA subname(  1), dif0(  1), ar(  1), meso(  1), lebas(  1) / 'SO2             ', 0.1089,   10.0,      0.0,  35.0/
@@ -568,31 +568,6 @@ C-----------------------------------------------------------------------
             Grid_Data%WRES    = 0.0
             Grid_Data%BSLP    = 0.0
 
-!         CANOPY_SHADE = ENVYN( 'CTM_CANOPY_SHADE',
-!     &                   'Flag for in-line canopy shading',
-!     &                   .FALSE., IOSX )
-!
-!         IF ( CANOPY_SHADE ) THEN
-!            XMSG = 'Using in-line canopy shading option-ASX_DATA_MOD.F'
-!            CALL M3MSG2( XMSG )
-!         END IF
-!         If ( CANOPY_SHADE  ) Then
-            ALLOCATE( Met_Data%FCH    ( NCOLS,NROWS ),
-     &                Met_Data%FRT    ( NCOLS,NROWS ),
-     &                Met_Data%CLU    ( NCOLS,NROWS ),
-     &                Met_Data%POPU   ( NCOLS,NROWS ),
-     &                Met_Data%LAIE   ( NCOLS,NROWS ),
-     &                Met_Data%C1R    ( NCOLS,NROWS ),
-     &                Met_Data%C2R    ( NCOLS,NROWS ),
-     &                Met_Data%C3R    ( NCOLS,NROWS ),
-     &                Met_Data%C4R    ( NCOLS,NROWS ),
-     &                STAT = ALLOCSTAT )
-            If ( ALLOCSTAT .Ne. 0 ) Then
-               XMSG = 'Failure allocating Canopy Shade variables'
-               Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
-            End If
-!         End If
-
             ALLOCATE( Mosaic_Data%USTAR   ( NCOLS,NROWS,n_lufrac ),
      &                Mosaic_Data%LAI     ( NCOLS,NROWS,n_lufrac ),
      &                Mosaic_Data%DELTA   ( NCOLS,NROWS,n_lufrac ),
@@ -651,6 +626,32 @@ C-----------------------------------------------------------------------
             ChemMos_Data%NAME    = name_lu
             ChemMos_Data%LU_Type = cat_lu
             ChemMos_Data%SubName = subname
+         End If
+
+!> ccccccccccccccccccccc canopy shade option!ccccccccccccccccccccc
+         CANOPY_SHADE = ENVYN( 'CTM_CANOPY_SHADE',
+     &                   'Flag for in-line canopy shading',
+     &                   .FALSE., IOSX )
+
+         IF ( CANOPY_SHADE ) THEN
+            XMSG = 'Using in-line canopy shading option-ASX_DATA_MOD.F'
+            CALL M3MSG2( XMSG )
+         END IF
+         If ( CANOPY_SHADE  ) Then
+            ALLOCATE( Met_Data%FCH    ( NCOLS,NROWS ),
+     &                Met_Data%FRT    ( NCOLS,NROWS ),
+     &                Met_Data%CLU    ( NCOLS,NROWS ),
+     &                Met_Data%POPU   ( NCOLS,NROWS ),
+     &                Met_Data%LAIE   ( NCOLS,NROWS ),
+     &                Met_Data%C1R    ( NCOLS,NROWS ),
+     &                Met_Data%C2R    ( NCOLS,NROWS ),
+     &                Met_Data%C3R    ( NCOLS,NROWS ),
+     &                Met_Data%C4R    ( NCOLS,NROWS ),
+     &                STAT = ALLOCSTAT )
+            If ( ALLOCSTAT .Ne. 0 ) Then
+               XMSG = 'Failure allocating Canopy Shade variables'
+               Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+            End If
          End If
 
 !> ccccccccccccccccccccc enable backward compatiblity ccccccccccccccccccccc
@@ -1069,7 +1070,7 @@ C Vegetation and surface vars
          End If
 
 C Canopy vars
-!       If ( CANOPY_SHADE ) Then
+       If ( CANOPY_SHADE ) Then
         VNAME = 'FCH'
          If ( .Not. INTERPX( MET_CRO_2D, VNAME, PNAME,
      &                       STRTCOLMC2,ENDCOLMC2, STRTROWMC2,ENDROWMC2,1,1,
@@ -1141,7 +1142,7 @@ C Canopy vars
             XMSG = MSG1 // TRIM( VNAME ) // ' from ' // MET_CRO_2D
             Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          End If
-!       End If
+       End If
 C Soil vars
          VNAME = 'SOIM1'
          If ( .Not. INTERPX( MET_CRO_2D, VNAME, PNAME,

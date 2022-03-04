@@ -1111,9 +1111,9 @@ C In-line canopy shading option? (default = false)
                                      RJ_CORRX (COUNTCAN) = interp_linear1_internal(XCAN,YCAN,XCANOUT)
                                    END IF
                                    ZCAN = ZCAN-0.5  !step down in-canopy resolution of 0.5 m
-                                WRITE(*,*) 'Met_Data%FCH = ', Met_Data%FCH( COL,ROW ),
-     &                                     'ZCANX (COUNTCAN) = ', ZCANX (COUNTCAN),
-     &                                     'RJ_CORRX (COUNTCAN) = ', RJ_CORRX (COUNTCAN)
+!                                WRITE(*,*) 'Met_Data%FCH = ', Met_Data%FCH( COL,ROW ),
+!     &                                     'ZCANX (COUNTCAN) = ', ZCANX (COUNTCAN),
+!     &                                     'RJ_CORRX (COUNTCAN) = ', RJ_CORRX (COUNTCAN)
                                 END DO !end loop on canopy layers
 
 !Integrate to get best attenuation value to use within canopy

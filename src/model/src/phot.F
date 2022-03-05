@@ -298,14 +298,14 @@ C...modules
       LOGICAL,         SAVE :: CANOPY_SHADE   ! flag in-lining canopy shading
 
 ! Canopy arrays
-      REAL, ALLOCATABLE  :: RJ_CORR_C1R ( :, :)    ! canopy shading correction to J-values (hc to 0.75*hc)
-      REAL, ALLOCATABLE  :: RJ_CORR_C2R ( :, :)    ! canopy shading correction to J-values (hc to 0.50*hc)
-      REAL, ALLOCATABLE  :: RJ_CORR_C3R ( :, :)    ! canopy shading correction to J-values (hc to 0.35*hc)
-      REAL, ALLOCATABLE  :: RJ_CORR_C4R ( :, :)    ! canopy shading correction to J-values (hc to 0.20*hc)
-      REAL, ALLOCATABLE  :: RJ_CORR_BOT ( :, :)    ! canopy shading correction to J-values (0.20*hc to bottom)
-      REAL, ALLOCATABLE  :: RJ_CORR ( :, :)        ! total/integrated canopy shading correction to J-values
-      REAL, ALLOCATABLE       :: ZCANX    ( : )        ! canopy heights[m]
-      REAL, ALLOCATABLE       :: RJ_CORRX ( : )        ! canopy height dependent photolysis attenuation factor
+      REAL, ALLOCATABLE, SAVE  :: RJ_CORR_C1R ( :, :)    ! canopy shading correction to J-values (hc to 0.75*hc)
+      REAL, ALLOCATABLE, SAVE  :: RJ_CORR_C2R ( :, :)    ! canopy shading correction to J-values (hc to 0.50*hc)
+      REAL, ALLOCATABLE, SAVE  :: RJ_CORR_C3R ( :, :)    ! canopy shading correction to J-values (hc to 0.35*hc)
+      REAL, ALLOCATABLE, SAVE  :: RJ_CORR_C4R ( :, :)    ! canopy shading correction to J-values (hc to 0.20*hc)
+      REAL, ALLOCATABLE, SAVE  :: RJ_CORR_BOT ( :, :)    ! canopy shading correction to J-values (0.20*hc to bottom)
+      REAL, ALLOCATABLE, SAVE  :: RJ_CORR ( :, :)        ! total/integrated canopy shading correction to J-values
+      REAL, ALLOCATABLE, SAVE  :: ZCANX    ( : )        ! canopy heights[m]
+      REAL, ALLOCATABLE, SAVE  :: RJ_CORRX ( : )        ! canopy height dependent photolysis attenuation factor
       REAL                    :: XCAN     ( 2 )        ! canopy height interpolation bounds
       REAL                    :: YCAN     ( 2 )        ! photolysisattenuation interpolation bounds
       REAL ZFL, ZCAN, COUNTCAN, XCANOUT                ! local canopyvariables

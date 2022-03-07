@@ -539,7 +539,7 @@ logical function interpx( fname, vname, pname, &
                             aqm_model_get, aqm_model_domain_get
   use aqm_const_mod, only : eps1, grav, onebg, rdgas
 
-  USE M3UTILIO,      ONLY : DESC3, M3MESG, NLAYS3D, VGLVS3D
+  USE M3UTILIO,      ONLY : M3MESG
 
   implicit none
 
@@ -550,7 +550,7 @@ logical function interpx( fname, vname, pname, &
 
   ! -- local variables
   integer :: localrc
-  integer :: c, r, l, k
+  integer :: c, r, l, k, n, nl
   integer :: lbuf, lu_index
   logical :: set_non_neg
   character(len=16)         :: varname
@@ -778,16 +778,16 @@ logical function interpx( fname, vname, pname, &
 
     select case (trim(vname))
       case ("JACOBF")
+        call aqm_model_domain_get(nl=nl, rc=localrc)
+        if (aqm_rc_check(localrc, msg="Failure to retrieve model coordinates", &
+          file=__FILE__, line=__LINE__)) return
         k = 0
         do l = lay0, lay1
+          n = min(l + 1, nl)
           do r = row0, row1
             do c = col0, col1
               k = k + 1
-              if (l < NLAYS3D) then
-                buffer(k) = onebg * (stateIn % phil(c,r,l+1) - stateIn % phil(c,r,l))
-              else
-                buffer(k) = onebg * (stateIn % phil(c,r,l) - stateIn % phil(c,r,l-1))
-              end if
+              buffer(k) = onebg * (stateIn % phil(c,r,n) - stateIn % phil(c,r,n-1))
             end do
           end do
         end do

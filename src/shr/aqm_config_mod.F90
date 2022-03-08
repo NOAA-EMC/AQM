@@ -270,6 +270,7 @@ contains
       case default
         call aqm_rc_set(AQM_RC_FAILURE, &
           msg="unknown mp_map", file=__FILE__, line=__LINE__, rc=rc)
+        return
     end select
 
     ! -- starting index for CMAQ tracers

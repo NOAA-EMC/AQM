@@ -259,14 +259,6 @@ contains
         config % species % p_atm_qc = 2
         ! -- set ozone pointer
         config % species % p_atm_o3 = 3
-      case ("wsm6")
-        ! -- set hydrometeors pointers
-        config % species % p_atm_qv = 1
-        config % species % p_atm_qc = 2
-        config % species % p_atm_qi = 3
-        config % species % p_atm_qr = 4
-        config % species % p_atm_qs = 5
-        config % species % p_atm_qg = 6
       case default
         call aqm_rc_set(AQM_RC_FAILURE, &
           msg="unknown mp_map", file=__FILE__, line=__LINE__, rc=rc)

@@ -16,7 +16,7 @@ if (isSubproject)
   endif ()
 endif ()
 
-$(builddir)/shr -I $(builddir)/drv -I $(builddir)/io/aqmio -I $(builddir)/io/ioapi -I $(builddir)/model
+include("aqm_files.cmake")
 
 # src/shr
 add_library(shr OBJECT ${aqm_shr_files})
@@ -76,7 +76,6 @@ target_link_libraries(CCTM PRIVATE shr aqmio ioapi)
 target_link_libraries(CCTM PRIVATE esmf)
 
 # AQM
-shr PRIVATE drv aqmio ioapi CCTM
 add_library(aqm STATIC $<TARGET_OBJECTS:shr>
                          $<TARGET_OBJECTS:drv>
                          $<TARGET_OBJECTS:aqmio>

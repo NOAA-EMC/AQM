@@ -2,66 +2,66 @@
 # This list was taken from the file Makefile.am found in subdirectories
 
 list(APPEND aqm_files
-    aqm_cap.F90
-    aqm_comp_mod.F90
+    src/aqm_cap.F90
+    src/aqm_comp_mod.F90
 )
 
 list(APPEND aqm_shr_files
-    shr/aqm_config_mod.F90
-    shr/aqm_const_mod.F90
-	shr/aqm_domain_mod.F90
-    shr/aqm_emis_mod.F90
-    shr/aqm_fires_mod.F90
-    shr/aqm_internal_mod.F90
-	shr/aqm_model_mod.F90
-    shr/aqm_rc_mod.F90
-    shr/aqm_methods.F90
-    shr/aqm_species_mod.F90
-	shr/aqm_state_mod.F90
-    shr/aqm_tools_mod.F90
-    shr/aqm_types_mod.F90
+    src/shr/aqm_config_mod.F90
+    src/shr/aqm_const_mod.F90
+	src/shr/aqm_domain_mod.F90
+    src/shr/aqm_emis_mod.F90
+    src/shr/aqm_fires_mod.F90
+    src/shr/aqm_internal_mod.F90
+	src/shr/aqm_model_mod.F90
+    src/shr/aqm_rc_mod.F90
+    src/shr/aqm_methods.F90
+    src/shr/aqm_species_mod.F90
+	src/shr/aqm_state_mod.F90
+    src/shr/aqm_tools_mod.F90
+    src/shr/aqm_types_mod.F90
 )
 
 list(APPEND aqm_drv_files
-    drv/cmaq_model_mod.F90
-    drv/cmaq_mod.F90
+    src/drv/cmaq_model_mod.F90
+    src/drv/cmaq_mod.F90
 )
 
 list(APPEND aqm_aqmio_files
-    io/aqmio/aqmio.F90
+    src/io/aqmio/aqmio.F90
 )
 
 list(APPEND aqm_ioapi_files
-    io/ioapi/FDESC3.EXT
-    io/ioapi/PARMS3.EXT
-    io/ioapi/crlf.F
-    io/ioapi/currec.f
-    io/ioapi/currstep.f
-    io/ioapi/dt2str.f
-    io/ioapi/findc.f
-    io/ioapi/getefile.F
-    io/ioapi/index1.f
-    io/ioapi/julian.F
-    io/ioapi/junit.F
-    io/ioapi/hhmmss.f
-    io/ioapi/mmddyy.F
-    io/ioapi/nextime.F
-    io/ioapi/poly.f
-    io/ioapi/promptmfile.f
-    io/ioapi/sec2time.f
-    io/ioapi/secsdiff.F
-    io/ioapi/setlam.f
-    io/ioapi/sortic.f
-    io/ioapi/str2real.f
-    io/ioapi/time2sec.f
-    io/ioapi/upcase.f
-    io/ioapi/wkday.F
-    io/ioapi/yr2day.F
-    io/ioapi/m3exit.F90
-    io/ioapi/m3mesg.F90
-    io/ioapi/m3msg2.F90
-    io/ioapi/m3warn.F90
-    io/ioapi/m3utilio.F90
+    src/io/ioapi/FDESC3.EXT
+    src/io/ioapi/PARMS3.EXT
+    src/io/ioapi/crlf.F
+    src/io/ioapi/currec.f
+    src/io/ioapi/currstep.f
+    src/io/ioapi/dt2str.f
+    src/io/ioapi/findc.f
+    src/io/ioapi/getefile.F
+    src/io/ioapi/index1.f
+    src/io/ioapi/julian.F
+    src/io/ioapi/junit.F
+    src/io/ioapi/hhmmss.f
+    src/io/ioapi/mmddyy.F
+    src/io/ioapi/nextime.F
+    src/io/ioapi/poly.f
+    src/io/ioapi/promptmfile.f
+    src/io/ioapi/sec2time.f
+    src/io/ioapi/secsdiff.F
+    src/io/ioapi/setlam.f
+    src/io/ioapi/sortic.f
+    src/io/ioapi/str2real.f
+    src/io/ioapi/time2sec.f
+    src/io/ioapi/upcase.f
+    src/io/ioapi/wkday.F
+    src/io/ioapi/yr2day.F
+    src/io/ioapi/m3exit.F90
+    src/io/ioapi/m3mesg.F90
+    src/io/ioapi/m3msg2.F90
+    src/io/ioapi/m3warn.F90
+    src/io/ioapi/m3utilio.F90
 )
 
 set(CCTM_ROOT "model/CMAQ/CCTM/src")

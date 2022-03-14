@@ -76,7 +76,7 @@ target_link_libraries(CCTM PRIVATE shr aqmio ioapi)
 target_link_libraries(CCTM PRIVATE esmf)
 
 # AQM
-add_library(aqm STATIC $<TARGET_OBJECTS:shr>
+add_library(aqm STATIC ${aqm_files} $<TARGET_OBJECTS:shr>
                          $<TARGET_OBJECTS:drv>
                          $<TARGET_OBJECTS:aqmio>
                          $<TARGET_OBJECTS:ioapi>

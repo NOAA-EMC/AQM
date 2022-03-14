@@ -21,6 +21,7 @@ module aqm_config_mod
     character(len=AQM_MAXSTR) :: optics_data   = ""
     character(len=AQM_MAXSTR) :: omi           = ""
     character(len=AQM_MAXSTR) :: mp_map        = ""
+    integer                   :: dy_map_beg    = 0
     integer                   :: ctm_stdate    = 0
     integer                   :: ctm_sttime    = 0
     integer                   :: ctm_tstep     = 0
@@ -183,6 +184,15 @@ contains
       rcToReturn=rc)) &
       return  ! bail out
 
+    ! -- CMAQ tracers start
+    call ESMF_ConfigGetAttribute(cf, config % dy_map_beg, &
+      label="dy_tracer_map_start:", default=0, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
     ! -- set other default values
     config % ctm_depvfile  = .false.
     config % ctm_photodiag = .false.
@@ -249,21 +259,23 @@ contains
         config % species % p_atm_qc = 2
         ! -- set ozone pointer
         config % species % p_atm_o3 = 3
-      case ("wsm6")
-        ! -- set hydrometeors pointers
-        config % species % p_atm_qv = 1
-        config % species % p_atm_qc = 2
-        config % species % p_atm_qi = 3
-        config % species % p_atm_qr = 4
-        config % species % p_atm_qs = 5
-        config % species % p_atm_qg = 6
       case default
         call aqm_rc_set(AQM_RC_FAILURE, &
           msg="unknown mp_map", file=__FILE__, line=__LINE__, rc=rc)
+        return
     end select
 
     ! -- starting index for CMAQ tracers
-    config % species % p_aqm_beg = config % species % p_atm_o3 + 1
+    if (config % dy_map_beg > 0) then
+      ! -- use provided starting index
+      if (aqm_rc_test(config % dy_map_beg <= config % species % p_atm_o3, &
+        msg="dynamics tracer mapping must start after microphysics", &
+        file=__FILE__, line=__LINE__, rc=rc)) return
+      config % species % p_aqm_beg = config % dy_map_beg
+    else
+      ! -- assume CMAQ tracers follow the microphysics ones
+      config % species % p_aqm_beg = config % species % p_atm_o3 + 1
+    end if
 
     ! -- initialize diagnostic tracers
     if (config % ctm_pmdiag) config % species % ndiag = 3
@@ -498,6 +510,14 @@ contains
       return  ! bail out
     call ESMF_LogWrite(trim(name) // ": config: read: mp_tracer_map: " &
       // config % mp_map, ESMF_LOGMSG_INFO, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+    write(msgString, '(a,": config: read: dy_tracer_map_start: ",i0)') &
+      trim(name), config % dy_map_beg
+    call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=localrc)
     if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__,  &
       file=__FILE__,  &

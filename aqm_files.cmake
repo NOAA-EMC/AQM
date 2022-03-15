@@ -64,7 +64,7 @@ list(APPEND aqm_ioapi_files
     src/io/ioapi/m3utilio.F90
 )
 
-set(CCTM_ROOT "model/CMAQ/CCTM/src")
+set(CCTM_ROOT "src/model/CMAQ/CCTM/src")
 set(AERO "${CCTM_ROOT}/aero/aero6")
 set(BIOG "${CCTM_ROOT}/biog/beis3")
 set(CLOUD "${CCTM_ROOT}/cloud/acm_ae6")
@@ -82,7 +82,7 @@ set(SPCS "${CCTM_ROOT}/spcs/cgrid_spcs_nml")
 set(STENEX "${CCTM_ROOT}/STENEX/noop")
 set(UTIL "${CCTM_ROOT}/util/util")
 set(VDIFF "${CCTM_ROOT}/vdiff/acm2")
-set(localCCTM "model/src")
+set(localCCTM "src/model/src")
 list(APPEND aqm_CCTM_files
 	${AERO}/AERO_DATA.F
 	${AERO}/aero_depv.F

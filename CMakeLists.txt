@@ -16,6 +16,14 @@ if (isSubproject)
   endif ()
 endif ()
 
+if(CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
+  set(CMAKE_Fortran_FLAGS "-g -fbacktrace -ffree-line-length-none")
+elseif(CMAKE_Fortran_COMPILER_ID MATCHES "Intel")
+  set(CMAKE_Fortran_FLAGS "-g -traceback -extend-source 132")
+else()
+  message(WARNING "Fortran compiler with ID ${CMAKE_Fortran_COMPILER_ID} will be used with CMake default options")
+endif()
+
 include("aqm_files.cmake")
 
 # src/shr
@@ -23,12 +31,13 @@ add_library(shr OBJECT ${aqm_shr_files})
 #add_dependencies(shr drv aqmio ioapi CCTM)
 set_target_properties(shr PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/mod)
 target_include_directories(shr PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/mod>)
-target_include_directories(shr PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/model/CMAQ/CCTM/src/ICL/fixed/filenames
-                                       ${CMAKE_CURRENT_SOURCE_DIR}/src/model/CMAQ/CCTM/src/ICL/fixed/const
-				       ${CMAKE_CURRENT_BINARY_DIR}/src/io/ioapi
-				       ${CMAKE_CURRENT_BINARY_DIR}/src/io/aqmio
-				       ${CMAKE_CURRENT_BINARY_DIR}/src/model)
-target_compile_definitions(shr PUBLIC "-DSUBST_CONST=\"CONST.EXT\" -DSUBST_FILES_ID=\"FILES_CTM.EXT\"")
+target_include_directories(shr PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/model/CMAQ/CCTM/src/ICL/fixed/filenames>
+                                       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/model/CMAQ/CCTM/src/ICL/fixed/const>
+				       $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src/io/ioapi>
+				       $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src/io/aqmio>
+				       $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src/model>)
+target_compile_definitions(shr PUBLIC SUBST_CONST="CONST.EXT" 
+				      SUBST_FILES_ID="FILES_CTM.EXT")
 #target_link_libraries(shr PRIVATE drv aqmio ioapi CCTM)
 target_link_libraries(shr PRIVATE esmf)
 
@@ -38,11 +47,11 @@ add_library(drv OBJECT ${aqm_drv_files})
 add_dependencies(drv shr)
 set_target_properties(drv PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/mod)
 target_include_directories(drv PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/mod>)
-target_include_directories(drv PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/src/shr
-                                       ${CMAKE_CURRENT_BINARY_DIR}/src/io/ioapi
-                                       ${CMAKE_CURRENT_BINARY_DIR}/src/io/aqmio
-                                       ${CMAKE_CURRENT_BINARY_DIR}/src/model)
-target_compile_definitions(drv PUBLIC "-Dverbose_driver")
+target_include_directories(drv PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src/shr>
+                                       $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src/io/ioapi>
+                                       $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src/io/aqmio>
+                                       $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src/model>)
+target_compile_definitions(drv PUBLIC verbose_driver)
 #target_link_libraries(drv PRIVATE shr CCTM aqmio ioapi)
 target_link_libraries(drv PRIVATE esmf)
 
@@ -56,8 +65,8 @@ target_link_libraries(aqmio PRIVATE esmf)
 add_library(ioapi OBJECT ${aqm_ioapi_files})
 set_target_properties(ioapi PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/mod)
 target_include_directories(ioapi PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/mod>)
-target_include_directories(ioapi PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/model/CMAQ/CCTM/src/ICL/fixed/filenames)
-target_compile_definitions(ioapi PUBLIC "-DSUBST_FILES_ID=\"FILES_CTM.EXT\"")
+target_include_directories(ioapi PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/model/CMAQ/CCTM/src/ICL/fixed/filenames>)
+target_compile_definitions(ioapi PUBLIC SUBST_FILES_ID="FILES_CTM.EXT")
 target_link_libraries(ioapi PRIVATE esmf)
 
 # src/model
@@ -65,26 +74,31 @@ add_library(CCTM OBJECT ${aqm_CCTM_files})
 #add_dependencies(CCTM shr aqmio ioapi)
 set_target_properties(CCTM PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/mod)
 target_include_directories(CCTM PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/mod>)
-target_include_directories(ioapi PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/model/CMAQ/CCTM/src/ICL/fixed/filenames
-                                         ${CMAKE_CURRENT_SOURCE_DIR}/src/model/CMAQ/CCTM/src/ICL/fixed/const
-                                         ${CMAKE_CURRENT_SOURCE_DIR}/src/model/CMAQ/CCTM/src/ICL/fixed/emctrl
-                                         ${CMAKE_CURRENT_SOURCE_DIR}/src/model/CMAQ/CCTM/src/ICL/fixed/mpi
-					 ${CMAKE_CURRENT_BINARY_DIR}/src/shr
-                                         ${CMAKE_CURRENT_BINARY_DIR}/src/io/ioapi
-                                         ${CMAKE_CURRENT_BINARY_DIR}/src/io/aqmio)
-target_compile_definitions(CCTM PUBLIC "-DSUBST_FILES_ID=\"FILES_CTM.EXT\""
-                                       "-DSUBST_CONST=\"CONST.EXT\""
-                                       "-DSUBST_EMISPRM=\"EMISPRM.EXT\""
-                                       "-DSUBST_PE_COMM=\"PE_COMM.EXT\""
-                                       "-DSUBST_COMM=NOOP_COMM"
-                                       "-DSUBST_BARRIER=NOOP_BARRIER"
-                                       "-DSUBST_SUBGRID_INDEX=NOOP_SUBGRID_INDEX"
-                                       "-DMOSAIC_MOD=MOSAIC_MODULE -DMosaic_Mod=Mosaic_Module"
-                                       "-DEDDYX=DUMMY_EDDYX"
-                                       "-DOPCONC=DUMMY_OPCONC -DOPACONC=DUMMY_OPACONC"
-                                       "-DOPWDEP=DUMMY_OPWDEP -DWR_INIT=DUMMY_WR_INIT"
-                                       "-Dverbose_aero -Dverbose_gas"
-                                       "-Dmpas -D_AQM_")
+target_include_directories(CCTM PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/model/CMAQ/CCTM/src/ICL/fixed/filenames>
+                                         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/model/CMAQ/CCTM/src/ICL/fixed/const>
+                                         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/model/CMAQ/CCTM/src/ICL/fixed/emctrl>
+                                         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/model/CMAQ/CCTM/src/ICL/fixed/mpi>
+					 $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src/shr>
+                                         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src/io/ioapi>
+                                         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src/io/aqmio>)
+target_compile_definitions(CCTM PUBLIC SUBST_FILES_ID="FILES_CTM.EXT"
+                                       SUBST_CONST="CONST.EXT"
+                                       SUBST_EMISPRM="EMISPRM.EXT"
+                                       SUBST_PE_COMM="PE_COMM.EXT"
+                                       SUBST_COMM=NOOP_COMM
+                                       SUBST_BARRIER=NOOP_BARRIER
+                                       SUBST_SUBGRID_INDEX=NOOP_SUBGRID_INDEX
+                                       MOSAIC_MOD=MOSAIC_MOD
+				       Mosaic_Mod=Mosaic_Mod
+                                       EDDYX=DUMMY_EDDYX
+                                       OPCONC=DUMMY_OPCONC
+				       OPACONC=DUMMY_OPACONC
+                                       OPWDEP=DUMMY_OPWDEP
+				       WR_INIT=DUMMY_WR_INIT
+                                       verbose_aero
+				       verbose_gas
+                                       mpas
+				       _AQM_)
 #target_link_libraries(CCTM PRIVATE shr aqmio ioapi)
 target_link_libraries(CCTM PRIVATE esmf)
 

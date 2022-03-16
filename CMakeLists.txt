@@ -100,6 +100,9 @@ target_compile_definitions(CCTM PUBLIC SUBST_FILES_ID="FILES_CTM.EXT"
                                        mpas
 				       _AQM_)
 #target_link_libraries(CCTM PRIVATE shr aqmio ioapi)
+ADD_CUSTOM_TARGET(link_target ALL
+                  COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_BINARY_DIR}/mod/mosaic_module.mod
+                  ${CMAKE_CURRENT_BINARY_DIR}/mod/mosaic_mod.mod)
 target_link_libraries(CCTM PRIVATE esmf)
 
 # AQM

@@ -108,6 +108,7 @@ add_library(aqm STATIC ${aqm_files} $<TARGET_OBJECTS:shr>
                          $<TARGET_OBJECTS:aqmio>
                          $<TARGET_OBJECTS:ioapi>
                          $<TARGET_OBJECTS:CCTM>)
+set_target_properties(aqm PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/mod)
 add_library(aqm::aqm ALIAS aqm)
 target_include_directories(aqm PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/mod>
                                       $<INSTALL_INTERFACE:mod>)

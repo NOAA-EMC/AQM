@@ -52,7 +52,7 @@ target_include_directories(drv PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_
                                        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src/io/aqmio>
                                        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src/model>)
 target_compile_definitions(drv PUBLIC verbose_driver)
-#target_link_libraries(drv PRIVATE shr CCTM aqmio ioapi)
+target_link_libraries(drv PRIVATE shr, CCTM)
 target_link_libraries(drv PRIVATE esmf)
 
 # src/io/aqmio

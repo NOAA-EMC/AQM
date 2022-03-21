@@ -34,6 +34,10 @@ omi_data:    /scratch1/NCEPDEV/nems/Raffaele.Montuoro/dev/aqm/epa/data/omi_cmaq_
 # - set to true for cold start
 init_concentrations: true
 
+# Run inline canopy effects
+#
+canopy_yn: false
+
 #
 # Run aerosol module
 #

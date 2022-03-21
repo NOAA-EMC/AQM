@@ -148,7 +148,7 @@ LOGICAL FUNCTION DESC3( FNAME )
 
   ELSE IF ( TRIM( FNAME ) .EQ. TRIM( MET_CRO_2D ) ) THEN
 
-    NVARS3D = 31
+    NVARS3D = 40
     VNAME3D( 1:NVARS3D ) = &
     (/ 'PRSFC           ', 'USTAR           ',            &
        'WSTAR           ', 'PBL             ',            &
@@ -165,7 +165,12 @@ LOGICAL FUNCTION DESC3( FNAME )
        'SLTYP           ', 'Q2              ',            &
        'SEAICE          ', 'SOIM1           ',            &
        'SOIM2           ', 'SOIT1           ',            &
-       'SOIT2           ', 'LH              ' /)
+       'SOIT2           ', 'LH              ',            &
+       'FCH             ', 'FRT             ',            &
+       'CLU             ', 'POPU            ',            &
+       'LAIE            ', 'C1R             ',            &
+       'C2R             ', 'C3R             ',            &
+       'C4R             '                     /)
     UNITS3D( 1:NVARS3D ) = &
     (/ 'Pascal          ', 'M/S             ',            &
        'M/S             ', 'M               ',            &
@@ -182,7 +187,12 @@ LOGICAL FUNCTION DESC3( FNAME )
        '-               ', 'KG/KG           ',            &
        'FRACTION        ', 'M**3/M**3       ',            &
        'M**3/M**3       ', 'K               ',            &
-       'K               ', 'WATTS/M**2      ' /)
+       'K               ', 'WATTS/M**2      ',            &
+       'M               ', 'NO UNIT         ',            &
+       'NO UNIT         ', 'PEOPLE/KM**2    ',            &
+       'NO UNIT         ', 'NO UNIT         ',            &
+       'NO UNIT         ', 'NO UNIT         ',            &
+       'NO UNIT         '                     /)
 
   ELSE IF ( TRIM( FNAME ) .EQ. TRIM( MET_CRO_3D ) ) THEN
 
@@ -330,6 +340,8 @@ logical function envyn(name, description, defaultval, status)
       envyn = associated(em)
     case ('CTM_GRAV_SETL')
       envyn = .false.
+    case ('CTM_CANOPY_SHADE')
+      envyn = config % canopy_yn !default (false)
     case ('INITIAL_RUN')
       envyn = .true.
     case default
@@ -734,6 +746,98 @@ logical function interpx( fname, vname, pname, &
          do c = col0, col1
            k = k + 1
            buffer(k) = 0.01 * stateIn % zorl(c,r)
+         end do
+        end do
+
+      ! canopy variables
+      case ("FCH")
+      !test forest canopy height set to 10 m
+      ! p2d => stateIn % cfch
+        k = 0
+        do r = row0, row1
+         do c = col0, col1
+           k = k + 1
+           buffer(k) = ( 0.0 * stateIn % zorl(c,r) ) + 10.0 
+         end do
+        end do
+      case ("FRT")
+      !test grid cell forest fraction to 0.5
+      ! p2d => stateIn % cfrt
+        k = 0
+        do r = row0, row1
+         do c = col0, col1
+           k = k + 1
+           buffer(k) = ( 0.0 * stateIn % zorl(c,r) ) + 0.5 
+         end do
+        end do
+      case ("CLU")
+      !test forest clumping index set to 0.5 (spherical leaf distribution)
+      ! p2d => stateIn % cclu
+        k = 0
+        do r = row0, row1
+         do c = col0, col1
+           k = k + 1
+           buffer(k) = ( 0.0 * stateIn % zorl(c,r) ) + 0.5 
+         end do
+        end do
+      case ("POPU")
+      !test pop. density set to 10000 people/10km2
+      ! p2d => stateIn % cpopu
+        k = 0
+        do r = row0, row1
+         do c = col0, col1
+           k = k + 1
+           buffer(k) = ( 0.0 * stateIn % zorl(c,r) ) + 10000.0
+         end do
+        end do
+      case ("LAIE")
+      !test new ECCC LAI set to 4
+      ! p2d => stateIn % claie
+        k = 0
+        do r = row0, row1
+         do c = col0, col1
+           k = k + 1
+           buffer(k) = ( 0.0 * stateIn % zorl(c,r) ) + 4.0
+         end do
+        end do
+      case ("C1R")
+      !test new ECCC cumulative LAI fraction 1 (FCH to 0.75FCH) set to 0.5
+      ! p2d => stateIn % cc1r
+        k = 0
+        do r = row0, row1
+         do c = col0, col1
+           k = k + 1
+           buffer(k) = ( 0.0 * stateIn % zorl(c,r) ) + 0.5
+         end do
+        end do
+      case ("C2R")
+      !test new ECCC cumulative LAI fraction 2 (FCH to 0.5FCH) set to 0.7
+      ! p2d => stateIn % cc2r
+        k = 0
+        do r = row0, row1
+         do c = col0, col1
+           k = k + 1
+           buffer(k) = ( 0.0 * stateIn % zorl(c,r) ) + 0.7
+         end do
+        end do
+      case ("C3R")
+      !test new ECCC cumulative LAI fraction 3 (FCH to 0.35FCH) set to 0.9
+      ! p2d => stateIn % cc3r
+        k = 0
+        do r = row0, row1
+         do c = col0, col1
+           k = k + 1
+           buffer(k) = ( 0.0 * stateIn % zorl(c,r) ) + 0.9
+         end do
+        end do
+      case ("C4R")
+      !test new ECCC cumulative LAI fraction 4 (FCH to 0.20FCH) set to 0.95
+      ! p2d => stateIn % cc4r
+        k = 0
+        do r = row0, row1
+         do c = col0, col1
+           k = k + 1
+           buffer(k) = ( 0.0 * stateIn % zorl(c,r) ) + 0.95
          end do
         end do
       case default

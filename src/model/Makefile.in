@@ -1533,13 +1533,13 @@ $(PHOT)/libCCTM_a-opphot.obj: $(PHOT)/opphot.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(PHOT)/libCCTM_a-opphot.obj `if test -f '$(PHOT)/opphot.F'; then $(CYGPATH_W) '$(PHOT)/opphot.F'; else $(CYGPATH_W) '$(srcdir)/$(PHOT)/opphot.F'; fi`
 
 $(localCCTM)/libCCTM_a-phot.o: $(localCCTM)/phot.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(localCCTM)/libCCTM_a-phot.o `test -f '$(localCCTM)/phot.F' || echo '$(localCCTM)/'`$(localCCTM)/phot.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(localCCTM)/libCCTM_a-phot.o `test -f '$(localCCTM)/phot.F' || echo '$(srcdir)/'`$(localCCTM)/phot.F
 
 $(localCCTM)/libCCTM_a-phot.obj: $(localCCTM)/phot.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(localCCTM)/libCCTM_a-phot.obj `if test -f '$(localCCTM)/phot.F'; then $(CYGPATH_W) '$(localCCTM)/phot.F'; else $(CYGPATH_W) '$(srcdir)/$(localCCTM)/phot.F'; fi`
 
 $(localCCTM)/libCCTM_a-centralized_io_util_module.o: $(localCCTM)/centralized_io_util_module.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(localCCTM)/libCCTM_a-centralized_io_util_module.o `test -f '$(localCCTM)/centralized_io_util_module.F' || echo '$(localCCTM)/'`$(localCCTM)/centralized_io_util_module.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(localCCTM)/libCCTM_a-centralized_io_util_module.o `test -f '$(localCCTM)/centralized_io_util_module.F' || echo '$(srcdir)/'`$(localCCTM)/centralized_io_util_module.F
 
 $(localCCTM)/libCCTM_a-centralized_io_util_module.obj: $(localCCTM)/centralized_io_util_module.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(localCCTM)/libCCTM_a-centralized_io_util_module.obj `if test -f '$(localCCTM)/centralized_io_util_module.F'; then $(CYGPATH_W) '$(localCCTM)/centralized_io_util_module.F'; else $(CYGPATH_W) '$(srcdir)/$(localCCTM)/centralized_io_util_module.F'; fi`

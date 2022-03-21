@@ -238,8 +238,7 @@ am_libCCTM_a_OBJECTS = $(AERO)/libCCTM_a-AERO_DATA.$(OBJEXT) \
 	$(localCCTM)/libCCTM_a-PT3D_DEFN.$(OBJEXT) \
         $(localCCTM)/libCCTM_a-phot.$(OBJEXT) \
         $(localCCTM)/libCCTM_a-ASX_DATA_MOD.$(OBJEXT) \
-        $(localCCTM)/libCCTM_a-centralized_io_util_module.$(OBJEXT) \
-
+        $(localCCTM)/libCCTM_a-centralized_io_util_module.$(OBJEXT)
 libCCTM_a_OBJECTS = $(am_libCCTM_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)

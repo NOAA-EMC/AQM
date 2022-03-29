@@ -37,6 +37,7 @@ init_concentrations: true
 # Run inline canopy effects
 #
 canopy_yn: false
+canopy_file: /scratch2/NAGAPE/arl/Patrick.C.Campbell/canopy_geofiles/gfs.t12z.geo.08.canopy_regrid.nc
 
 #
 # Run aerosol module

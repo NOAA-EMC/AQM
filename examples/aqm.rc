@@ -34,10 +34,29 @@ omi_data:    /scratch1/NCEPDEV/nems/Raffaele.Montuoro/dev/aqm/epa/data/omi_cmaq_
 # - set to true for cold start
 init_concentrations: true
 
-# Run inline canopy effects
+#
+# Inline Canopy Effects
 #
 canopy_yn: true
+
+canopy_type: canopy
+
+canopy_format: netcdf
+
 canopy_file: /scratch2/NAGAPE/arl/Patrick.C.Campbell/canopy_geofiles/gfs.t12z.geo.08.canopy_regrid.nc
+
+canopy_frequency: static
+
+canopy_species::
+    FCH        1.00000   FCH      m
+    FRT        1.00000   FRT      unitless
+    CLU        1.00000   CLU      unitless
+    POPU       1.00000   POPU     10000_people/10km2
+    LAIE       1.00000   LAIE     cm2/cm2
+    C1R        1.00000   C1R      cm2/cm2
+    C2R        1.00000   C2R      cm2/cm2
+    C3R        1.00000   C3R      cm2/cm2
+    C4R        1.00000   C4R      cm2/cm2
 
 #
 # Run aerosol module

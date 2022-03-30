@@ -49,14 +49,15 @@ canopy_frequency: static
 
 canopy_species::
     FCH        1.00000   FCH      m
-    FRT        1.00000   FRT      unitless
-    CLU        1.00000   CLU      unitless
+    FRT        1.00000   FRT      1
+    CLU        1.00000   CLU      1
     POPU       1.00000   POPU     10000_people/10km2
-    LAIE       1.00000   LAIE     cm2/cm2
-    C1R        1.00000   C1R      cm2/cm2
-    C2R        1.00000   C2R      cm2/cm2
-    C3R        1.00000   C3R      cm2/cm2
-    C4R        1.00000   C4R      cm2/cm2
+    LAIE       1.00000   LAIE     1
+    C1R        1.00000   C1R      1
+    C2R        1.00000   C2R      1
+    C3R        1.00000   C3R      1
+    C4R        1.00000   C4R      1
+::
 
 #
 # Run aerosol module
@@ -89,7 +90,7 @@ ctm_pmdiag: true
 emission_sources: myemis
 
 #
-#  Emission type: anthropogenic, biogenic, gbbepx
+#  Emission type: anthropogenic, biogenic, gbbepx, canopy
 #
 myemis_type: anthropogenic
 

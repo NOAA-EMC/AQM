@@ -653,6 +653,11 @@ logical function interpx( fname, vname, pname, &
     if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
       file=__FILE__, line=__LINE__)) return
 
+    call aqm_model_get(config=config, stateIn=stateIn, rc=localrc)
+    if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
+      file=__FILE__, line=__LINE__)) return
+
+
     select case (trim(vname))
       case ("HFX")
         p2d => stateIn % hfx

@@ -439,8 +439,6 @@ module AQM
           if (aqmGridCoordSys == ESMF_COORDSYS_SPH_RAD) then
             coord = coord * rad2deg
           endif
-           print *,'in AQM, get lon(0,0)=',coord(tlb(1),tlb(2)), 'tlb=',tlb,'tub=',tub &
-               ,'localPet=',localPet
 
           call aqm_model_domain_coord_set(item, coord, de=localDe, rc=rc)
 

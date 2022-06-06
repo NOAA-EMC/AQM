@@ -70,6 +70,9 @@ module AQM
     /)
 
   private
+
+  real(ESMF_KIND_R8), parameter :: pi = 3.1415926535897931
+  real(ESMF_KIND_R8), parameter :: rad2deg = 180./pi
   
   public SetServices
   
@@ -257,6 +260,7 @@ module AQM
     type(ESMF_GeomType_flag)      :: geomtype
     type(ESMF_DistGrid)           :: distgrid
     type(ESMF_Array)              :: array
+
     integer                       :: de, item, localrc, localDe, tile
     integer                       :: comm, localPet
     real(ESMF_KIND_R8), dimension(:,:), pointer :: coord
@@ -271,7 +275,11 @@ module AQM
     real(ESMF_KIND_R8)         :: dts
     type(ESMF_Time)            :: startTime
     type(ESMF_TimeInterval)    :: TimeStep
+    type(ESMF_CoordSys_Flag)   :: aqmGridCoordSys
     character(len=ESMF_MAXSTR) :: msgString, name
+!test:
+    integer :: tlb(2), tub(2)
+
 
     ! begin
     rc = ESMF_SUCCESS
@@ -332,6 +340,7 @@ module AQM
 
     if (geomtype == ESMF_GEOMTYPE_GRID) then
       call ESMF_FieldGet(field, grid=grid, array=array, rc=rc)
+
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
         line=__LINE__, &
         file=__FILE__)) &
@@ -423,14 +432,26 @@ module AQM
         end if
 
         ! -- get local coordinate arrays
+        call ESMF_GridGet(grid, coordSys=aqmGridCoordSys, rc=rc)
+        if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__, &
+            file=__FILE__)) &
+            return  ! bail out
+         
         do item = 1, 2
           call ESMF_GridGetCoord(grid, coordDim=item, staggerloc=ESMF_STAGGERLOC_CENTER, &
+            totalLBound=tlb, totalUBound=tub, &
             localDE=localDe, farrayPtr=coord, rc=rc)
           if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
             line=__LINE__, &
             file=__FILE__)) &
             return  ! bail out
+          if (aqmGridCoordSys == ESMF_COORDSYS_SPH_RAD) then
+            coord = coord * rad2deg
+          endif
+
           call aqm_model_domain_coord_set(item, coord, de=localDe, rc=rc)
+
           if (aqm_rc_check(rc)) then
             call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, &
               msg="Failed to set coordinates for air quality model", &

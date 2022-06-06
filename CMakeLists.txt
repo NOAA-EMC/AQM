@@ -16,30 +16,133 @@ if (isSubproject)
   endif ()
 endif ()
 
-# Run configure/make as external project
-include (ExternalProject)
+if(CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
+  set(CMAKE_Fortran_FLAGS "-ffree-line-length-none -ffixed-line-length-none")
+elseif(CMAKE_Fortran_COMPILER_ID MATCHES "Intel")
+  set(CMAKE_Fortran_FLAGS "-extend-source 132")
+else()
+  message(WARNING "Fortran compiler with ID ${CMAKE_Fortran_COMPILER_ID} will be used with CMake default options")
+endif()
 
-# set install directory
-set (aqm_dir ${CMAKE_CURRENT_BINARY_DIR}/aqm)
+include("aqm_files.cmake")
 
-# add configure flag for debug build type
-if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-   set (configure_options "--enable-debug")
-endif ()
+# src/shr
+add_library(shr OBJECT ${aqm_shr_files})
+#add_dependencies(shr drv aqmio ioapi CCTM)
+set_target_properties(shr PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/mod)
+target_include_directories(shr PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/mod>)
+target_include_directories(shr PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/model/CMAQ/CCTM/src/ICL/fixed/filenames>
+                                       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/model/CMAQ/CCTM/src/ICL/fixed/const>
+				       $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src/io/ioapi>
+				       $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src/io/aqmio>
+				       $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src/model>)
+target_compile_definitions(shr PUBLIC SUBST_CONST="CONST.EXT" 
+				      SUBST_FILES_ID="FILES_CTM.EXT")
+#target_link_libraries(shr PRIVATE drv aqmio ioapi CCTM)
+target_link_libraries(shr PRIVATE esmf)
 
-ExternalProject_Add (aqm_gnu
-  PREFIX             aqm
-  DOWNLOAD_COMMAND   ""
-  CONFIGURE_COMMAND  ${CMAKE_CURRENT_SOURCE_DIR}/configure
-                         --prefix=${aqm_dir} --libdir=${aqm_dir} --includedir=${aqm_dir}
-                         FC=${CMAKE_Fortran_COMPILER} F77=${CMAKE_Fortran_COMPILER} CC=${CMAKE_C_COMPILER}
-                         ${configure_options}
-  BUILD_ALWAYS       True
-)
+# src/drv
+add_library(drv OBJECT ${aqm_drv_files})
+#add_dependencies(drv shr CCTM aqmio ioapi)
+add_dependencies(drv shr)
+set_target_properties(drv PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/mod)
+target_include_directories(drv PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/mod>)
+target_include_directories(drv PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src/shr>
+                                       $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src/io/ioapi>
+                                       $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src/io/aqmio>
+                                       $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src/model>)
+target_compile_definitions(drv PUBLIC verbose_driver)
+target_link_libraries(drv PRIVATE shr, CCTM)
+target_link_libraries(drv PRIVATE esmf)
 
-# create target
-add_library(aqm STATIC IMPORTED GLOBAL)
-set_property(TARGET aqm PROPERTY IMPORTED_LOCATION ${aqm_dir}/libaqm.a)
-add_dependencies(aqm aqm_gnu)
-target_include_directories(aqm INTERFACE ${aqm_dir})
-target_link_libraries(aqm INTERFACE esmf NetCDF::NetCDF_Fortran)
+# src/io/aqmio
+add_library(aqmio OBJECT ${aqm_aqmio_files})
+set_target_properties(aqmio PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/mod)
+target_include_directories(aqmio PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/mod>)
+target_link_libraries(aqmio PRIVATE esmf)
+
+# src/io/ioapi
+add_library(ioapi OBJECT ${aqm_ioapi_files})
+set_target_properties(ioapi PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/mod)
+target_include_directories(ioapi PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/mod>)
+target_include_directories(ioapi PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/model/CMAQ/CCTM/src/ICL/fixed/filenames>)
+target_compile_definitions(ioapi PUBLIC SUBST_FILES_ID="FILES_CTM.EXT")
+target_link_libraries(ioapi PRIVATE esmf)
+
+# src/model
+add_library(CCTM OBJECT ${aqm_CCTM_files})
+#add_dependencies(CCTM shr aqmio ioapi)
+set_target_properties(CCTM PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/mod)
+target_include_directories(CCTM PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/mod>)
+target_include_directories(CCTM PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/model/CMAQ/CCTM/src/ICL/fixed/filenames>
+                                         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/model/CMAQ/CCTM/src/ICL/fixed/const>
+                                         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/model/CMAQ/CCTM/src/ICL/fixed/emctrl>
+                                         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/model/CMAQ/CCTM/src/ICL/fixed/mpi>
+					 $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src/shr>
+                                         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src/io/ioapi>
+                                         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src/io/aqmio>)
+target_compile_definitions(CCTM PUBLIC SUBST_FILES_ID="FILES_CTM.EXT"
+                                       SUBST_CONST="CONST.EXT"
+                                       SUBST_EMISPRM="EMISPRM.EXT"
+                                       SUBST_PE_COMM="PE_COMM.EXT"
+                                       SUBST_COMM=NOOP_COMM
+                                       SUBST_BARRIER=NOOP_BARRIER
+                                       SUBST_SUBGRID_INDEX=NOOP_SUBGRID_INDEX
+                                       MOSAIC_MOD=MOSAIC_MODULE
+				       Mosaic_Mod=Mosaic_Module
+                                       EDDYX=DUMMY_EDDYX
+                                       OPCONC=DUMMY_OPCONC
+				       OPACONC=DUMMY_OPACONC
+                                       OPWDEP=DUMMY_OPWDEP
+				       WR_INIT=DUMMY_WR_INIT
+                                       verbose_aero
+				       verbose_gas
+                                       mpas
+				       _AQM_)
+#target_link_libraries(CCTM PRIVATE shr aqmio ioapi)
+ADD_CUSTOM_TARGET(link_target ALL
+                  COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_BINARY_DIR}/mod/mosaic_module.mod
+                  ${CMAKE_CURRENT_BINARY_DIR}/mod/mosaic_mod.mod)
+target_link_libraries(CCTM PRIVATE esmf)
+
+# AQM
+add_library(aqm STATIC ${aqm_files} $<TARGET_OBJECTS:shr>
+                         $<TARGET_OBJECTS:drv>
+                         $<TARGET_OBJECTS:aqmio>
+                         $<TARGET_OBJECTS:ioapi>
+                         $<TARGET_OBJECTS:CCTM>)
+set_target_properties(aqm PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/mod)
+add_library(aqm::aqm ALIAS aqm)
+target_include_directories(aqm PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/mod>
+                                      $<INSTALL_INTERFACE:mod>)
+target_link_libraries(aqm PUBLIC esmf NetCDF::NetCDF_Fortran)
+list(APPEND LIB_TARGETS aqm)
+
+###############################################################################
+### Install
+###############################################################################
+
+install(
+  TARGETS   ${LIB_TARGETS}
+  EXPORT    AQMExports
+  LIBRARY   DESTINATION lib
+  ARCHIVE   DESTINATION lib
+  COMPONENT Library)
+
+export(EXPORT    AQMExports
+       NAMESPACE aqm::
+       FILE      aqm-targets.cmake)
+
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/mod DESTINATION ${CMAKE_INSTALL_PREFIX}/AQM)
+
+install(EXPORT      AQMExports
+        NAMESPACE   aqm::
+        FILE        aqm-targets.cmake
+        DESTINATION lib/cmake)
+
+# # create target
+# add_library(aqm OBJECT ${aqm_files})
+# set_property(TARGET aqm PROPERTY IMPORTED_LOCATION ${aqm_dir}/libaqm.a)
+# add_dependencies(aqm aqm_gnu)
+# target_include_directories(aqm INTERFACE ${aqm_dir})
+# target_link_libraries(aqm INTERFACE esmf NetCDF::NetCDF_Fortran)

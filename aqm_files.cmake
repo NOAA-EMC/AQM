@@ -180,7 +180,6 @@ list(APPEND aqm_CCTM_files
 	${PHOT}/CSQY_DATA.F
 	${PHOT}/OMI_1979_to_2015.dat
 	${PHOT}/opphot.F
-	${PHOT}/phot.F
 	${PHOT}/PHOT_MET_DATA.F
 	${PHOT}/PHOT_MOD.F
 	${PHOT}/PHOTOLYSIS_ALBEDO.F
@@ -215,7 +214,6 @@ list(APPEND aqm_CCTM_files
 	${UTIL}/subhdomain.F
 	${UTIL}/UTILIO_DEFN.F
 	${VDIFF}/aero_sedv.F
-	${VDIFF}/ASX_DATA_MOD.F
 	${VDIFF}/conv_cgrid.F
 	${VDIFF}/matrix1.F
 	${VDIFF}/opddep.F

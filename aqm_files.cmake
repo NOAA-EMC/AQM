@@ -231,7 +231,7 @@ list(APPEND aqm_CCTM_files
 	${localCCTM}/vdiffacmx.F
 	${localCCTM}/PTMAP.F
 	${localCCTM}/PT3D_DEFN.F
-        ${localCCTM}/phot.F
         ${localCCTM}/ASX_DATA_MOD.F
+        ${localCCTM}/phot.F
         ${localCCTM}/centralized_io_util_module.F
 )

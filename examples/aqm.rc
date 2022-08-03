@@ -55,6 +55,20 @@ ctm_aod: true
 #  Compute and export PM2.5 mode fractions as diagnostic tracers
 ctm_pmdiag: true
 
+#
+# Fengsha Dust Emission Option
+#
+fengsha_yn: true
+
+fengsha_format: netcdf
+
+fengsha_file: /scratch1/RDARCH/rda-arl-gpu/Barry.Baker/emissions/nexus/FENGSHA/FENGSHA_FILES.nc
+
+fengsha_species::
+    clayf      1.00000   clayf    1
+    sandf      1.00000   sandf    1
+    drag       1.00000   drag     1
+    uthr       1.00000   uthr     1
 
 #
 #  Input emissions
@@ -194,3 +208,5 @@ myemis_species::
     SESQ
     TOLU
 ::
+
+

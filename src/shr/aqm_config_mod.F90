@@ -35,7 +35,6 @@ module aqm_config_mod
     logical                   :: ctm_wb_dust   = .false.
     logical                   :: init_conc     = .false.
     logical                   :: run_aero      = .false.
-    logical                   :: fengsha_yn    = .false.
     logical                   :: verbose       = .false.
     type(aqm_species_type), pointer :: species => null()
   end type aqm_config_type
@@ -188,14 +187,6 @@ contains
     ! -- CMAQ tracers start
     call ESMF_ConfigGetAttribute(cf, config % dy_map_beg, &
       label="dy_tracer_map_start:", default=0, rc=localrc)
-    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__,  &
-      file=__FILE__,  &
-      rcToReturn=rc)) &
-      return  ! bail out
-
-    call ESMF_ConfigGetAttribute(cf, config % fengsha_yn, &
-      label="fengsha_yn:", default=.false., rc=localrc)
     if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__,  &
       file=__FILE__,  &
@@ -503,13 +494,6 @@ contains
         ESMF_LOGMSG_INFO, rc=localrc)
     else
       call ESMF_LogWrite(trim(name) // ": config: read: ctm_wb_dust: false", &
-        ESMF_LOGMSG_INFO, rc=localrc)
-    end if
-    if (config % fengsha_yn) then
-      call ESMF_LogWrite(trim(name) // ": config: read: fengsha_yn: true", &
-        ESMF_LOGMSG_INFO, rc=localrc)
-    else
-      call ESMF_LogWrite(trim(name) // ": config: read: fengsha_yn: false", &
         ESMF_LOGMSG_INFO, rc=localrc)
     end if
     if (config % run_aero) then

@@ -148,7 +148,7 @@ LOGICAL FUNCTION DESC3( FNAME )
 
   ELSE IF ( TRIM( FNAME ) .EQ. TRIM( MET_CRO_2D ) ) THEN
 
-    NVARS3D = 35
+    NVARS3D = 31
     VNAME3D( 1:NVARS3D ) = &
     (/ 'PRSFC           ', 'USTAR           ',            &
        'WSTAR           ', 'PBL             ',            &
@@ -165,9 +165,7 @@ LOGICAL FUNCTION DESC3( FNAME )
        'SLTYP           ', 'Q2              ',            &
        'SEAICE          ', 'SOIM1           ',            &
        'SOIM2           ', 'SOIT1           ',            &
-       'SOIT2           ', 'LH              ',            &
-       'CLAYF           ', 'SANDF           ',            &
-       'DRAG            ', 'UTHR            ' /)
+       'SOIT2           ', 'LH              ' /)
     UNITS3D( 1:NVARS3D ) = &
     (/ 'Pascal          ', 'M/S             ',            &
        'M/S             ', 'M               ',            &
@@ -184,9 +182,7 @@ LOGICAL FUNCTION DESC3( FNAME )
        '-               ', 'KG/KG           ',            &
        'FRACTION        ', 'M**3/M**3       ',            &
        'M**3/M**3       ', 'K               ',            &
-       'K               ', 'WATTS/M**2      ',            &
-       '-               ', '-               ',            &
-       '-               ', 'M/S             ' /)
+       'K               ', 'WATTS/M**2      ' /)
 
   ELSE IF ( TRIM( FNAME ) .EQ. TRIM( MET_CRO_3D ) ) THEN
 
@@ -334,10 +330,6 @@ logical function envyn(name, description, defaultval, status)
       envyn = associated(em)
     case ('CTM_GRAV_SETL')
       envyn = .false.
-    case ('CTM_FENGSHA')
-      write(*,*) 'CTM_FENGSHA CONFIG SET'
-      envyn = config % fengsha_yn ! Default: False
-      envyn = .true.
     case ('INITIAL_RUN')
       envyn = .true.
     case default
@@ -744,48 +736,7 @@ logical function interpx( fname, vname, pname, &
            buffer(k) = 0.01 * stateIn % zorl(c,r)
          end do
         end do
-      case ("CLAYF")
-       !  p2d -> stateIn % clayf
-       if (config % fengsha_yn) then
-         write(*,*) 'FENGSHA CONFIG READ'
-         call aqm_emis_read("fengsha", vname, buffer, rc=localrc)
-         if (aqm_rc_test((localrc /= 0), &
-              msg="Failure to read fengsha for " // vname, &
-              file=__FILE__, line=__LINE__)) return
-       else
-          buffer(1:lbuf) = 0
-       endif
-      case ("SANDF")
-      ! p2d -> stateIn % clayf
-       if (config % fengsha_yn) then
-         call aqm_emis_read("fengsha", vname, buffer, rc=localrc)
-         if (aqm_rc_test((localrc /=    0), &
-              msg="Failure to read fengsha for " // vname, &
-              file=__FILE__, line=__LINE__)) return
-       else
-         buffer(1:lbuf) =    0
-       endif
-       case ("DRAG")
-      ! p2d -> stateIn % clayf
-       if (config % fengsha_yn) then
-         call aqm_emis_read("fengsha", vname, buffer, rc=localrc)
-         if (aqm_rc_test((localrc /=    0), &
-              msg="Failure to read fengsha for " // vname, &
-              file=__FILE__, line=__LINE__)) return
-       else
-         buffer(1:lbuf) =    0
-       endif
-       case ("UTHR")
-      ! p2d -> stateIn % clayf
-       if (config % fengsha_yn) then
-         call aqm_emis_read("fengsha", vname, buffer, rc=localrc)
-         if (aqm_rc_test((localrc /=    0), &
-              msg="Failure to read fengsha for " // vname, &
-              file=__FILE__, line=__LINE__)) return
-       else
-         buffer(1:lbuf) =    0
-       endif
-    case default
+      case default
     !   return
     end select
 

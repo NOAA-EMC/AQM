@@ -604,6 +604,8 @@ logical function interpx( fname, vname, pname, &
       select case (trim(vname))
         case ('HT')
           p2d => stateIn % ht
+	case ('AREA')
+	  p2d => stateIN % area
         case ('LAT')
           p2d => lat
         case ('LON')
@@ -825,6 +827,10 @@ logical function interpx( fname, vname, pname, &
             end do
           end do
         end do
+      case ("UWINDA")
+        p3d => stateIn % uwind
+      case ("VWINDA")
+        p3d => stateIn % vwind
       case ("PRES")
         p3d => stateIn % prl
       case ("CFRAC_3D")

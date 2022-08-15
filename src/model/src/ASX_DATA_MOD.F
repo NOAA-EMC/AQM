@@ -629,10 +629,10 @@ C-----------------------------------------------------------------------
      &                   'Flag for in-line fengsha ',
      &                   .FALSE., IOSX )
          IF ( FENGSHA ) THEN
-            XMSG = 'Using in-line canopy shading option'
+            XMSG = 'Using the Fengsha Wind-Blown dust emission model...'
             CALL M3MSG2( XMSG )
          END IF
-         FENGSHA=.true.
+     
          If ( FENGSHA  ) Then
             ALLOCATE( Met_Data%CLAYF  ( NCOLS,NROWS ),
      &                Met_Data%SANDF  ( NCOLS,NROWS ),

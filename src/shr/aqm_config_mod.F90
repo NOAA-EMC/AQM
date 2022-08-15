@@ -175,7 +175,8 @@ contains
       file=__FILE__,  &
       rcToReturn=rc)) &
       return  ! bail out
-
+    
+    ! FENGSHA Options
     call ESMF_ConfigGetAttribute(cf, config % fengsha_yn, &
       label="fengsha_yn:", default=.true., rc=localrc)
     if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -183,7 +184,7 @@ contains
       file=__FILE__,  &
       rcToReturn=rc)) &
       return  ! bail out
-
+    
     ! -- microphysics tracer map
     call ESMF_ConfigGetAttribute(cf, config % mp_map, &
       label="mp_tracer_map:", rc=localrc)

@@ -628,6 +628,8 @@ C-----------------------------------------------------------------------
          FENGSHA = ENVYN( 'CTM_FENGSHA',
      &                   'Flag for in-line fengsha ',
      &                   .FALSE., IOSX )
+        
+         ! write(*,*) 'FENGSHA IS = ', FENGSHA
          IF ( FENGSHA ) THEN
             XMSG = 'Using the Fengsha Wind-Blown dust emission model...'
             CALL M3MSG2( XMSG )

@@ -50,7 +50,8 @@ target_include_directories(drv PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_
                                        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src/io/aqmio>
                                        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src/model>)
 target_compile_definitions(drv PUBLIC verbose_driver)
-target_link_libraries(drv PRIVATE shr CCTM esmf)
+#target_link_libraries(drv PRIVATE shr CCTM esmf)
+target_link_libraries(drv PRIVATE shr CCTM)
 
 # src/io/aqmio
 add_library(aqmio OBJECT ${aqm_aqmio_files})
@@ -96,7 +97,6 @@ target_compile_definitions(CCTM PUBLIC SUBST_FILES_ID="FILES_CTM.EXT"
 				       verbose_gas
                                        mpas
 				       _AQM_)
-target_link_libraries(CCTM PRIVATE esmf)
 
 # AQM
 add_library(aqm STATIC ${aqm_files} $<TARGET_OBJECTS:shr>

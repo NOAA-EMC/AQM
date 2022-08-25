@@ -1052,8 +1052,8 @@ C In-line canopy shading option? (default = false)
 
 !Interpolate to get attenuation profile below canopy
                                 ZFL = Met_Data%ZF( COL,ROW,1 )
-                                ZCAN = ZFL    ! Initialize canopy top (m) = Bottom of First model layer above canopy
-!                                ZCAN =  Met_Data%FCH( COL,ROW ) ! Initialize canopy top (m) = Top of canopy
+!                                ZCAN = ZFL    ! Initialize canopy top (m) = Bottom of First model layer above canopy
+                                ZCAN =  Met_Data%FCH( COL,ROW ) ! Initialize canopy top (m) = Top of canopy
                                 COUNTCAN = 0  ! Initialize canopy layers
                                 DO WHILE (ZCAN.GE.0.5)  !canopy threshold >= 0.5 m
                                    IF ( ZCAN .GT. Met_Data%FCH( COL,ROW ) ) THEN

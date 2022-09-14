@@ -155,7 +155,7 @@ LOGICAL FUNCTION DESC3( FNAME )
        'ZRUF            ', &
        'HFX             ', 'WSPD10          ',            &
        'GSW             ', 'RGRND           ',            &
-       'RNA             ', 'RCA             ',            &
+       'RN              ', 'RC              ',            &
        'CFRAC           ', 'CLDT            ',            &
        'CLDB            ', 'WBAR            ',            &
        'RA              ', 'RS              ',            &

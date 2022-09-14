@@ -114,6 +114,11 @@ list(APPEND aqm_CCTM_files
 	${BIOG}/tmpbeis.F
 	${BIOG}/wrdaymsg.f
 	${CLOUD}/hlconst.F
+        ${CLOUD}/cldproc_acm.F
+        ${CLOUD}/getalpha.F
+        ${CLOUD}/indexn.f
+        ${CLOUD}/rescld.F
+        ${CLOUD}/scavwdep.F
 	${DEPV}/ABFLUX_MOD.F
 	${DEPV}/BIDI_MOD.F
 	${DEPV}/cgrid_depv.F

@@ -1160,6 +1160,13 @@ contains
           if (present(rc)) rc = AQM_RC_FAILURE
           return  ! bail out
         end if
+
+        if (trim(em % type) == "fengsha") then
+           ! -- ensure fengsha input variables are not normalized by area like
+           ! -- emissions conversions below
+           em % dens_flag(item) = 1
+        end if
+
         select case (em % dens_flag(item))
           case (:-1)
             ! -- this case indicates that input emissions are provided as totals/cell

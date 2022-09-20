@@ -378,12 +378,11 @@ module AQM
         return  ! bail out
       end if
 
-      call ESMF_VMGet(vm, localPet=localPet, rc=rc)
+      call ESMF_VMGet(vm, localPet=mylocalPet, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
         line=__LINE__, &
         file=__FILE__)) &
         return  ! bail out
-
       do localDe = 0, localDeCount-1
         de   = localDeToDeMap(localDe+1) + 1
         tile = deToTileMap(de)

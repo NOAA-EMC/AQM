@@ -169,8 +169,8 @@ C Time step part of laypoint
          USE AQM_EMIS_MOD
          USE AQM_FIRES_MOD
          USE AQM_RC_MOD
-c         use aqm_model_mod, only : aqm_config_type, aqm_state_type,
-c     &                      aqm_model_get, aqm_model_domain_get
+         use aqm_model_mod, only : aqm_config_type, aqm_state_type,
+     &                      aqm_model_get, aqm_model_domain_get
          
 	 USE RXNS_DATA, ONLY : MECHNAME !Get Chemical Mechanism Name
          USE GRID_CONF   ! horizontal & vertical domain specifications
@@ -178,7 +178,8 @@ c     &                      aqm_model_get, aqm_model_domain_get
          USE AERO_DATA, ONLY : N_EMIS_PM, PMEM_MAP_NAME
          USE PTMAP       ! defines pt src species mapping to VDEMIS* arrays
          USE UTILIO_DEFN
-
+	 use esmf
+	 use nuopc
 	 
          IMPLICIT NONE
 
@@ -226,7 +227,11 @@ C Local variables:
          INTEGER          LSTK       ! first L: ZF(L) > STKHT
          REAL             LFRC       ! intermediate LFRAC
          character(len=NF90_MAX_NAME) :: path_in
-	 	 
+	 
+ 	 type(ESMF_VM)                          :: VM_ESMF	 
+	 integer myrc, my_mpi_comm,my_ntasks, is, ie, js, je
+	 character(200) :: aline
+	 
 	 real  zf0,zf1,mxzplm
 	 integer, save :: ntimes,itstep,ncid,iddim_stack,nstack,idvar,nvars,idlists(200),
      &	   id_em_gc(200),id_em_pm(200),indx_gc(200),indx_pm(200), nvars_gc,nvars_pm,ndims,
@@ -296,11 +301,18 @@ C----------------------------------------------------! height [m] (can be greate
          IF ( FIRSTIME ) THEN
             FIRSTIME = .FALSE.
             LOGDEV = SETUP_LOGDEV()
+            
+	    call aqm_model_domain_get(ids=is, ide=ie, jds=js, jde=je, rc=myrc)
+            if (aqm_rc_check(myrc, msg="Failure to retrieve grid coordinates in PT3D", 
+     &         file=__FILE__, line=__LINE__)) return
 	    
-	    L=nf90_open('NEXUS/PT.nc',nf90_nowrite, ncid)
+	    write(logdev,*)'LOCALPET, is, ie, js, je=',mylocalpet, is, ie, js, je
+	    write(aline,"('PT/pt-',i4.4,'.nc')")mylocalpet
+	    L=nf90_open(trim(aline),nf90_nowrite, ncid)
 	    if(L.ne.nf90_noerr) then
-	     write(logdev,*)'error openning NEXUS/PT.nc'
-	     stop
+	          IF ( AQM_RC_CHECK( L,
+     &               MSG='failed to open '//trim(aline),
+     &               FILE=__FILE__, LINE=__LINE__ ) ) RETURN
 	    endif
 	    call check(nf90_inq_dimid(ncid,'nlocs',iddim_stack))
             call check(nf90_inquire_dimension(ncid,iddim_stack,len=nstack))
@@ -347,7 +359,9 @@ C----------------------------------------------------! height [m] (can be greate
 	       
 	       if(ndims.ne.2) then
 	        write(logdev,*)'ndims wrong',ndims,vname
-		stop
+		IF ( AQM_RC_CHECK( 1,
+     &               MSG='gaseous ndims wrong '//trim(vname),
+     &               FILE=__FILE__, LINE=__LINE__ ) ) RETURN
 	       endif       
 	       if( PTEM_MAP( L ) .gt.0) then
 	        nvars_gc=nvars_gc+1
@@ -360,7 +374,9 @@ C----------------------------------------------------! height [m] (can be greate
 	       if (L > 0) then
 	        if(ndims.ne.2) then
 	         write(logdev,*)'ndims wrong',ndims,vname
-		 stop
+		 IF ( AQM_RC_CHECK( 1,
+     &               MSG='aerosol ndims wrong '//trim(vname),
+     &               FILE=__FILE__, LINE=__LINE__ ) ) RETURN
 	        endif
 	        do S=1, N_SPC_PTPM
 	         if(PTPM_MAP(S).eq.L) exit
@@ -374,10 +390,14 @@ C----------------------------------------------------! height [m] (can be greate
 	      endif
 	    enddo
 	    
-	    write(logdev,*)'Point Sources nvars_gc, nvars_pm=',nvars_gc, nvars_pm
+	    write(logdev,*)'Point Sources nstack, nvars_gc, nvars_pm=',nstack,nvars_gc, nvars_pm
 	    write(logdev,*)'ncols,nrows,my_ncols,my_nrows=',ncols,nrows,my_ncols,my_nrows
 	    allocate(my_area(my_ncols,my_nrows))
-	    if(.not.interpx(GRID_CRO_2D,'AREA','emis',1,my_ncols,1,my_nrows,1,1,jdate,jtime,my_area)) stop
+	    if(.not.interpx(GRID_CRO_2D,'AREA','emis',1,my_ncols,1,my_nrows,1,1,jdate,jtime,my_area)) then
+	     IF ( AQM_RC_CHECK( 1,
+     &               MSG='failed to get area '//trim(aline),
+     &               FILE=__FILE__, LINE=__LINE__ ) ) RETURN
+            endif
 	    
 	    allocate(stkemis(nstack,nvars_gc+nvars_pm),uwind(my_ncols,my_nrows,emlyrs), vwind(my_ncols,my_nrows,emlyrs),
      &	    stk_ddzf(emlyrs),stk_pres(emlyrs),stk_dens(emlyrs),stk_qv(emlyrs),stk_ta(emlyrs),stk_wspd(emlyrs),stk_zf(emlyrs),
@@ -398,12 +418,13 @@ C        ... initialize emission arrays ...
 C--- anthropogenic point sources
          
 	 itstep=secsdiff(jstartdate,jstarttime,jdate,jtime)/3600+1
-	 write(logdev,*)'process PT emission ',jdate,jtime,tstep(1),itstep
+	 write(logdev,*)'process PT emission ',jdate,jtime,tstep(1),itstep, mylocalpet,nstack
 	 n=nf90_inq_path(ncid,L,path_in)
-	 if(n.ne.nf90_noerr.or.trim(path_in).ne.'NEXUS/PT.nc') then
-	  write(logdev,*)itstep,'ncid wrong, reopen it ',trim(nf90_strerror(n))
-	  L=nf90_close(ncid)
-	  call check(nf90_open('NEXUS/PT.nc',nf90_nowrite, ncid))
+	 if(n.ne.nf90_noerr) then
+	  write(logdev,*)itstep,'ncid wrong ',trim(nf90_strerror(n))
+          IF ( AQM_RC_CHECK( 1,
+     &               MSG='ncid wrong ',
+     &               FILE=__FILE__, LINE=__LINE__ ) ) RETURN
 	 endif
 	   
 	 elemStart(1)=1; elemStart(2)=itstep
@@ -418,8 +439,10 @@ c           write(logdev,*)'read PT emission of gas ',v,itstep
 	     write(logdev,*)'also error 1-step reading PT emission of gas ',v,trim(nf90_strerror(S)),id_em_gc(v)
 	    else
 	      write(logdev,*)'OK for 1-step reading PT emission of gas ',v,trim(nf90_strerror(S)),id_em_gc(v)
-	    endif  
-	    stop
+	    endif
+	    IF ( AQM_RC_CHECK( 1,
+     &               MSG='failed to read PT gas emission  ',
+     &               FILE=__FILE__, LINE=__LINE__ ) ) RETURN
 	   endif 
 	 enddo
 	 
@@ -428,13 +451,23 @@ c         write(logdev,*)'read PT emission of PM ',v
 	   L=nf90_get_var(ncid,id_em_pm(v),stkemis(:,v+nvars_gc),start=elemStart,count=elemCount)
 	   if(L.ne.nf90_noerr) then
 	    write(logdev,*)'error reading PT emission of pm ',v,itstep,nstack,id_em_pm(v)
-	    stop
+	    IF ( AQM_RC_CHECK( 1,
+     &               MSG='failed to read PT aerosol emission  ',
+     &               FILE=__FILE__, LINE=__LINE__ ) ) RETURN
 	   endif 
 	 enddo
 c	 call check(nf90_close(ncid))
 	 
-	 if(.not.interpx(MET_CRO_3D,'UWINDA','PT3D_DEFN',1,my_ncols,1,my_nrows,1,emlyrs,jdate,jtime,uwind)) stop
-	 if(.not.interpx(MET_CRO_3D,'VWINDA','PT3D_DEFN',1,my_ncols,1,my_nrows,1,emlyrs,jdate,jtime,vwind)) stop
+	 if(.not.interpx(MET_CRO_3D,'UWINDA','PT3D_DEFN',1,my_ncols,1,my_nrows,1,emlyrs,jdate,jtime,uwind)) then
+	   IF ( AQM_RC_CHECK( 1,
+     &               MSG='failed to read wind field ',
+     &               FILE=__FILE__, LINE=__LINE__ ) ) RETURN
+         endif
+	 if(.not.interpx(MET_CRO_3D,'VWINDA','PT3D_DEFN',1,my_ncols,1,my_nrows,1,emlyrs,jdate,jtime,vwind)) then
+	   IF ( AQM_RC_CHECK( 1,
+     &               MSG='failed to read wind field ',
+     &               FILE=__FILE__, LINE=__LINE__ ) ) RETURN
+         endif
 	 
 	 mxzplm=0.0
 	   
@@ -509,7 +542,10 @@ C (~mass concentration -- minor hydrostatic assumption) from bottom to top.
                   WRITE( LOGDEV,* ) '    Zbot: ', ZBOT, ' Ztop: ', ZTOP
                   WRITE( LOGDEV,* ) '    Stack Top: ', STKHT( N ),
      &                              ' Plume Top: ', ZPLM
-                  stop
+                  IF ( AQM_RC_CHECK( 1,
+     &               MSG='ERROR: Top of plume is less than stack height ',
+     &               FILE=__FILE__, LINE=__LINE__ ) ) RETURN
+         
                END IF
 
 C Compute LBOT, LTOP such that

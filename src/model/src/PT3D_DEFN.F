@@ -178,8 +178,8 @@ C Time step part of laypoint
          USE AERO_DATA, ONLY : N_EMIS_PM, PMEM_MAP_NAME
          USE PTMAP       ! defines pt src species mapping to VDEMIS* arrays
          USE UTILIO_DEFN
-	 use esmf
-	 use nuopc
+!	 use esmf
+!	 use nuopc
 	 
          IMPLICIT NONE
 
@@ -228,7 +228,7 @@ C Local variables:
          REAL             LFRC       ! intermediate LFRAC
          character(len=NF90_MAX_NAME) :: path_in
 	 
- 	 type(ESMF_VM)                          :: VM_ESMF	 
+! 	 type(ESMF_VM)                          :: VM_ESMF	 
 	 integer myrc, my_mpi_comm,my_ntasks, is, ie, js, je
 	 character(200) :: aline
 	 

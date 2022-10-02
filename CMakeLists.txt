@@ -67,9 +67,16 @@ target_include_directories(ioapi PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_BINAR
 target_compile_definitions(ioapi PUBLIC SUBST_FILES_ID="FILES_CTM.EXT")
 target_link_libraries(ioapi PRIVATE esmf)
 
+# custom targets
+add_custom_target(aqm_mosaic
+                  COMMAND ${CMAKE_COMMAND} -E create_symlink
+                          ${CMAKE_CURRENT_BINARY_DIR}/mod/mosaic_module.mod
+                          ${CMAKE_CURRENT_BINARY_DIR}/mod/mosaic_mod.mod
+                  )
+
 # src/model
 add_library(CCTM OBJECT ${aqm_CCTM_files})
-add_dependencies(CCTM shr aqmio ioapi)
+add_dependencies(CCTM shr aqmio ioapi aqm_mosaic)
 set_target_properties(CCTM PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/mod)
 target_include_directories(CCTM PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/mod>
                                         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/model/CMAQ/CCTM/src/ICL/fixed/filenames>
@@ -105,12 +112,6 @@ add_library(aqm STATIC ${aqm_files} $<TARGET_OBJECTS:shr>
                          	    $<TARGET_OBJECTS:ioapi>
                          	    $<TARGET_OBJECTS:CCTM>)
 set_target_properties(aqm PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/mod)
-add_custom_target(aqm_mosaic
-                  COMMAND ${CMAKE_COMMAND} -E create_symlink
-                          ${CMAKE_CURRENT_BINARY_DIR}/mod/mosaic_module.mod
-                          ${CMAKE_CURRENT_BINARY_DIR}/mod/mosaic_mod.mod
-                  )
-add_dependencies(aqm aqm_mosaic)
 add_library(aqm::aqm ALIAS aqm)
 target_include_directories(aqm PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/mod>
                                       $<INSTALL_INTERFACE:mod>)

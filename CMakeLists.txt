@@ -50,7 +50,8 @@ target_include_directories(drv PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_
                                        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src/io/aqmio>
                                        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src/model>)
 target_compile_definitions(drv PUBLIC verbose_driver)
-target_link_libraries(drv PRIVATE shr CCTM esmf)
+#target_link_libraries(drv PRIVATE shr CCTM esmf)
+target_link_libraries(drv PRIVATE shr CCTM)
 
 # src/io/aqmio
 add_library(aqmio OBJECT ${aqm_aqmio_files})
@@ -86,6 +87,8 @@ target_compile_definitions(CCTM PUBLIC SUBST_FILES_ID="FILES_CTM.EXT"
                                        SUBST_BARRIER=NOOP_BARRIER
                                        SUBST_SUBGRID_INDEX=NOOP_SUBGRID_INDEX
                                        EDDYX=DUMMY_EDDYX
+                                       MOSAIC_MOD=MOSAIC_MODULE
+                                       Mosaic_Mod=Mosaic_Module
                                        OPCONC=DUMMY_OPCONC
 				       OPACONC=DUMMY_OPACONC
                                        OPWDEP=DUMMY_OPWDEP
@@ -94,7 +97,6 @@ target_compile_definitions(CCTM PUBLIC SUBST_FILES_ID="FILES_CTM.EXT"
 				       verbose_gas
                                        mpas
 				       _AQM_)
-target_link_libraries(CCTM PRIVATE esmf)
 
 # AQM
 add_library(aqm STATIC ${aqm_files} $<TARGET_OBJECTS:shr>
@@ -103,6 +105,12 @@ add_library(aqm STATIC ${aqm_files} $<TARGET_OBJECTS:shr>
                          	    $<TARGET_OBJECTS:ioapi>
                          	    $<TARGET_OBJECTS:CCTM>)
 set_target_properties(aqm PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/mod)
+add_custom_target(aqm_mosaic
+                  COMMAND ${CMAKE_COMMAND} -E create_symlink
+                          ${CMAKE_CURRENT_BINARY_DIR}/mod/mosaic_module.mod
+                          ${CMAKE_CURRENT_BINARY_DIR}/mod/mosaic_mod.mod
+                  )
+add_dependencies(aqm aqm_mosaic)
 add_library(aqm::aqm ALIAS aqm)
 target_include_directories(aqm PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/mod>
                                       $<INSTALL_INTERFACE:mod>)

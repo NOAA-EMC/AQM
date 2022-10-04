@@ -143,7 +143,6 @@ am_libCCTM_a_OBJECTS = $(AERO)/libCCTM_a-AERO_DATA.$(OBJEXT) \
 	$(EMIS)/libCCTM_a-BEIS_DEFN.$(OBJEXT) \
 	$(EMIS)/libCCTM_a-BIOG_EMIS.$(OBJEXT) \
 	$(EMIS)/libCCTM_a-cropcal.$(OBJEXT) \
-	$(EMIS)/libCCTM_a-DUST_EMIS.$(OBJEXT) \
 	$(EMIS)/libCCTM_a-EMIS_DEFN.$(OBJEXT) \
 	$(EMIS)/libCCTM_a-LTNG_DEFN.$(OBJEXT) \
 	$(EMIS)/libCCTM_a-LUS_DEFN.$(OBJEXT) \
@@ -238,7 +237,8 @@ am_libCCTM_a_OBJECTS = $(AERO)/libCCTM_a-AERO_DATA.$(OBJEXT) \
 	$(localCCTM)/libCCTM_a-PT3D_DEFN.$(OBJEXT) \
         $(localCCTM)/libCCTM_a-phot.$(OBJEXT) \
         $(localCCTM)/libCCTM_a-ASX_DATA_MOD.$(OBJEXT) \
-        $(localCCTM)/libCCTM_a-centralized_io_util_module.$(OBJEXT)
+        $(localCCTM)/libCCTM_a-centralized_io_util_module.$(OBJEXT) \
+	$(localCCTM)/libCCTM_a-DUST_EMIS.$(OBJEXT)
 libCCTM_a_OBJECTS = $(am_libCCTM_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -469,7 +469,7 @@ libCCTM_a_SOURCES = $(AERO)/AERO_DATA.F $(AERO)/aero_depv.F \
 	$(DEPV)/MOSAIC_MOD.F $(DEPV)/opdepv_diag.F \
 	$(DEPV)/opdepv_mos.F $(DEPV)/opdepv_fst.F $(DEPV)/m3dry.F \
 	$(EMIS)/BEIS_DEFN.F $(EMIS)/BIOG_EMIS.F $(EMIS)/cropcal.F \
-	$(EMIS)/DUST_EMIS.F $(EMIS)/EMIS_DEFN.F $(EMIS)/LTNG_DEFN.F \
+	$(EMIS)/EMIS_DEFN.F $(EMIS)/LTNG_DEFN.F \
 	$(EMIS)/LUS_DEFN.F $(EMIS)/MGEMIS.F $(EMIS)/opemis.F \
 	$(EMIS)/PTBILIN.F $(EMIS)/SSEMIS.F $(EMIS)/STK_EMIS.F \
 	$(EMIS)/STK_PRMS.F $(EMIS)/tfabove.F $(EMIS)/tfbelow.F \
@@ -513,7 +513,8 @@ libCCTM_a_SOURCES = $(AERO)/AERO_DATA.F $(AERO)/aero_depv.F \
 	$(localCCTM)/o3totcol.f $(localCCTM)/vdiffacmx.F \
 	$(localCCTM)/PTMAP.F $(localCCTM)/PT3D_DEFN.F \
         $(localCCTM)/phot.F $(localCCTM)/ASX_DATA_MOD.F \
-        $(localCCTM)/centralized_io_util_module.F
+        $(localCCTM)/centralized_io_util_module.F \
+	$(localCCTM)/DUST_EMIS.F
 
 # local version of CCTM source files
 localCCTM = $(builddir)/src
@@ -759,8 +760,6 @@ $(EMIS)/libCCTM_a-BEIS_DEFN.$(OBJEXT): $(EMIS)/$(am__dirstamp) \
 $(EMIS)/libCCTM_a-BIOG_EMIS.$(OBJEXT): $(EMIS)/$(am__dirstamp) \
 	$(EMIS)/$(DEPDIR)/$(am__dirstamp)
 $(EMIS)/libCCTM_a-cropcal.$(OBJEXT): $(EMIS)/$(am__dirstamp) \
-	$(EMIS)/$(DEPDIR)/$(am__dirstamp)
-$(EMIS)/libCCTM_a-DUST_EMIS.$(OBJEXT): $(EMIS)/$(am__dirstamp) \
 	$(EMIS)/$(DEPDIR)/$(am__dirstamp)
 $(EMIS)/libCCTM_a-EMIS_DEFN.$(OBJEXT): $(EMIS)/$(am__dirstamp) \
 	$(EMIS)/$(DEPDIR)/$(am__dirstamp)
@@ -1027,8 +1026,8 @@ $(localCCTM)/libCCTM_a-ASX_DATA_MOD.$(OBJEXT): $(localCCTM)/$(am__dirstamp) \
         $(localCCTM)/$(DEPDIR)/$(am__dirstamp)
 $(localCCTM)/libCCTM_a-centralized_io_util_module.$(OBJEXT): $(localCCTM)/$(am__dirstamp) \
         $(localCCTM)/$(DEPDIR)/$(am__dirstamp)
-
-
+$(localCCTM)/libCCTM_a-DUST_EMIS.$(OBJEXT): $(localCCTM)/$(am__dirstamp) \
+        $(localCCTM)/$(DEPDIR)/$(am__dirstamp)
 
 libCCTM.a: $(libCCTM_a_OBJECTS) $(libCCTM_a_DEPENDENCIES) $(EXTRA_libCCTM_a_DEPENDENCIES) 
 	$(AM_V_at)-rm -f libCCTM.a
@@ -1280,11 +1279,13 @@ $(EMIS)/libCCTM_a-cropcal.o: $(EMIS)/cropcal.F
 $(EMIS)/libCCTM_a-cropcal.obj: $(EMIS)/cropcal.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-cropcal.obj `if test -f '$(EMIS)/cropcal.F'; then $(CYGPATH_W) '$(EMIS)/cropcal.F'; else $(CYGPATH_W) '$(srcdir)/$(EMIS)/cropcal.F'; fi`
 
-$(EMIS)/libCCTM_a-DUST_EMIS.o: $(EMIS)/DUST_EMIS.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-DUST_EMIS.o `test -f '$(EMIS)/DUST_EMIS.F' || echo '$(srcdir)/'`$(EMIS)/DUST_EMIS.F
+$(localCCTM)/libCCTM_a-DUST_EMIS.o: $(localCCTM)/DUST_EMIS.F
+       $(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(localCCTM)/libCCTM_a-DUST_EMIS.o `test -f '$(local
+CCTM)/DUST_EMIS.F' || echo '$(srcdir)/'`$(localCCTM)/DUST_EMIS.F
 
-$(EMIS)/libCCTM_a-DUST_EMIS.obj: $(EMIS)/DUST_EMIS.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-DUST_EMIS.obj `if test -f '$(EMIS)/DUST_EMIS.F'; then $(CYGPATH_W) '$(EMIS)/DUST_EMIS.F'; else $(CYGPATH_W) '$(srcdir)/$(EMIS)/DUST_EMIS.F'; fi`
+$(localCCTM)/libCCTM_a-DUST_EMIS.obj: $(localCCTM)/DUST_EMIS.F
+       $(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(localCCTM)/libCCTM_a-DUST_EMIS.obj `if test -f '$(
+localCCTM)/DUST_EMIS.F'; then $(CYGPATH_W) '$(localCCTM)/DUST_EMIS.F'; else $(CYGPATH_W) '$(srcdir)/$(localCCTM)/DUST_EMIS.F'; fi`
 
 $(EMIS)/libCCTM_a-EMIS_DEFN.o: $(EMIS)/EMIS_DEFN.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(EMIS)/libCCTM_a-EMIS_DEFN.o `test -f '$(EMIS)/EMIS_DEFN.F' || echo '$(srcdir)/'`$(EMIS)/EMIS_DEFN.F
@@ -2190,7 +2191,7 @@ $(libAERO)aero_driver.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
 	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
 $(libAERO)AERO_EMIS.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/filenames/FILES_CTM.EXT \
 	$(libAERO)AERO_DATA.$(OBJEXT) $(liblocalCCTM)ASX_DATA_MOD.$(OBJEXT) \
-	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libEMIS)DUST_EMIS.$(OBJEXT) \
+	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(liblocalCCTM)DUST_EMIS.$(OBJEXT) \
 	$(libGRID)GRID_CONF.$(OBJEXT) $(libAERO)PRECURSOR_DATA.$(OBJEXT) \
 	$(liblocalCCTM)PT3D_DEFN.$(OBJEXT) $(liblocalCCTM)PTMAP.$(OBJEXT) \
 	$(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libEMIS)SSEMIS.$(OBJEXT) \
@@ -2308,10 +2309,6 @@ $(libEMIS)BIOG_EMIS.$(OBJEXT) : \
 	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
 $(libEMIS)cropcal.$(OBJEXT) : \
 	$(libGRID)HGRD_DEFN.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
-$(libEMIS)DUST_EMIS.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/filenames/FILES_CTM.EXT \
-	$(libAERO)AERO_DATA.$(OBJEXT) $(liblocalCCTM)ASX_DATA_MOD.$(OBJEXT) \
-	$(libGRID)GRID_CONF.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT) \
-	$(libEMIS)LUS_DEFN.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
 $(libEMIS)EMIS_DEFN.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/filenames/FILES_CTM.EXT \
 	$(libAERO)AERO_DATA.$(OBJEXT) $(libAERO)AERO_EMIS.$(OBJEXT) \
 	$(liblocalCCTM)ASX_DATA_MOD.$(OBJEXT) $(libEMIS)BEIS_DEFN.$(OBJEXT) \
@@ -2567,6 +2564,10 @@ $(liblocalCCTM)ASX_DATA_MOD.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/filenames/
         $(libDEPV)DEPVVARS.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
         $(libDEPV)LSM_MOD.$(OBJEXT) $(libSTENEX)noop_modules.$(OBJEXT) \
         $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(liblocalCCTM)DUST_EMIS.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/filenames/FILES_CTM.EXT \
+	$(libAERO)AERO_DATA.$(OBJEXT) $(liblocalCCTM)ASX_DATA_MOD.$(OBJEXT) \
+	$(libGRID)GRID_CONF.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT) \
+	$(libEMIS)LUS_DEFN.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

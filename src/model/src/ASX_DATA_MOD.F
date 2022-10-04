@@ -132,6 +132,12 @@ C-------------------------------------------------------------------------------
          Real,    Allocatable :: C3R      ( :,: )  ! cumulative LAI fraction hc to 0.35 * hc
          Real,    Allocatable :: C4R      ( :,: )  ! cumulative LAI fraction hc to 0.20 * hc
 
+!> FENGSHA option
+         Real,    Allocatable :: CLAYF    ( :,: )  ! Fractional Clay Content 
+         Real,    Allocatable :: SANDF    ( :,: )  ! Fractional Sand Content 
+         Real,    Allocatable :: DRAG     ( :,: )  ! Drag Partion
+         Real,    Allocatable :: UTHR     ( :,: )  ! Dry Threshold Friction Velocity
+
 !> U and V wind components on the cross grid points
          Real,    Allocatable :: UWIND    ( :,:,: )  ! [m/s]
          Real,    Allocatable :: VWIND    ( :,:,: )  ! [m/s]                    
@@ -287,9 +293,14 @@ C Land use information:
       Real, Pointer, Private :: BUFF2D( :,: )   ! 2D temp var
       Real, Pointer, Private :: BUFF3D( :,:,: ) ! 3D temp var
 
-! Canopy in-line control
+! Canopy option control
       CHARACTER( 20 ), SAVE :: CTM_CANOPY_SHADE = 'CTM_CANOPY_SHADE    '! env var for in-line
       LOGICAL,         PUBLIC, SAVE :: CANOPY_SHADE     ! flag in-lining canopy shading
+
+! FENGSHA option control
+      CHARACTER( 20 ), SAVE :: CTM_FENGSHA = 'CTM_FENGSHA    '! env var for in-line
+      LOGICAL,         PUBLIC, SAVE :: FENGSHA                     ! flag for fengsha option
+
       INTEGER                          IOSX             ! i/o and allocate memory status
 
       DATA subname(  1), dif0(  1), ar(  1), meso(  1), lebas(  1) / 'SO2             ', 0.1089,   10.0,      0.0,  35.0/
@@ -650,6 +661,29 @@ C-----------------------------------------------------------------------
      &                STAT = ALLOCSTAT )
             If ( ALLOCSTAT .Ne. 0 ) Then
                XMSG = 'Failure allocating Canopy Shade variables'
+               Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+            End If
+         End If
+
+!> ccccccccccccccccccccc Fengsha option!ccccccccccccccccccccc
+         FENGSHA = ENVYN( 'CTM_FENGSHA',
+     &                   'Flag for in-line fengsha ',
+     &                   .FALSE., IOSX )
+        
+         ! write(*,*) 'FENGSHA IS = ', FENGSHA
+         IF ( FENGSHA ) THEN
+            XMSG = 'Using the Fengsha Wind-Blown dust emission model...'
+            CALL M3MSG2( XMSG )
+         END IF
+     
+         If ( FENGSHA  ) Then
+            ALLOCATE( Met_Data%CLAYF  ( NCOLS,NROWS ),
+     &                Met_Data%SANDF  ( NCOLS,NROWS ),
+     &                Met_Data%DRAG   ( NCOLS,NROWS ),
+     &                Met_Data%UTHR   ( NCOLS,NROWS ),
+     &                STAT = ALLOCSTAT )
+            If ( ALLOCSTAT .Ne. 0 ) Then
+               XMSG = 'Failure allocating Fengsha variables'
                Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
             End If
          End If
@@ -1107,7 +1141,6 @@ C Canopy vars
          If ( .Not. INTERPX( MET_CRO_2D, VNAME, PNAME,
      &                       STRTCOLMC2,ENDCOLMC2,STRTROWMC2,ENDROWMC2,1,1,
      &                       JDATE, JTIME, Met_Data%LAIE ) ) Then
-            XMSG = MSG1 // TRIM( VNAME ) // ' from ' // MET_CRO_2D
             Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          End If
 
@@ -1131,7 +1164,6 @@ C Canopy vars
          If ( .Not. INTERPX( MET_CRO_2D, VNAME, PNAME,
      &                       STRTCOLMC2,ENDCOLMC2,STRTROWMC2,ENDROWMC2,1,1,
      &                       JDATE, JTIME, Met_Data%C3R ) ) Then
-            XMSG = MSG1 // TRIM( VNAME ) // ' from ' // MET_CRO_2D
             Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          End If
 
@@ -1143,6 +1175,42 @@ C Canopy vars
             Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          End If
        End If
+
+C FENGSHA vars
+       If ( FENGSHA ) Then
+        VNAME = 'CLAYF'
+         If ( .Not. INTERPX( MET_CRO_2D, VNAME, PNAME,
+     &                       STRTCOLMC2,ENDCOLMC2, STRTROWMC2,ENDROWMC2,1,1,
+     &                       JDATE, JTIME, Met_Data%CLAYF ) ) Then
+            XMSG = MSG1 // TRIM( VNAME ) // ' from ' // MET_CRO_2D
+            Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+         End If
+
+        VNAME = 'SANDF'
+         If ( .Not. INTERPX( MET_CRO_2D, VNAME, PNAME,
+     &                       STRTCOLMC2,ENDCOLMC2, STRTROWMC2,ENDROWMC2,1,1,
+     &                       JDATE, JTIME, Met_Data%SANDF ) ) Then
+            XMSG = MSG1 // TRIM( VNAME ) // ' from ' // MET_CRO_2D
+            Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+         End If
+
+        VNAME = 'DRAG'
+         If ( .Not. INTERPX( MET_CRO_2D, VNAME, PNAME,
+     &                       STRTCOLMC2,ENDCOLMC2, STRTROWMC2,ENDROWMC2,1,1,
+     &                       JDATE, JTIME, Met_Data%DRAG ) ) Then
+            XMSG = MSG1 // TRIM( VNAME ) // ' from ' // MET_CRO_2D
+            Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+         End If
+
+        VNAME = 'UTHR'
+         If ( .Not. INTERPX( MET_CRO_2D, VNAME, PNAME,
+     &                       STRTCOLMC2,ENDCOLMC2, STRTROWMC2,ENDROWMC2,1,1,
+     &                       JDATE, JTIME, Met_Data%UTHR ) ) Then
+            XMSG = MSG1 // TRIM( VNAME ) // ' from ' // MET_CRO_2D
+            Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+         End If
+      End If
+
 C Soil vars
          VNAME = 'SOIM1'
          If ( .Not. INTERPX( MET_CRO_2D, VNAME, PNAME,

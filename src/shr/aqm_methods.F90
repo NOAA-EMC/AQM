@@ -148,11 +148,11 @@ LOGICAL FUNCTION DESC3( FNAME )
 
   ELSE IF ( TRIM( FNAME ) .EQ. TRIM( MET_CRO_2D ) ) THEN
 
-    NVARS3D = 40
+    NVARS3D = 44
     VNAME3D( 1:NVARS3D ) = &
     (/ 'PRSFC           ', 'USTAR           ',            &
        'WSTAR           ', 'PBL             ',            &
-       'ZRUF            ', &
+       'ZRUF            ',                                &
        'HFX             ', 'WSPD10          ',            &
        'GSW             ', 'RGRND           ',            &
        'RNA             ', 'RCA             ',            &
@@ -170,11 +170,13 @@ LOGICAL FUNCTION DESC3( FNAME )
        'CLU             ', 'POPU            ',            &
        'LAIE            ', 'C1R             ',            &
        'C2R             ', 'C3R             ',            &
-       'C4R             '                     /)
+       'C4R             ',                                &
+       'CLAYF           ', 'SANDF           ',            &
+       'DRAG            ', 'UTHR            ' /)
     UNITS3D( 1:NVARS3D ) = &
     (/ 'Pascal          ', 'M/S             ',            &
        'M/S             ', 'M               ',            &
-       'M               ', &
+       'M               ',                                &
        'WATTS/M**2      ', 'M/S             ',            &
        'WATTS/M**2      ', 'WATTS/M**2      ',            &
        'CM              ', 'CM              ',            &
@@ -192,7 +194,9 @@ LOGICAL FUNCTION DESC3( FNAME )
        'NO UNIT         ', 'PEOPLE/KM**2    ',            &
        'NO UNIT         ', 'NO UNIT         ',            &
        'NO UNIT         ', 'NO UNIT         ',            &
-       'NO UNIT         '                     /)
+       'NO UNIT         ',                                &
+       '1               ', '1               ',            &
+       '1               ', 'M/S             ' /)
 
   ELSE IF ( TRIM( FNAME ) .EQ. TRIM( MET_CRO_3D ) ) THEN
 
@@ -341,7 +345,9 @@ logical function envyn(name, description, defaultval, status)
     case ('CTM_GRAV_SETL')
       envyn = .false.
     case ('CTM_CANOPY_SHADE')
-      envyn = config % canopy_yn !default (false)
+      envyn = config % canopy_yn
+    case ('CTM_FENGSHA')
+      envyn = config % fengsha_yn
     case ('INITIAL_RUN')
       envyn = .true.
     case default
@@ -652,6 +658,10 @@ logical function interpx( fname, vname, pname, &
     call aqm_model_get(stateIn=stateIn, rc=localrc)
     if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
       file=__FILE__, line=__LINE__)) return
+    
+    call aqm_model_get(config=config, stateIn=stateIn, rc=localrc)
+    if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
+      file=__FILE__, line=__LINE__)) return
 
     call aqm_model_get(config=config, stateIn=stateIn, rc=localrc)
     if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
@@ -841,6 +851,48 @@ logical function interpx( fname, vname, pname, &
         call aqm_emis_read("canopy", vname, buffer, rc=localrc)
         if (aqm_rc_test((localrc /= 0), &
           msg="Failure to read canopy for " // vname, &
+          file=__FILE__, line=__LINE__)) return
+       else
+         buffer(1:lbuf) = 0.
+       end if
+
+      ! fengsha variables
+      case ("CLAYF")
+      ! p2d => stateIn % cclayf
+       if (config % fengsha_yn) then
+        call aqm_emis_read("fengsha", vname, buffer, rc=localrc)
+        if (aqm_rc_test((localrc /= 0), &
+          msg="Failure to read fengsha for " // vname, &
+          file=__FILE__, line=__LINE__)) return
+       else
+         buffer(1:lbuf) = 0.
+       end if
+      case ("SANDF")
+      ! p2d => stateIn % csandf
+       if (config % fengsha_yn) then
+        call aqm_emis_read("fengsha", vname, buffer, rc=localrc)
+        if (aqm_rc_test((localrc /= 0), &
+          msg="Failure to read fengsha for " // vname, &
+          file=__FILE__, line=__LINE__)) return
+       else
+         buffer(1:lbuf) = 0.
+       end if
+      case ("DRAG")
+      ! p2d => stateIn % cdrag
+       if (config % fengsha_yn) then
+        call aqm_emis_read("fengsha", vname, buffer, rc=localrc)
+        if (aqm_rc_test((localrc /= 0), &
+          msg="Failure to read fengsha for " // vname, &
+          file=__FILE__, line=__LINE__)) return
+       else
+         buffer(1:lbuf) = 0.
+       end if
+      case ("UTHR")
+      ! p2d => stateIn % cuthr
+       if (config % fengsha_yn) then
+        call aqm_emis_read("fengsha", vname, buffer, rc=localrc)
+        if (aqm_rc_test((localrc /= 0), &
+          msg="Failure to read fengsha for " // vname, &
           file=__FILE__, line=__LINE__)) return
        else
          buffer(1:lbuf) = 0.

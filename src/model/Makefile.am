@@ -79,7 +79,6 @@ libCCTM_a_SOURCES += \
 	$(EMIS)/BEIS_DEFN.F \
 	$(EMIS)/BIOG_EMIS.F \
 	$(EMIS)/cropcal.F \
-	$(EMIS)/DUST_EMIS.F \
 	$(EMIS)/EMIS_DEFN.F \
 	$(EMIS)/LTNG_DEFN.F \
 	$(EMIS)/LUS_DEFN.F \
@@ -242,7 +241,8 @@ libCCTM_a_SOURCES += \
 	$(localCCTM)/PT3D_DEFN.F \
         $(localCCTM)/phot.F \
         $(localCCTM)/ASX_DATA_MOD.F \
-        $(localCCTM)/centralized_io_util_module.F
+        $(localCCTM)/centralized_io_util_module.F \
+        $(localCCTM)/DUST_EMIS.F
 
 libCCTM_a_CPPFLAGS  = -DSUBST_FILES_ID=\"FILES_CTM.EXT\"
 libCCTM_a_CPPFLAGS += -DSUBST_CONST=\"CONST.EXT\"
@@ -301,7 +301,7 @@ $(libAERO)aero_driver.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
 	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
 $(libAERO)AERO_EMIS.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/filenames/FILES_CTM.EXT \
 	$(libAERO)AERO_DATA.$(OBJEXT) $(liblocalCCTM)ASX_DATA_MOD.$(OBJEXT) \
-	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libEMIS)DUST_EMIS.$(OBJEXT) \
+	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(liblocalCCTM)DUST_EMIS.$(OBJEXT) \
 	$(libGRID)GRID_CONF.$(OBJEXT) $(libAERO)PRECURSOR_DATA.$(OBJEXT) \
 	$(liblocalCCTM)PT3D_DEFN.$(OBJEXT) $(liblocalCCTM)PTMAP.$(OBJEXT) \
 	$(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libEMIS)SSEMIS.$(OBJEXT) \
@@ -678,3 +678,7 @@ $(liblocalCCTM)ASX_DATA_MOD.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/filenames/
         $(libDEPV)DEPVVARS.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
         $(libDEPV)LSM_MOD.$(OBJEXT) $(libSTENEX)noop_modules.$(OBJEXT) \
         $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(liblocalCCTM)DUST_EMIS.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/filenames/FILES_CTM.EXT \
+       $(libAERO)AERO_DATA.$(OBJEXT) $(liblocalCCTM)ASX_DATA_MOD.$(OBJEXT) \
+       $(libGRID)GRID_CONF.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT) \
+       $(libEMIS)LUS_DEFN.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)

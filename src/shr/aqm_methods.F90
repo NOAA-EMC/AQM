@@ -155,7 +155,7 @@ LOGICAL FUNCTION DESC3( FNAME )
        'ZRUF            ',                                &
        'HFX             ', 'WSPD10          ',            &
        'GSW             ', 'RGRND           ',            &
-       'RNA             ', 'RCA             ',            &
+       'RN              ', 'RC              ',            &
        'CFRAC           ', 'CLDT            ',            &
        'CLDB            ', 'WBAR            ',            &
        'RA              ', 'RS              ',            &
@@ -1366,6 +1366,33 @@ LOGICAL FUNCTION WRITE3_REAL4D( FNAME, VNAME, JDATE, JTIME, BUFFER )
 END FUNCTION WRITE3_REAL4D
 
 ! -- dummy subroutines
+
+SUBROUTINE DUMMY_AQ_MAP( JDATE, JTIME, WTBAR, WCBAR, TBARC, PBARC, &
+                         CTHK1, AIRM, PRATE1, TAUCLD, POLC, CEND,  &
+                         REMOV, REMOVAC, ALFA0, ALFA2, ALFA3, DARK )
+  INTEGER, INTENT( IN )    :: JDATE, JTIME
+  REAL,    INTENT( IN )    :: WTBAR, WCBAR, TBARC, PBARC, &
+                              CTHK1, AIRM, PRATE1, TAUCLD
+  REAL,    INTENT( IN )    :: POLC ( : )
+  REAL,    INTENT( INOUT ) :: REMOVAC
+  REAL,    INTENT( INOUT ) :: CEND( : ), REMOV( : )
+  REAL,    INTENT( IN )    :: ALFA0, ALFA2, ALFA3
+  LOGICAL, INTENT( IN )    :: DARK
+END SUBROUTINE DUMMY_AQ_MAP
+
+SUBROUTINE DUMMY_CONVCLD_ACM ( CGRID, JDATE, JTIME, TSTEP, &
+                               N_SPC_WDEP, WDEP_MAP, CONV_DEP, SUBTRANS )
+  REAL, POINTER            :: CGRID( :,:,:,: )
+  INTEGER, INTENT( IN )    :: JDATE
+  INTEGER, INTENT( IN )    :: JTIME
+  INTEGER, INTENT( IN )    :: TSTEP( 3 )
+  INTEGER, INTENT( IN )    :: N_SPC_WDEP
+  INTEGER, INTENT( IN )    :: WDEP_MAP( : )
+  REAL,    INTENT( INOUT ) :: CONV_DEP( :,:,: )
+  REAL,    INTENT( OUT )   :: SUBTRANS( :,:,: )
+  CONV_DEP = 0.0
+  SUBTRANS = 0.0
+END SUBROUTINE DUMMY_CONVCLD_ACM
 
 SUBROUTINE DUMMY_EDDYX ( EDDYV )
   REAL,   INTENT( OUT ) :: EDDYV ( :,:,: )

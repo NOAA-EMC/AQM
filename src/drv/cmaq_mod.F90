@@ -131,6 +131,11 @@ contains
         INTEGER                   :: JDATE, JTIME
         INTEGER                   :: TSTEP( 3 )
       END SUBROUTINE VDIFF
+      SUBROUTINE CLDPROC ( CGRID, JDATE, JTIME, TSTEP )
+        REAL, POINTER             :: CGRID( :,:,:,: )
+        INTEGER, INTENT( IN )     :: JDATE, JTIME
+        INTEGER, INTENT( IN )     :: TSTEP( 3 )
+      END SUBROUTINE CLDPROC
       SUBROUTINE CHEM ( CGRID, JDATE, JTIME, TSTEP )
         REAL, POINTER             :: CGRID( :,:,:,: )
         INTEGER                   :: JDATE, JTIME
@@ -150,6 +155,8 @@ contains
     CALL VDIFF ( CGRID, JDATE, JTIME, TSTEP )
     
     CALL CHEM ( CGRID, JDATE, JTIME, TSTEP )
+
+    CALL CLDPROC ( CGRID, JDATE, JTIME, TSTEP )
 
     if (run_aero) then
       CALL AERO ( CGRID, JDATE, JTIME, TSTEP )

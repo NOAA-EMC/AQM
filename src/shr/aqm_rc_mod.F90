@@ -4,7 +4,7 @@ module aqm_rc_mod
 
   integer, parameter :: AQM_RC_SUCCESS = 0
   integer, parameter :: AQM_RC_FAILURE = -1
-
+  integer  :: mylocalpet
   public
 
 contains

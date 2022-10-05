@@ -148,7 +148,7 @@ LOGICAL FUNCTION DESC3( FNAME )
 
   ELSE IF ( TRIM( FNAME ) .EQ. TRIM( MET_CRO_2D ) ) THEN
 
-    NVARS3D = 35
+    NVARS3D = 44
     VNAME3D( 1:NVARS3D ) = &
     (/ 'PRSFC           ', 'USTAR           ',            &
        'WSTAR           ', 'PBL             ',            &
@@ -166,6 +166,11 @@ LOGICAL FUNCTION DESC3( FNAME )
        'SEAICE          ', 'SOIM1           ',            &
        'SOIM2           ', 'SOIT1           ',            &
        'SOIT2           ', 'LH              ',            &
+       'FCH             ', 'FRT             ',            &
+       'CLU             ', 'POPU            ',            &
+       'LAIE            ', 'C1R             ',            &
+       'C2R             ', 'C3R             ',            &
+       'C4R             ',                                &
        'CLAYF           ', 'SANDF           ',            &
        'DRAG            ', 'UTHR            ' /)
     UNITS3D( 1:NVARS3D ) = &
@@ -185,6 +190,11 @@ LOGICAL FUNCTION DESC3( FNAME )
        'FRACTION        ', 'M**3/M**3       ',            &
        'M**3/M**3       ', 'K               ',            &
        'K               ', 'WATTS/M**2      ',            &
+       'M               ', 'NO UNIT         ',            &
+       'NO UNIT         ', 'PEOPLE/KM**2    ',            &
+       'NO UNIT         ', 'NO UNIT         ',            &
+       'NO UNIT         ', 'NO UNIT         ',            &
+       'NO UNIT         ',                                &
        '1               ', '1               ',            &
        '1               ', 'M/S             ' /)
 
@@ -334,6 +344,8 @@ logical function envyn(name, description, defaultval, status)
       envyn = associated(em)
     case ('CTM_GRAV_SETL')
       envyn = .false.
+    case ('CTM_CANOPY_SHADE')
+      envyn = config % canopy_yn
     case ('CTM_FENGSHA')
       envyn = config % fengsha_yn
     case ('INITIAL_RUN')
@@ -651,6 +663,11 @@ logical function interpx( fname, vname, pname, &
     if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
       file=__FILE__, line=__LINE__)) return
 
+    call aqm_model_get(config=config, stateIn=stateIn, rc=localrc)
+    if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
+      file=__FILE__, line=__LINE__)) return
+
+
     select case (trim(vname))
       case ("HFX")
         p2d => stateIn % hfx
@@ -746,7 +763,99 @@ logical function interpx( fname, vname, pname, &
            buffer(k) = 0.01 * stateIn % zorl(c,r)
          end do
         end do
-        
+
+      ! canopy variables
+      case ("FCH")
+      ! p2d => stateIn % cfch
+       if (config % canopy_yn) then
+        call aqm_emis_read("canopy", vname, buffer, rc=localrc)
+        if (aqm_rc_test((localrc /= 0), &
+          msg="Failure to read canopy for " // vname, &
+          file=__FILE__, line=__LINE__)) return
+       else
+         buffer(1:lbuf) = 0.
+       end if
+      case ("FRT")
+      ! p2d => stateIn % cfrt
+       if (config % canopy_yn) then
+        call aqm_emis_read("canopy", vname, buffer, rc=localrc)
+        if (aqm_rc_test((localrc /= 0), &
+          msg="Failure to read canopy for " // vname, &
+          file=__FILE__, line=__LINE__)) return
+       else
+         buffer(1:lbuf) = 0.
+       end if
+      case ("CLU")
+      ! p2d => stateIn % cclu
+       if (config % canopy_yn) then
+        call aqm_emis_read("canopy", vname, buffer, rc=localrc)
+        if (aqm_rc_test((localrc /= 0), &
+          msg="Failure to read canopy for " // vname, &
+          file=__FILE__, line=__LINE__)) return
+       else
+         buffer(1:lbuf) = 0.
+       end if
+      case ("POPU")
+      ! p2d => stateIn % cpopu
+       if (config % canopy_yn) then
+        call aqm_emis_read("canopy", vname, buffer, rc=localrc)
+        if (aqm_rc_test((localrc /= 0), &
+          msg="Failure to read canopy for " // vname, &
+          file=__FILE__, line=__LINE__)) return
+       else
+         buffer(1:lbuf) = 0.
+       end if
+      case ("LAIE")
+      ! p2d => stateIn % claie
+       if (config % canopy_yn) then
+        call aqm_emis_read("canopy", vname, buffer, rc=localrc)
+        if (aqm_rc_test((localrc /= 0), &
+          msg="Failure to read canopy for " // vname, &
+          file=__FILE__, line=__LINE__)) return
+       else
+         buffer(1:lbuf) = 0.
+       end if
+      case ("C1R")
+      ! p2d => stateIn % cc1r
+       if (config % canopy_yn) then
+        call aqm_emis_read("canopy", vname, buffer, rc=localrc)
+        if (aqm_rc_test((localrc /= 0), &
+          msg="Failure to read canopy for " // vname, &
+          file=__FILE__, line=__LINE__)) return
+       else
+         buffer(1:lbuf) = 0.
+       end if      
+      case ("C2R")
+      ! p2d => stateIn % cc2r
+       if (config % canopy_yn) then
+        call aqm_emis_read("canopy", vname, buffer, rc=localrc)
+        if (aqm_rc_test((localrc /= 0), &
+          msg="Failure to read canopy for " // vname, &
+          file=__FILE__, line=__LINE__)) return
+       else
+         buffer(1:lbuf) = 0.
+       end if
+      case ("C3R")
+      ! p2d => stateIn % cc3r
+       if (config % canopy_yn) then
+        call aqm_emis_read("canopy", vname, buffer, rc=localrc)
+        if (aqm_rc_test((localrc /= 0), &
+          msg="Failure to read canopy for " // vname, &
+          file=__FILE__, line=__LINE__)) return
+       else
+         buffer(1:lbuf) = 0.
+       end if
+      case ("C4R")
+      ! p2d => stateIn % cc4r
+       if (config % canopy_yn) then
+        call aqm_emis_read("canopy", vname, buffer, rc=localrc)
+        if (aqm_rc_test((localrc /= 0), &
+          msg="Failure to read canopy for " // vname, &
+          file=__FILE__, line=__LINE__)) return
+       else
+         buffer(1:lbuf) = 0.
+       end if
+
       ! fengsha variables
       case ("CLAYF")
       ! p2d => stateIn % cclayf

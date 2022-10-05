@@ -13,6 +13,7 @@ module AQM
 
   ! -- import fields
   integer, parameter :: importFieldCount = 35
+!  integer, parameter :: importFieldCount = 44  !with canopy
   character(len=*), dimension(importFieldCount), parameter :: &
     importFieldNames = (/ &
       "canopy_moisture_storage                  ", &
@@ -50,6 +51,15 @@ module AQM
       "surface_cell_area                        ", &
       "surface_snow_area_fraction               ", &
       "temperature_of_soil_layer                "  &
+!      "forest_canopy_height                     ", &
+!      "forest_fraction                          ", &
+!      "clumping_index                           ", &      
+!      "population_density                       ", &
+!      "leaf_area_index_eccc                     ", &
+!      "cum_lai_frac1_eccc                       ", &
+!      "cum_lai_frac2_eccc                       ", &
+!      "cum_lai_frac3_eccc                       ", &
+!      "cum_lai_frac4_eccc                       ", &
     /)
   ! -- export fields
   integer, parameter :: exportFieldCount = 2

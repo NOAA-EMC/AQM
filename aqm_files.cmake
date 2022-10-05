@@ -179,7 +179,6 @@ list(APPEND aqm_CCTM_files
 	${PHOT}/CSQY_DATA.F
 	${PHOT}/OMI_1979_to_2015.dat
 	${PHOT}/opphot.F
-	${PHOT}/phot.F
 	${PHOT}/PHOT_MET_DATA.F
 	${PHOT}/PHOT_MOD.F
 	${PHOT}/PHOTOLYSIS_ALBEDO.F
@@ -229,6 +228,8 @@ list(APPEND aqm_CCTM_files
 	${localCCTM}/vdiffacmx.F
 	${localCCTM}/PTMAP.F
 	${localCCTM}/PT3D_DEFN.F
-	${localCCTM}/ASX_DATA_MOD.F
-	${localCCTM}/DUST_EMIS.F
+        ${localCCTM}/ASX_DATA_MOD.F
+        ${localCCTM}/DUST_EMIS.F
+        ${localCCTM}/phot.F
+        ${localCCTM}/centralized_io_util_module.F
 )

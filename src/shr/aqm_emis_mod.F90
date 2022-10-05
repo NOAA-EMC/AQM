@@ -1161,6 +1161,12 @@ contains
           return  ! bail out
         end if
 
+        if (trim(em % type) == "canopy") then
+           ! -- ensure canopy variables are not normalized by area like
+           ! -- emissions conversions below
+           em % dens_flag(item) = 1
+        end if
+
         if (trim(em % type) == "fengsha") then
            ! -- ensure fengsha input variables are not normalized by area like
            ! -- emissions conversions below

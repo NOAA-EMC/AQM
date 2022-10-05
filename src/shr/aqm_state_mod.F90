@@ -45,9 +45,20 @@ module aqm_state_mod
 
     real(AQM_KIND_R8), dimension(:,:,:,:), pointer :: tr       => null()
 
+    ! -- canopy variables
+!    real(AQM_KIND_R8), dimension(:,:),     pointer :: cfch     => null()
+!    real(AQM_KIND_R8), dimension(:,:),     pointer :: cfrt     => null()
+!    real(AQM_KIND_R8), dimension(:,:),     pointer :: cclu     => null()
+!    real(AQM_KIND_R8), dimension(:,:),     pointer :: cpopu    => null()
+!    real(AQM_KIND_R8), dimension(:,:),     pointer :: claie    => null()
+!    real(AQM_KIND_R8), dimension(:,:),     pointer :: cc1r     => null()
+!    real(AQM_KIND_R8), dimension(:,:),     pointer :: cc2r     => null()
+!    real(AQM_KIND_R8), dimension(:,:),     pointer :: cc3r     => null()
+!    real(AQM_KIND_R8), dimension(:,:),     pointer :: cc4r     => null()
+
     ! -- diagnostics
     real(AQM_KIND_R8), dimension(:,:),     pointer :: aod      => null()
-
+    
   end type aqm_state_type
 
   public

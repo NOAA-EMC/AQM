@@ -4,6 +4,7 @@ module cmaq_mod
   use aqm_types_mod
   use aqm_const_mod, only : onebg, rdgas, grav, mwair, zero
   use aqm_emis_mod
+  use aqm_prod_mod
   use aqm_tools_mod, only : aqm_units_conv
 
   use PAGRD_DEFN
@@ -43,6 +44,8 @@ module cmaq_mod
   public :: cmaq_emis_init
   public :: cmaq_emis_finalize
   public :: cmaq_emis_print
+  public :: cmaq_prod_units_get
+  public :: cmaq_prod_update
   public :: cmaq_species_read
   public :: cmaq_export
   public :: cmaq_import
@@ -641,5 +644,126 @@ contains
     call m3mesg(msgString)
 
   end subroutine cmaq_domain_log
+
+  subroutine cmaq_prod_units_get( species, units )
+
+    character(len=*), intent(in)  :: species
+    character(len=*), intent(out) :: units
+
+    ! -- local variables
+    integer :: spc
+
+    ! -- begin
+    units = "n/a"
+    select case ( trim(species) )
+      case ("PM2.5")
+        ! --- diagnostic PM2.5
+        units = "ug/m3"
+      case default
+        ! --- CMAQ species
+        ! --- 1. gas species
+        spc = index1( trim(species), n_gc_spc, gc_spc )
+        if (spc > 0) then
+          units = "ppmV"
+        else
+          ! --- 2. aerosol species
+          spc = index1( trim(species), n_ae_spc, ae_spc )
+          if (spc > 0) units = "ug/m3"
+        end if
+    end select
+
+  end subroutine cmaq_prod_units_get
+
+  subroutine cmaq_prod_update(tracers, start_index, rc)
+
+    real(AQM_KIND_R8), intent(in)  :: tracers(:,:,:,:)
+    integer,           intent(in)  :: start_index
+    integer, optional, intent(out) :: rc
+
+    ! -- local variables
+    integer :: item, n, spc
+    real    :: pm25(my_ncols,my_nrows,1,1)
+    type(aqm_internal_emis_type), pointer :: pdata(:)
+    type(aqm_internal_emis_type), pointer :: prod
+
+    ! -- begin
+    nullify(pdata)
+    pdata => aqm_emis_data_get()
+
+    if (associated(pdata)) then
+
+      do item = 1, size(pdata)
+        nullify(prod)
+        if (trim(pdata(item) % type) == "product") then
+          prod => pdata(item)
+          do n = 1, size(prod % species)
+            select case ( trim(prod % species(n)) )
+              case ("PM2.5")
+                ! --- diagnostic PM2.5
+                call cmaq_prod_pm25( pm25, cgrid, tracers, start_index )
+                call aqm_prod_compute( prod, pm25, n, 1 )
+              case default
+                ! --- CMAQ species
+                ! --- 1. gas species
+                spc = index1( prod % species(n), n_gc_spc, gc_spc )
+                if (spc > 0) then
+                  call aqm_prod_compute( prod, cgrid, n, spc )
+                else
+                  ! --- 2. aerosol species
+                  spc = index1( prod % species(n), n_ae_spc, ae_spc )
+                  if (spc > 0) call aqm_prod_compute( prod, cgrid, n, spc )
+                end if
+            end select
+          end do
+        end if
+      end do
+
+    end if
+
+  end subroutine cmaq_prod_update
+
+  subroutine cmaq_prod_pm25( pm25, cgrid, frac, idx )
+
+    real,              intent(out) :: pm25(:,:,:,:)
+    real,              intent(in)  :: cgrid(:,:,:,:)
+    real(AQM_KIND_R8), intent(in)  :: frac(:,:,:,:)
+    integer,           intent(in)  :: idx
+
+    ! -- local variables
+    integer :: i, ibeg, iend, mode, spc
+    integer :: c, r
+
+    ! -- local parameters
+    character(len=*), parameter :: pm25_species(*) = &
+      (/ "ASO4I  ", "ANO3I  ", "ANH4I  ", "ANAI   ", "ACLI   ", "AECI   ", "AOMI   ", "AOTHRI ", & ! I-mode (Atken)
+         "ASO4J  ", "ANO3J  ", "ANH4J  ", "ANAJ   ", "ACLJ   ", "AECJ   ", "AOMJ   ", "AOTHRJ ", & ! J-mode (accum)
+         "AFEJ   ", "ASIJ   ", "ATIJ   ", "ACAJ   ", "AMGJ   ", "AMNJ   ", "AALJ   ", "AKJ    ", &
+         "ASOIL  ", "ACORS  ", "ASEACAT", "ACLK   ", "ASO4K  ", "ANO3K  ", "ANH4K  " /)            ! K-mode (coarse)
+
+    integer, parameter :: nspc(3) = (/ 8, 16, 7 /)
+
+    ! -- begin
+    pm25 = 0.
+
+    ibeg = 0
+    iend = 0
+
+    ! -- loop over I, J, K modes
+    do mode = 1, 3
+      ibeg = iend + 1
+      iend = iend + nspc(mode)
+      do i = ibeg, iend
+        spc = index1( pm25_species(i), n_ae_spc, ae_spc )
+        if (spc > 0) then
+          do r = 1, my_nrows
+            do c = 1, my_ncols
+              pm25( c,r,1,1 ) = pm25( c,r,1,1 ) + frac( c,r,1,mode-1+idx ) * cgrid( c,r,1,spc )
+            end do
+          end do
+        end if
+      end do
+    end do
+
+  end subroutine cmaq_prod_pm25
 
 end module cmaq_mod

@@ -11,6 +11,7 @@ list(APPEND aqm_shr_files
     src/shr/aqm_const_mod.F90
 	src/shr/aqm_domain_mod.F90
     src/shr/aqm_emis_mod.F90
+    src/shr/aqm_prod_mod.F90
     src/shr/aqm_fires_mod.F90
     src/shr/aqm_internal_mod.F90
 	src/shr/aqm_model_mod.F90

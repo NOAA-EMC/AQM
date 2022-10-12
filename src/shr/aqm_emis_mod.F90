@@ -23,6 +23,7 @@ module aqm_emis_mod
 
   public :: aqm_emis_init
   public :: aqm_emis_finalize
+  public :: aqm_emis_data_get
   public :: aqm_emis_get
   public :: aqm_emis_desc
   public :: aqm_emis_update
@@ -196,6 +197,7 @@ contains
       em(item) % file = ""
       em(item) % frequency = ""
       em(item) % format = "netcdf"
+      em(item) % iomode = "read"
       em(item) % iofmt = ESMF_IOFMT_NETCDF
       em(item) % irec  = 0
       em(item) % verbose     = .false.
@@ -205,6 +207,7 @@ contains
       em(item) % specfile    = ""
       em(item) % specprofile = ""
       nullify(em(item) % species)
+      nullify(em(item) % sources)
       nullify(em(item) % units)
       nullify(em(item) % factors)
       nullify(em(item) % fields)
@@ -238,7 +241,7 @@ contains
     integer                    :: columnCount, rowCount
     integer                    :: fieldCount, spcsCount, item
     integer                    :: aqm_emis_num
-    logical                    :: eolFlag
+    logical                    :: eolFlag, readFactors
     character(len=ESMF_MAXSTR) :: value
     character(len=ESMF_MAXSTR) :: msgString
     character(len=ESMF_MAXSTR), allocatable :: tmpSourceList(:)
@@ -469,6 +472,8 @@ contains
         return  ! bail out
     end if
 
+    readFactors = .true.
+
     select case (trim(em % type))
       case ("biogenic")
         call ESMF_ConfigGetAttribute(config, value, &
@@ -560,6 +565,9 @@ contains
             rcToReturn=rc)) &
             return  ! bail out
         end if
+      case ("product")
+        em % iomode = "create"
+        readFactors = .false.
     end select
 
     call ESMF_ConfigGetDim(config, rowCount, columnCount, &
@@ -613,24 +621,30 @@ contains
           file=__FILE__,  &
           rcToReturn=rc)) &
           return  ! bail out
-        ! -- scaling factor
-        call ESMF_ConfigGetAttribute(config, value, default="1.0", &
-          eolFlag=eolFlag, rc=localrc)
-        if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-          line=__LINE__,  &
-          file=__FILE__,  &
-          rcToReturn=rc)) &
-          return  ! bail out
-        if (.not.eolFlag) then
-          read(value, *, iostat=stat) tmpFactorList(item)
-          if (stat /= 0) then
-            call ESMF_LogSetError(ESMF_RC_NOT_VALID, &
-              msg="- emission factor: "//trim(value), &
-              line=__LINE__,  &
-              file=__FILE__,  &
-              rcToReturn=rc)
+        if (readFactors) then
+          ! -- scaling factor
+          call ESMF_ConfigGetAttribute(config, value, default="1.0", &
+            eolFlag=eolFlag, rc=localrc)
+          if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__,  &
+            file=__FILE__,  &
+            rcToReturn=rc)) &
             return  ! bail out
+          if (.not.eolFlag) then
+            read(value, *, iostat=stat) tmpFactorList(item)
+            if (stat /= 0) then
+              call ESMF_LogSetError(ESMF_RC_NOT_VALID, &
+                msg="- emission factor: "//trim(value), &
+                line=__LINE__,  &
+                file=__FILE__,  &
+                rcToReturn=rc)
+              return  ! bail out
+            end if
           end if
+        else
+          eolFlag = .false.
+        end if
+        if (.not.eolFlag) then
           ! -- variable (netcdf) or file (binary) name
           call ESMF_ConfigGetAttribute(config, tmpSourceList(item), &
             default="", eolFlag=eolFlag, rc=localrc)
@@ -695,7 +709,7 @@ contains
 
         ! -- open single netCDF file if selected
         if (em % iofmt == ESMF_IOFMT_NETCDF) then
-          call AQMIO_Open(em % IO, em % file, filePath=em % path, iomode="read", &
+          call AQMIO_Open(em % IO, em % file, filePath=em % path, iomode=em % iomode, &
             iofmt=em % iofmt, rc=localrc)
           if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
             line=__LINE__,  &
@@ -1009,12 +1023,16 @@ contains
 
       em => is % wrap % emis(item)
 
-      isRinging = ESMF_AlarmIsRinging(em % alarm, rc=localrc)
-      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__,  &
-        file=__FILE__,  &
-        rcToReturn=rc)) &
-        return  ! bail out
+      isRinging = (trim(em % iomode) == "read")
+
+      if (isRinging) then
+        isRinging = ESMF_AlarmIsRinging(em % alarm, rc=localrc)
+        if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__,  &
+          file=__FILE__,  &
+          rcToReturn=rc)) &
+          return  ! bail out
+      end if
 
       if (isRinging) then
         call ESMF_ClockGet(clock, currTime=currTime, rc=localrc)
@@ -1088,6 +1106,15 @@ contains
 
   end function aqm_emis_get
 
+  function aqm_emis_data_get() result (ep)
+    type(aqm_internal_emis_type), pointer :: ep(:)
+
+    nullify(ep)
+
+    if (associated(aqm_emis_data)) ep => aqm_emis_data
+
+  end function aqm_emis_data_get
+
   subroutine aqm_emis_desc( etype, nlays, nvars, vnames, units )
     character(len=*),  intent(in)  :: etype
     integer,           intent(out) :: nlays
@@ -1143,6 +1170,8 @@ contains
     em => aqm_emis_get(etype)
     ! -- bail out if no emissions available
     if (.not.associated(em)) return
+    ! -- bail out if this is a product
+    if (trim(em % iomode) /= "read") return
 
     call aqm_model_get(stateIn=stateIn, rc=localrc)
     if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &

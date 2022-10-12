@@ -18,6 +18,7 @@ module aqm_internal_mod
     character(len=6)               :: period
     integer                        :: irec
     logical                        :: verbose
+    character(len=ESMF_MAXSTR)     :: iomode
     type(ESMF_IOFmt_flag)          :: iofmt
     type(ESMF_GridComp)            :: IO
     type(ESMF_Alarm)               :: alarm

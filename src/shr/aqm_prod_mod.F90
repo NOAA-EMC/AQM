@@ -351,6 +351,14 @@ contains
           file=__FILE__,  &
           rcToReturn=rc)) &
           return  ! bail out
+        if ( em % sync ) then
+          call AQMIO_Sync(em % IO, rc=localrc)
+          if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__,  &
+            file=__FILE__,  &
+            rcToReturn=rc)) &
+            return  ! bail out
+        end if
         call ESMF_AlarmRingerOff(em % alarm, rc=localrc)
         if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
           line=__LINE__,  &

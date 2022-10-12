@@ -200,6 +200,7 @@ contains
       em(item) % iomode = "read"
       em(item) % iofmt = ESMF_IOFMT_NETCDF
       em(item) % irec  = 0
+      em(item) % sync        = .false.
       em(item) % verbose     = .false.
       em(item) % logprefix   = ""
       em(item) % period      = ""
@@ -568,6 +569,32 @@ contains
       case ("product")
         em % iomode = "create"
         readFactors = .false.
+        call ESMF_ConfigGetAttribute(config, em % sync, &
+          label=trim(em % name)//"_sync:", default=.false., rc=localrc)
+        if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__,  &
+          file=__FILE__,  &
+          rcToReturn=rc)) &
+          return  ! bail out
+        if (em % verbose) then
+          if (em % sync) then
+            call ESMF_LogWrite(trim(em % logprefix)//": "//pName &
+              //": sync: true", ESMF_LOGMSG_INFO, rc=localrc)
+            if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+              line=__LINE__,  &
+              file=__FILE__,  &
+              rcToReturn=rc)) &
+              return  ! bail out
+          else
+            call ESMF_LogWrite(trim(em % logprefix)//": "//pName &
+              //": sync: false", ESMF_LOGMSG_INFO, rc=localrc)
+            if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+              line=__LINE__,  &
+              file=__FILE__,  &
+              rcToReturn=rc)) &
+              return  ! bail out
+          end if
+        end if
     end select
 
     call ESMF_ConfigGetDim(config, rowCount, columnCount, &

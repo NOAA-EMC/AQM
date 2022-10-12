@@ -17,6 +17,7 @@ module aqm_internal_mod
     character(len=ESMF_MAXSTR)     :: specprofile
     character(len=6)               :: period
     integer                        :: irec
+    logical                        :: sync
     logical                        :: verbose
     character(len=ESMF_MAXSTR)     :: iomode
     type(ESMF_IOFmt_flag)          :: iofmt

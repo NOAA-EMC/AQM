@@ -2619,8 +2619,10 @@ contains
     integer, dimension(:,:), allocatable :: minIndexPTile, maxIndexPTile
     character(len=ESMF_MAXSTR) :: fieldName
     character(len=ESMF_MAXSTR) :: dimName
+    character(len=ESMF_MAXSTR) :: units
     type(ESMF_DistGrid)      :: distgrid
     type(ESMF_Grid)          :: grid
+    type(ESMF_Info)          :: info
     type(ESMF_StaggerLoc)    :: staggerloc
     type(ESMF_TypeKind_Flag) :: typekind
 
@@ -2790,6 +2792,28 @@ contains
       line=__LINE__, &
       file=__FILE__, &
       rcToReturn=rc)) return  ! bail out
+
+    ! -- add units if available
+    call ESMF_InfoGetFromHost(field, info, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__, &
+      rcToReturn=rc)) return  ! bail out
+
+    call ESMF_InfoGet(info, "units", units, default="", rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__, &
+      rcToReturn=rc)) return  ! bail out
+
+    if (len_trim(units) > 0) then
+      ncStatus = nf90_put_att(IOLayout % ncid, lvarId, "units", trim(units))
+      if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
+        msg="Error adding units to NetCDF variable: "//trim(fieldName), &
+        line=__LINE__, &
+        file=__FILE__, &
+        rcToReturn=rc)) return  ! bail out
+    end if
 
     ncStatus = nf90_enddef(IOLayout % ncid)
     if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &

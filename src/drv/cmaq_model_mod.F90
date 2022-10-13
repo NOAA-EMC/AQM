@@ -74,7 +74,7 @@ contains
 
     ! -- initialize emissions
     call cmaq_emis_init(rc=localrc)
-    if (aqm_rc_check(localrc, msg="Failed to initialize CMAQ", &
+    if (aqm_rc_check(localrc, msg="Failed to initialize emissions", &
       file=__FILE__, line=__LINE__, rc=rc)) return
 
     ! -- initialize products

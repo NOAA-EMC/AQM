@@ -734,18 +734,25 @@ contains
             select case ( trim(prod % species(n)) )
               case ("PM2.5")
                 ! --- diagnostic PM2.5
-                call cmaq_prod_pm25( pm25, cgrid, tracers, start_index )
-                call aqm_prod_compute( prod, pm25, n, 1 )
+                if ( n_ae_spc > 0 ) then
+                  call cmaq_prod_pm25( pm25, cgrid, tracers, start_index )
+                  call aqm_prod_compute( prod, pm25, n, 1 )
+                end if
               case default
                 ! --- CMAQ species
+                spc = 0
                 ! --- 1. gas species
-                spc = index1( prod % species(n), n_gc_spc, gc_spc )
+                if ( n_gc_spc > 0 ) spc = index1( prod % species(n), n_gc_spc, gc_spc )
                 if (spc > 0) then
+                  spc = spc + gc_strt - 1
                   call aqm_prod_compute( prod, cgrid, n, spc )
                 else
                   ! --- 2. aerosol species
-                  spc = index1( prod % species(n), n_ae_spc, ae_spc )
-                  if (spc > 0) call aqm_prod_compute( prod, cgrid, n, spc )
+                  if ( n_ae_spc > 0 ) spc = index1( prod % species(n), n_ae_spc, ae_spc )
+                  if (spc > 0) then
+                    spc = spc + ae_strt - 1
+                    call aqm_prod_compute( prod, cgrid, n, spc )
+                  end if
                 end if
             end select
           end do
@@ -764,7 +771,7 @@ contains
     integer,           intent(in)  :: idx
 
     ! -- local variables
-    integer :: i, ibeg, iend, mode, spc
+    integer :: i, ibeg, iend, imod, mode, spc
     integer :: c, r
 
     ! -- local parameters
@@ -785,24 +792,29 @@ contains
     ! -- begin
     pm25 = 0.
 
-    ibeg = 0
-    iend = 0
+    if ( n_ae_spc > 0 ) then
+      ibeg = 0
+      iend = 0
 
-    ! -- loop over I, J, K modes
-    do mode = 1, 3
-      ibeg = iend + 1
-      iend = iend + nspc(mode)
-      do i = ibeg, iend
-        spc = index1( pm25_species(i), n_ae_spc, ae_spc )
-        if (spc > 0) then
-          do r = 1, my_nrows
-            do c = 1, my_ncols
-              pm25( c,r,1,1 ) = pm25( c,r,1,1 ) + frac( c,r,1,mode-1+idx ) * cgrid( c,r,1,spc )
+      ! -- loop over I, J, K modes
+      imod = idx
+      do mode = 1, 3
+        ibeg = iend + 1
+        iend = iend + nspc(mode)
+        do i = ibeg, iend
+          spc = index1( pm25_species(i), n_ae_spc, ae_spc )
+          if (spc > 0) then
+            spc = spc + ae_strt - 1
+            do r = 1, my_nrows
+              do c = 1, my_ncols
+                pm25( c,r,1,1 ) = pm25( c,r,1,1 ) + frac( c,r,1,imod ) * cgrid( c,r,1,spc )
+              end do
             end do
-          end do
-        end if
+          end if
+        end do
+        imod = imod + 1
       end do
-    end do
+    end if
 
   end subroutine cmaq_prod_pm25
 

@@ -769,12 +769,18 @@ contains
 
     ! -- local parameters
     character(len=*), parameter :: pm25_species(*) = &
-      (/ "ASO4I  ", "ANO3I  ", "ANH4I  ", "ANAI   ", "ACLI   ", "AECI   ", "AOMI   ", "AOTHRI ", & ! I-mode (Atken)
-         "ASO4J  ", "ANO3J  ", "ANH4J  ", "ANAJ   ", "ACLJ   ", "AECJ   ", "AOMJ   ", "AOTHRJ ", & ! J-mode (accum)
+      (/ "ASO4I  ", "ANO3I  ", "ANH4I  ", "ANAI   ", "ACLI   ", "AECI   ", "AOTHRI ",            & ! I-mode (Atken)
+         "ALVPO1I", "ASVPO1I", "ASVPO2I", "ALVOO1I", "ALVOO2I", "ASVOO1I", "ASVOO2I",            &
+         "ASO4J  ", "ANO3J  ", "ANH4J  ", "ANAJ   ", "ACLJ   ", "AECJ   ", "AOTHRJ ",            & ! J-mode (accum)
+         "ALVPO1J", "ASVPO1J", "ASVPO2J", "ASVPO3J", "AIVPO1J",                                  &
+         "AXYL1J ", "AXYL2J ", "AXYL3J ", "ATOL1J ", "ATOL2J ", "ATOL3J ", "ABNZ1J ", "ABNZ2J ", &
+         "ABNZ3J ", "AISO1J ", "AISO2J ", "AISO3J ", "ATRP1J ", "ATRP2J ", "ASQTJ  ", "AALK1J ", &
+         "AALK2J ", "APAH1J ", "APAH2J ", "APAH3J ", "AORGCJ ", "AOLGBJ ", "AOLGAJ ",            &
+         "ALVOO1J", "ALVOO2J", "ASVOO1J", "ASVOO2J", "ASVOO3J", "APCSOJ ",                       &
          "AFEJ   ", "ASIJ   ", "ATIJ   ", "ACAJ   ", "AMGJ   ", "AMNJ   ", "AALJ   ", "AKJ    ", &
          "ASOIL  ", "ACORS  ", "ASEACAT", "ACLK   ", "ASO4K  ", "ANO3K  ", "ANH4K  " /)            ! K-mode (coarse)
 
-    integer, parameter :: nspc(3) = (/ 8, 16, 7 /)
+    integer, parameter :: nspc(3) = (/ 14, 49, 7 /)
 
     ! -- begin
     pm25 = 0.

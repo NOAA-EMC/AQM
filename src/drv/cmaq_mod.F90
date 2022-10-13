@@ -44,6 +44,7 @@ module cmaq_mod
   public :: cmaq_emis_init
   public :: cmaq_emis_finalize
   public :: cmaq_emis_print
+  public :: cmaq_prod_init
   public :: cmaq_prod_units_get
   public :: cmaq_prod_update
   public :: cmaq_species_read
@@ -644,6 +645,39 @@ contains
     call m3mesg(msgString)
 
   end subroutine cmaq_domain_log
+
+  subroutine cmaq_prod_init(rc)
+
+    integer, optional, intent(out) :: rc
+
+    ! -- local variables
+    integer                               :: item, n
+    character(len=AQM_MAXSTR)             :: units
+    type(aqm_internal_emis_type), pointer :: pdata(:)
+    type(aqm_internal_emis_type), pointer :: prod
+
+    ! -- begin
+    if (present(rc)) rc = AQM_RC_SUCCESS
+
+    nullify(pdata)
+    pdata => aqm_emis_data_get()
+
+    if (associated(pdata)) then
+
+      do item = 1, size(pdata)
+        nullify(prod)
+        if (trim(pdata(item) % type) == "product") then
+          prod => pdata(item)
+          do n = 1, size(prod % species)
+            call cmaq_prod_units_get( prod % species(n), units )
+            call aqm_prod_units_set ( prod % fields(n),  units )
+          end do
+        end if
+      end do
+
+    end if
+
+  end subroutine cmaq_prod_init
 
   subroutine cmaq_prod_units_get( species, units )
 

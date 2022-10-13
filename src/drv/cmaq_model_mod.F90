@@ -77,6 +77,11 @@ contains
     if (aqm_rc_check(localrc, msg="Failed to initialize CMAQ", &
       file=__FILE__, line=__LINE__, rc=rc)) return
 
+    ! -- initialize products
+    call cmaq_prod_init(rc=localrc)
+    if (aqm_rc_check(localrc, msg="Failed to initialize products", &
+      file=__FILE__, line=__LINE__, rc=rc)) return
+
   end subroutine cmaq_model_init
 
 

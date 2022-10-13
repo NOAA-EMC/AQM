@@ -18,6 +18,7 @@ module aqm_prod_mod
 
   public :: aqm_prod_init
   public :: aqm_prod_compute
+  public :: aqm_prod_units_set
   public :: aqm_prod_update
 
 contains
@@ -52,6 +53,33 @@ contains
     end do
 
   end subroutine aqm_prod_field_init
+
+  subroutine aqm_prod_units_set(field, units, rc)
+    type(ESMF_Field)               :: field
+    character(len=*),  intent(in)  :: units
+    integer, optional, intent(out) :: rc
+
+    ! -- local variables
+    integer         :: localrc
+    type(ESMF_Info) :: info
+
+    ! -- begin
+    if (present(rc)) rc = ESMF_SUCCESS
+
+    ! -- add units to field
+    call ESMF_InfoGetFromHost(field, info, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__, &
+      rcToReturn=rc)) return  ! bail out
+
+    call ESMF_InfoSet(info, "units", units, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__, &
+      rcToReturn=rc)) return  ! bail out
+
+  end subroutine aqm_prod_units_set
 
   subroutine aqm_prod_init(model, rc)
     type(ESMF_GridComp)            :: model

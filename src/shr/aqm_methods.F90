@@ -76,8 +76,8 @@ LOGICAL FUNCTION DESC3( FNAME )
   USE M3UTILIO,      ONLY : &
     GDNAM3D, NLAYS3D, NVARS3D, VDESC3D, VGLVS3D, &
     VGSGPN3, VGTOP3D, VGTYP3D, VNAME3D, UNITS3D, &
-    NCOLS3D, NROWS3D
-   
+    NCOLS3D, NROWS3D, SDATE3D, STIME3D, TSTEP3D
+
   USE aqm_emis_mod
   USE aqm_model_mod, ONLY : aqm_config_type, &
                             aqm_model_get, aqm_model_domain_get
@@ -100,6 +100,10 @@ LOGICAL FUNCTION DESC3( FNAME )
   VNAME3D = ""
   UNITS3D = ""
   VDESC3D = ""
+
+  SDATE3D = 0
+  STIME3D = 0
+  TSTEP3D = 0
 
   IF ( (TRIM(FNAME) .EQ. TRIM(INIT_GASC_1)) .OR. &
        (TRIM(FNAME) .EQ. TRIM(INIT_AERO_1)) .OR. &
@@ -188,6 +192,14 @@ LOGICAL FUNCTION DESC3( FNAME )
        '1               ', '1               ',            &
        '1               ', 'M/S             ' /)
 
+    call aqm_model_get(config=config, rc=localrc)
+    if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
+      file=__FILE__, line=__LINE__)) return
+
+    SDATE3D = config % ctm_stdate
+    STIME3D = config % ctm_sttime
+    TSTEP3D = config % ctm_tstep
+
   ELSE IF ( TRIM( FNAME ) .EQ. TRIM( MET_CRO_3D ) ) THEN
 
     CALL aqm_model_domain_get(nl=NLAYS3D, rc=localrc)
@@ -226,6 +238,10 @@ LOGICAL FUNCTION DESC3( FNAME )
     if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
       file=__FILE__, line=__LINE__)) return
 
+    SDATE3D = config % ctm_stdate
+    STIME3D = config % ctm_sttime
+    TSTEP3D = config % ctm_tstep
+
     if (config % species % p_atm_qr > 0) then
       NVARS3D = NVARS3D + 1
       VNAME3D( NVARS3D ) = 'QR'
@@ -258,6 +274,14 @@ LOGICAL FUNCTION DESC3( FNAME )
     UNITS3D( 1:NVARS3D ) = &
     (/ 'M/S             ', 'M/S             ',            &
        'KG/(M*S)        ', 'KG/(M*S)        '  /)
+
+    call aqm_model_get(config=config, rc=localrc)
+    if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
+      file=__FILE__, line=__LINE__)) return
+
+    SDATE3D = config % ctm_stdate
+    STIME3D = config % ctm_sttime
+    TSTEP3D = config % ctm_tstep
 
   ELSE IF ( TRIM( FNAME ) .EQ. 'MODIS_FPAR' ) THEN
     NVARS3D = 1

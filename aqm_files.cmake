@@ -119,6 +119,8 @@ list(APPEND aqm_CCTM_files
 	${CLOUD}/indexn.f
 	${CLOUD}/rescld.F
 	${CLOUD}/scavwdep.F
+	${CLOUD}/aq_map.F
+	${CLOUD}/AQ_DATA.F
 	${DEPV}/ABFLUX_MOD.F
 	${DEPV}/BIDI_MOD.F
 	${DEPV}/cgrid_depv.F

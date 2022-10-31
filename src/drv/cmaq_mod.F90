@@ -133,8 +133,8 @@ contains
       END SUBROUTINE VDIFF
       SUBROUTINE CLDPROC ( CGRID, JDATE, JTIME, TSTEP )
         REAL, POINTER             :: CGRID( :,:,:,: )
-        INTEGER, INTENT( IN )     :: JDATE, JTIME
-        INTEGER, INTENT( IN )     :: TSTEP( 3 )
+        INTEGER                   :: JDATE, JTIME
+        INTEGER                   :: TSTEP( 3 )
       END SUBROUTINE CLDPROC
       SUBROUTINE CHEM ( CGRID, JDATE, JTIME, TSTEP )
         REAL, POINTER             :: CGRID( :,:,:,: )

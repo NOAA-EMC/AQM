@@ -122,7 +122,7 @@ contains
     end if
 
     ! -- advance model
-    call cmaq_advance(jdate, jtime, tstep, config % run_aero, rc=localrc)
+    call cmaq_advance(jdate, jtime, tstep, config % run_aero, config % run_rescld, rc=localrc)
     if (aqm_rc_check(localrc, msg="Failed to advance CMAQ on local DE", &
       file=__FILE__, line=__LINE__, rc=rc)) return
 

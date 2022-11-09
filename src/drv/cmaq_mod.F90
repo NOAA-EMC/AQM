@@ -120,10 +120,10 @@ contains
 
   end subroutine cmaq_init
 
-  subroutine cmaq_advance(jdate, jtime, tstep, run_aero, rc)
+  subroutine cmaq_advance(jdate, jtime, tstep, run_aero, run_rescld, rc)
 
     integer,           intent(in)    :: jdate, jtime, tstep(3)
-    logical,           intent(in)    :: run_aero
+    logical,           intent(in)    :: run_aero, run_rescld
     integer, optional, intent(out)   :: rc
 
     ! -- local variables
@@ -135,6 +135,11 @@ contains
         INTEGER                   :: JDATE, JTIME
         INTEGER                   :: TSTEP( 3 )
       END SUBROUTINE VDIFF
+      SUBROUTINE CLDPROC ( CGRID, JDATE, JTIME, TSTEP )
+        REAL, POINTER             :: CGRID( :,:,:,: )
+        INTEGER                   :: JDATE, JTIME
+        INTEGER                   :: TSTEP( 3 )
+      END SUBROUTINE CLDPROC
       SUBROUTINE CHEM ( CGRID, JDATE, JTIME, TSTEP )
         REAL, POINTER             :: CGRID( :,:,:,: )
         INTEGER                   :: JDATE, JTIME
@@ -153,6 +158,10 @@ contains
     ! -- advance all physical and chemical processes on a grid
     CALL VDIFF ( CGRID, JDATE, JTIME, TSTEP )
     
+    if (run_rescld) then
+      CALL CLDPROC ( CGRID, JDATE, JTIME, TSTEP )
+    end if
+
     CALL CHEM ( CGRID, JDATE, JTIME, TSTEP )
 
     if (run_aero) then

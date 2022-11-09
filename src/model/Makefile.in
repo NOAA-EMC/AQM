@@ -591,6 +591,7 @@ libCCTM_a_CPPFLAGS = -DSUBST_FILES_ID=\"FILES_CTM.EXT\" \
 	-DSUBST_BARRIER=NOOP_BARRIER \
 	-DSUBST_SUBGRID_INDEX=NOOP_SUBGRID_INDEX \
 	-DMOSAIC_MOD=MOSAIC_MODULE -DMosaic_Mod=Mosaic_Module \
+	-DAQCHEM=DUMMY_AQCHEM -DCONVCLD_ACM=DUMMY_CONVCLD_ACM \
 	-DEDDYX=DUMMY_EDDYX -DOPCONC=DUMMY_OPCONC \
 	-DOPACONC=DUMMY_OPACONC -DOPWDEP=DUMMY_OPWDEP \
 	-DWR_INIT=DUMMY_WR_INIT -Dverbose_aero -Dverbose_gas -Dmpas \
@@ -2147,6 +2148,13 @@ uninstall-am:
 	mostlyclean-compile mostlyclean-generic pdf pdf-am ps ps-am \
 	tags tags-am uninstall uninstall-am
 
+	$(CLOUD)/cldproc_acm.F
+	$(CLOUD)/getalpha.F
+	$(CLOUD)/indexn.f
+	$(CLOUD)/rescld.F
+	$(CLOUD)/scavwdep.F
+	$(CLOUD)/aq_map.F
+	$(CLOUD)/AQ_DATA.F
 
 include $(ESMFMKFILE)
 

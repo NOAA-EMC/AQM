@@ -24,8 +24,13 @@ module AQMIO
     type(ioData), pointer :: IO => null()
   end type ioWrapper
 
+  integer, parameter :: AQMIO_FMT_BIN    = 101, &
+                        AQMIO_FMT_NETCDF = 102
 
   private
+
+  public :: AQMIO_FMT_BIN
+  public :: AQMIO_FMT_NETCDF
 
   public :: AQMIO_Create
   public :: AQMIO_Destroy
@@ -333,20 +338,20 @@ contains
     character(len=*),      intent(in)            :: fileName
     character(len=*),      intent(in),  optional :: filePath
     character(len=*),      intent(in),  optional :: iomode
-    type(ESMF_IOFmt_flag), intent(in),  optional :: iofmt
+    integer,               intent(in),  optional :: iofmt
     integer,               intent(out), optional :: rc
 
     ! -- local variables
     integer :: localrc
     integer :: ncStatus
     integer :: item, localDe, localDeCount, tileCount
+    integer :: liofmt
     integer :: cmode
     logical :: create
     character(len=ESMF_MAXPATHLEN) :: fullName
     character(len=6) :: liomode, fmode
     type(ioWrapper) :: is
     type(ESMF_Grid) :: grid
-    type(ESMF_IOFmt_flag) :: liofmt
 
     ! -- begin
     if (present(rc)) rc = ESMF_SUCCESS
@@ -364,7 +369,7 @@ contains
 
     localDeCount = size(is % IO % IOLayout)
 
-    liofmt = ESMF_IOFMT_NETCDF
+    liofmt = AQMIO_FMT_NETCDF
     if (present(iofmt)) liofmt = iofmt
 
     liomode = "read"
@@ -410,7 +415,7 @@ contains
         else
           call AQMIO_FileNameGet(fullName, fileName, filePath=filePath)
         end if
-        if      (liofmt == ESMF_IOFMT_NETCDF) then
+        if      (liofmt == AQMIO_FMT_NETCDF) then
 #if HAVE_NETCDF
           if (create) then
             ncStatus = nf90_create(trim(fullName), cmode, &
@@ -443,7 +448,7 @@ contains
             rcToReturn=rc)
           return
 #endif
-        else if (liofmt == ESMF_IOFMT_BIN) then
+        else if (liofmt == AQMIO_FMT_BIN) then
 
           call ESMF_UtilIOUnitGet (unit=is % IO % IOLayout(localDe) % iounit, rc=localrc)
           if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -548,18 +553,18 @@ contains
     type(ESMF_GridComp),   intent(inout)         :: IOComp
     character(len=*),      intent(in)            :: fileName
     character(len=*),      intent(in),  optional :: filePath
-    type(ESMF_IOFmt_flag), intent(in),  optional :: iofmt
+    integer,               intent(in),  optional :: iofmt
     integer,               intent(out), optional :: rc
 
     ! -- local variables
     integer :: localrc
     integer :: ncStatus
     integer :: item, localDe, localDeCount, tileCount, pathLen
+    integer :: liofmt
     logical :: isFileOpen
     character(len=ESMF_MAXPATHLEN) :: fullName, pathIn
     type(ioWrapper) :: is
     type(ESMF_Grid) :: grid
-    type(ESMF_IOFmt_flag) :: liofmt
 
     ! -- begin
     if (present(rc)) rc = ESMF_SUCCESS
@@ -579,7 +584,7 @@ contains
 
     localDeCount = size(is % IO % IOLayout)
 
-    liofmt = ESMF_IOFMT_NETCDF
+    liofmt = AQMIO_FMT_NETCDF
     if (present(iofmt)) liofmt = iofmt
 
     call ESMF_GridCompGet(IOComp, grid=grid, rc=localrc)
@@ -603,7 +608,7 @@ contains
         else
           call AQMIO_FileNameGet(fullName, fileName, filePath=filePath)
         end if
-        if      (liofmt == ESMF_IOFMT_NETCDF) then
+        if      (liofmt == AQMIO_FMT_NETCDF) then
 #if HAVE_NETCDF
           if (is % IO % IOLayout(localDe) % ncid > 0) then
             ncStatus = nf90_inq_path(is % IO % IOLayout(localDe) % ncid, &
@@ -688,21 +693,21 @@ contains
     integer,               intent(in),  optional :: timeSlice
     character(len=*),      intent(in),  optional :: fileName
     character(len=*),      intent(in),  optional :: filePath
-    type(ESMF_IOFmt_flag), intent(in),  optional :: iofmt
+    integer,               intent(in),  optional :: iofmt
     integer,               intent(out), optional :: rc
 
     ! -- local variables
     integer :: localrc
     integer :: item, localDe, localDeCount
+    integer :: liofmt
     type(ioWrapper) :: is
-    type(ESMF_IOFmt_flag) :: liofmt
 
     ! -- begin
     if (present(rc)) rc = ESMF_SUCCESS
 
     if (.not.ESMF_GridCompIsPetLocal(IOComp)) return
 
-    liofmt = ESMF_IOFMT_NETCDF
+    liofmt = AQMIO_FMT_NETCDF
     if (present(iofmt)) liofmt = iofmt
 
     if (present(fieldNameList)) then
@@ -782,7 +787,7 @@ contains
     integer,               intent(in),  optional :: timeSlice
     character(len=*),      intent(in),  optional :: fileName
     character(len=*),      intent(in),  optional :: filePath
-    type(ESMF_IOFmt_flag), intent(in),  optional :: iofmt
+    integer,               intent(in),  optional :: iofmt
     integer,               intent(out), optional :: rc
 
     ! -- local variables
@@ -879,7 +884,7 @@ contains
     type(ESMF_Time),       intent(inout), pointer  :: timesList(:)
     character(len=*),      intent(in),    optional :: fileName
     character(len=*),      intent(in),    optional :: filePath
-    type(ESMF_IOFmt_flag), intent(in),    optional :: iofmt
+    integer,               intent(in),    optional :: iofmt
     integer,               intent(out),   optional :: rc
 
     ! -- local variables
@@ -903,7 +908,7 @@ contains
     if (.not.associated(is % IO % IOLayout)) return
 
     if (present(iofmt)) then
-      if (.not.(iofmt == ESMF_IOFMT_NETCDF)) then
+      if (.not.(iofmt == AQMIO_FMT_NETCDF)) then
         call ESMF_LogSetError(ESMF_RC_ARG_INCOMP, &
           msg="This function only supports NetCDF I/O", &
           line=__LINE__, &
@@ -971,6 +976,7 @@ contains
     integer :: localrc
     integer :: localDe, localDeCount, rank
     integer :: de, deCount, dimCount, tile, tileCount, ungriddedCount
+    integer :: iofmt
     integer, dimension(:),   pointer     :: ungriddedLBound, ungriddedUBound
     integer, dimension(:),   allocatable :: deToTileMap, localDeToDeMap
     integer, dimension(:,:), allocatable :: minIndexPDe, maxIndexPDe
@@ -982,7 +988,6 @@ contains
     type(ESMF_GeomType_flag)      :: geomtype
     type(ESMF_StaggerLoc)         :: staggerloc
     type(ESMF_TypeKind_Flag)      :: typekind
-    type(ESMF_IOFmt_flag)         :: iofmt
 
     ! -- begin
     if (present(rc)) rc = ESMF_SUCCESS

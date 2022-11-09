@@ -16,11 +16,11 @@ module aqm_internal_mod
     character(len=ESMF_MAXSTR)     :: specfile
     character(len=ESMF_MAXSTR)     :: specprofile
     character(len=6)               :: period
-    integer                        :: irec
     logical                        :: sync
     logical                        :: verbose
+    integer                        :: irec
+    integer                        :: iofmt
     character(len=ESMF_MAXSTR)     :: iomode
-    type(ESMF_IOFmt_flag)          :: iofmt
     type(ESMF_GridComp)            :: IO
     type(ESMF_Alarm)               :: alarm
     character(len=ESMF_MAXSTR), dimension(:),   pointer :: sources   => null()

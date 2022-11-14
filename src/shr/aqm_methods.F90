@@ -1266,6 +1266,10 @@ LOGICAL FUNCTION WRITE3_REAL4D( FNAME, VNAME, JDATE, JTIME, BUFFER )
           buffer(:,:,:,p_pm25at + s)
       end do
 
+      ! PM2.5 Tracer
+      stateOut % tr(:,:,:,config % species % p_diag_beg + 4) = &
+        buffer(:,:,:,p_pm25at + 4)
+
     END IF
 
     WRITE3_REAL4D = .TRUE.

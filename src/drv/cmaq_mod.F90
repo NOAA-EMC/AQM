@@ -263,6 +263,9 @@ contains
     ! -- local variables
     integer :: c, r, l, n, off, spc, v
     real(AQM_KIND_R8) :: rdens
+    real :: pm25(:,:,:,:)
+    integer :: idx, localrc
+    type(aqm_config_type), pointer :: config
 
     ! -- begin
     if (present(rc)) rc = AQM_RC_SUCCESS
@@ -318,6 +321,27 @@ contains
          end do
       end do
     end if
+
+    ! -- pm2.5
+    nullify(config)
+    
+    ! call aqm_model_get(config=config, stateOut=stateOut, rc=localrc)
+    
+    call aqm_model_get(config=config, rc=localrc)
+    if (aqm_rc_check(localrc, msg="Failure to retrieve model config", &
+      file=__FILE__, line=__LINE__)) return  
+    
+    idx = config % species % p_diag_beg + 4
+    
+    call cmaq_prod_pm25( pm25, cgrid, cgrid, idx)
+
+    do l = 1, nlays
+      do r = 1, my_nrows
+        do c = 1, my_ncols
+          tracers( c,r,l,idx ) = pm25
+        end do
+      end do
+    end do
 
   end subroutine cmaq_export
 

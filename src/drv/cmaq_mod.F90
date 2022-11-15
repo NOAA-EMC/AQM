@@ -332,7 +332,7 @@ contains
     
     idx = config % species % p_diag_beg + 4
     
-    call cmaq_prod_pm25( pm25, cgrid, tracer, idx)
+    call cmaq_prod_pm25( pm25, cgrid, tracers, idx)
 
     do l = 1, nlays
       do r = 1, my_nrows

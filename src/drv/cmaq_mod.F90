@@ -4,8 +4,6 @@ module cmaq_mod
   use aqm_types_mod
   use aqm_const_mod, only : onebg, rdgas, grav, mwair, zero
   use aqm_emis_mod
-  use aqm_model_mod
-  use aqm_config_mod
   use aqm_prod_mod
   use aqm_tools_mod, only : aqm_units_conv
 
@@ -326,7 +324,7 @@ contains
     end if
 
     ! -- pm2.5
-    idx = diag_index + 4
+    idx = diag_index + 3
     
     call cmaq_prod_pm25( pm25, cgrid, tracers, idx, nlays)
     n = n + 1

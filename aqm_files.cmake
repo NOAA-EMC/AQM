@@ -9,15 +9,15 @@ list(APPEND aqm_files
 list(APPEND aqm_shr_files
     src/shr/aqm_config_mod.F90
     src/shr/aqm_const_mod.F90
-	src/shr/aqm_domain_mod.F90
+    src/shr/aqm_domain_mod.F90
     src/shr/aqm_emis_mod.F90
     src/shr/aqm_fires_mod.F90
     src/shr/aqm_internal_mod.F90
-	src/shr/aqm_model_mod.F90
+    src/shr/aqm_model_mod.F90
     src/shr/aqm_rc_mod.F90
     src/shr/aqm_methods.F90
     src/shr/aqm_species_mod.F90
-	src/shr/aqm_state_mod.F90
+    src/shr/aqm_state_mod.F90
     src/shr/aqm_tools_mod.F90
     src/shr/aqm_types_mod.F90
 )
@@ -114,6 +114,13 @@ list(APPEND aqm_CCTM_files
 	${BIOG}/tmpbeis.F
 	${BIOG}/wrdaymsg.f
 	${CLOUD}/hlconst.F
+	${CLOUD}/cldproc_acm.F
+	${CLOUD}/getalpha.F
+	${CLOUD}/indexn.f
+	${CLOUD}/rescld.F
+	${CLOUD}/scavwdep.F
+	${CLOUD}/aq_map.F
+	${CLOUD}/AQ_DATA.F
 	${DEPV}/ABFLUX_MOD.F
 	${DEPV}/BIDI_MOD.F
 	${DEPV}/cgrid_depv.F
@@ -130,7 +137,6 @@ list(APPEND aqm_CCTM_files
 	${EMIS}/BEIS_DEFN.F
 	${EMIS}/BIOG_EMIS.F
 	${EMIS}/cropcal.F
-	${EMIS}/DUST_EMIS.F
 	${EMIS}/EMIS_DEFN.F
 	${EMIS}/LTNG_DEFN.F
 	${EMIS}/LUS_DEFN.F
@@ -215,7 +221,6 @@ list(APPEND aqm_CCTM_files
 	${UTIL}/subhdomain.F
 	${UTIL}/UTILIO_DEFN.F
 	${VDIFF}/aero_sedv.F
-	${VDIFF}/ASX_DATA_MOD.F
 	${VDIFF}/conv_cgrid.F
 	${VDIFF}/matrix1.F
 	${VDIFF}/opddep.F
@@ -231,4 +236,6 @@ list(APPEND aqm_CCTM_files
 	${localCCTM}/vdiffacmx.F
 	${localCCTM}/PTMAP.F
 	${localCCTM}/PT3D_DEFN.F
+	${localCCTM}/ASX_DATA_MOD.F
+	${localCCTM}/DUST_EMIS.F
 )

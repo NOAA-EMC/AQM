@@ -7,7 +7,7 @@ libioapi_a_SOURCES += crlf.F currec.f currstep.f dt2str.f findc.f getefile.F ind
 	poly.f promptmfile.f sec2time.f secsdiff.F setlam.f sortic.f str2real.f time2sec.f upcase.f wkday.F yr2day.F
 libioapi_a_SOURCES += m3exit.F90 m3mesg.F90 m3msg2.F90 m3warn.F90 m3utilio.F90
 
-libioapi_a_FFLAGS   = $(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) $(ESMF_F90COMPILEFREECPP) $(ESMF_F90COMPILECPPFLAGS)
+libioapi_a_FFLAGS   = $(CCTM_FFLAGS) $(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) $(ESMF_F90COMPILEFREECPP) $(ESMF_F90COMPILECPPFLAGS)
 
 libioapi_a_FCFLAGS  = $(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) $(ESMF_F90COMPILEFREECPP) $(ESMF_F90COMPILECPPFLAGS)
 libioapi_a_FCFLAGS += -DSUBST_FILES_ID=\"FILES_CTM.EXT\"

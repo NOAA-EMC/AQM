@@ -76,8 +76,8 @@ LOGICAL FUNCTION DESC3( FNAME )
   USE M3UTILIO,      ONLY : &
     GDNAM3D, NLAYS3D, NVARS3D, VDESC3D, VGLVS3D, &
     VGSGPN3, VGTOP3D, VGTYP3D, VNAME3D, UNITS3D, &
-    NCOLS3D, NROWS3D
-   
+    NCOLS3D, NROWS3D, SDATE3D, STIME3D, TSTEP3D
+
   USE aqm_emis_mod
   USE aqm_model_mod, ONLY : aqm_config_type, &
                             aqm_model_get, aqm_model_domain_get
@@ -100,6 +100,10 @@ LOGICAL FUNCTION DESC3( FNAME )
   VNAME3D = ""
   UNITS3D = ""
   VDESC3D = ""
+
+  SDATE3D = 0
+  STIME3D = 0
+  TSTEP3D = 0
 
   IF ( (TRIM(FNAME) .EQ. TRIM(INIT_GASC_1)) .OR. &
        (TRIM(FNAME) .EQ. TRIM(INIT_AERO_1)) .OR. &
@@ -148,14 +152,14 @@ LOGICAL FUNCTION DESC3( FNAME )
 
   ELSE IF ( TRIM( FNAME ) .EQ. TRIM( MET_CRO_2D ) ) THEN
 
-    NVARS3D = 31
+    NVARS3D = 35
     VNAME3D( 1:NVARS3D ) = &
     (/ 'PRSFC           ', 'USTAR           ',            &
        'WSTAR           ', 'PBL             ',            &
-       'ZRUF            ', &
+       'ZRUF            ',                                &
        'HFX             ', 'WSPD10          ',            &
        'GSW             ', 'RGRND           ',            &
-       'RNA             ', 'RCA             ',            &
+       'RN              ', 'RC              ',            &
        'CFRAC           ', 'CLDT            ',            &
        'CLDB            ', 'WBAR            ',            &
        'RA              ', 'RS              ',            &
@@ -165,11 +169,13 @@ LOGICAL FUNCTION DESC3( FNAME )
        'SLTYP           ', 'Q2              ',            &
        'SEAICE          ', 'SOIM1           ',            &
        'SOIM2           ', 'SOIT1           ',            &
-       'SOIT2           ', 'LH              ' /)
+       'SOIT2           ', 'LH              ',            &
+       'CLAYF           ', 'SANDF           ',            &
+       'DRAG            ', 'UTHR            ' /)
     UNITS3D( 1:NVARS3D ) = &
     (/ 'Pascal          ', 'M/S             ',            &
        'M/S             ', 'M               ',            &
-       'M               ', &
+       'M               ',                                &
        'WATTS/M**2      ', 'M/S             ',            &
        'WATTS/M**2      ', 'WATTS/M**2      ',            &
        'CM              ', 'CM              ',            &
@@ -182,7 +188,17 @@ LOGICAL FUNCTION DESC3( FNAME )
        '-               ', 'KG/KG           ',            &
        'FRACTION        ', 'M**3/M**3       ',            &
        'M**3/M**3       ', 'K               ',            &
-       'K               ', 'WATTS/M**2      ' /)
+       'K               ', 'WATTS/M**2      ',            &
+       '1               ', '1               ',            &
+       '1               ', 'M/S             ' /)
+
+    call aqm_model_get(config=config, rc=localrc)
+    if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
+      file=__FILE__, line=__LINE__)) return
+
+    SDATE3D = config % ctm_stdate
+    STIME3D = config % ctm_sttime
+    TSTEP3D = config % ctm_tstep
 
   ELSE IF ( TRIM( FNAME ) .EQ. TRIM( MET_CRO_3D ) ) THEN
 
@@ -222,6 +238,10 @@ LOGICAL FUNCTION DESC3( FNAME )
     if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
       file=__FILE__, line=__LINE__)) return
 
+    SDATE3D = config % ctm_stdate
+    STIME3D = config % ctm_sttime
+    TSTEP3D = config % ctm_tstep
+
     if (config % species % p_atm_qr > 0) then
       NVARS3D = NVARS3D + 1
       VNAME3D( NVARS3D ) = 'QR'
@@ -254,6 +274,14 @@ LOGICAL FUNCTION DESC3( FNAME )
     UNITS3D( 1:NVARS3D ) = &
     (/ 'M/S             ', 'M/S             ',            &
        'KG/(M*S)        ', 'KG/(M*S)        '  /)
+
+    call aqm_model_get(config=config, rc=localrc)
+    if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
+      file=__FILE__, line=__LINE__)) return
+
+    SDATE3D = config % ctm_stdate
+    STIME3D = config % ctm_sttime
+    TSTEP3D = config % ctm_tstep
 
   ELSE IF ( TRIM( FNAME ) .EQ. 'MODIS_FPAR' ) THEN
     NVARS3D = 1
@@ -330,6 +358,8 @@ logical function envyn(name, description, defaultval, status)
       envyn = associated(em)
     case ('CTM_GRAV_SETL')
       envyn = .false.
+    case ('CTM_FENGSHA')
+      envyn = config % fengsha_yn
     case ('INITIAL_RUN')
       envyn = .true.
     case default
@@ -640,6 +670,10 @@ logical function interpx( fname, vname, pname, &
     call aqm_model_get(stateIn=stateIn, rc=localrc)
     if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
       file=__FILE__, line=__LINE__)) return
+    
+    call aqm_model_get(config=config, stateIn=stateIn, rc=localrc)
+    if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
+      file=__FILE__, line=__LINE__)) return
 
     select case (trim(vname))
       case ("HFX")
@@ -736,6 +770,48 @@ logical function interpx( fname, vname, pname, &
            buffer(k) = 0.01 * stateIn % zorl(c,r)
          end do
         end do
+        
+      ! fengsha variables
+      case ("CLAYF")
+      ! p2d => stateIn % cclayf
+       if (config % fengsha_yn) then
+        call aqm_emis_read("fengsha", vname, buffer, rc=localrc)
+        if (aqm_rc_test((localrc /= 0), &
+          msg="Failure to read fengsha for " // vname, &
+          file=__FILE__, line=__LINE__)) return
+       else
+         buffer(1:lbuf) = 0.
+       end if
+      case ("SANDF")
+      ! p2d => stateIn % csandf
+       if (config % fengsha_yn) then
+        call aqm_emis_read("fengsha", vname, buffer, rc=localrc)
+        if (aqm_rc_test((localrc /= 0), &
+          msg="Failure to read fengsha for " // vname, &
+          file=__FILE__, line=__LINE__)) return
+       else
+         buffer(1:lbuf) = 0.
+       end if
+      case ("DRAG")
+      ! p2d => stateIn % cdrag
+       if (config % fengsha_yn) then
+        call aqm_emis_read("fengsha", vname, buffer, rc=localrc)
+        if (aqm_rc_test((localrc /= 0), &
+          msg="Failure to read fengsha for " // vname, &
+          file=__FILE__, line=__LINE__)) return
+       else
+         buffer(1:lbuf) = 0.
+       end if
+      case ("UTHR")
+      ! p2d => stateIn % cuthr
+       if (config % fengsha_yn) then
+        call aqm_emis_read("fengsha", vname, buffer, rc=localrc)
+        if (aqm_rc_test((localrc /= 0), &
+          msg="Failure to read fengsha for " // vname, &
+          file=__FILE__, line=__LINE__)) return
+       else
+         buffer(1:lbuf) = 0.
+       end if
       case default
     !   return
     end select
@@ -1199,6 +1275,46 @@ LOGICAL FUNCTION WRITE3_REAL4D( FNAME, VNAME, JDATE, JTIME, BUFFER )
 END FUNCTION WRITE3_REAL4D
 
 ! -- dummy subroutines
+
+SUBROUTINE DUMMY_AQCHEM ( JDATE, JTIME, TEMP, PRES_PA, TAUCLD, PRCRATE, &
+                          WCAVG, WTAVG, AIRM, ALFA0, ALFA2, ALFA3, GAS, &
+                          AEROSOL, GASWDEP, AERWDEP, HPWDEP, BETASO4, DARK )
+  INTEGER,   INTENT( IN )  :: JDATE
+  INTEGER,   INTENT( IN )  :: JTIME
+  REAL,      INTENT( IN )  :: AIRM
+  REAL,      INTENT( IN )  :: ALFA0
+  REAL,      INTENT( IN )  :: ALFA2
+  REAL,      INTENT( IN )  :: ALFA3
+  REAL,      INTENT( OUT ) :: HPWDEP
+  REAL( 8 ), INTENT( OUT ) :: BETASO4
+  REAL,      INTENT( IN )  :: PRCRATE
+  REAL,      INTENT( IN )  :: PRES_PA
+  REAL,      INTENT( IN )  :: TAUCLD
+  REAL,      INTENT( IN )  :: TEMP
+  REAL,      INTENT( IN )  :: WCAVG
+  REAL,      INTENT( IN )  :: WTAVG
+  REAL( 8 ), INTENT( INOUT ) :: GAS    ( : )
+  REAL( 8 ), INTENT( INOUT ) :: AEROSOL( :,: )
+  REAL( 8 ), INTENT( INOUT ) :: GASWDEP( : )
+  REAL( 8 ), INTENT( INOUT ) :: AERWDEP( :,: )
+  LOGICAL,   INTENT( IN )    :: DARK
+  BETASO4 = 0.0D0
+  HPWDEP  = 0.0
+END SUBROUTINE DUMMY_AQCHEM
+
+SUBROUTINE DUMMY_CONVCLD_ACM ( CGRID, JDATE, JTIME, TSTEP, &
+                               N_SPC_WDEP, WDEP_MAP, CONV_DEP, SUBTRANS )
+  REAL, POINTER            :: CGRID( :,:,:,: )
+  INTEGER, INTENT( IN )    :: JDATE
+  INTEGER, INTENT( IN )    :: JTIME
+  INTEGER, INTENT( IN )    :: TSTEP( 3 )
+  INTEGER, INTENT( IN )    :: N_SPC_WDEP
+  INTEGER, INTENT( IN )    :: WDEP_MAP( : )
+  REAL,    INTENT( INOUT ) :: CONV_DEP( :,:,: )
+  REAL,    INTENT( OUT )   :: SUBTRANS( :,:,: )
+  CONV_DEP = 0.0
+  SUBTRANS = 1.0
+END SUBROUTINE DUMMY_CONVCLD_ACM
 
 SUBROUTINE DUMMY_EDDYX ( EDDYV )
   REAL,   INTENT( OUT ) :: EDDYV ( :,:,: )

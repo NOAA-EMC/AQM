@@ -196,7 +196,7 @@ contains
       em(item) % file = ""
       em(item) % frequency = ""
       em(item) % format = "netcdf"
-      em(item) % iofmt = ESMF_IOFMT_NETCDF
+      em(item) % iofmt = AQMIO_FMT_NETCDF
       em(item) % irec  = 0
       em(item) % verbose     = .false.
       em(item) % logprefix   = ""
@@ -311,9 +311,9 @@ contains
 
     select case (trim(em % format))
       case ("binary")
-        em % iofmt = ESMF_IOFMT_BIN
+        em % iofmt = AQMIO_FMT_BIN
       case ("netcdf")
-        em % iofmt = ESMF_IOFMT_NETCDF
+        em % iofmt = AQMIO_FMT_NETCDF
       case default
         call ESMF_LogSetError(ESMF_RC_NOT_VALID, &
           msg="- invalid emission format: "//trim(em % format), &
@@ -382,7 +382,7 @@ contains
       rcToReturn=rc)) &
       return  ! bail out
 
-    if (em % iofmt == ESMF_IOFMT_BIN) then
+    if (em % iofmt == AQMIO_FMT_BIN) then
       if (trim(em % frequency) /= "static") then
         em % frequency = "static"
         if (em % verbose) then
@@ -694,7 +694,7 @@ contains
         end if
 
         ! -- open single netCDF file if selected
-        if (em % iofmt == ESMF_IOFMT_NETCDF) then
+        if (em % iofmt == AQMIO_FMT_NETCDF) then
           call AQMIO_Open(em % IO, em % file, filePath=em % path, iomode="read", &
             iofmt=em % iofmt, rc=localrc)
           if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -1038,7 +1038,7 @@ contains
             rcToReturn=rc)) &
             return  ! bail out
         end if
-        if (em % iofmt == ESMF_IOFMT_BIN) then
+        if (em % iofmt == AQMIO_FMT_BIN) then
           do n = 1, size(em % sources)
             call AQMIO_Read(em % IO, (/ em % fields(n) /), fileName=em % sources(n), &
               filePath=em % path, iofmt=em % iofmt, rc=localrc)
@@ -1160,6 +1160,13 @@ contains
           if (present(rc)) rc = AQM_RC_FAILURE
           return  ! bail out
         end if
+
+        if (trim(em % type) == "fengsha") then
+           ! -- ensure fengsha input variables are not normalized by area like
+           ! -- emissions conversions below
+           em % dens_flag(item) = 1
+        end if
+
         select case (em % dens_flag(item))
           case (:-1)
             ! -- this case indicates that input emissions are provided as totals/cell

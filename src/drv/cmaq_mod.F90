@@ -4,6 +4,7 @@ module cmaq_mod
   use aqm_types_mod
   use aqm_const_mod, only : onebg, rdgas, grav, mwair, zero
   use aqm_emis_mod
+  use aqm_model_mod
   use aqm_config_mod
   use aqm_prod_mod
   use aqm_tools_mod, only : aqm_units_conv
@@ -264,7 +265,7 @@ contains
     ! -- local variables
     integer :: c, r, l, n, off, spc, v
     real(AQM_KIND_R8) :: rdens
-    real :: pm25(:,:,:,:)
+    real, pointer :: pm25(:,:,:,:) => null()
     integer :: idx, localrc
     type(aqm_config_type), pointer :: config
 
@@ -334,7 +335,7 @@ contains
     
     idx = config % species % p_diag_beg + 4
     
-    call cmaq_prod_pm25( pm25, cgrid, cgrid, idx)
+    call cmaq_prod_pm25( pm25, cgrid, tracer, idx)
 
     do l = 1, nlays
       do r = 1, my_nrows

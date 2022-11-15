@@ -4,6 +4,7 @@ module cmaq_mod
   use aqm_types_mod
   use aqm_const_mod, only : onebg, rdgas, grav, mwair, zero
   use aqm_emis_mod
+  use aqm_config_mod
   use aqm_prod_mod
   use aqm_tools_mod, only : aqm_units_conv
 

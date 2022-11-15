@@ -132,7 +132,7 @@ contains
       file=__FILE__, line=__LINE__, rc=rc)) return
 
     ! -- export updated species mixing ratios
-    call cmaq_export(stateOut % tr, stateIn % prl, stateIn % temp, config % species % p_aqm_beg, config % species % p_diag_beg)
+    call cmaq_export(stateOut % tr, stateIn % prl, stateIn % temp, config % species % p_diag_beg, config % species % p_aqm_beg)
     if (config % verbose) call cmaq_conc_log(trim(config % name) // ": export")
 
     ! -- update products

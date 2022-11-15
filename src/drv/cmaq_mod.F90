@@ -254,18 +254,20 @@ contains
 
   end subroutine cmaq_import
 
-  subroutine cmaq_export(tracers, prl, temp, start_index, rc, diag_index)
+  subroutine cmaq_export(tracers, prl, temp, start_index, diag_index, rc)
 
     real(AQM_KIND_R8), intent(out) :: tracers(:,:,:,:)
     real(AQM_KIND_R8), intent(in)  :: prl(:,:,:)
     real(AQM_KIND_R8), intent(in)  :: temp(:,:,:)
     integer,           intent(in)  :: start_index
+    integer,           intent(in)  :: diag_index
     integer, optional, intent(out) :: rc
+    
 
     ! -- local variables
     integer :: c, r, l, n, off, spc, v
     real(AQM_KIND_R8) :: rdens
-    real(AQM_KIND_R8) :: pm25(my_ncols,my_nrows,nlays,1)
+    real :: pm25(my_ncols,my_nrows,nlays,1)
     integer :: idx, localrc
 
     ! -- begin

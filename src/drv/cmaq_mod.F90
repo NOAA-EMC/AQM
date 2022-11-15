@@ -805,7 +805,7 @@ contains
 
     ! -- local variables
     integer :: i, ibeg, iend, imod, mode, spc
-    integer :: c, r
+    integer :: c, r, l
 
     ! -- local parameters
     character(len=*), parameter :: pm25_species(*) = &
@@ -838,9 +838,11 @@ contains
           spc = index1( pm25_species(i), n_ae_spc, ae_spc )
           if (spc > 0) then
             spc = spc + ae_strt - 1
-            do r = 1, my_nrows
-              do c = 1, my_ncols
-                pm25( c,r,1,1 ) = pm25( c,r,1,1 ) + frac( c,r,1,imod ) * cgrid( c,r,1,spc )
+            do l = 1, nlays
+              do r = 1, my_nrows
+                do c = 1, my_ncols
+                  pm25( c,r,l,1 ) = pm25( c,r,l,1 ) + frac( c,r,l,imod ) * cgrid( c,r,l,spc )
+                end do
               end do
             end do
           end if

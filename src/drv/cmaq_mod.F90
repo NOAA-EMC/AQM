@@ -325,10 +325,7 @@ contains
     end if
 
     ! -- pm2.5
-    nullify(config)
-    
-    ! call aqm_model_get(config=config, stateOut=stateOut, rc=localrc)
-    
+    nullify(config)    
     call aqm_model_get(config=config, rc=localrc)
     if (aqm_rc_check(localrc, msg="Failure to retrieve model config", &
       file=__FILE__, line=__LINE__)) return  
@@ -340,7 +337,7 @@ contains
     do l = 1, nlays
       do r = 1, my_nrows
         do c = 1, my_ncols
-          tracers( c,r,l,idx ) = pm25
+          tracers( c,r,l,idx ) = pm25( c,r,l,1 )
         end do
       end do
     end do

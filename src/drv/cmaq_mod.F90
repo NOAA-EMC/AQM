@@ -254,7 +254,7 @@ contains
 
   end subroutine cmaq_import
 
-  subroutine cmaq_export(tracers, prl, temp, start_index, rc)
+  subroutine cmaq_export(tracers, prl, temp, start_index, rc, diag_index)
 
     real(AQM_KIND_R8), intent(out) :: tracers(:,:,:,:)
     real(AQM_KIND_R8), intent(in)  :: prl(:,:,:)
@@ -265,9 +265,8 @@ contains
     ! -- local variables
     integer :: c, r, l, n, off, spc, v
     real(AQM_KIND_R8) :: rdens
-    real, pointer :: pm25(:,:,:,:) => null()
+    real(AQM_KIND_R8) :: pm25(my_ncols,my_nrows,nlays,1)
     integer :: idx, localrc
-    type(aqm_config_type), pointer :: config
 
     ! -- begin
     if (present(rc)) rc = AQM_RC_SUCCESS
@@ -325,14 +324,9 @@ contains
     end if
 
     ! -- pm2.5
-    nullify(config)    
-    call aqm_model_get(config=config, rc=localrc)
-    if (aqm_rc_check(localrc, msg="Failure to retrieve model config", &
-      file=__FILE__, line=__LINE__)) return  
+    idx = diag_index + 4
     
-    idx = config % species % p_diag_beg + 4
-    
-    call cmaq_prod_pm25( pm25, cgrid, tracers, idx)
+    call cmaq_prod_pm25( pm25, cgrid, tracers, idx, nlays)
     n = n + 1
     do l = 1, nlays
       do r = 1, my_nrows
@@ -767,7 +761,7 @@ contains
               case ("PM2.5")
                 ! --- diagnostic PM2.5
                 if ( n_ae_spc > 0 ) then
-                  call cmaq_prod_pm25( pm25, cgrid, tracers, start_index )
+                  call cmaq_prod_pm25( pm25, cgrid, tracers, start_index, 1)
                   call aqm_prod_compute( prod, pm25, n, 1 )
                 end if
               case default
@@ -795,12 +789,13 @@ contains
 
   end subroutine cmaq_prod_update
 
-  subroutine cmaq_prod_pm25( pm25, cgrid, frac, idx )
+  subroutine cmaq_prod_pm25( pm25, cgrid, frac, idx, nlays_in)
 
     real,              intent(out) :: pm25(:,:,:,:)
     real,              intent(in)  :: cgrid(:,:,:,:)
     real(AQM_KIND_R8), intent(in)  :: frac(:,:,:,:)
     integer,           intent(in)  :: idx
+    integer,           intent(in)  :: nlays_in
 
     ! -- local variables
     integer :: i, ibeg, iend, imod, mode, spc
@@ -837,7 +832,7 @@ contains
           spc = index1( pm25_species(i), n_ae_spc, ae_spc )
           if (spc > 0) then
             spc = spc + ae_strt - 1
-            do l = 1, nlays
+            do l = 1, nlays_in
               do r = 1, my_nrows
                 do c = 1, my_ncols
                   pm25( c,r,l,1 ) = pm25( c,r,l,1 ) + frac( c,r,l,imod ) * cgrid( c,r,l,spc )

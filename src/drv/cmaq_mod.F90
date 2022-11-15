@@ -333,11 +333,11 @@ contains
     idx = config % species % p_diag_beg + 4
     
     call cmaq_prod_pm25( pm25, cgrid, tracers, idx)
-
+    n = n + 1
     do l = 1, nlays
       do r = 1, my_nrows
         do c = 1, my_ncols
-          tracers( c,r,l,idx ) = pm25( c,r,l,1 )
+          tracers( c,r,l,n ) = pm25( c,r,l,1 )
         end do
       end do
     end do

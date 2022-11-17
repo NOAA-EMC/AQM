@@ -76,8 +76,8 @@ LOGICAL FUNCTION DESC3( FNAME )
   USE M3UTILIO,      ONLY : &
     GDNAM3D, NLAYS3D, NVARS3D, VDESC3D, VGLVS3D, &
     VGSGPN3, VGTOP3D, VGTYP3D, VNAME3D, UNITS3D, &
-    NCOLS3D, NROWS3D
-   
+    NCOLS3D, NROWS3D, SDATE3D, STIME3D, TSTEP3D
+
   USE aqm_emis_mod
   USE aqm_model_mod, ONLY : aqm_config_type, &
                             aqm_model_get, aqm_model_domain_get
@@ -100,6 +100,10 @@ LOGICAL FUNCTION DESC3( FNAME )
   VNAME3D = ""
   UNITS3D = ""
   VDESC3D = ""
+
+  SDATE3D = 0
+  STIME3D = 0
+  TSTEP3D = 0
 
   IF ( (TRIM(FNAME) .EQ. TRIM(INIT_GASC_1)) .OR. &
        (TRIM(FNAME) .EQ. TRIM(INIT_AERO_1)) .OR. &
@@ -198,6 +202,14 @@ LOGICAL FUNCTION DESC3( FNAME )
        '1               ', '1               ',            &
        '1               ', 'M/S             ' /)
 
+    call aqm_model_get(config=config, rc=localrc)
+    if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
+      file=__FILE__, line=__LINE__)) return
+
+    SDATE3D = config % ctm_stdate
+    STIME3D = config % ctm_sttime
+    TSTEP3D = config % ctm_tstep
+
   ELSE IF ( TRIM( FNAME ) .EQ. TRIM( MET_CRO_3D ) ) THEN
 
     CALL aqm_model_domain_get(nl=NLAYS3D, rc=localrc)
@@ -236,6 +248,10 @@ LOGICAL FUNCTION DESC3( FNAME )
     if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
       file=__FILE__, line=__LINE__)) return
 
+    SDATE3D = config % ctm_stdate
+    STIME3D = config % ctm_sttime
+    TSTEP3D = config % ctm_tstep
+
     if (config % species % p_atm_qr > 0) then
       NVARS3D = NVARS3D + 1
       VNAME3D( NVARS3D ) = 'QR'
@@ -268,6 +284,14 @@ LOGICAL FUNCTION DESC3( FNAME )
     UNITS3D( 1:NVARS3D ) = &
     (/ 'M/S             ', 'M/S             ',            &
        'KG/(M*S)        ', 'KG/(M*S)        '  /)
+
+    call aqm_model_get(config=config, rc=localrc)
+    if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
+      file=__FILE__, line=__LINE__)) return
+
+    SDATE3D = config % ctm_stdate
+    STIME3D = config % ctm_sttime
+    TSTEP3D = config % ctm_tstep
 
   ELSE IF ( TRIM( FNAME ) .EQ. 'MODIS_FPAR' ) THEN
     NVARS3D = 1
@@ -1367,18 +1391,31 @@ END FUNCTION WRITE3_REAL4D
 
 ! -- dummy subroutines
 
-SUBROUTINE DUMMY_AQ_MAP( JDATE, JTIME, WTBAR, WCBAR, TBARC, PBARC, &
-                         CTHK1, AIRM, PRATE1, TAUCLD, POLC, CEND,  &
-                         REMOV, REMOVAC, ALFA0, ALFA2, ALFA3, DARK )
-  INTEGER, INTENT( IN )    :: JDATE, JTIME
-  REAL,    INTENT( IN )    :: WTBAR, WCBAR, TBARC, PBARC, &
-                              CTHK1, AIRM, PRATE1, TAUCLD
-  REAL,    INTENT( IN )    :: POLC ( : )
-  REAL,    INTENT( INOUT ) :: REMOVAC
-  REAL,    INTENT( INOUT ) :: CEND( : ), REMOV( : )
-  REAL,    INTENT( IN )    :: ALFA0, ALFA2, ALFA3
-  LOGICAL, INTENT( IN )    :: DARK
-END SUBROUTINE DUMMY_AQ_MAP
+SUBROUTINE DUMMY_AQCHEM ( JDATE, JTIME, TEMP, PRES_PA, TAUCLD, PRCRATE, &
+                          WCAVG, WTAVG, AIRM, ALFA0, ALFA2, ALFA3, GAS, &
+                          AEROSOL, GASWDEP, AERWDEP, HPWDEP, BETASO4, DARK )
+  INTEGER,   INTENT( IN )  :: JDATE
+  INTEGER,   INTENT( IN )  :: JTIME
+  REAL,      INTENT( IN )  :: AIRM
+  REAL,      INTENT( IN )  :: ALFA0
+  REAL,      INTENT( IN )  :: ALFA2
+  REAL,      INTENT( IN )  :: ALFA3
+  REAL,      INTENT( OUT ) :: HPWDEP
+  REAL( 8 ), INTENT( OUT ) :: BETASO4
+  REAL,      INTENT( IN )  :: PRCRATE
+  REAL,      INTENT( IN )  :: PRES_PA
+  REAL,      INTENT( IN )  :: TAUCLD
+  REAL,      INTENT( IN )  :: TEMP
+  REAL,      INTENT( IN )  :: WCAVG
+  REAL,      INTENT( IN )  :: WTAVG
+  REAL( 8 ), INTENT( INOUT ) :: GAS    ( : )
+  REAL( 8 ), INTENT( INOUT ) :: AEROSOL( :,: )
+  REAL( 8 ), INTENT( INOUT ) :: GASWDEP( : )
+  REAL( 8 ), INTENT( INOUT ) :: AERWDEP( :,: )
+  LOGICAL,   INTENT( IN )    :: DARK
+  BETASO4 = 0.0D0
+  HPWDEP  = 0.0
+END SUBROUTINE DUMMY_AQCHEM
 
 SUBROUTINE DUMMY_CONVCLD_ACM ( CGRID, JDATE, JTIME, TSTEP, &
                                N_SPC_WDEP, WDEP_MAP, CONV_DEP, SUBTRANS )
@@ -1391,7 +1428,7 @@ SUBROUTINE DUMMY_CONVCLD_ACM ( CGRID, JDATE, JTIME, TSTEP, &
   REAL,    INTENT( INOUT ) :: CONV_DEP( :,:,: )
   REAL,    INTENT( OUT )   :: SUBTRANS( :,:,: )
   CONV_DEP = 0.0
-  SUBTRANS = 0.0
+  SUBTRANS = 1.0
 END SUBROUTINE DUMMY_CONVCLD_ACM
 
 SUBROUTINE DUMMY_EDDYX ( EDDYV )

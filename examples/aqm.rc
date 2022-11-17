@@ -60,9 +60,15 @@ canopy_species::
 ::
 
 #
-# Run aerosol module
+# Run options:
+#
+# - enable aerosol module
 #
 run_aerosol: true
+#
+# - enable wet deposition processes in resolved-scale clouds
+#
+run_rescld: true
 
 #
 # Microphysics scheme used by coupled atmospheric model

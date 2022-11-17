@@ -266,7 +266,7 @@ contains
     integer :: c, r, l, n, off, spc, v
     real(AQM_KIND_R8) :: rdens
     real :: pm25(my_ncols,my_nrows,nlays,1)
-    integer :: idx, localrc
+    integer :: localrc
 
     ! -- begin
     if (present(rc)) rc = AQM_RC_SUCCESS
@@ -324,10 +324,9 @@ contains
     end if
 
     ! -- pm2.5
-    idx = diag_index + 3
     
-    call cmaq_prod_pm25( pm25, cgrid, tracers, idx, nlays)
-    n = n + 1
+    call cmaq_prod_pm25( pm25, cgrid, tracers, diag_index, nlays)
+    n = diag_index + 3
     do l = 1, nlays
       do r = 1, my_nrows
         do c = 1, my_ncols

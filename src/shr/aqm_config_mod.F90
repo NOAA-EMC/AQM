@@ -297,7 +297,7 @@ contains
     end if
 
     ! -- initialize diagnostic tracers
-    if (config % ctm_pmdiag) config % species % ndiag = 3
+    if (config % ctm_pmdiag) config % species % ndiag = 4
 
   end subroutine aqm_config_species_init
 

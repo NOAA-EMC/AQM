@@ -1261,7 +1261,7 @@ LOGICAL FUNCTION WRITE3_REAL4D( FNAME, VNAME, JDATE, JTIME, BUFFER )
       if (aqm_rc_check(localrc, msg="Failure to retrieve model output state", &
         file=__FILE__, line=__LINE__)) return
 
-      do s = 0, config % species % ndiag - 1
+      do s = 0, config % species % ndiag - 2
         stateOut % tr(:,:,:,config % species % p_diag_beg + s) = &
           buffer(:,:,:,p_pm25at + s)
       end do

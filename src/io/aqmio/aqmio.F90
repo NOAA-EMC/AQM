@@ -39,6 +39,7 @@ module AQMIO
   public :: AQMIO_Close
   public :: AQMIO_Read
   public :: AQMIO_ReadTimes
+  public :: AQMIO_Sync
   public :: AQMIO_Write
 
 contains
@@ -636,6 +637,51 @@ contains
     AQMIO_IsOpen = isFileOpen
 
   end function AQMIO_IsOpen
+
+!------------------------------------------------------------------------------
+
+  subroutine AQMIO_Sync(IOComp, rc)
+    type(ESMF_GridComp),   intent(inout)         :: IOComp
+    integer,               intent(out), optional :: rc
+
+    ! -- local variables
+    integer :: localrc
+    integer :: ncStatus
+    integer :: item, localDe, localDeCount
+    type(ioWrapper) :: is
+
+    ! -- begin
+    if (present(rc)) rc = ESMF_SUCCESS
+
+#if HAVE_NETCDF
+    if (.not.ESMF_GridCompIsPetLocal(IOComp)) return
+
+    call ESMF_GridCompGetInternalState(IOComp, is, localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__, &
+      rcToReturn=rc)) return  ! bail out
+
+    if (.not.associated(is % IO)) return
+    if (.not.associated(is % IO % IOLayout)) return
+
+    localDeCount = size(is % IO % IOLayout)
+
+    do localDe = 0, localDeCount - 1
+      if (is % IO % IOLayout(localDe) % localIOflag) then
+        if (is % IO % IOLayout(localDe) % ncid > 0) then
+          ncStatus = nf90_sync(is % IO % IOLayout(localDe) % ncid)
+          if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
+            msg="Error syncing NetCDF data set", &
+            line=__LINE__, &
+            file=__FILE__, &
+            rcToReturn=rc)) return  ! bail out
+        end if
+      end if
+    end do
+#endif
+
+  end subroutine AQMIO_Sync
 
 !------------------------------------------------------------------------------
 
@@ -2578,8 +2624,10 @@ contains
     integer, dimension(:,:), allocatable :: minIndexPTile, maxIndexPTile
     character(len=ESMF_MAXSTR) :: fieldName
     character(len=ESMF_MAXSTR) :: dimName
+    character(len=ESMF_MAXSTR) :: units
     type(ESMF_DistGrid)      :: distgrid
     type(ESMF_Grid)          :: grid
+    type(ESMF_Info)          :: info
     type(ESMF_StaggerLoc)    :: staggerloc
     type(ESMF_TypeKind_Flag) :: typekind
 
@@ -2749,6 +2797,28 @@ contains
       line=__LINE__, &
       file=__FILE__, &
       rcToReturn=rc)) return  ! bail out
+
+    ! -- add units if available
+    call ESMF_InfoGetFromHost(field, info, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__, &
+      rcToReturn=rc)) return  ! bail out
+
+    call ESMF_InfoGet(info, "units", units, default="", rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__, &
+      rcToReturn=rc)) return  ! bail out
+
+    if (len_trim(units) > 0) then
+      ncStatus = nf90_put_att(IOLayout % ncid, lvarId, "units", trim(units))
+      if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
+        msg="Error adding units to NetCDF variable: "//trim(fieldName), &
+        line=__LINE__, &
+        file=__FILE__, &
+        rcToReturn=rc)) return  ! bail out
+    end if
 
     ncStatus = nf90_enddef(IOLayout % ncid)
     if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &

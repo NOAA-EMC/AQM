@@ -202,7 +202,7 @@ C Local variables:
 
          INTEGER          IOS        ! i/o and allocate memory status
          INTEGER          L, S, V    ! counters
-         INTEGER          C, R, K, N, I, J
+         INTEGER          C, R, K, N, I, J, M
          INTEGER          LOCALRC
 
          LOGICAL       :: IS_NOT_NVPOA, SAVE_POC
@@ -229,16 +229,16 @@ C Local variables:
          character(len=NF90_MAX_NAME) :: path_in
 	 
 ! 	 type(ESMF_VM)                          :: VM_ESMF	 
-	 integer myrc, my_mpi_comm,my_ntasks, is, ie, js, je
+	 integer myrc, my_mpi_comm,my_ntasks, is, ie, js, je, Lindex1,Lindex2,INDEXINT1
 	 character(200) :: aline
-	 
+
 	 real  zf0,zf1,mxzplm
 	 integer, save :: ntimes,itstep,ncid,iddim_stack,nstack,idvar,nvars,idlists(200),
      &	   id_em_gc(200),id_em_pm(200),indx_gc(200),indx_pm(200), nvars_gc,nvars_pm,ndims,
      &     elemStart(2),elemCount(2),jstartdate,jstarttime
      
 	 real,save :: distnear   ! search distrance in km, sqrt(0.5)*model_resolution in km
-	 integer, save, allocatable, dimension (:) :: ixt, jyt
+	 integer, save, allocatable, dimension (:) :: ixt, jyt, Lunique
          real, save, allocatable, dimension (:) :: tlat,tlon,stkdm,stkht,tfrac,
      &	    stktk,stkve,stkflw,stk_ddzf,stk_pres,stk_dens,stk_qv,stk_ta,stk_wspd,stk_zf,stk_zh,stk_zstk,
      &      stk_presf,stk_zzf,stk_dthdz,stk_uwind,stk_vwind
@@ -298,7 +298,11 @@ c         type(aqm_config_type), pointer :: config
           END INTERFACE 			     ! above stack, finally plume centerline
 C----------------------------------------------------! height [m] (can be greater than the   -------------------
 						     ! height of the top of the EMLAYS layer)
-         IF ( FIRSTIME ) THEN
+         
+	 EM => AQM_EMIS_GET( ETYPE )
+         IF ( .NOT.ASSOCIATED( EM ) ) RETURN
+
+	 IF ( FIRSTIME ) THEN
             FIRSTIME = .FALSE.
             LOGDEV = SETUP_LOGDEV()
             
@@ -352,41 +356,35 @@ C----------------------------------------------------! height [m] (can be greate
 
 	    nvars_gc=0
 	    nvars_pm=0
+	    
+	    allocate(Lunique(N_SPC_PTEM))
+	        	 	
 	    do n=1,nvars
 	      call check(nf90_inquire_variable(ncid,idlists(n),vname,ndims=ndims))
-	      L=index1(vname,n_gc_emis, gc_emis)
-	      if (L > 0) then
-	       
+	      L=index1(vname,N_SPC_PTEM, EM%TABLE(1,1) )  ! index in PT emission
+	      if (L > 0) then	       
 	       if(ndims.ne.2) then
 	        write(logdev,*)'ndims wrong',ndims,vname
 		IF ( AQM_RC_CHECK( 1,
      &               MSG='gaseous ndims wrong '//trim(vname),
      &               FILE=__FILE__, LINE=__LINE__ ) ) RETURN
-	       endif       
-	       if( PTEM_MAP( L ) .gt.0) then
-	        nvars_gc=nvars_gc+1
-	        id_em_gc(nvars_gc)=idlists(n)
-	        indx_gc(nvars_gc)=PTEM_MAP( L )
 	       endif
 	       
-	      else ! aerosol
-	       L=index1(vname,n_emis_pm, pmem_map_name) ! index in pt em
-	       if (L > 0) then
-	        if(ndims.ne.2) then
-	         write(logdev,*)'ndims wrong',ndims,vname
-		 IF ( AQM_RC_CHECK( 1,
-     &               MSG='aerosol ndims wrong '//trim(vname),
-     &               FILE=__FILE__, LINE=__LINE__ ) ) RETURN
-	        endif
-	        do S=1, N_SPC_PTPM
-	         if(PTPM_MAP(S).eq.L) exit
-	        enddo
-		if (S. le. N_SPC_PTPM ) then
-	          nvars_pm=nvars_pm+1
-	          id_em_pm(nvars_pm)=idlists(n)
-		  indx_pm(nvars_pm)=S
-	        endif
+	       if(any(vname.eq.gc_emis)) then  ! gaseous, not unique
+	        nvars_gc=nvars_gc+1
+	        id_em_gc(nvars_gc)=idlists(n)
+	        indx_gc(nvars_gc)=L     ! index in fire-pt
+		write(logdev,*)'vname,nvars_gc,indx_gc(nvars_gc),em_table =',vname,nvars_gc,
+     & 	         indx_gc(nvars_gc),EM % TABLE(L, 1 )
 	       endif
+	       
+	       Lindex1=INDEX1( vname, N_EMIS_PM, PMEM_MAP_NAME )  ! aerosol
+	       if(Lindex1.ge.1) then  
+                  nvars_pm=nvars_pm+1
+	          id_em_pm(nvars_pm)=idlists(n)
+                  indx_pm(nvars_pm)=INDEXINT1(Lindex1,N_SPC_PTPM,PTPM_MAP)  ! index in PTPM_MAP (unique)
+	       endif	  	        
+	  
 	      endif
 	    enddo
 	    
@@ -651,8 +649,6 @@ C Apportion emissions to the layers
 
 c-----FIRE emissions
 
-         EM => AQM_EMIS_GET( ETYPE )
-         IF ( .NOT.ASSOCIATED( EM ) ) RETURN
 
 C For each time step, compute the layer fractions...
 
@@ -702,9 +698,20 @@ C        ... gas species ...
 
          IS_NOT_NVPOA = ( INDEX( MECHNAME, 'NVPOA' ) .EQ. 0 )
 
+         if(IS_NOT_NVPOA) then
+	    Lindex1=INDEX1('POC',N_SPC_PTEM,em%table(1,1))
+	    Lindex2=INDEX1('PNCOM',N_SPC_PTEM,em%table(1,1))
+	    VDEMIS_PT( :,:,:,Lindex1)=VDEMIS_PT( :,:,:,Lindex2) ! replace POC with PNCOM in gaseous PT emission holder
+	 endif
+	 
+	 Lunique=0
+	 M=0   
          DO S = 1, N_GSPC_EMIS
             N = PTEM_MAP( S )
-            IF ( N .GT. 0 ) THEN
+            IF ( N .GT. 0. .and. (.not.any(N.eq.Lunique)) ) THEN
+	       M=M+1
+	       Lunique(M)=N
+	       
                BUFFER = 0.0
                CALL AQM_EMIS_READ( ETYPE, EM % TABLE( N, 1 ), BUFFER, RC=LOCALRC )
                IF ( AQM_RC_CHECK( LOCALRC, MSG="Failure while reading " //
@@ -745,7 +752,7 @@ C              Read Non-Carbon Organic Matter too if POC is Requested
 
 C        ... aerosol species ...        
 
-         DO S = 1, N_SPC_PTPM  ! FIRE inventory index of aerosol  
+         DO S = 1, N_SPC_PTPM  ! FIRE inventory index of aerosol (unique) 
             V = PTPM_MAP( S )   ! index in aerosol emission holder
             BUFFER = 0.0
             CALL AQM_EMIS_READ( ETYPE, PMEM_MAP_NAME( V ), BUFFER, RC=LOCALRC )

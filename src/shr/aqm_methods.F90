@@ -358,6 +358,8 @@ logical function envyn(name, description, defaultval, status)
       envyn = .false.
     case ('CTM_FENGSHA')
       envyn = aqm_emis_ispresent("fengsha")
+    case ('CTM_WB_DUST')
+      envyn = config % ctm_wb_dust
     case ('INITIAL_RUN')
       envyn = .true.
     case default

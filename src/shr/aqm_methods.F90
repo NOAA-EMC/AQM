@@ -304,7 +304,8 @@ END FUNCTION DESC3
 
 logical function envyn(name, description, defaultval, status)
 
-  use aqm_emis_mod,  only : aqm_internal_emis_type, aqm_emis_get
+  use aqm_emis_mod,  only : aqm_internal_emis_type, &
+                            aqm_emis_get, aqm_emis_ispresent
   use aqm_model_mod, only : aqm_config_type, aqm_model_get
   use aqm_rc_mod,    only : aqm_rc_check
 
@@ -344,9 +345,7 @@ logical function envyn(name, description, defaultval, status)
     case ('CTM_AOD')
       envyn = config % ctm_aod
     case ('CTM_BIOGEMIS')
-      envyn = .false.
-      em => aqm_emis_get("biogenic")
-      envyn = associated(em)
+      envyn = aqm_emis_ispresent("biogenic")
     case ('CTM_DEPVFILE')
       envyn = config % ctm_depvfile
     case ('CTM_PMDIAG')
@@ -354,12 +353,11 @@ logical function envyn(name, description, defaultval, status)
     case ('CTM_PHOTODIAG')
       envyn = config % ctm_photodiag
     case ('CTM_PT3DEMIS')
-      em => aqm_emis_get("gbbepx")
-      envyn = associated(em)
+      envyn = aqm_emis_ispresent("gbbepx")
     case ('CTM_GRAV_SETL')
       envyn = .false.
     case ('CTM_FENGSHA')
-      envyn = config % fengsha_yn
+      envyn = aqm_emis_ispresent("fengsha")
     case ('INITIAL_RUN')
       envyn = .true.
     case default

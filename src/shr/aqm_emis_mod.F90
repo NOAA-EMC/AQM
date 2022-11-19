@@ -24,6 +24,7 @@ module aqm_emis_mod
   public :: aqm_emis_init
   public :: aqm_emis_finalize
   public :: aqm_emis_data_get
+  public :: aqm_emis_ispresent
   public :: aqm_emis_get
   public :: aqm_emis_desc
   public :: aqm_emis_update
@@ -1141,6 +1142,13 @@ contains
     if (associated(aqm_emis_data)) ep => aqm_emis_data
 
   end function aqm_emis_data_get
+
+  logical function aqm_emis_ispresent(etype)
+    character(len=*), intent(in) :: etype
+
+    aqm_emis_ispresent = associated(aqm_emis_get(etype))
+
+  end function aqm_emis_ispresent
 
   subroutine aqm_emis_desc( etype, nlays, nvars, vnames, units )
     character(len=*),  intent(in)  :: etype

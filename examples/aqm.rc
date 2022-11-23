@@ -208,7 +208,11 @@ myemis_type: fengsha
 
 myemis_format: netcdf
 
+myemis_frequency: static
+
 myemis_file: /scratch1/RDARCH/rda-arl-gpu/Barry.Baker/emissions/nexus/FENGSHA/FENGSHA_FILES.nc
+
+myemis_alpha: 0.7
 
 myemis_species::
     clayf      1.00000   clayf    1

@@ -283,7 +283,7 @@ C Land use information:
       Real, Pointer, Private :: BUFF3D( :,:,: ) ! 3D temp var
 
 ! FENGSHA option control
-      CHARACTER( 20 ), SAVE :: CTM_FENGSHA = 'CTM_FENGSHA    '! env var for in-line
+      CHARACTER( 18 ),         SAVE :: CTM_WBDUST_FENGSHA = 'CTM_WBDUST_FENGSHA' ! env var for in-line
       LOGICAL,         PUBLIC, SAVE :: FENGSHA                     ! flag for fengsha option
 
       INTEGER                          IOSX             ! i/o and allocate memory status
@@ -625,11 +625,10 @@ C-----------------------------------------------------------------------
          End If
 
 !> ccccccccccccccccccccc Fengsha option!ccccccccccccccccccccc
-         FENGSHA = ENVYN( 'CTM_FENGSHA',
+         FENGSHA = ENVYN( CTM_WBDUST_FENGSHA,
      &                   'Flag for in-line fengsha ',
      &                   .FALSE., IOSX )
         
-         ! write(*,*) 'FENGSHA IS = ', FENGSHA
          IF ( FENGSHA ) THEN
             XMSG = 'Using the Fengsha Wind-Blown dust emission model...'
             CALL M3MSG2( XMSG )

@@ -36,7 +36,6 @@ module aqm_config_mod
     logical                   :: init_conc     = .false.
     logical                   :: run_aero      = .false.
     logical                   :: run_rescld    = .false.
-    logical                   :: fengsha_yn    = .true.
     logical                   :: verbose       = .false.
     type(aqm_species_type), pointer :: species => null()
   end type aqm_config_type
@@ -179,15 +178,6 @@ contains
 
     call ESMF_ConfigGetAttribute(cf, config % ctm_wb_dust, &
       label="ctm_wb_dust:", default=.true., rc=localrc)
-    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__,  &
-      file=__FILE__,  &
-      rcToReturn=rc)) &
-      return  ! bail out
-    
-    ! FENGSHA Options
-    call ESMF_ConfigGetAttribute(cf, config % fengsha_yn, &
-      label="fengsha_yn:", default=.true., rc=localrc)
     if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__,  &
       file=__FILE__,  &
@@ -527,13 +517,6 @@ contains
         ESMF_LOGMSG_INFO, rc=localrc)
     else
       call ESMF_LogWrite(trim(name) // ": config: read: run_rescld: false", &
-        ESMF_LOGMSG_INFO, rc=localrc)
-    end if
-    if (config % fengsha_yn) then
-      call ESMF_LogWrite(trim(name) // ": config: read: fengsha_yn: true", &
-        ESMF_LOGMSG_INFO, rc=localrc)
-    else
-      call ESMF_LogWrite(trim(name) // ": config: read: fengsha_yn: false", &
         ESMF_LOGMSG_INFO, rc=localrc)
     end if
     if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &

@@ -201,6 +201,7 @@ contains
       em(item) % iomode = "read"
       em(item) % iofmt = AQMIO_FMT_NETCDF
       em(item) % irec  = 0
+      em(item) % scalefactor = 1.0
       em(item) % sync        = .false.
       em(item) % verbose     = .false.
       em(item) % logprefix   = ""
@@ -544,6 +545,14 @@ contains
             rcToReturn=rc)) &
             return  ! bail out
         end if
+      case ("fengsha")
+        call ESMF_ConfigGetAttribute(config, em % scalefactor, &
+          label=trim(em % name)//"_alpha:", default=1.0, rc=localrc)
+        if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__,  &
+          file=__FILE__,  &
+          rcToReturn=rc)) &
+          return  ! bail out
       case ("gbbepx")
         call ESMF_ConfigGetAttribute(config, value, &
           label=trim(em % name)//"_plume_rise:", default="none", rc=localrc)

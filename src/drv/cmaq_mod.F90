@@ -429,9 +429,10 @@ contains
     type(aqm_internal_emis_type), pointer :: em
 
     ! -- local parameters
-    character(len=*), parameter :: etype(3) = (/ &
+    character(len=*), parameter :: etype(4) = (/ &
       "anthropogenic", &
       "biogenic     ", &
+      "fengsha      ", &
       "gbbepx       "  &
     /)
 
@@ -573,6 +574,13 @@ contains
                   file=__FILE__, line=__LINE__, rc=rc)
                 return
             end select
+          end do
+
+          case ("fengsha")
+
+          ! -- inputs are already provided as surface densities, no need to normalize
+          do n = 1, size(em % species)
+            em % dens_flag(n) = 1
           end do
 
         end select

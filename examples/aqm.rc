@@ -44,6 +44,10 @@ run_aerosol: true
 # - enable wet deposition processes in resolved-scale clouds
 #
 run_rescld: true
+#
+# - compute aerosol optical properties using Mie theory (default: false)
+#
+mie_optics: false
 
 #
 # Microphysics scheme used by coupled atmospheric model

@@ -33,6 +33,7 @@ module aqm_config_mod
     logical                   :: ctm_photodiag = .false.
     logical                   :: ctm_pmdiag    = .false.
     logical                   :: ctm_wb_dust   = .false.
+    logical                   :: mie_optics    = .false.
     logical                   :: init_conc     = .false.
     logical                   :: run_aero      = .false.
     logical                   :: run_rescld    = .false.
@@ -144,6 +145,14 @@ contains
 
     call ESMF_ConfigGetAttribute(cf, config % run_rescld, &
       label="run_rescld:", default=.true., rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+    call ESMF_ConfigGetAttribute(cf, config % mie_optics, &
+      label="mie_optics:", default=.false., rc=localrc)
     if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__,  &
       file=__FILE__,  &

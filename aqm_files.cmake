@@ -14,6 +14,7 @@ list(APPEND aqm_shr_files
     src/shr/aqm_prod_mod.F90
     src/shr/aqm_fires_mod.F90
     src/shr/aqm_internal_mod.F90
+    src/shr/aqm_logger_mod.F90
     src/shr/aqm_model_mod.F90
     src/shr/aqm_rc_mod.F90
     src/shr/aqm_methods.F90

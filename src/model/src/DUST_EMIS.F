@@ -964,7 +964,7 @@ C-----------------------------------------------------------------------
          if ( firstime ) then
             firstime = .false.
             if ( fengsha ) then
-              dust_alpha = 0.7    ! default
+              dust_alpha = 0.05    ! default
               dust_alpha = envreal( ctm_wbdust_fengsha_alpha,
      &          'Emission global scaling factor for FENGSHA dust scheme',
      &          dust_alpha, status )

@@ -531,36 +531,95 @@ contains
     if (config % ctm_aod) then
       call ESMF_LogWrite(trim(name) // ": config: read: ctm_aod: true", &
         ESMF_LOGMSG_INFO, rc=localrc)
+      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__,  &
+        file=__FILE__,  &
+        rcToReturn=rc)) &
+        return  ! bail out
     else
       call ESMF_LogWrite(trim(name) // ": config: read: ctm_aod: false", &
         ESMF_LOGMSG_INFO, rc=localrc)
+      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__,  &
+        file=__FILE__,  &
+        rcToReturn=rc)) &
+        return  ! bail out
     end if
     if (config % ctm_wb_dust) then
       call ESMF_LogWrite(trim(name) // ": config: read: ctm_wb_dust: true", &
         ESMF_LOGMSG_INFO, rc=localrc)
+      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__,  &
+        file=__FILE__,  &
+        rcToReturn=rc)) &
+        return  ! bail out
     else
       call ESMF_LogWrite(trim(name) // ": config: read: ctm_wb_dust: false", &
         ESMF_LOGMSG_INFO, rc=localrc)
+      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__,  &
+        file=__FILE__,  &
+        rcToReturn=rc)) &
+        return  ! bail out
     end if
-    if (config % run_aero) then
-      call ESMF_LogWrite(trim(name) // ": config: read: run_aerosol: true", &
-        ESMF_LOGMSG_INFO, rc=localrc)
-    else
-      call ESMF_LogWrite(trim(name) // ": config: read: run_aerosol: false", &
-        ESMF_LOGMSG_INFO, rc=localrc)
-    end if
-    if (config % run_rescld) then
-      call ESMF_LogWrite(trim(name) // ": config: read: run_rescld: true", &
-        ESMF_LOGMSG_INFO, rc=localrc)
-    else
-      call ESMF_LogWrite(trim(name) // ": config: read: run_rescld: false", &
-        ESMF_LOGMSG_INFO, rc=localrc)
-    end if
+    call ESMF_LogWrite(trim(name) // ": config: read: ctm_stdout: " &
+      // config % ctm_stdout, ESMF_LOGMSG_INFO, rc=localrc)
     if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__,  &
       file=__FILE__,  &
       rcToReturn=rc)) &
       return  ! bail out
+    if (config % run_aero) then
+      call ESMF_LogWrite(trim(name) // ": config: read: run_aerosol: true", &
+        ESMF_LOGMSG_INFO, rc=localrc)
+      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__,  &
+        file=__FILE__,  &
+        rcToReturn=rc)) &
+        return  ! bail out
+    else
+      call ESMF_LogWrite(trim(name) // ": config: read: run_aerosol: false", &
+        ESMF_LOGMSG_INFO, rc=localrc)
+      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__,  &
+        file=__FILE__,  &
+        rcToReturn=rc)) &
+        return  ! bail out
+    end if
+    if (config % run_rescld) then
+      call ESMF_LogWrite(trim(name) // ": config: read: run_rescld: true", &
+        ESMF_LOGMSG_INFO, rc=localrc)
+      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__,  &
+        file=__FILE__,  &
+        rcToReturn=rc)) &
+        return  ! bail out
+    else
+      call ESMF_LogWrite(trim(name) // ": config: read: run_rescld: false", &
+        ESMF_LOGMSG_INFO, rc=localrc)
+      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__,  &
+        file=__FILE__,  &
+        rcToReturn=rc)) &
+        return  ! bail out
+    end if
+    if (config % mie_optics) then
+      call ESMF_LogWrite(trim(name) // ": config: read: mie_optics: true", &
+        ESMF_LOGMSG_INFO, rc=localrc)
+      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__,  &
+        file=__FILE__,  &
+        rcToReturn=rc)) &
+        return  ! bail out
+    else
+      call ESMF_LogWrite(trim(name) // ": config: read: mie_optics: false", &
+        ESMF_LOGMSG_INFO, rc=localrc)
+      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__,  &
+        file=__FILE__,  &
+        rcToReturn=rc)) &
+        return  ! bail out
+    end if
     call ESMF_LogWrite(trim(name) // ": config: read: mp_tracer_map: " &
       // config % mp_map, ESMF_LOGMSG_INFO, rc=localrc)
     if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &

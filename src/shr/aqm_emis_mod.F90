@@ -553,6 +553,16 @@ contains
           file=__FILE__,  &
           rcToReturn=rc)) &
           return  ! bail out
+        if (em % verbose) then
+          write(msgString,'(g20.8)') em % scalefactor
+          call ESMF_LogWrite(trim(em % logprefix)//": "//pName &
+            //": alpha: "//adjustl(msgString), ESMF_LOGMSG_INFO, rc=localrc)
+          if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__,  &
+            file=__FILE__,  &
+            rcToReturn=rc)) &
+            return  ! bail out
+        end if
       case ("gbbepx")
         call ESMF_ConfigGetAttribute(config, value, &
           label=trim(em % name)//"_plume_rise:", default="none", rc=localrc)

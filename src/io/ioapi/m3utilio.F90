@@ -153,7 +153,7 @@ contains
   INTEGER FUNCTION INIT3()
     INTEGER :: IOS
     INTEGER, SAVE :: IOUNIT = -1
-
+    
     IF (IOUNIT > 0) THEN
       INIT3 = IOUNIT
     ELSE
@@ -162,7 +162,7 @@ contains
       ELSE
         IOUNIT = JUNIT()
         OPEN(UNIT=IOUNIT, FILE='/dev/null', IOSTAT=IOS, ACTION='WRITE')
-        IF (IOS == 0) INIT3 = IOUNIT
+        IF (IOS /= 0) IOUNIT = DEFAULT_LOGDEV
       END IF
     END IF
   END FUNCTION INIT3

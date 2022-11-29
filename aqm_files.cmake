@@ -182,7 +182,6 @@ list(APPEND aqm_CCTM_files
 	${MECHS}/RXNS_FUNC_MODULE.F90
 	${PA}/PA_DEFN.F
 	${PA}/pa_update.F
-	${PHOT}/AERO_PHOTDATA.F
 	${PHOT}/CLOUD_OPTICS.F
 	${PHOT}/complex_number_module.F90
 	${PHOT}/CSQY_DATA.F
@@ -240,4 +239,5 @@ list(APPEND aqm_CCTM_files
 	${localCCTM}/PT3D_DEFN.F
 	${localCCTM}/ASX_DATA_MOD.F
 	${localCCTM}/DUST_EMIS.F
+  ${localCCTM}/AERO_PHOTDATA.F
 )

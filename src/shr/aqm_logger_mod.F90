@@ -12,8 +12,15 @@ module aqm_logger_mod
   public :: aqm_logger_init
   public :: aqm_logger_log
   public :: aqm_logger_logstep
+  public :: aqm_logger_active
 
 contains
+
+  logical function aqm_logger_active()
+
+    aqm_logger_active = is_logger_on
+
+  end function aqm_logger_active
 
   subroutine aqm_logger_init(model, rc)
 
@@ -47,7 +54,6 @@ contains
     is_logger_on = (localPet == aqm_logger_task)
 
   end subroutine aqm_logger_init
-
 
   subroutine aqm_logger_log(msg, logUnit, rc)
 

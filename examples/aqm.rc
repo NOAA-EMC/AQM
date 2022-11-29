@@ -66,6 +66,15 @@ ctm_aod: true
 ctm_pmdiag: true
 
 #
+# Output verbosity
+#
+# Set standard output verbosity level. Options are:
+# - all         (enable output from all PETs - default)
+# - maintask    (enable output only from main PET)
+# - none        (disable output)
+ctm_stdout: all
+
+#
 #  Input emissions
 #
 #  List emission sources using custom names, then enter emission

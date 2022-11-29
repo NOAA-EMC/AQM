@@ -5,8 +5,11 @@ module aqm_config_mod
   use NUOPC_Model, only : NUOPC_ModelGet
 
   use aqm_rc_mod
+  use aqm_logger_mod,  only : aqm_logger_active
   use aqm_types_mod,   only : AQM_MAXSTR
   use aqm_species_mod, only : aqm_species_type
+
+  use m3utilio,        only : m3io_enabled
 
   implicit none
 
@@ -21,6 +24,7 @@ module aqm_config_mod
     character(len=AQM_MAXSTR) :: optics_data   = ""
     character(len=AQM_MAXSTR) :: omi           = ""
     character(len=AQM_MAXSTR) :: mp_map        = ""
+    character(len=AQM_MAXSTR) :: ctm_stdout    = ""
     integer                   :: dy_map_beg    = 0
     integer                   :: ctm_stdate    = 0
     integer                   :: ctm_sttime    = 0
@@ -57,6 +61,7 @@ contains
 
     ! -- local variables
     integer                    :: localrc
+    character(len=ESMF_MAXSTR) :: value
     type(ESMF_Config)          :: cf
 
     ! -- begin
@@ -193,6 +198,20 @@ contains
       rcToReturn=rc)) &
       return  ! bail out
     
+    call ESMF_ConfigGetAttribute(cf, value, &
+      label="ctm_stdout:", default="all", rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+    config % ctm_stdout = ESMF_UtilStringLowerCase(value, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
     ! -- microphysics tracer map
     call ESMF_ConfigGetAttribute(cf, config % mp_map, &
       label="mp_tracer_map:", rc=localrc)
@@ -422,6 +441,15 @@ contains
     ! -- set model's name and verbosity level based on the component standard diagnostic level
     config % name    = name
     config % verbose = btest(diagnostic, 17)
+
+    select case (trim(config % ctm_stdout))
+      case ("all")
+        m3io_enabled = .true.
+      case ("maintask")
+        m3io_enabled = aqm_logger_active()
+      case ("none")
+        m3io_enabled = .false.
+    end select
 
     if (btest(verbosity,8)) then
       call aqm_config_log(config, name, rc=localrc)

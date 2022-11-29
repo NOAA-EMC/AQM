@@ -466,15 +466,15 @@ module AQM
       return  ! bail out
     end if
 
-    ! -- create & initialize model component (infrastructure)
-    call aqm_comp_create(model, rc=rc)
+    ! -- initialize logger
+    call aqm_logger_init(model, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
 
-    ! -- initialize logger
-    call aqm_logger_init(model, rc=rc)
+    ! -- create & initialize model component (infrastructure)
+    call aqm_comp_create(model, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &

@@ -50,6 +50,7 @@ module cmaq_mod
   public :: cmaq_species_read
   public :: cmaq_export
   public :: cmaq_import
+  public :: cmaq_pm_export
 
 contains
 
@@ -252,13 +253,12 @@ contains
 
   end subroutine cmaq_import
 
-  subroutine cmaq_export(tracers, prl, temp, start_index, diag_index, rc)
+  subroutine cmaq_export(tracers, prl, temp, start_index, rc)
 
     real(AQM_KIND_R8), intent(out) :: tracers(:,:,:,:)
     real(AQM_KIND_R8), intent(in)  :: prl(:,:,:)
     real(AQM_KIND_R8), intent(in)  :: temp(:,:,:)
     integer,           intent(in)  :: start_index
-    integer,           intent(in)  :: diag_index
     integer, optional, intent(out) :: rc
     
 
@@ -323,9 +323,23 @@ contains
       end do
     end if
 
+  end subroutine cmaq_export
+
+  subroutine cmaq_pm_export(tracers, diag_index, rc)
+
+    real(AQM_KIND_R8), intent(out) :: tracers(:,:,:,:)
+    integer,           intent(in)  :: diag_index
+    integer, optional, intent(out) :: rc
+
+    ! -- local variables
+    integer :: c, r, l, n
+    real    :: pm25(my_ncols,my_nrows,nlays,1)
+
+    ! -- begin
+    if (present(rc)) rc = AQM_RC_SUCCESS
+
     ! -- pm2.5
-    
-    call cmaq_prod_pm25( pm25, cgrid, tracers, diag_index, nlays)
+    call cmaq_prod_pm25( pm25, cgrid, tracers, diag_index, nlays )
     n = diag_index + 3
     do l = 1, nlays
       do r = 1, my_nrows
@@ -335,7 +349,7 @@ contains
       end do
     end do
 
-  end subroutine cmaq_export
+  end subroutine cmaq_pm_export
 
   subroutine cmaq_conc_init(jdate, jtime, tstep, rc)
 
@@ -429,9 +443,10 @@ contains
     type(aqm_internal_emis_type), pointer :: em
 
     ! -- local parameters
-    character(len=*), parameter :: etype(3) = (/ &
+    character(len=*), parameter :: etype(4) = (/ &
       "anthropogenic", &
       "biogenic     ", &
+      "fengsha      ", &
       "gbbepx       "  &
     /)
 
@@ -573,6 +588,13 @@ contains
                   file=__FILE__, line=__LINE__, rc=rc)
                 return
             end select
+          end do
+
+          case ("fengsha")
+
+          ! -- inputs are already provided as surface densities, no need to normalize
+          do n = 1, size(em % species)
+            em % dens_flag(n) = 1
           end do
 
         end select
@@ -733,10 +755,11 @@ contains
 
   end subroutine cmaq_prod_units_get
 
-  subroutine cmaq_prod_update(tracers, start_index, rc)
+  subroutine cmaq_prod_update(tracers, start_index, pmdiag, rc)
 
     real(AQM_KIND_R8), intent(in)  :: tracers(:,:,:,:)
     integer,           intent(in)  :: start_index
+    logical,           intent(in)  :: pmdiag
     integer, optional, intent(out) :: rc
 
     ! -- local variables
@@ -759,7 +782,7 @@ contains
             select case ( trim(prod % species(n)) )
               case ("PM2.5")
                 ! --- diagnostic PM2.5
-                if ( n_ae_spc > 0 ) then
+                if ( n_ae_spc > 0 .and. pmdiag ) then
                   call cmaq_prod_pm25( pm25, cgrid, tracers, start_index, 1)
                   call aqm_prod_compute( prod, pm25, n, 1 )
                 end if

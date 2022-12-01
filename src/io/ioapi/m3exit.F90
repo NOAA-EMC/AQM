@@ -5,6 +5,9 @@ subroutine m3exit( caller, jdate, jtime, msgtxt, xstat )
   character(len=*),  intent(in) :: msgtxt
   integer,           intent(in) :: xstat
 
+  write(0, '("FATAL: ",a)') trim(caller) // ':' // trim(msgtxt)
+  flush 0
+
   call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, &
     msg=trim(caller) // ':' // trim(msgtxt))
   call ESMF_Finalize(endflag=ESMF_END_ABORT)

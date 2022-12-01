@@ -6,6 +6,7 @@ module aqm_comp_mod
   use aqm_rc_mod
   use aqm_config_mod
   use aqm_types_mod, only : AQM_MAXSTR
+  use aqm_logger_mod
   use aqm_model_mod
   use aqm_emis_mod
   use aqm_prod_mod

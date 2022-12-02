@@ -39,7 +39,7 @@ contains
     do n = 1, size(em % fields)
       select case (trim(em % units(n)))
         case ("MIN")
-          initValue = huge(1._ESMF_KIND_R8)
+          initValue = huge(1._ESMF_KIND_R4)    ! this prevents overflow converting from R8 to R4 in ESMF
         case default
           initValue = 0._ESMF_KIND_R8
       end select

@@ -18,6 +18,7 @@ module aqm_internal_mod
     character(len=6)               :: period
     logical                        :: sync
     logical                        :: verbose
+    real                           :: scalefactor
     integer                        :: irec
     integer                        :: iofmt
     character(len=ESMF_MAXSTR)     :: iomode

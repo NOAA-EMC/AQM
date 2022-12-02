@@ -304,7 +304,8 @@ END FUNCTION DESC3
 
 logical function envyn(name, description, defaultval, status)
 
-  use aqm_emis_mod,  only : aqm_internal_emis_type, aqm_emis_get
+  use aqm_emis_mod,  only : aqm_internal_emis_type, &
+                            aqm_emis_get, aqm_emis_ispresent
   use aqm_model_mod, only : aqm_config_type, aqm_model_get
   use aqm_rc_mod,    only : aqm_rc_check
 
@@ -344,9 +345,7 @@ logical function envyn(name, description, defaultval, status)
     case ('CTM_AOD')
       envyn = config % ctm_aod
     case ('CTM_BIOGEMIS')
-      envyn = .false.
-      em => aqm_emis_get("biogenic")
-      envyn = associated(em)
+      envyn = aqm_emis_ispresent("biogenic")
     case ('CTM_DEPVFILE')
       envyn = config % ctm_depvfile
     case ('CTM_PMDIAG')
@@ -354,12 +353,15 @@ logical function envyn(name, description, defaultval, status)
     case ('CTM_PHOTODIAG')
       envyn = config % ctm_photodiag
     case ('CTM_PT3DEMIS')
-      em => aqm_emis_get("gbbepx")
-      envyn = associated(em)
+      envyn = aqm_emis_ispresent("gbbepx")
     case ('CTM_GRAV_SETL')
       envyn = .false.
-    case ('CTM_FENGSHA')
-      envyn = config % fengsha_yn
+    case ('CTM_WBDUST_FENGSHA')
+      envyn = aqm_emis_ispresent("fengsha")
+    case ('CTM_WB_DUST')
+      envyn = config % ctm_wb_dust
+    case ('MIE_OPTICS')
+      envyn = config % mie_optics
     case ('INITIAL_RUN')
       envyn = .true.
     case default
@@ -425,13 +427,31 @@ end function envint
 
 
 REAL FUNCTION ENVREAL( LNAME, DESC, DEFAULT, STAT )
+
+  USE AQM_EMIS_MOD,  ONLY : AQM_INTERNAL_EMIS_TYPE, AQM_EMIS_GET
+
   IMPLICIT NONE
+
   CHARACTER*(*), INTENT(IN   ) :: LNAME
   CHARACTER*(*), INTENT(IN   ) :: DESC
   REAL         , INTENT(IN   ) :: DEFAULT
   INTEGER      , INTENT(  OUT) :: STAT
+
+  ! -- local variables
+  TYPE(AQM_INTERNAL_EMIS_TYPE), POINTER :: EM
+
+  ! -- begin
   ENVREAL = DEFAULT
   STAT = 0
+
+  SELECT CASE ( TRIM(LNAME) )
+    CASE ( 'CTM_WBDUST_FENGSHA_ALPHA' )
+      EM => AQM_EMIS_GET("fengsha")
+      IF (ASSOCIATED(EM)) ENVREAL = EM % SCALEFACTOR
+    CASE DEFAULT
+      ! Nothing to do
+  END SELECT
+
 END FUNCTION ENVREAL
 
 
@@ -770,48 +790,12 @@ logical function interpx( fname, vname, pname, &
            buffer(k) = 0.01 * stateIn % zorl(c,r)
          end do
         end do
-        
-      ! fengsha variables
-      case ("CLAYF")
-      ! p2d => stateIn % cclayf
-       if (config % fengsha_yn) then
+      case ("CLAYF","DRAG","SANDF","UTHR")
+        ! -- read in fengsha variables
         call aqm_emis_read("fengsha", vname, buffer, rc=localrc)
         if (aqm_rc_test((localrc /= 0), &
-          msg="Failure to read fengsha for " // vname, &
+          msg="Failure to read fengsha input for " // vname, &
           file=__FILE__, line=__LINE__)) return
-       else
-         buffer(1:lbuf) = 0.
-       end if
-      case ("SANDF")
-      ! p2d => stateIn % csandf
-       if (config % fengsha_yn) then
-        call aqm_emis_read("fengsha", vname, buffer, rc=localrc)
-        if (aqm_rc_test((localrc /= 0), &
-          msg="Failure to read fengsha for " // vname, &
-          file=__FILE__, line=__LINE__)) return
-       else
-         buffer(1:lbuf) = 0.
-       end if
-      case ("DRAG")
-      ! p2d => stateIn % cdrag
-       if (config % fengsha_yn) then
-        call aqm_emis_read("fengsha", vname, buffer, rc=localrc)
-        if (aqm_rc_test((localrc /= 0), &
-          msg="Failure to read fengsha for " // vname, &
-          file=__FILE__, line=__LINE__)) return
-       else
-         buffer(1:lbuf) = 0.
-       end if
-      case ("UTHR")
-      ! p2d => stateIn % cuthr
-       if (config % fengsha_yn) then
-        call aqm_emis_read("fengsha", vname, buffer, rc=localrc)
-        if (aqm_rc_test((localrc /= 0), &
-          msg="Failure to read fengsha for " // vname, &
-          file=__FILE__, line=__LINE__)) return
-       else
-         buffer(1:lbuf) = 0.
-       end if
       case default
     !   return
     end select

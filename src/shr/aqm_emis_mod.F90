@@ -24,6 +24,7 @@ module aqm_emis_mod
   public :: aqm_emis_init
   public :: aqm_emis_finalize
   public :: aqm_emis_data_get
+  public :: aqm_emis_ispresent
   public :: aqm_emis_get
   public :: aqm_emis_desc
   public :: aqm_emis_update
@@ -200,6 +201,7 @@ contains
       em(item) % iomode = "read"
       em(item) % iofmt = AQMIO_FMT_NETCDF
       em(item) % irec  = 0
+      em(item) % scalefactor = 1.0
       em(item) % sync        = .false.
       em(item) % verbose     = .false.
       em(item) % logprefix   = ""
@@ -537,6 +539,24 @@ contains
         if (em % verbose) then
           call ESMF_LogWrite(trim(em % logprefix)//": "//pName &
             //": speciation profile: "//trim(em % specprofile), ESMF_LOGMSG_INFO, rc=localrc)
+          if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__,  &
+            file=__FILE__,  &
+            rcToReturn=rc)) &
+            return  ! bail out
+        end if
+      case ("fengsha")
+        call ESMF_ConfigGetAttribute(config, em % scalefactor, &
+          label=trim(em % name)//"_alpha:", default=1.0, rc=localrc)
+        if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__,  &
+          file=__FILE__,  &
+          rcToReturn=rc)) &
+          return  ! bail out
+        if (em % verbose) then
+          write(msgString,'(g20.8)') em % scalefactor
+          call ESMF_LogWrite(trim(em % logprefix)//": "//pName &
+            //": alpha: "//adjustl(msgString), ESMF_LOGMSG_INFO, rc=localrc)
           if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
             line=__LINE__,  &
             file=__FILE__,  &
@@ -1141,6 +1161,13 @@ contains
     if (associated(aqm_emis_data)) ep => aqm_emis_data
 
   end function aqm_emis_data_get
+
+  logical function aqm_emis_ispresent(etype)
+    character(len=*), intent(in) :: etype
+
+    aqm_emis_ispresent = associated(aqm_emis_get(etype))
+
+  end function aqm_emis_ispresent
 
   subroutine aqm_emis_desc( etype, nlays, nvars, vnames, units )
     character(len=*),  intent(in)  :: etype

@@ -208,7 +208,7 @@ LOGICAL FUNCTION DESC3( FNAME )
 
     GDNAM3D = 'Cubed-Sphere'
     VGTYP3D = VGSGPN3 ! non-hydrostatic sigma-P
-    VGTOP3D = 20.
+    VGTOP3D = 20. * 101.325
     ! -- actual sigma levels are not required for AQM since transport
     ! -- is performed in the atmosphere. Bogus sigma levels are set
     ! -- to satisfy d(sigma) = 1

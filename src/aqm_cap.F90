@@ -378,11 +378,12 @@ module AQM
         return  ! bail out
       end if
 
-      call ESMF_VMGet(vm, localPet=mylocalPet, rc=rc)
+      call ESMF_VMGet(vm, localPet=localPet, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
         line=__LINE__, &
         file=__FILE__)) &
         return  ! bail out
+
       do localDe = 0, localDeCount-1
         de   = localDeToDeMap(localDe+1) + 1
         tile = deToTileMap(de)
@@ -475,6 +476,13 @@ module AQM
         rcToReturn=rc)
       return  ! bail out
     end if
+
+    ! -- initialize logger
+    call aqm_logger_init(model, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
 
     ! -- create & initialize model component (infrastructure)
     call aqm_comp_create(model, rc=rc)

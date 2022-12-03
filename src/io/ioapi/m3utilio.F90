@@ -9,6 +9,8 @@ module m3utilio
 
   integer, parameter :: default_logdev = 6
 
+  logical :: M3IO_ENABLED = .TRUE.
+
 !...........   EXTERNAL Functions:
 
   INTEGER           :: INTERP3
@@ -148,9 +150,23 @@ module m3utilio
 
 contains
 
-  integer function init3()
-    init3 = default_logdev
-  end function init3
+  INTEGER FUNCTION INIT3()
+    INTEGER :: IOS
+    INTEGER, SAVE :: IOUNIT = -1
+    
+    IF (IOUNIT > 0) THEN
+      INIT3 = IOUNIT
+    ELSE
+      IF (M3IO_ENABLED) THEN
+        IOUNIT = DEFAULT_LOGDEV
+      ELSE
+        IOUNIT = JUNIT()
+        OPEN(UNIT=IOUNIT, FILE='/dev/null', IOSTAT=IOS, ACTION='WRITE')
+        IF (IOS /= 0) IOUNIT = DEFAULT_LOGDEV
+      END IF
+      INIT3 = IOUNIT
+    END IF
+  END FUNCTION INIT3
 
   LOGICAL FUNCTION  OPEN3( FNAME, FSTATUS, PGNAME )
     CHARACTER(LEN=*), INTENT(IN) :: FNAME

@@ -252,7 +252,6 @@ module AQM
     type(ESMF_Array)              :: array
 
     integer                       :: de, item, localrc, localDe, tile
-
     real(ESMF_KIND_R8), dimension(:,:), pointer :: coord
 
     integer :: dimCount, tileCount, deCount, localDeCount
@@ -267,8 +266,6 @@ module AQM
     type(ESMF_TimeInterval)    :: TimeStep
     type(ESMF_CoordSys_Flag)   :: aqmGridCoordSys
     character(len=ESMF_MAXSTR) :: msgString, name
-!test:
-    integer :: tlb(2), tub(2)
 
 
     ! begin
@@ -430,15 +427,13 @@ module AQM
          
         do item = 1, 2
           call ESMF_GridGetCoord(grid, coordDim=item, staggerloc=ESMF_STAGGERLOC_CENTER, &
-            totalLBound=tlb, totalUBound=tub, &
             localDE=localDe, farrayPtr=coord, rc=rc)
           if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
             line=__LINE__, &
             file=__FILE__)) &
             return  ! bail out
-          if (aqmGridCoordSys == ESMF_COORDSYS_SPH_RAD) then
-            coord = coord * rad2deg
-          endif
+
+          if (aqmGridCoordSys == ESMF_COORDSYS_SPH_RAD) coord = coord * rad2deg
 
           call aqm_model_domain_coord_set(item, coord, de=localDe, rc=rc)
 
@@ -559,30 +554,8 @@ module AQM
       file=__FILE__)) &
       return  ! bail out
 
-    ! HERE THE MODEL ADVANCES: currTime -> currTime + timeStep
-    
-    ! Because of the way that the internal Clock was set in SetClock(),
-    ! its timeStep is likely smaller than the parent timeStep. As a consequence
-    ! the time interval covered by a single parent timeStep will result in 
-    ! multiple calls to the ModelAdvance() routine. Every time the currTime
-    ! will come in by one internal timeStep advanced. This goes until the
-    ! stopTime of the internal Clock has been reached.
-    
-    call ESMF_ClockPrint(clock, options="currTime", &
-      preString="------>Advancing AQM from: ", rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-    
-    call ESMF_ClockGet(clock, currTime=currTime, timeStep=timeStep, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-    
-    call ESMF_TimePrint(currTime + timeStep, &
-      preString="---------------------> to: ", rc=rc)
+    ! log current time step
+    call aqm_logger_logstep(model, "AQM", rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &

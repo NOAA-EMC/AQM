@@ -19,6 +19,7 @@ module aqm_internal_mod
     logical                        :: sync
     logical                        :: verbose
     real                           :: scalefactor
+    integer                        :: count
     integer                        :: irec
     integer                        :: iofmt
     character(len=ESMF_MAXSTR)     :: iomode
@@ -28,6 +29,9 @@ module aqm_internal_mod
     character(len=ESMF_MAXSTR), dimension(:),   pointer :: species   => null()
     character(len=ESMF_MAXSTR), dimension(:),   pointer :: units     => null()
     integer,                    dimension(:),   pointer :: dens_flag => null()
+    integer,                    dimension(:),   pointer :: ip        => null()
+    integer,                    dimension(:),   pointer :: jp        => null()
+    real(ESMF_KIND_R4),         dimension(:),   pointer :: rates     => null()
     real(ESMF_KIND_R4),         dimension(:),   pointer :: factors   => null()
     type(ESMF_Field),           dimension(:),   pointer :: fields    => null()
     character(len=ESMF_MAXSTR), dimension(:,:), pointer :: table     => null()

@@ -29,6 +29,8 @@ module aqm_emis_mod
   public :: aqm_emis_desc
   public :: aqm_emis_update
   public :: aqm_emis_read
+  public :: aqm_emis_pt_map
+  public :: aqm_emis_pt_read
 
   public :: aqm_internal_emis_type
 
@@ -201,6 +203,7 @@ contains
       em(item) % iomode = "read"
       em(item) % iofmt = AQMIO_FMT_NETCDF
       em(item) % irec  = 0
+      em(item) % count  = 0
       em(item) % scalefactor = 1.0
       em(item) % sync        = .false.
       em(item) % verbose     = .false.
@@ -214,7 +217,10 @@ contains
       nullify(em(item) % units)
       nullify(em(item) % factors)
       nullify(em(item) % fields)
+      nullify(em(item) % rates)
       nullify(em(item) % dens_flag)
+      nullify(em(item) % ip)
+      nullify(em(item) % jp)
       nullify(em(item) % table)
 
       call ESMF_ConfigGetAttribute(config, emName, rc=localrc)
@@ -586,6 +592,8 @@ contains
             rcToReturn=rc)) &
             return  ! bail out
         end if
+      case ("point-source")
+        ! -- nothing to do for now
       case ("product")
         em % iomode = "create"
         readFactors = .false.
@@ -1306,5 +1314,293 @@ contains
     end do
 
   end subroutine aqm_emis_read
+
+  subroutine aqm_emis_pt_read(etype, spcname, buffer, ip, jp, localDe, rc)
+    character(len=*),  intent(in)    :: etype
+    character(len=*),  intent(in)    :: spcname
+    real,              intent(inout) :: buffer(*)
+    integer, pointer,  intent(inout) :: ip(:)
+    integer, pointer,  intent(inout) :: jp(:)
+    integer, optional, intent(in)    :: localDe
+    integer, optional, intent(out)   :: rc
+
+    ! -- local variables
+    integer :: localrc
+    integer :: item, i, j, n
+    character(len=ESMF_MAXSTR)    :: msgString
+    real(ESMF_KIND_R4),   pointer :: fptr(:,:)
+    type(aqm_state_type), pointer :: stateIn
+    type(aqm_internal_emis_type), pointer :: em
+
+    ! -- begin
+    if (present(rc)) rc = AQM_RC_SUCCESS
+
+    ! -- NOTE: input emissions need to be converted to surface densities here
+    ! -- since grid cell area is set to 1 internally.
+
+    em => aqm_emis_get(etype)
+    ! -- bail out if no emissions available
+    if (.not.associated(em)) return
+    ! -- bail out if this is a product
+    if (trim(em % iomode) /= "read") return
+
+    call aqm_model_get(stateIn=stateIn, rc=localrc)
+    if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
+      file=__FILE__, line=__LINE__, rc=rc)) return
+
+    ! -- return grid locations
+    ip => em % ip
+    jp => em % jp
+
+    do item = 1, size(em % species)
+      if (trim(spcname) == trim(em % species(item))) then
+
+        select case (em % dens_flag(item))
+          case (:-1)
+            ! -- this case indicates that input emissions are provided as totals/cell
+            ! -- while surface densities are required and should never occur in CMAQ
+            do n = 1, em % count
+              i = em % ic(n)
+              j = em % jc(n)
+              buffer(n) = buffer(n) &
+                + em % factors(item) * em % rate(n) / stateIn % area(i,j) &
+                                                    / stateIn % area(i,j)
+            end do
+          case (0)
+            ! -- emissions are totals over each grid cell
+            do n = 1, em % count
+              i = em % ic(n)
+              j = em % jc(n)
+              buffer(n) = buffer(n) &
+                + em % factors(item) * em % rate(n) / stateIn % area(i,j)
+            end do
+          case (1:)
+            ! -- emissions are already provided as surface densities, no need to normalize
+            do n = 1, em % count
+              i = em % ic(n)
+              j = em % jc(n)
+              buffer(n) = buffer(n) &
+                + em % factors(item) * em % rate(n)
+            end do
+          case default
+            ! -- this case should never occur
+            call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, &
+              msg="uncategorized emission source", &
+              line=__LINE__, &
+              file=__FILE__, &
+              rcToReturn=rc)
+            return
+        end select
+        if (em % verbose) then
+          write(msgString, '(a12,": read",12x,": ",a16,": min/max = ",2g20.8)') &
+            em % logprefix, spcname, minval(em % rate), maxval(em % rate)
+          call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=localrc)
+          if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__,  &
+            file=__FILE__,  &
+            rcToReturn=rc)) &
+            return  ! bail out
+        end if
+      end if
+    end do
+
+  end subroutine aqm_emis_pt_read
+
+  subroutine aqm_emis_pt_map(model, em, rc)
+    type(ESMF_GridComp)                     :: model
+    type(aqm_internal_emis_type)            :: em
+    integer, optional,          intent(out) :: rc
+
+    ! -- local variables
+    integer :: localrc
+
+    real(AQM_KIND_R8), pointer :: lon(:,:)
+    real(AQM_KIND_R8), pointer :: lat(:,:)
+    real(AQM_KIND_R8), pointer :: fptr(:,:)
+
+    type(ESMF_Grid)          :: grid
+    type(ESMF_Field)         :: field
+    type(ESMF_RouteHandle)   :: rh
+    type(ESMF_CoordSys_Flag) :: coordSys
+    type(ESMF_Index_Flag)    :: indexflag
+
+    ! -- begin
+    if (present(rc)) rc = ESMF_SUCCESS
+
+    if (.not.associated(em)) return
+
+    ! -- bail out if this is not point source
+    if (trim(em % type) /= "point-source") return
+
+    ! -- bail out if this is a product
+    if (trim(em % iomode) /= "read") return
+
+    if (.not.associated(em % lat)) return
+
+    allocate(em % ip(em % count), em % jp(em % count), stat=stat)
+    if (ESMF_LogFoundAllocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return
+
+    ! -- get model grid coordinates
+    call ESMF_GridCompGet(model, grid=grid, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+    ! -- get coordinate system
+    call ESMF_GridGet(grid, coordSys=coordSys, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+    ! -- (1) center coordinates
+    call ESMF_GridGet(grid, staggerloc=ESMF_STAGGERLOC_CENTER, &
+      exclusiveCount=ec, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+    ic = ec(1)
+    jc = ec(2)
+
+    call ESMF_GridGetCoord(grid, coordDim=1, staggerloc=ESMF_STAGGERLOC_CENTER, &
+      fArrayPtr=coord, totalCount=tc, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+!   allocate(lon(tc(1),tc(2)), lat(tc(1),tc(2)), stat=stat)
+    allocate(lon(ic, jc), lat(ic, jc), lonc(ic+1, jc+1), latc(ic+1, jc+1), stat=stat)
+    if (ESMF_LogFoundAllocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return
+
+    lon = coord
+
+    call ESMF_GridGetCoord(grid, coordDim=2, staggerloc=ESMF_STAGGERLOC_CENTER, &
+      fArrayPtr=coord, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+    lat = coord
+
+    ! -- (2) corner coordinates
+    call ESMF_GridGetCoord(grid, coordDim=1, staggerloc=ESMF_STAGGERLOC_CORNER, &
+      fArrayPtr=coord, totalCount=tc, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+    allocate(fptr(0:tc(1)+1,0:tc(2)+1), stat=stat)
+    if (ESMF_LogFoundAllocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return
+
+    fptr = 0._ESMF_KIND_R8
+
+    field = ESMF_FieldCreate(grid, fptr, staggerLoc=ESMF_STAGGERLOC_CORNER, &
+      totalLWidth=[1,1], totalUWidth=[1,1], rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+    call ESMF_FieldHaloStore(field, rh, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+    fp(1:tc(1),1:tc(2)) = coord
+
+    call ESMF_FieldHalo(field, rh, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+    lonc = fprt(1:ec(1)+1,1:ec(2)+1)
+
+    call ESMF_GridGetCoord(grid, coordDim=2, staggerloc=ESMF_STAGGERLOC_CORNER, &
+      fArrayPtr=coord, totalCount=tc, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+    fp(1:tc(1),1:tc(2)) = coord
+
+    call ESMF_FieldHalo(field, rh, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+    latc = fprt(1:ec(1)+1,1:ec(2)+1)
+
+    deallocate(fptr, stat=stat)
+    if (ESMF_LogFoundDeallocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return
+
+    call ESMF_FieldDestroy(field, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+    call ESMF_FieldHaloRelease(rh, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+    if      (coordSys == ESMF_COORDSYS_SPH_DEG) then
+      lon  = lon  * deg_to_rad
+      lat  = lat  * deg_to_rad
+      lonc = lonc * deg_to_rad
+      latc = latc * deg_to_rad
+    else if (coordSys == ESMF_COORDSYS_SPH_RAD) then
+      ! -- nothing to do
+    else
+    end if
+
+    ! -- emission coordinates are expected in degrees
+    em % lon = em % lon * deg_to_rad
+    em % lat = em % lat * deg_to_rad
+
+    ! -- map point-source locations to grid
+    call aqm_gridloc_get(lon, lat, lonc, latc, em % lon, em % lat, em % ip, em % jp)
     
+  end subroutine aqm_emis_pt_map
+
 end module aqm_emis_mod

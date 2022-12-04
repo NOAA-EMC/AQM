@@ -4,6 +4,10 @@ module aqm_internal_mod
 
   implicit none
 
+  type aqm_internal_rate_type
+    real(ESMF_KIND_R4), dimension(:), pointer :: values => null()
+  end type aqm_internal_rate_type
+
   type aqm_internal_emis_type
     character(len=ESMF_MAXSTR)     :: name
     character(len=ESMF_MAXSTR)     :: type
@@ -16,6 +20,7 @@ module aqm_internal_mod
     character(len=ESMF_MAXSTR)     :: specfile
     character(len=ESMF_MAXSTR)     :: specprofile
     character(len=6)               :: period
+    logical                        :: allpes
     logical                        :: sync
     logical                        :: verbose
     real                           :: scalefactor
@@ -31,9 +36,11 @@ module aqm_internal_mod
     integer,                    dimension(:),   pointer :: dens_flag => null()
     integer,                    dimension(:),   pointer :: ip        => null()
     integer,                    dimension(:),   pointer :: jp        => null()
-    real(ESMF_KIND_R4),         dimension(:),   pointer :: rates     => null()
+    real(ESMF_KIND_R4),         dimension(:),   pointer :: lat       => null()
+    real(ESMF_KIND_R4),         dimension(:),   pointer :: lon       => null()
     real(ESMF_KIND_R4),         dimension(:),   pointer :: factors   => null()
     type(ESMF_Field),           dimension(:),   pointer :: fields    => null()
+    type(aqm_internal_rate_type), dimension(:), pointer :: rates     => null()
     character(len=ESMF_MAXSTR), dimension(:,:), pointer :: table     => null()
   end type
 

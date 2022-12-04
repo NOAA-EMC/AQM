@@ -295,10 +295,10 @@ contains
 
  end function convert_to_cart
 
-function vect_mag(v) result(mag)
-   real(AQM_KIND_R8), intent(in) :: v(3)
-   real :: mag
-   mag = sqrt(v(1)*v(1)+v(2)*v(2)+v(3)*v(3))
-end function vect_mag
+ function vect_mag(v) result(mag)
+    real(AQM_KIND_R8), intent(in) :: v(3)
+    real :: mag
+    mag = sqrt(v(1)*v(1)+v(2)*v(2)+v(3)*v(3))
+ end function vect_mag
 
 end module aqm_tools_mod

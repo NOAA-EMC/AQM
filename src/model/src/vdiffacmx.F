@@ -56,6 +56,7 @@ C-----------------------------------------------------------------------
       USE VDIFF_MAP
       USE UTILIO_DEFN
       USE BIDI_MOD
+      USE PT3D_EMIS_DEFN
 
       IMPLICIT NONE
 
@@ -167,6 +168,7 @@ C set auxiliary depv arrays
  
       END IF   !  if Firstime
 
+      CALL GET_PT3D_EMIS ()
 C ------------------------------------------- Row, Col LOOPS -----------
 
       DTS = DTSEC

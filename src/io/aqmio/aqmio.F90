@@ -1645,7 +1645,8 @@ contains
 
   subroutine AQMIO_DataRead(IOComp, fArray, variableName, timeSlice, localDe, rc)
     type(ESMF_GridComp),   intent(inout)         :: IOComp
-    real(ESMF_KIND_R4),    pointer               :: fArray(:)
+!   real(ESMF_KIND_R4),    pointer               :: fArray(:)
+    real(ESMF_KIND_R4),    intent(out)               :: fArray(:)
     character(len=*),      intent(in)            :: variableName
     integer,               intent(in),  optional :: timeSlice
     integer,               intent(in),  optional :: localDe
@@ -1659,6 +1660,7 @@ contains
     integer,               dimension(:),     allocatable :: dimids
     integer,               dimension(:),     allocatable :: elemCount
     integer,               dimension(:),     allocatable :: elemStart
+    real(ESMF_KIND_R4),    pointer               :: fp(:)
     character(len=ESMF_MAXSTR) :: dataSetName
     type(ioWrapper)       :: is
     type(ioData), pointer :: IO
@@ -1767,11 +1769,11 @@ contains
             return  ! bail out
           end if
         end if
-        deallocate(dimids, stat=localrc)
-        if (ESMF_LogFoundDeallocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-          line=__LINE__, &
-          file=__FILE__, &
-          rcToReturn=rc)) return  ! bail out
+!       deallocate(dimids, stat=localrc)
+!       if (ESMF_LogFoundDeallocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+!         line=__LINE__, &
+!         file=__FILE__, &
+!         rcToReturn=rc)) return  ! bail out
       end if
 
       rank = 1
@@ -1783,6 +1785,8 @@ contains
         file=__FILE__, &
         rcToReturn=rc)) return  ! bail out
 
+        ilen = size(fArray)
+#if 0
       if (associated(fArray)) then
         ilen = size(fArray)
       else
@@ -1794,12 +1798,21 @@ contains
           file=__FILE__, &
           rcToReturn=rc)) return  ! bail out
 
-        allocate(fArray(ilen), stat=localrc)
+        allocate(fp(ilen), stat=localrc)
         if (ESMF_LogFoundAllocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
           line=__LINE__, &
           file=__FILE__, &
           rcToReturn=rc)) return  ! bail out
+
+        fArray => fp
       end if
+#endif
+
+      deallocate(dimids, stat=localrc)
+      if (ESMF_LogFoundDeallocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__, &
+        file=__FILE__, &
+        rcToReturn=rc)) return  ! bail out
 
       elemCount(1) = ilen
 

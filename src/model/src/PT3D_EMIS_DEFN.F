@@ -2,10 +2,19 @@
 
       USE GRID_CONF           ! horizontal & vertical domain specifications      
       USE EMIS_DEFN
+      USE AQM_EMIS_MOD, ONLY : AQM_EMIS_GET, AQM_EMIS_READ, AQM_INTERNAL_EMIS_TYPE
 
       IMPLICIT NONE
 
       INTEGER :: NSPC
+      INTEGER :: N_GSPC_EMIS
+      INTEGER :: N_SPC_PT3DEM
+      INTEGER :: N_SPC_PT3DPM
+
+      INTEGER, ALLOCATABLE :: SPC_PT3DEM_FAC( : )
+      INTEGER, ALLOCATABLE :: SPC_PT3DEM_MAP( : )
+      INTEGER, ALLOCATABLE :: PT3DEM_MAP( : )
+      INTEGER, ALLOCATABLE :: PT3DPM_MAP( : )
 
 C Emission type
       CHARACTER( * ), PARAMETER :: ETYPE = 'point-source'
@@ -16,11 +25,14 @@ C Emission type
 
       CONTAINS
 
-         SUBROUTINE GET_PT3D_EMIS ( JDATE, JTIME, TSTEP, CONVPA, CGRID )
+c        SUBROUTINE GET_PT3D_EMIS ( JDATE, JTIME, TSTEP, CONVPA, CGRID )
+c        SUBROUTINE GET_PT3D_EMIS ( JDATE, JTIME )
+         SUBROUTINE GET_PT3D_EMIS
 
          USE CGRID_SPCS          ! CGRID mechanism species
          USE UTILIO_DEFN
          USE DEPV_DEFN, ONLY: ABFLUX ! ammonia bidi flag
+         USE AQM_RC_MOD
          USE ASX_DATA_MOD, ONLY: MET_DATA, GRID_DATA
          USE RXNS_DATA, ONLY: MECHNAME
 
@@ -30,20 +42,24 @@ C Includes:
          INCLUDE SUBST_FILES_ID  ! file name parameters
 
 C Arguments:
-         INTEGER, INTENT( IN ) :: JDATE, JTIME  ! date (YYYYDDD), time (HHMMSS)
-         INTEGER, INTENT( IN ) :: TSTEP( 3 )    ! time step vector (HHMMSS)
-         REAL,    INTENT( IN ) :: CONVPA        ! conversion factor to pressure in Pascals
-         REAL, POINTER :: CGRID( :,:,:,: )
+c        INTEGER, INTENT( IN ) :: JDATE, JTIME  ! date (YYYYDDD), time (HHMMSS)
+c        INTEGER, INTENT( IN ) :: TSTEP( 3 )    ! time step vector (HHMMSS)
+c        REAL,    INTENT( IN ) :: CONVPA        ! conversion factor to pressure in Pascals
+c        REAL, POINTER :: CGRID( :,:,:,: )
 
 C Local Variables:
          REAL             CNVTC         ! combined conversion factor
          REAL             CNVTI         ! intermediate combined conv. factor
          REAL,    SAVE :: CNVTP         ! intermediate combined conv. factor
          REAL             DELT          ! interpolation factor
-         INTEGER          C, R, L, N, S, V ! loop induction variables
+         INTEGER          C, R, L, N, S, V, K ! loop induction variables
+         INTEGER          NSRC, NP
          INTEGER          S_STRT, S_END ! substitute loop induction variables
+         INTEGER          IOS, LOCALRC
+         INTEGER          :: P( 2 )
          INTEGER, POINTER :: IP( : )
          INTEGER, POINTER :: JP( : )
+         REAL, ALLOCATABLE :: BUFFER( : )
 
          CHARACTER( 16 ) :: PNAME = 'GET_PT3D_EMIS'
          CHARACTER( 120 ) :: XMSG = ' '
@@ -60,21 +76,25 @@ C-----------------------------------------------------------------------
          IF ( .NOT.ASSOCIATED( EM ) ) RETURN
 
 
-         IF ( FIRSTTIME ) THEN
+         IF ( FIRSTIME ) THEN
 
 C Get domain decomp info from the emissions file
 !           CALL SUBHFILE ( EMIS_1, GXOFF, GYOFF, STARTCOL, ENDCOL, STARTROW, ENDROW )
-            CNVTP = CONVPA * CNVTE
+c           CNVTP = CONVPA * CNVTE
+            CNVTP = 1.
 
 C Set emission layers
             EMLYRS = NLAYS
 
 C get point source emission mapping
-            IF ( .NOT. PT3DEM_MAP( ) ) THEN
-               XMSG = 'Could not get point source mappings'
-               CALL M3WARN ( PNAME, JDATE, JTIME, XMSG )
-               SUCCESS = .FALSE.; RETURN
-            END IF
+c           IF ( .NOT. PT3DEM_MAP_INIT( ) ) THEN
+c              XMSG = 'Could not get point source mappings'
+c              CALL M3WARN ( PNAME, JDATE, JTIME, XMSG )
+c           END IF
+            IF ( AQM_RC_TEST( .NOT. PT3DEM_MAP_INIT( ),
+     &              MSG="Failure initializing mapping for" //
+     &              TRIM( ETYPE ) // " emissions",
+     &              FILE=__FILE__, LINE=__LINE__ ) ) RETURN
 
             NSRC = EM % COUNT
 
@@ -82,7 +102,7 @@ C Allocate Buffer space for Reading Emissions
             ALLOCATE ( BUFFER( NSRC ), STAT = IOS )
             CALL CHECKMEM( IOS, 'BUFFER', PNAME )
 
-            FIRSTTIME = .FALSE.
+            FIRSTIME = .FALSE.
          END IF
 
 C        ... gas species only ...        
@@ -97,7 +117,7 @@ C        ... gas species only ...
                  IF ( AQM_RC_TEST( ( P( 2 ) .LE. 0 ),
      &              MSG="Failure while reading PNCOM" //
      &              " from " // TRIM( ETYPE ) // " emissions",
-     &              FILE=__FILE__, LINE=__LINE__)) RETURN
+     &              FILE=__FILE__, LINE=__LINE__ ) ) RETURN
                  NP = 2
                END IF
 
@@ -109,7 +129,8 @@ C        ... gas species only ...
      &               MSG="Failure while reading " //
      &               TRIM( EM % TABLE( N, 1 ) ) // " from " // 
      &               TRIM( ETYPE) // " emissions",
-     &               FILE=__FILE__, LINE=__LINE__)) RETURN
+     &               FILE=__FILE__, LINE=__LINE__ ) ) RETURN
+#if 0
                   DO S = 1, NSRC
                      C = IP( S )
                      R = JP( S )
@@ -121,18 +142,21 @@ c                       vfrac = ...
                         END DO
                      END IF
                   END DO
+#endif
                END DO
             END IF
 
          END DO
+
+c        DEALLOCATE( BUFFER )
+#if 0
 
 C        ... aerosol species ...        
 
          DO S = 1, N_SPC_PT3DPM
             V = PT3DPM_MAP( S )
             BUFFER = 0.0
-            CALL AQM_EMIS_READ( ETYPE, PMEM_MAP_NAME( V ), BUFFER,
-            CRC=LOCALRC )
+            CALL AQM_EMIS_READ( ETYPE, PMEM_MAP_NAME( V ), BUFFER, RC=LOCALRC )
             IF ( AQM_RC_CHECK( LOCALRC, MSG="Failure while reading " //
      &         TRIM( PMEM_MAP_NAME( V ) ) // " from " // TRIM( ETYPE ) // " emissions",
      &         FILE=__FILE__, LINE=__LINE__)) RETURN
@@ -162,8 +186,8 @@ C emissions.
                DO L = 1, EMLAYS
                   CNVTC = CNVTP * Grid_Data%RDX3F( L ) * Met_Data%RRHOJ( C,R,L )
                   DO S = S_STRT, S_END
-                     V = SPC_PTEM_MAP( S ) ! <- pointer to non-PM (non-aerosol) species
-                     N = PTEM_MAP( S )     ! <- pointer to non-PM emissions
+                     V = SPC_PT3DEM_MAP( S ) ! <- pointer to non-PM (non-aerosol) species
+                     N = PT3DEM_MAP( S )     ! <- pointer to non-PM emissions
                      IF ( V .LT. 1 ) CYCLE
                         VDEMIS( V,L,C,R ) = VDEMIS( V,L,C,R )
      &                                    + CNVTC * SPC_PT3DEM_FAC( S )
@@ -180,8 +204,8 @@ C emissions.
                   CNVTC = CNVTP * Grid_Data%RDX3F( L ) *
                   CMet_Data%RRHOJ( C,R,L )
                   DO S = S_STRT, S_END
-                     V = SPC_PTEM_MAP( S ) ! <- pointer to non-PM (non-aerosol) species
-                     N = PTEM_MAP( S )     ! <- pointer to non-PM emissions
+                     V = SPC_PT3DEM_MAP( S ) ! <- pointer to non-PM (non-aerosol) species
+                     N = PT3DEM_MAP( S )     ! <- pointer to non-PM emissions
                      IF ( V .LT. 1 ) CYCLE
                      VDEMIS( V,L,C,R ) = VDEMIS( V,L,C,R )
      &                                 + CNVTC * SPC_PT3DEM_FAC( S )
@@ -190,12 +214,12 @@ C emissions.
                END DO
             END DO
          END DO
-
+#endif
 
          END SUBROUTINE GET_PT3D_EMIS
 
 
-         FUNCTION PT3DEM_MAP( ) RESULT ( SUCCESS )
+         FUNCTION PT3DEM_MAP_INIT( ) RESULT ( SUCCESS )
 
          USE CGRID_SPCS                                    ! CGRID mechanism species
          USE AERO_DATA, ONLY : N_EMIS_PM, PMEM_MAP_NAME    ! defines aerosol species
@@ -225,6 +249,8 @@ C-----------------------------------------------------------------------
          LOGDEV = SETUP_LOGDEV()
 
          SUCCESS = .TRUE.
+
+         N_GSPC_EMIS = 0
 
 C check if emissions are being provided
 
@@ -319,6 +345,6 @@ C        ... aerosol species ...
 
          DEALLOCATE( MAP )
 
-         END FUNCTION PT3DEM_MAP
+         END FUNCTION PT3DEM_MAP_INIT
 
       END MODULE PT3D_EMIS_DEFN

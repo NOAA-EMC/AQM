@@ -19,8 +19,10 @@ module aqm_internal_mod
     character(len=ESMF_MAXSTR)     :: plumerise
     character(len=ESMF_MAXSTR)     :: specfile
     character(len=ESMF_MAXSTR)     :: specprofile
+    character(len=ESMF_MAXSTR)     :: latname
+    character(len=ESMF_MAXSTR)     :: lonname
     character(len=6)               :: period
-    logical                        :: allpes
+    logical                        :: gridded
     logical                        :: sync
     logical                        :: verbose
     real                           :: scalefactor
@@ -36,11 +38,12 @@ module aqm_internal_mod
     integer,                    dimension(:),   pointer :: dens_flag => null()
     integer,                    dimension(:),   pointer :: ip        => null()
     integer,                    dimension(:),   pointer :: jp        => null()
+    integer,                    dimension(:),   pointer :: ijmap     => null()
     real(ESMF_KIND_R4),         dimension(:),   pointer :: lat       => null()
     real(ESMF_KIND_R4),         dimension(:),   pointer :: lon       => null()
     real(ESMF_KIND_R4),         dimension(:),   pointer :: factors   => null()
     type(ESMF_Field),           dimension(:),   pointer :: fields    => null()
-    type(aqm_internal_rate_type), dimension(:), pointer :: rates     => null()
+    type(aqm_internal_rate_type), dimension(:), allocatable :: rates
     character(len=ESMF_MAXSTR), dimension(:,:), pointer :: table     => null()
   end type
 

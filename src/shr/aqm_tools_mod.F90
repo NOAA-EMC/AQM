@@ -126,11 +126,12 @@ contains
 ! grid mapping (spherical geometry)
 ! ---------------------------------------------------------------------
 
- subroutine aqm_gridloc_get(center_lons,center_lats,corner_lons,corner_lats,lons,lats,ii,jj,rc)
+ subroutine aqm_gridloc_get(center_lons,center_lats,corner_lons,corner_lats,lons,lats,ii,jj,ijcount,rc)
     real(AQM_KIND_R8), intent(in)  :: center_lats(:,:),center_lons(:,:)
     real(AQM_KIND_R8), intent(in)  :: corner_lats(:,:),corner_lons(:,:)
     real(AQM_KIND_R8), intent(in)  :: lons(:),lats(:)
     integer,           intent(out) :: ii(:),jj(:)
+    integer,           intent(out) :: ijcount
     integer, optional, intent(out) :: rc
 
     ! -- local variables
@@ -141,6 +142,7 @@ contains
     ! -- begin
     ii = -1
     jj = -1
+    ijcount = 0
 
     npts = size(lats)
     if (npts /= size(lons)) return
@@ -215,6 +217,7 @@ contains
        end if
        ii(i)=ifound
        jj(i)=jfound
+       if (ifound > 0 .and. jfound > 0) ijcount = ijcount + 1
     enddo
 
  end subroutine aqm_gridloc_get

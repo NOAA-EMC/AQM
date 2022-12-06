@@ -30,10 +30,13 @@ module aqm_emis_mod
   public :: aqm_emis_desc
   public :: aqm_emis_update
   public :: aqm_emis_read
-  public :: aqm_emis_pt_map
-  public :: aqm_emis_pt_read
 
   public :: aqm_internal_emis_type
+
+  interface aqm_emis_read
+    module procedure aqm_emis_grd_read
+    module procedure aqm_emis_pts_read
+  end interface aqm_emis_read
 
 contains
 
@@ -206,7 +209,7 @@ contains
       em(item) % irec  = 0
       em(item) % count  = 0
       em(item) % scalefactor = 1.0
-      em(item) % allpes      = .false.
+      em(item) % gridded     = .true.
       em(item) % sync        = .false.
       em(item) % verbose     = .false.
       em(item) % logprefix   = ""
@@ -214,15 +217,18 @@ contains
       em(item) % plumerise   = ""
       em(item) % specfile    = ""
       em(item) % specprofile = ""
+      em(item) % latname     = ""
+      em(item) % lonname     = ""
       nullify(em(item) % species)
       nullify(em(item) % sources)
       nullify(em(item) % units)
       nullify(em(item) % factors)
       nullify(em(item) % fields)
-      nullify(em(item) % rates)
+!     nullify(em(item) % rates)
       nullify(em(item) % dens_flag)
       nullify(em(item) % ip)
       nullify(em(item) % jp)
+      nullify(em(item) % ijmap)
       nullify(em(item) % table)
 
       call ESMF_ConfigGetAttribute(config, emName, rc=localrc)
@@ -595,7 +601,26 @@ contains
             return  ! bail out
         end if
       case ("point-source")
-        em % allpes = .true.
+        em % gridded = .false.
+        ! -- get coordinate labels
+        call ESMF_ConfigFindLabel(config, trim(em % name) // "_latlon_names:", rc=localrc)
+        if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__,  &
+          file=__FILE__,  &
+          rcToReturn=rc)) &
+          return  ! bail out
+        call ESMF_ConfigGetAttribute(config, em % latname, rc=localrc)
+        if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__,  &
+          file=__FILE__,  &
+          rcToReturn=rc)) &
+          return  ! bail out
+        call ESMF_ConfigGetAttribute(config, em % lonname, rc=localrc)
+        if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__,  &
+          file=__FILE__,  &
+          rcToReturn=rc)) &
+          return  ! bail out
       case ("product")
         em % iomode = "create"
         readFactors = .false.
@@ -748,7 +773,7 @@ contains
 
       if (fieldCount > 0) then
         ! -- create I/O component for emissions
-        em % IO = AQMIO_Create(grid, allpes=em % allpes, rc=localrc)
+        em % IO = AQMIO_Create(grid, allpes=.not.em % gridded, rc=localrc)
         if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
           line=__LINE__,  &
           file=__FILE__,  &
@@ -824,7 +849,7 @@ contains
           return
 
         ! -- create fields if needed
-        if (.not. em % allpes) then
+        if (em % gridded) then
           allocate(em % fields(fieldCount), stat=stat)
           if (ESMF_LogFoundAllocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
             line=__LINE__,  &
@@ -840,6 +865,13 @@ contains
               rcToReturn=rc)) &
               return  ! bail out
           end do
+        else
+          allocate(em % rates(fieldCount), stat=stat)
+          if (ESMF_LogFoundAllocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__,  &
+            file=__FILE__,  &
+            rcToReturn=rc)) &
+            return
         end if
 
       end if
@@ -1136,26 +1168,36 @@ contains
           end do
         else
           em % irec = em % irec + 1
-          if (em % allpes) then
-            call aqm_emis_pt_clear(em, rc=localrc)
+          if (em % gridded) then
+            call AQMIO_Read(em % IO, em % fields, timeSlice=em % irec, rc=localrc)
             if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
               line=__LINE__,  &
               file=__FILE__,  &
               rcToReturn=rc)) &
               return  ! bail out
-            call AQMIO_DataRead(em % IO, em % lat, "lats", timeSlice=em % irec, rc=localrc)
+          else
+            call aqm_emis_pts_clear(em, rc=localrc)
             if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
               line=__LINE__,  &
               file=__FILE__,  &
               rcToReturn=rc)) &
               return  ! bail out
-            call AQMIO_DataRead(em % IO, em % lon, "lons", timeSlice=em % irec, rc=localrc)
+            call AQMIO_DataRead(em % IO, em % lat, em % latname, rc=localrc)
             if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
               line=__LINE__,  &
               file=__FILE__,  &
               rcToReturn=rc)) &
               return  ! bail out
+            call AQMIO_DataRead(em % IO, em % lon, em % lonname, rc=localrc)
+            if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+              line=__LINE__,  &
+              file=__FILE__,  &
+              rcToReturn=rc)) &
+              return  ! bail out
+            em % count = size(em % lat)
             do n = 1, size(em % sources)
+              allocate(em % rates(n) % values(em % count))
+              em % rates(n) % values = 0.0
               call AQMIO_DataRead(em % IO, em % rates(n) % values, em % sources(n), timeSlice=em % irec, rc=localrc)
               if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
                 line=__LINE__,  &
@@ -1165,14 +1207,7 @@ contains
             end do
             em % count = size(em % lat)
             ! -- map point source emissions to grid
-            call aqm_emis_pt_map(model, em, rc=localrc)
-            if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-              line=__LINE__,  &
-              file=__FILE__,  &
-              rcToReturn=rc)) &
-              return  ! bail out
-          else
-            call AQMIO_Read(em % IO, em % fields, timeSlice=em % irec, rc=localrc)
+            call aqm_emis_pts_map(model, em, rc=localrc)
             if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
               line=__LINE__,  &
               file=__FILE__,  &
@@ -1257,7 +1292,7 @@ contains
 
   end subroutine aqm_emis_desc
 
-  subroutine aqm_emis_read(etype, spcname, buffer, localDe, rc)
+  subroutine aqm_emis_grd_read(etype, spcname, buffer, localDe, rc)
     character(len=*),  intent(in)    :: etype
     character(len=*),  intent(in)    :: spcname
     real,              intent(inout) :: buffer(*)
@@ -1363,9 +1398,9 @@ contains
       end if
     end do
 
-  end subroutine aqm_emis_read
+  end subroutine aqm_emis_grd_read
 
-  subroutine aqm_emis_pt_read(etype, spcname, buffer, ip, jp, localDe, rc)
+  subroutine aqm_emis_pts_read(etype, spcname, buffer, ip, jp, localDe, rc)
     character(len=*),  intent(in)    :: etype
     character(len=*),  intent(in)    :: spcname
     real,              intent(inout) :: buffer(*)
@@ -1376,7 +1411,7 @@ contains
 
     ! -- local variables
     integer :: localrc
-    integer :: item, i, j, n
+    integer :: item, i, j, m, n
     character(len=ESMF_MAXSTR)    :: msgString
     real(ESMF_KIND_R4),   pointer :: fptr(:,:)
     type(aqm_state_type), pointer :: stateIn
@@ -1394,6 +1429,8 @@ contains
     ! -- bail out if this is a product
     if (trim(em % iomode) /= "read") return
 
+    if (em % count == 0) return
+
     call aqm_model_get(stateIn=stateIn, rc=localrc)
     if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
       file=__FILE__, line=__LINE__, rc=rc)) return
@@ -1409,7 +1446,8 @@ contains
           case (:-1)
             ! -- this case indicates that input emissions are provided as totals/cell
             ! -- while surface densities are required and should never occur in CMAQ
-            do n = 1, em % count
+            do m = 1, size(em % ijmap)
+              n = em % ijmap(m)
               i = em % ip(n)
               j = em % jp(n)
               buffer(n) = buffer(n) &
@@ -1418,7 +1456,8 @@ contains
             end do
           case (0)
             ! -- emissions are totals over each grid cell
-            do n = 1, em % count
+            do m = 1, size(em % ijmap)
+              n = em % ijmap(m)
               i = em % ip(n)
               j = em % jp(n)
               buffer(n) = buffer(n) &
@@ -1426,9 +1465,8 @@ contains
             end do
           case (1:)
             ! -- emissions are already provided as surface densities, no need to normalize
-            do n = 1, em % count
-              i = em % ip(n)
-              j = em % jp(n)
+            do m = 1, size(em % ijmap)
+              n = em % ijmap(m)
               buffer(n) = buffer(n) &
                 + em % factors(item) * em % rates(item) % values(n)
             end do
@@ -1455,16 +1493,17 @@ contains
       end if
     end do
 
-  end subroutine aqm_emis_pt_read
+  end subroutine aqm_emis_pts_read
 
-  subroutine aqm_emis_pt_map(model, em, rc)
+  subroutine aqm_emis_pts_map(model, em, rc)
     type(ESMF_GridComp)                     :: model
     type(aqm_internal_emis_type)            :: em
     integer, optional,          intent(out) :: rc
 
     ! -- local variables
     integer :: localrc, stat
-    integer :: ic, jc
+    integer :: ic, jc, ijcount
+    integer :: m, n
     integer, dimension(2) :: ec, tc
 
     real(AQM_KIND_R8), allocatable :: lon(:,:)
@@ -1663,19 +1702,38 @@ contains
     latp = em % lat * deg_to_rad
 
     ! -- map point-source locations to grid
-    call aqm_gridloc_get(lon, lat, lonc, latc, lonp, latp, em % ip, em % jp)
-    
+    call aqm_gridloc_get(lon, lat, lonc, latc, lonp, latp, em % ip, em % jp, ijcount)
+
+    if (ijcount > 0) then
+      allocate(em % ijmap(ijcount), stat=stat)
+      if (ESMF_LogFoundAllocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__,  &
+        file=__FILE__,  &
+        rcToReturn=rc)) &
+        return
+      do n = 1, em % count
+        m = 0
+        if (em % ip(n) > 0 .and. em % jp(n) > 0) then
+           m = m + 1
+           em % ijmap(m) = n
+        end if
+      end do
+    else
+      ! -- no local sources, disable emissions
+      em % count = 0
+    end if
+
     ! -- free up memory
-    deallocate(lat, latc, latp, lon, lonc, lonp, fptr, stat=stat)
+    deallocate(lat, latc, latp, lon, lonc, lonp, stat=stat)
     if (ESMF_LogFoundDeallocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__,  &
       file=__FILE__,  &
       rcToReturn=rc)) &
       return
 
-  end subroutine aqm_emis_pt_map
+  end subroutine aqm_emis_pts_map
 
-  subroutine aqm_emis_pt_clear(em, rc)
+  subroutine aqm_emis_pts_clear(em, rc)
     type(aqm_internal_emis_type)            :: em
     integer, optional,          intent(out) :: rc
 
@@ -1723,6 +1781,16 @@ contains
       nullify(em % jp)
     end if
 
+    if (associated(em % ijmap)) then
+      deallocate(em % ijmap, stat=stat)
+      if (ESMF_LogFoundDeallocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__,  &
+        file=__FILE__,  &
+        rcToReturn=rc)) &
+        return
+      nullify(em % ijmap)
+    end if
+
     do n = 1, size(em % sources)
       if (associated(em % rates(n) % values)) then
         deallocate(em % rates(n) % values, stat=stat)
@@ -1735,6 +1803,8 @@ contains
       end if
     end do
 
-  end subroutine aqm_emis_pt_clear
+    em % count = 0
+
+  end subroutine aqm_emis_pts_clear
 
 end module aqm_emis_mod

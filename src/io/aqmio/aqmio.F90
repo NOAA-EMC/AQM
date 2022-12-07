@@ -1645,8 +1645,7 @@ contains
 
   subroutine AQMIO_DataRead(IOComp, fArray, variableName, timeSlice, localDe, rc)
     type(ESMF_GridComp),   intent(inout)         :: IOComp
-!   real(ESMF_KIND_R4),    pointer               :: fArray(:)
-    real(ESMF_KIND_R4),    intent(out)               :: fArray(:)
+    real(ESMF_KIND_R4),    pointer               :: fArray(:)
     character(len=*),      intent(in)            :: variableName
     integer,               intent(in),  optional :: timeSlice
     integer,               intent(in),  optional :: localDe
@@ -1769,11 +1768,6 @@ contains
             return  ! bail out
           end if
         end if
-!       deallocate(dimids, stat=localrc)
-!       if (ESMF_LogFoundDeallocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-!         line=__LINE__, &
-!         file=__FILE__, &
-!         rcToReturn=rc)) return  ! bail out
       end if
 
       rank = 1
@@ -1785,28 +1779,26 @@ contains
         file=__FILE__, &
         rcToReturn=rc)) return  ! bail out
 
-        ilen = size(fArray)
-#if 0
-      if (associated(fArray)) then
-        ilen = size(fArray)
-      else
-        ! -- allocate array according to dimension on file
-        ncStatus = nf90_inquire_dimension(IO % IOLayout(lde) % ncid, dimids(ndims), len=ilen)
-        if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
-          msg="Error inquiring dimension for "//trim(variableName)//" in "//trim(dataSetName), &
-          line=__LINE__, &
-          file=__FILE__, &
-          rcToReturn=rc)) return  ! bail out
+      ! -- allocate array according to dimension on file
+      ncStatus = nf90_inquire_dimension(IO % IOLayout(lde) % ncid, dimids(ndims), len=ilen)
+      if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
+        msg="Error inquiring dimension for "//trim(variableName)//" in "//trim(dataSetName), &
+        line=__LINE__, &
+        file=__FILE__, &
+        rcToReturn=rc)) return  ! bail out
 
+      if (associated(fArray)) then
+        ilen = min(ilen,size(fArray))
+      else
         allocate(fp(ilen), stat=localrc)
         if (ESMF_LogFoundAllocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
           line=__LINE__, &
           file=__FILE__, &
           rcToReturn=rc)) return  ! bail out
-
         fArray => fp
       end if
-#endif
+
+      fArray = 0._ESMF_KIND_R4
 
       deallocate(dimids, stat=localrc)
       if (ESMF_LogFoundDeallocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &

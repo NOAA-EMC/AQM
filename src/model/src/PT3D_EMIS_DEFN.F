@@ -33,13 +33,15 @@ c        SUBROUTINE GET_PT3D_EMIS ( JDATE, JTIME )
          USE UTILIO_DEFN
          USE DEPV_DEFN, ONLY: ABFLUX ! ammonia bidi flag
          USE AQM_RC_MOD
-         USE ASX_DATA_MOD, ONLY: MET_DATA, GRID_DATA
+         USE ASX_DATA_MOD, ONLY: MET_DATA, GRID_DATA, CONVPA
          USE RXNS_DATA, ONLY: MECHNAME
+         USE EMIS_DEFN, ONLY: VDEMIS
 
          IMPLICIT NONE
 
 C Includes:
          INCLUDE SUBST_FILES_ID  ! file name parameters
+         INCLUDE SUBST_CONST
 
 C Arguments:
 c        INTEGER, INTENT( IN ) :: JDATE, JTIME  ! date (YYYYDDD), time (HHMMSS)
@@ -52,7 +54,7 @@ C Local Variables:
          REAL             CNVTI         ! intermediate combined conv. factor
          REAL,    SAVE :: CNVTP         ! intermediate combined conv. factor
          REAL             DELT          ! interpolation factor
-         INTEGER          C, R, L, N, S, V, K ! loop induction variables
+         INTEGER          C, R, L, N, S, V, K, I ! loop induction variables
          INTEGER          NSRC, NP
          INTEGER          S_STRT, S_END ! substitute loop induction variables
          INTEGER          IOS, LOCALRC
@@ -60,6 +62,7 @@ C Local Variables:
          INTEGER, POINTER :: IP( : )
          INTEGER, POINTER :: JP( : )
          REAL, ALLOCATABLE :: BUFFER( : )
+         REAL, ALLOCATABLE :: VDEMIS_PT( :,:,:,: )
 
          CHARACTER( 16 ) :: PNAME = 'GET_PT3D_EMIS'
          CHARACTER( 120 ) :: XMSG = ' '
@@ -81,16 +84,12 @@ C-----------------------------------------------------------------------
 C Get domain decomp info from the emissions file
 !           CALL SUBHFILE ( EMIS_1, GXOFF, GYOFF, STARTCOL, ENDCOL, STARTROW, ENDROW )
 c           CNVTP = CONVPA * CNVTE
-            CNVTP = 1.
+            CNVTP = 1.0
 
 C Set emission layers
             EMLYRS = NLAYS
 
 C get point source emission mapping
-c           IF ( .NOT. PT3DEM_MAP_INIT( ) ) THEN
-c              XMSG = 'Could not get point source mappings'
-c              CALL M3WARN ( PNAME, JDATE, JTIME, XMSG )
-c           END IF
             IF ( AQM_RC_TEST( .NOT. PT3DEM_MAP_INIT( ),
      &              MSG="Failure initializing mapping for" //
      &              TRIM( ETYPE ) // " emissions",
@@ -99,13 +98,17 @@ c           END IF
             NSRC = EM % COUNT
 
 C Allocate Buffer space for Reading Emissions
-            ALLOCATE ( BUFFER( NSRC ), STAT = IOS )
+            ALLOCATE ( BUFFER( SIZE( EM % LAT ) ), STAT = IOS )
             CALL CHECKMEM( IOS, 'BUFFER', PNAME )
+
+            ALLOCATE (VDEMIS_PT( NCOLS,NROWS,EMLYRS,N_GSPC_EMIS ))
+            VDEMIS_PT = 0.0
 
             FIRSTIME = .FALSE.
          END IF
 
 C        ... gas species only ...        
+         VDEMIS_PT = 0.0
 
          DO S = 1, N_GSPC_EMIS
             P( 1 ) = PT3DEM_MAP( S )
@@ -123,6 +126,7 @@ C        ... gas species only ...
 
                DO K = 1, NP
                   N = P( K )
+                  BUFFER = 0.0
                   CALL AQM_EMIS_READ( ETYPE, EM % TABLE( N, 1 ),
      &              BUFFER, IP, JP, RC=LOCALRC)
                   IF ( AQM_RC_CHECK( LOCALRC, 
@@ -130,25 +134,23 @@ C        ... gas species only ...
      &               TRIM( EM % TABLE( N, 1 ) ) // " from " // 
      &               TRIM( ETYPE) // " emissions",
      &               FILE=__FILE__, LINE=__LINE__ ) ) RETURN
-#if 0
-                  DO S = 1, NSRC
-                     C = IP( S )
-                     R = JP( S )
-                     IF ( C .GT. O .AND. R .GT. 0 ) THEN
-c                       ... compute plumerise ...
-c                       vfrac = ...
-                        DO L = 1, EMLYRS
-                           VDEMIS_PT( C,R,L,N ) = VFRAC( L ) * BUFFER( S )
-                        END DO
-                     END IF
+
+               DO I = 1, NSRC
+                  V = EM % IJMAP( I )
+                  C = IP( V )
+                  R = JP( V )
+c                 ... compute plumerise ...
+c                 vfrac = ...
+                  DO L = 1, EMLYRS
+c                    VDEMIS_PT( C,R,L,N ) = VFRAC( L ) * BUFFER( S )
+                     VDEMIS_PT( C,R,L,N ) = VDEMIS_PT( C,R,L,N ) + BUFFER( V )
                   END DO
-#endif
+               END DO
                END DO
             END IF
 
          END DO
 
-c        DEALLOCATE( BUFFER )
 #if 0
 
 C        ... aerosol species ...        
@@ -171,6 +173,7 @@ C        ... aerosol species ...
             END DO
          END DO
 
+#endif
 
 C Add to total emission array
 
@@ -201,8 +204,7 @@ C emissions.
          DO R = 1, MY_NROWS
             DO C = 1, MY_NCOLS
                DO L = 1, EMLAYS
-                  CNVTC = CNVTP * Grid_Data%RDX3F( L ) *
-                  CMet_Data%RRHOJ( C,R,L )
+                  CNVTC = CNVTP * Grid_Data%RDX3F( L ) * Met_Data%RRHOJ( C,R,L )
                   DO S = S_STRT, S_END
                      V = SPC_PT3DEM_MAP( S ) ! <- pointer to non-PM (non-aerosol) species
                      N = PT3DEM_MAP( S )     ! <- pointer to non-PM emissions
@@ -214,7 +216,6 @@ C emissions.
                END DO
             END DO
          END DO
-#endif
 
          END SUBROUTINE GET_PT3D_EMIS
 

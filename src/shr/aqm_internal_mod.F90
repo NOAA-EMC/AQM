@@ -21,6 +21,10 @@ module aqm_internal_mod
     character(len=ESMF_MAXSTR)     :: specprofile
     character(len=ESMF_MAXSTR)     :: latname
     character(len=ESMF_MAXSTR)     :: lonname
+    character(len=ESMF_MAXSTR)     :: stkdmname
+    character(len=ESMF_MAXSTR)     :: stkhtname
+    character(len=ESMF_MAXSTR)     :: stktkname
+    character(len=ESMF_MAXSTR)     :: stkvename
     character(len=6)               :: period
     logical                        :: gridded
     logical                        :: sync
@@ -41,9 +45,13 @@ module aqm_internal_mod
     integer,                    dimension(:),   pointer :: ijmap     => null()
     real(ESMF_KIND_R4),         dimension(:),   pointer :: lat       => null()
     real(ESMF_KIND_R4),         dimension(:),   pointer :: lon       => null()
+    real(ESMF_KIND_R4),         dimension(:),   pointer :: stkdm     => null()
+    real(ESMF_KIND_R4),         dimension(:),   pointer :: stkht     => null()
+    real(ESMF_KIND_R4),         dimension(:),   pointer :: stktk     => null()
+    real(ESMF_KIND_R4),         dimension(:),   pointer :: stkve     => null()
     real(ESMF_KIND_R4),         dimension(:),   pointer :: factors   => null()
     type(ESMF_Field),           dimension(:),   pointer :: fields    => null()
-    type(aqm_internal_rate_type), dimension(:), allocatable :: rates
+    type(aqm_internal_rate_type), dimension(:), pointer :: rates     => null()
     character(len=ESMF_MAXSTR), dimension(:,:), pointer :: table     => null()
   end type
 

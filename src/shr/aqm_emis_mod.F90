@@ -8,7 +8,7 @@ module aqm_emis_mod
   use aqm_tools_mod
   use aqm_internal_mod
   use aqm_model_mod, only : aqm_model_get, aqm_state_type
-  use aqm_const_mod, only : deg_to_rad
+  use aqm_const_mod, only : deg_to_rad, rad_to_deg
 
   implicit none
 
@@ -612,6 +612,29 @@ contains
         end if
       case ("point-source")
         em % gridded = .false.
+        ! -- get plumerise type
+        call ESMF_ConfigGetAttribute(config, value, &
+          label=trim(em % name)//"_plume_rise:", default="default", rc=localrc)
+        if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__,  &
+          file=__FILE__,  &
+          rcToReturn=rc)) &
+          return  ! bail out
+        em % plumerise = ESMF_UtilStringLowerCase(value, rc=localrc)
+        if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__,  &
+          file=__FILE__,  &
+          rcToReturn=rc)) &
+          return  ! bail out
+        if (em % verbose) then
+          call ESMF_LogWrite(trim(em % logprefix)//": "//pName &
+            //": plume_rise: "//trim(em % plumerise), ESMF_LOGMSG_INFO, rc=localrc)
+          if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__,  &
+            file=__FILE__,  &
+            rcToReturn=rc)) &
+            return  ! bail out
+        end if
         ! -- get coordinate labels
         call ESMF_ConfigFindLabel(config, trim(em % name) // "_latlon_names:", rc=localrc)
         if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -641,6 +664,7 @@ contains
             rcToReturn=rc)) &
             return  ! bail out
         end if
+        ! -- get stack parameters
         call ESMF_ConfigGetAttribute(config, em % stkdmname, &
           label=trim(em % name)//"_stack_diameter:", default='STKDM', rc=localrc)
         if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -666,7 +690,7 @@ contains
           return  ! bail out
         if (em % verbose) then
           call ESMF_LogWrite(trim(em % logprefix)//": "//pName &
-            //": stack_height: "//trim(em % stkdmname), ESMF_LOGMSG_INFO, rc=localrc)
+            //": stack_height: "//trim(em % stkhtname), ESMF_LOGMSG_INFO, rc=localrc)
           if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
             line=__LINE__,  &
             file=__FILE__,  &
@@ -682,7 +706,7 @@ contains
           return  ! bail out
         if (em % verbose) then
           call ESMF_LogWrite(trim(em % logprefix)//": "//pName &
-            //": stack_temperature: "//trim(em % stkdmname), ESMF_LOGMSG_INFO, rc=localrc)
+            //": stack_temperature: "//trim(em % stktkname), ESMF_LOGMSG_INFO, rc=localrc)
           if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
             line=__LINE__,  &
             file=__FILE__,  &
@@ -698,7 +722,7 @@ contains
           return  ! bail out
         if (em % verbose) then
           call ESMF_LogWrite(trim(em % logprefix)//": "//pName &
-            //": stack_velocity: "//trim(em % stkdmname), ESMF_LOGMSG_INFO, rc=localrc)
+            //": stack_velocity: "//trim(em % stkvename), ESMF_LOGMSG_INFO, rc=localrc)
           if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
             line=__LINE__,  &
             file=__FILE__,  &
@@ -957,7 +981,7 @@ contains
             rcToReturn=rc)) &
             return
           ! -- initialize ungridded emissions (point sources)
-          call aqm_emis_pts_init(model, em, rc)
+          call aqm_emis_pts_init(model, em, rc=localrc)
           if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
             line=__LINE__,  &
             file=__FILE__,  &
@@ -1475,7 +1499,7 @@ contains
     integer :: localrc
     integer :: item, i, j, m, n
     character(len=ESMF_MAXSTR)    :: msgString
-    real(ESMF_KIND_R4),   pointer :: fptr(:,:)
+    real(ESMF_KIND_R4)            :: em_min, em_max
     type(aqm_state_type), pointer :: stateIn
     type(aqm_internal_emis_type), pointer :: em
 
@@ -1542,9 +1566,15 @@ contains
             return
         end select
         if (em % verbose) then
+          em_min = huge(0._ESMF_KIND_R4)
+          em_max = -em_min
+          do m = 1, size(em % ijmap)
+            n = em % ijmap(m)
+            em_min = min( em_min, em % rates(item) % values(n) )
+            em_max = max( em_max, em % rates(item) % values(n) )
+          end do
           write(msgString, '(a12,": read",12x,": ",a16,": min/max = ",2g20.8)') &
-            em % logprefix, spcname, minval(em % rates(item) % values), &
-            maxval(em % rates(item) % values)
+            em % logprefix, spcname, em_min, em_max
           call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=localrc)
           if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
             line=__LINE__,  &
@@ -1584,6 +1614,8 @@ contains
     type(ESMF_CoordSys_Flag)    :: coordSys
     type(ESMF_Index_Flag)       :: indexflag
 
+    real(AQM_KIND_R8) :: emin, emax, fmin, fmax
+    character(len=ESMF_MAXSTR) :: msg
     ! -- begin
     if (present(rc)) rc = ESMF_SUCCESS
 
@@ -1773,8 +1805,8 @@ contains
         file=__FILE__,  &
         rcToReturn=rc)) &
         return
+      m = 0
       do n = 1, em % count
-        m = 0
         if (em % ip(n) > 0 .and. em % jp(n) > 0) then
            m = m + 1
            em % ijmap(m) = n
@@ -1785,6 +1817,71 @@ contains
       ! -- no local sources, disable emissions
       em % count = 0
     end if
+
+    ! -- log coordinates
+    lon  = lon  * rad_to_deg
+    lat  = lat  * rad_to_deg
+    lonc = lonc * rad_to_deg
+    latc = latc * rad_to_deg
+    lonp = lonp * rad_to_deg
+    latp = latp * rad_to_deg
+
+    if      (coordSys == ESMF_COORDSYS_SPH_DEG) then
+      call ESMF_LogWrite('original coord. in degrees', ESMF_LOGMSG_INFO, rc=localrc)
+      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__,  &
+        file=__FILE__,  &
+        rcToReturn=rc)) &
+        return  ! bail out
+    else if (coordSys == ESMF_COORDSYS_SPH_RAD) then
+      call ESMF_LogWrite('original coord. in radians', ESMF_LOGMSG_INFO, rc=localrc)
+      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__,  &
+        file=__FILE__,  &
+        rcToReturn=rc)) &
+        return  ! bail out
+    else
+    end if
+
+    where(lon  < 0.) lon  = lon  + 360.
+    where(lonc < 0.) lonc = lonc + 360.
+    where(lonp < 0.) lonp = lonp + 360.
+
+    write( msg, '("ijmap: centers: min/max: ",4g20.5)') &
+      minval(lon), maxval(lon), minval(lat), maxval(lat)
+    call ESMF_LogWrite(msg, ESMF_LOGMSG_INFO, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+    write( msg, '("ijmap: corners: min/max: ",4g20.5)') &
+      minval(lonc), maxval(lonc), minval(latc), maxval(latc)
+    call ESMF_LogWrite(msg, ESMF_LOGMSG_INFO, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+    emin = huge(0.0)
+    fmin = huge(0.0)
+    emax = -emin
+    fmax = -fmin
+    do n = 1, em % count
+      m = em % ijmap(n)
+      emin = min(emin,latp(m))
+      emax = max(emax,latp(m))
+      fmin = min(fmin,lonp(m))
+      fmax = max(fmax,lonp(m))
+    end do
+      write( msg, '("ijmap: pt-srcs: min/max: ",4g20.5)') fmin, fmax, emin, emax
+      call ESMF_LogWrite(msg, ESMF_LOGMSG_INFO, rc=localrc)
+      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__,  &
+        file=__FILE__,  &
+        rcToReturn=rc)) &
+        return  ! bail out
 
     ! -- free up memory
     deallocate(lat, latc, latp, lon, lonc, lonp, stat=stat)
@@ -1879,6 +1976,9 @@ contains
 
     ! -- local variables
     integer :: localrc
+    character(len=ESMF_MAXSTR) :: msgString
+
+    character(len=*), parameter :: pName = "init: source"
 
     ! -- begin
     if (present(rc)) rc = ESMF_SUCCESS
@@ -1909,6 +2009,16 @@ contains
       file=__FILE__,  &
       rcToReturn=rc)) &
       return  ! bail out
+    if (em % verbose) then
+      write(msgString, '("mapped to ",i0," local grid points")') em % count
+      call ESMF_LogWrite(trim(em % logprefix)//": "//pName &
+            //": "//trim(msgString), ESMF_LOGMSG_INFO, rc=localrc)
+      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__,  &
+        file=__FILE__,  &
+        rcToReturn=rc)) &
+        return  ! bail out
+    end if
 
     if (em % count > 0) then
       ! -- read stack parameters

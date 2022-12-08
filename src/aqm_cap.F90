@@ -8,6 +8,7 @@ module AQM
   use NUOPC_Model, inheritModel => SetServices
 
   use aqm_comp_mod
+  use aqm_const_mod, only: rad_to_deg
   
   implicit none
 
@@ -61,9 +62,6 @@ module AQM
 
   private
 
-  real(ESMF_KIND_R8), parameter :: pi = 3.1415926535897931
-  real(ESMF_KIND_R8), parameter :: rad2deg = 180./pi
-  
   public SetServices
   
   !-----------------------------------------------------------------------------
@@ -264,7 +262,7 @@ module AQM
     real(ESMF_KIND_R8)         :: dts
     type(ESMF_Time)            :: startTime
     type(ESMF_TimeInterval)    :: TimeStep
-    type(ESMF_CoordSys_Flag)   :: aqmGridCoordSys
+    type(ESMF_CoordSys_Flag)   :: coordSys
     character(len=ESMF_MAXSTR) :: msgString, name
 
 
@@ -413,7 +411,7 @@ module AQM
         end if
 
         ! -- get local coordinate arrays
-        call ESMF_GridGet(grid, coordSys=aqmGridCoordSys, rc=rc)
+        call ESMF_GridGet(grid, coordSys=coordSys, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
             line=__LINE__, &
             file=__FILE__)) &
@@ -427,7 +425,34 @@ module AQM
             file=__FILE__)) &
             return  ! bail out
 
-          if (aqmGridCoordSys == ESMF_COORDSYS_SPH_RAD) coord = coord * rad2deg
+          if (coordSys == ESMF_COORDSYS_SPH_RAD) then
+            call aqm_model_domain_coord_set(item, coord, scale=rad_to_deg, de=localDe, rc=rc)
+            if (aqm_rc_check(rc)) then
+              call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, &
+                msg="Failed to set coordinates for air quality model", &
+                line=__LINE__, &
+                file=__FILE__, &
+                rcToReturn=rc)
+              return  ! bail out
+            end if
+          else if (coordSys == ESMF_COORDSYS_SPH_DEG) then
+            call aqm_model_domain_coord_set(item, coord, de=localDe, rc=rc)
+            if (aqm_rc_check(rc)) then
+              call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, &
+                msg="Failed to set coordinates for air quality model", &
+                line=__LINE__, &
+                file=__FILE__, &
+                rcToReturn=rc)
+              return  ! bail out
+            end if
+          else
+            call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, &
+              msg="Unsupported coordinate system - Failed to set coordinates for air quality model", &
+              line=__LINE__, &
+              file=__FILE__, &
+              rcToReturn=rc)
+            return  ! bail out
+          end if
 
           call aqm_model_domain_coord_set(item, coord, de=localDe, rc=rc)
 

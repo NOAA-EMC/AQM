@@ -7,7 +7,7 @@ module aqm_emis_mod
   use aqm_types_mod
   use aqm_tools_mod
   use aqm_internal_mod
-  use aqm_model_mod, only : aqm_model_get, aqm_state_type
+  use aqm_model_mod, only : aqm_model_get, aqm_model_domain_get, aqm_state_type
   use aqm_const_mod, only : deg_to_rad, rad_to_deg
 
   implicit none
@@ -32,11 +32,6 @@ module aqm_emis_mod
   public :: aqm_emis_read
 
   public :: aqm_internal_emis_type
-
-  interface aqm_emis_read
-    module procedure aqm_emis_grd_read
-    module procedure aqm_emis_pts_read
-  end interface aqm_emis_read
 
 contains
 
@@ -1151,6 +1146,8 @@ contains
             return  ! bail out
           nullify(em % fields)
         end if
+        ! --------- ADD PT SECTION -- TODO
+
         call ESMF_AlarmDestroy(em % alarm, rc=localrc)
         if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
           line=__LINE__,  &
@@ -1349,37 +1346,48 @@ contains
   end function aqm_emis_ispresent
 
   subroutine aqm_emis_desc( etype, nlays, nvars, vnames, units )
-    character(len=*),  intent(in)  :: etype
-    integer,           intent(out) :: nlays
-    integer,           intent(out) :: nvars
-    character(len=16), intent(out) :: vnames(:)
-    character(len=16), intent(out) :: units(:)
+    character(len=*),            intent(in)  :: etype
+    integer,           optional, intent(out) :: nlays
+    integer,           optional, intent(out) :: nvars
+    character(len=16), optional, intent(out) :: vnames(:)
+    character(len=16), optional, intent(out) :: units(:)
 
     ! -- local variables
-    integer :: item
+    integer :: localrc
+    integer :: item, nsrc
     type(aqm_internal_emis_type), pointer :: em
 
     ! -- begin
-    nlays = 0
-    nvars = 0
-    vnames = ""
-    units  = ""
-
     ! -- get emission data
     nullify(em)
     em => aqm_emis_get(etype)
 
     if (associated(em)) then
-      nlays = 1
-      nvars = size( em % table, dim=1 )
-      vnames( 1:nvars ) = em % table( 1:nvars, 1 )
-      units ( 1:nvars ) = em % table( 1:nvars, 2 )
+      if (present(nlays)) then
+        select case (trim(em % plumerise))
+          case ("briggs","sofiev","default")
+            call aqm_model_domain_get(nl=nlays, rc=localrc)
+            if (aqm_rc_check(localrc, msg="Failure to retrieve model layers", &
+              file=__FILE__, line=__LINE__)) return
+          case default
+            nlays = 1
+        end select
+      end if
+      nsrc = size( em % table, dim=1 )
+      if (present(nvars))  nvars = nsrc
+      if (present(vnames)) vnames( 1:nsrc ) = em % table( 1:nsrc, 1 )
+      if (present(units))  units ( 1:nsrc ) = em % table( 1:nsrc, 2 )
+    else
+      if (present(nlays))  nlays  = 0
+      if (present(nvars))  nvars  = 0
+      if (present(vnames)) vnames = ""
+      if (present(units))  units  = ""
     end if
 
   end subroutine aqm_emis_desc
 
-  subroutine aqm_emis_grd_read(etype, spcname, buffer, localDe, rc)
-    character(len=*),  intent(in)    :: etype
+  subroutine aqm_emis_grd_read(em, spcname, buffer, localDe, rc)
+    type(aqm_internal_emis_type)     :: em
     character(len=*),  intent(in)    :: spcname
     real,              intent(inout) :: buffer(*)
     integer, optional, intent(in)    :: localDe
@@ -1392,7 +1400,6 @@ contains
     character(len=ESMF_MAXSTR)    :: msgString
     real(ESMF_KIND_R4),   pointer :: fptr(:,:)
     type(aqm_state_type), pointer :: stateIn
-    type(aqm_internal_emis_type), pointer :: em
 
     ! -- begin
     if (present(rc)) rc = AQM_RC_SUCCESS
@@ -1400,9 +1407,6 @@ contains
     ! -- NOTE: input emissions need to be converted to surface densities here
     ! -- since grid cell area is set to 1 internally.
 
-    em => aqm_emis_get(etype)
-    ! -- bail out if no emissions available
-    if (.not.associated(em)) return
     ! -- bail out if this is a product
     if (trim(em % iomode) /= "read") return
 
@@ -1486,12 +1490,13 @@ contains
 
   end subroutine aqm_emis_grd_read
 
-  subroutine aqm_emis_pts_read(etype, spcname, buffer, ip, jp, localDe, rc)
-    character(len=*),  intent(in)    :: etype
+  subroutine aqm_emis_pts_read(em, spcname, buffer, ip, jp, ijmap, localDe, rc)
+    type(aqm_internal_emis_type)     :: em
     character(len=*),  intent(in)    :: spcname
     real,              intent(inout) :: buffer(*)
-    integer, pointer,  intent(inout) :: ip(:)
-    integer, pointer,  intent(inout) :: jp(:)
+    integer, optional, pointer       :: ip(:)
+    integer, optional, pointer       :: jp(:)
+    integer, optional, pointer       :: ijmap(:)
     integer, optional, intent(in)    :: localDe
     integer, optional, intent(out)   :: rc
 
@@ -1501,7 +1506,6 @@ contains
     character(len=ESMF_MAXSTR)    :: msgString
     real(ESMF_KIND_R4)            :: em_min, em_max
     type(aqm_state_type), pointer :: stateIn
-    type(aqm_internal_emis_type), pointer :: em
 
     ! -- begin
     if (present(rc)) rc = AQM_RC_SUCCESS
@@ -1509,9 +1513,6 @@ contains
     ! -- NOTE: input emissions need to be converted to surface densities here
     ! -- since grid cell area is set to 1 internally.
 
-    em => aqm_emis_get(etype)
-    ! -- bail out if no emissions available
-    if (.not.associated(em)) return
     ! -- bail out if this is a product
     if (trim(em % iomode) /= "read") return
 
@@ -1521,9 +1522,10 @@ contains
     if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
       file=__FILE__, line=__LINE__, rc=rc)) return
 
-    ! -- return grid locations
-    ip => em % ip
-    jp => em % jp
+    ! -- return grid locations and map
+    if (present(ip))    ip    => em % ip
+    if (present(jp))    jp    => em % jp
+    if (present(ijmap)) ijmap => em % ijmap
 
     do item = 1, size(em % species)
       if (trim(spcname) == trim(em % species(item))) then
@@ -1586,6 +1588,40 @@ contains
     end do
 
   end subroutine aqm_emis_pts_read
+
+  subroutine aqm_emis_read(etype, spcname, buffer, ip, jp, ijmap, localDe, rc)
+    character(len=*),  intent(in)    :: etype
+    character(len=*),  intent(in)    :: spcname
+    real,              intent(inout) :: buffer(*)
+    integer, optional, pointer       :: ip(:)
+    integer, optional, pointer       :: jp(:)
+    integer, optional, pointer       :: ijmap(:)
+    integer, optional, intent(in)    :: localDe
+    integer, optional, intent(out)   :: rc
+
+    ! -- local variables
+    type(aqm_internal_emis_type), pointer :: em
+
+    ! -- begin
+    if (present(rc)) rc = AQM_RC_SUCCESS
+
+    ! -- retrieve emissions
+    em => aqm_emis_get(etype)
+
+    ! -- bail out if no emissions available
+    if (.not.associated(em)) return
+
+    ! -- bail out if this is a product
+    if (trim(em % iomode) /= "read") return
+
+    ! -- select emission reader
+    if (em % gridded) then
+      call aqm_emis_grd_read(em, spcname, buffer, localDe=localDe, rc=rc)
+    else
+      call aqm_emis_pts_read(em, spcname, buffer, ip=ip, jp=jp, ijmap=ijmap, localDe=localDe, rc=rc)
+    end if
+
+  end subroutine aqm_emis_read
 
   subroutine aqm_emis_pts_map(model, em, rc)
     type(ESMF_GridComp)                     :: model
@@ -1975,7 +2011,7 @@ contains
     integer, optional,          intent(out) :: rc
 
     ! -- local variables
-    integer :: localrc
+    integer :: localrc, item
     character(len=ESMF_MAXSTR) :: msgString
 
     character(len=*), parameter :: pName = "init: source"
@@ -1985,6 +2021,11 @@ contains
 
     ! -- bail out if gridded emissions
     if (em % gridded) return
+
+    ! -- initialize pointers
+    do item = 1, size(em % sources)
+      nullify(em % rates(item) % values)
+    end do
 
     ! -- read stack locations
     call AQMIO_DataRead(em % IO, em % lat, em % latname, rc=localrc)

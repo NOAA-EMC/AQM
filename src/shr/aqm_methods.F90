@@ -91,6 +91,7 @@ LOGICAL FUNCTION DESC3( FNAME )
  
   integer :: localrc
   integer :: is, ie, js, je
+  integer :: EMLAYS
   type(aqm_config_type), pointer :: config
 
   ! -- begin
@@ -127,7 +128,16 @@ LOGICAL FUNCTION DESC3( FNAME )
 
   ELSE IF ( TRIM( FNAME ) .EQ. TRIM( EMIS_1 ) ) THEN
 
-    call aqm_emis_desc("anthropogenic", NLAYS3D, NVARS3D, VNAME3D, UNITS3D)
+    NLAYS3D = 0
+
+    call aqm_emis_desc("gbbepx",        NLAYS=EMLAYS)
+    NLAYS3D = MAX(EMLAYS, NLAYS3D)
+
+    call aqm_emis_desc("point-source",  NLAYS=EMLAYS)
+    NLAYS3D = MAX(EMLAYS, NLAYS3D)
+
+    call aqm_emis_desc("anthropogenic", NLAYS=EMLAYS, NVARS=NVARS3D, VNAMES=VNAME3D, UNITS=UNITS3D)
+    NLAYS3D = MAX(EMLAYS, NLAYS3D)
 
   ELSE IF ( TRIM( FNAME ) .EQ. TRIM( GRID_DOT_2D ) ) THEN
     NVARS3D = 1

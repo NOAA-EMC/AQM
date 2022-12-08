@@ -115,14 +115,8 @@ C create point source internal array
 
 C set number of emissions layers depending on whether plumerise is on
 
-         SELECT CASE ( TRIM( EM % PLUMERISE ) )
-            CASE ("sofiev")
-               EMLYRS    = NLAYS
-               PM_EMLYRS = NLAYS
-            CASE DEFAULT
-               EMLYRS    = 1
-               PM_EMLYRS = 1
-         END SELECT
+         CALL AQM_EMIS_DESC( ETYPE, NLAYS=EMLYRS )
+         PM_EMLYRS = EMLYRS
          
 C get point source emission mapping
 

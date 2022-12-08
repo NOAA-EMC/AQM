@@ -2,7 +2,8 @@
 
       USE GRID_CONF           ! horizontal & vertical domain specifications      
       USE EMIS_DEFN
-      USE AQM_EMIS_MOD, ONLY : AQM_EMIS_GET, AQM_EMIS_READ, AQM_INTERNAL_EMIS_TYPE
+      USE AQM_EMIS_MOD, ONLY : AQM_EMIS_DESC, AQM_EMIS_GET,
+     &                         AQM_EMIS_READ, AQM_INTERNAL_EMIS_TYPE
 
       IMPLICIT NONE
 
@@ -56,6 +57,7 @@ C Local Variables:
          INTEGER           :: P( 2 )
          INTEGER, POINTER  :: IP( : )
          INTEGER, POINTER  :: JP( : )
+         INTEGER, POINTER  :: IJMAP( : )
          REAL              :: DX1, DX2
          REAL, ALLOCATABLE :: BUFFER( : )
 
@@ -73,6 +75,8 @@ C-----------------------------------------------------------------------
 
          EM => AQM_EMIS_GET( ETYPE )
          IF ( .NOT.ASSOCIATED( EM ) ) RETURN
+
+         IF (EM % COUNT == 0) RETURN
 
          IF ( FIRSTIME ) THEN
 
@@ -96,12 +100,7 @@ C ... or ...
 
 C set number of emissions layers depending on whether plumerise is on
 
-            SELECT CASE ( TRIM( EM % PLUMERISE ) )
-               CASE ("briggs","default")
-                  EMLYRS    = NLAYS
-               CASE DEFAULT
-                  EMLYRS    = 1
-            END SELECT
+            CALL AQM_EMIS_DESC( ETYPE, NLAYS=EMLYRS )
 
 C get point source emission mapping
             IF ( AQM_RC_TEST( .NOT. PT3DEM_MAP_INIT( ),
@@ -109,16 +108,18 @@ C get point source emission mapping
      &              TRIM( ETYPE ) // " emissions",
      &              FILE=__FILE__, LINE=__LINE__ ) ) RETURN
 
-            NSRC = EM % COUNT
-
-C Allocate Buffer space for Reading Emissions
-            ALLOCATE ( BUFFER( SIZE( EM % LAT ) ), STAT = IOS )
-            CALL CHECKMEM( IOS, 'BUFFER', PNAME )
-
             FIRSTIME = .FALSE.
          END IF
 
+C Allocate Buffer space for Reading Emissions
+         ALLOCATE ( BUFFER( SIZE( EM % LAT ) ), STAT = IOS )
+         CALL CHECKMEM( IOS, 'BUFFER', PNAME )
+
+         NSRC = SIZE( EM % IJMAP )
+
          ! -- loop over mapped emissions only
+
+         ! -- (1) non-PM emissions
          DO S = 1, N_GSPC_EMIS
             V = SPC_PT3DEM_FAC( S )
             IF ( V .LT. 1 ) CYCLE
@@ -129,7 +130,7 @@ C Allocate Buffer space for Reading Emissions
 
             BUFFER = 0.0
             CALL AQM_EMIS_READ( ETYPE, EM % TABLE( N, 1 ),
-     &         BUFFER, IP, JP, RC=LOCALRC)
+     &         BUFFER, IP, JP, IJMAP, RC=LOCALRC)
             IF ( AQM_RC_CHECK( LOCALRC,
      &         MSG="Failure while reading " //
      &         TRIM( EM % TABLE( N, 1 ) ) // " from " //
@@ -137,7 +138,7 @@ C Allocate Buffer space for Reading Emissions
      &         FILE=__FILE__, LINE=__LINE__ ) ) RETURN
             IF ( EM % TABLE( N, 1 ) .EQ. 'POC' ) THEN
                CALL AQM_EMIS_READ( ETYPE, 'PNCOM',
-     &            BUFFER, IP, JP, RC=LOCALRC)
+     &            BUFFER, IP, JP, IJMAP, RC=LOCALRC)
                IF ( AQM_RC_CHECK( LOCALRC,
      &            MSG="Failure while reading PNCOM emissions from" //
      &            TRIM( ETYPE ) // " emissions",
@@ -160,6 +161,10 @@ C Allocate Buffer space for Reading Emissions
                END DO
             END DO
          END DO
+
+         ! -- (2) PM emissions (TBD)
+
+         DEALLOCATE ( BUFFER )
 
          END SUBROUTINE GET_PT3D_EMIS
 

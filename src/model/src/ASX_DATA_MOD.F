@@ -144,6 +144,8 @@ C-------------------------------------------------------------------------------
          Real,    Allocatable :: RJACM    ( :,:,: )  ! reciprocal mid-layer Jacobian
          Real,    Allocatable :: RJACF    ( :,:,: )  ! reciprocal full-layer Jacobian
          Real,    Allocatable :: RRHOJ    ( :,:,: )  ! reciprocal density X Jacobian
+         Real,    Allocatable :: UWINDA   ( :,:,: )  ! [m/s]
+         Real,    Allocatable :: VWINDA   ( :,:,: )  ! [m/s]
       End Type MET_Type
       
       Type :: GRID_Type
@@ -496,6 +498,8 @@ C-----------------------------------------------------------------------
      &             Met_Data%CONVCT   ( NCOLS,NROWS ),
      &             Met_Data%PBL      ( NCOLS,NROWS ),
      &             Met_Data%NACL_EMIS( NCOLS,NROWS ),
+     &             Met_Data%UWINDA   ( NCOLS,NROWS,NLAYS ),
+     &             Met_Data%VWINDA   ( NCOLS,NROWS,NLAYS ),
      &             Met_Data%UWIND    ( NCOLS+1,NROWS+1,NLAYS ),
      &             Met_Data%VWIND    ( NCOLS+1,NROWS+1,NLAYS ),
      &             Met_Data%KZMIN    ( NCOLS,NROWS,NLAYS ),
@@ -1186,6 +1190,22 @@ C met vars
          If ( .Not. INTERPX( MET_CRO_2D, VNAME, PNAME,
      &                       STRTCOLMC2,ENDCOLMC2, STRTROWMC2,ENDROWMC2, 1,1,
      &                       JDATE, JTIME, Met_Data%USTAR ) ) Then
+            XMSG = MSG1 // TRIM( VNAME ) // ' from ' // MET_CRO_2D
+            Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+         End If
+
+         VNAME = 'UWINDA'
+         If ( .Not. INTERPX( MET_CRO_2D, VNAME, PNAME,
+     &                       STRTCOLMC2,ENDCOLMC2, STRTROWMC2,ENDROWMC2, 1,1,
+     &                       JDATE, JTIME, Met_Data%UWINDA ) ) Then
+            XMSG = MSG1 // TRIM( VNAME ) // ' from ' // MET_CRO_2D
+            Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+         End If
+
+         VNAME = 'VWINDA'
+         If ( .Not. INTERPX( MET_CRO_2D, VNAME, PNAME,
+     &                       STRTCOLMC2,ENDCOLMC2, STRTROWMC2,ENDROWMC2, 1,1,
+     &                       JDATE, JTIME, Met_Data%VWINDA ) ) Then
             XMSG = MSG1 // TRIM( VNAME ) // ' from ' // MET_CRO_2D
             Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          End If

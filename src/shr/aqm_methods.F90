@@ -226,12 +226,13 @@ LOGICAL FUNCTION DESC3( FNAME )
       VGLVS3D( is ) = DBLE(NLAYS3D + 1 - is)
     END DO
 
-    NVARS3D = 11
+    NVARS3D = 13
     VNAME3D( 1:NVARS3D ) = &
     (/ 'JACOBF          ', 'JACOBM          ',            &
        'DENSA_J         ', 'TA              ',            &
        'QV              ', 'QC              ',            &
        'PRES            ', 'DENS            ',            &
+       'UWINDA          ', 'VWINDA          ',            &
        'ZH              ', 'ZF              ',            &
        'CFRAC_3D        '                                 &
     /)
@@ -240,6 +241,7 @@ LOGICAL FUNCTION DESC3( FNAME )
        'KG/M**2         ', 'K               ',            &
        'KG/KG           ', 'KG/KG           ',            &
        'Pa              ', 'KG/M**3         ',            &
+       'M/S             ', 'M/S             ',            &
        'M               ', 'M               ',            &
        'FRACTION        '                                 &
     /)
@@ -363,7 +365,8 @@ logical function envyn(name, description, defaultval, status)
     case ('CTM_PHOTODIAG')
       envyn = config % ctm_photodiag
     case ('CTM_PT3DEMIS')
-      envyn = aqm_emis_ispresent("gbbepx")
+      envyn = aqm_emis_ispresent("gbbepx") .or. &
+              aqm_emis_ispresent("point-source")
     case ('CTM_GRAV_SETL')
       envyn = .false.
     case ('CTM_WBDUST_FENGSHA')
@@ -927,6 +930,10 @@ logical function interpx( fname, vname, pname, &
           p3d => stateIn % tr(:,:,:,config % species % p_atm_qg)
           set_non_neg = .true.
         end if
+      case ("UWINDA")
+        p3d => stateIn % uwind
+      case ("VWINDA")
+        p3d => stateIn % vwind
       case ("ZF")
         k = 0
         do l = lay0, lay1

@@ -477,6 +477,12 @@ contains
               line=__LINE__, &
               file=__FILE__)) &
               return  ! bail
+          case ("inst_pres_interface")
+            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % pri, rc=rc)
+            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+              line=__LINE__, &
+              file=__FILE__)) &
+              return  ! bail
           case ("inst_pres_levels")
             call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % prl, rc=rc)
             if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &

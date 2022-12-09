@@ -226,7 +226,7 @@ LOGICAL FUNCTION DESC3( FNAME )
       VGLVS3D( is ) = DBLE(NLAYS3D + 1 - is)
     END DO
 
-    NVARS3D = 13
+    NVARS3D = 14
     VNAME3D( 1:NVARS3D ) = &
     (/ 'JACOBF          ', 'JACOBM          ',            &
        'DENSA_J         ', 'TA              ',            &
@@ -234,7 +234,7 @@ LOGICAL FUNCTION DESC3( FNAME )
        'PRES            ', 'DENS            ',            &
        'UWINDA          ', 'VWINDA          ',            &
        'ZH              ', 'ZF              ',            &
-       'CFRAC_3D        '                                 &
+       'CFRAC_3D        ', 'PRESF           '             &
     /)
     UNITS3D( 1:NVARS3D ) = &
     (/ 'M               ', 'M               ',            &
@@ -243,7 +243,7 @@ LOGICAL FUNCTION DESC3( FNAME )
        'Pa              ', 'KG/M**3         ',            &
        'M/S             ', 'M/S             ',            &
        'M               ', 'M               ',            &
-       'FRACTION        '                                 &
+       'FRACTION        ', 'Pa              '             &
     /)
 
     call aqm_model_get(config=config, rc=localrc)
@@ -900,6 +900,8 @@ logical function interpx( fname, vname, pname, &
         end do
       case ("PRES")
         p3d => stateIn % prl
+      case ("PRESF")
+        p3d => stateIn % pri
       case ("CFRAC_3D")
         p3d => stateIn % cldfl
       case ("PV")

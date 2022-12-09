@@ -13,7 +13,7 @@ module AQM
   implicit none
 
   ! -- import fields
-  integer, parameter :: importFieldCount = 35
+  integer, parameter :: importFieldCount = 36
   character(len=*), dimension(importFieldCount), parameter :: &
     importFieldNames = (/ &
       "canopy_moisture_storage                  ", &
@@ -31,6 +31,7 @@ module AQM
       "inst_net_sw_flx                          ", &
       "inst_pbl_height                          ", &
       "inst_pres_height_surface                 ", &
+      "inst_pres_interface                      ", &
       "inst_pres_levels                         ", &
       "inst_rainfall_amount                     ", &
       "inst_sensi_heat_flx                      ", &

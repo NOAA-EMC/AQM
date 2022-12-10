@@ -212,26 +212,28 @@ C Allocate Buffer space for Reading Emissions
          ALLOCATE ( BUFFER( SIZE( EM % LAT ) ), STAT = IOS )
          CALL CHECKMEM( IOS, 'BUFFER', PNAME )
 
-         ALLOCATE ( DTHDZ( EMLYRS ), STAT = IOS )
-         CALL CHECKMEM( IOS, 'DTHDZ', PNAME )
-
-         ALLOCATE ( PRESF( 0:EMLYRS ), STAT = IOS )
-         CALL CHECKMEM( IOS, 'PRESF', PNAME )
-
-         ALLOCATE ( WSPD( EMLYRS ), STAT = IOS )
-         CALL CHECKMEM( IOS, 'WSPD', PNAME )
-
-         ALLOCATE ( ZZF( EMLYRS ), STAT = IOS )
-         CALL CHECKMEM( IOS, 'ZZF', PNAME )
-
-         ALLOCATE ( ZSTK( EMLYRS ), STAT = IOS )
-         CALL CHECKMEM( IOS, 'ZSTK', PNAME )
-
-         ALLOCATE ( DDZF( EMLYRS ), STAT = IOS )
-         CALL CHECKMEM( IOS, 'DDZF', PNAME )
-
          ALLOCATE ( TFRAC( EMLYRS ), STAT = IOS )
          CALL CHECKMEM( IOS, 'TFRAC', PNAME )
+
+         IF ( EMLYRS .GT. 1 ) THEN
+            ALLOCATE ( DTHDZ( EMLYRS ), STAT = IOS )
+            CALL CHECKMEM( IOS, 'DTHDZ', PNAME )
+
+            ALLOCATE ( PRESF( 0:EMLYRS ), STAT = IOS )
+            CALL CHECKMEM( IOS, 'PRESF', PNAME )
+
+            ALLOCATE ( WSPD( EMLYRS ), STAT = IOS )
+            CALL CHECKMEM( IOS, 'WSPD', PNAME )
+
+            ALLOCATE ( ZZF( EMLYRS ), STAT = IOS )
+            CALL CHECKMEM( IOS, 'ZZF', PNAME )
+
+            ALLOCATE ( ZSTK( EMLYRS ), STAT = IOS )
+            CALL CHECKMEM( IOS, 'ZSTK', PNAME )
+
+            ALLOCATE ( DDZF( EMLYRS ), STAT = IOS )
+            CALL CHECKMEM( IOS, 'DDZF', PNAME )
+         END IF
 
          NSRC = SIZE( EM % IJMAP )
 
@@ -268,74 +270,75 @@ C Allocate Buffer space for Reading Emissions
                C  = EM % IP( IJ )
                R  = EM % JP( IJ )
 
+               IF ( EMLYRS .GT. 1 ) THEN
 C Loop through sources and compute plume rise
 
-               ZZF( 0 ) = 0.0
-               ZZF( 1:EMLYRS ) = Met_Data % ZF( C,R,1:EMLYRS )
+                  ZZF( 0 ) = 0.0
+                  ZZF( 1:EMLYRS ) = Met_Data % ZF( C,R,1:EMLYRS )
 
 C Set surface pressure (convert to mb from Pa)
-               PSFC = CNVPA2MB * Met_Data % PRSFC( C,R )
+                  PSFC = CNVPA2MB * Met_Data % PRSFC( C,R )
 
-               PRESF( 0:EMLYRS ) = CNVPA2MB * Met_Data % PRESF( C,R,: )
+                  PRESF( 0:EMLYRS ) = CNVPA2MB * Met_Data % PRESF( C,R,: )
 
 C Compute vertical gradient quantities
-               ZF0 = Met_Data % ZF( C,R,1 )
-               ZSTK( 1 ) = ZF0 - EM % STKHT( IJ )
-               DDZF( 1 ) = 1.0 / ZF0
+                  ZF0 = Met_Data % ZF( C,R,1 )
+                  ZSTK( 1 ) = ZF0 - EM % STKHT( IJ )
+                  DDZF( 1 ) = 1.0 / ZF0
 
-               DO L = 2, EMLYRS
-                  ZF1 = Met_Data % ZF( C,R,L )
-                  ZSTK( L ) = ZF1 - EM % STKHT( IJ )
-                  DDZF( L ) = 1.0 / ( ZF1 - ZF0 )
-                  ZF0 = ZF1
-               END DO
+                  DO L = 2, EMLYRS
+                     ZF1 = Met_Data % ZF( C,R,L )
+                     ZSTK( L ) = ZF1 - EM % STKHT( IJ )
+                     DDZF( L ) = 1.0 / ( ZF1 - ZF0 )
+                     ZF0 = ZF1
+                  END DO
 
 C Compute derived met vars needed before layer assignments
-               CALL PREPLM( .FALSE., EMLYRS,
-     &            Met_Data % PBL   ( C,R ),   EM % STKHT( IJ ), PSFC,
-     &            Met_Data % TEMP2 ( C,R ),   DDZF,
-     &            Met_Data % QV    ( C,R,: ), Met_Data % TA     ( C,R,: ),
-     &            Met_Data % UWINDA( C,R,: ), Met_Data % VWINDA ( C,R,: ),
-     &            Met_Data % ZH    ( C,R,: ), Met_Data % ZF     ( C,R,: ),
-     &            PRESF, LSTK, LPBL, TSTK, WSTK,
-     &            DTHDZ, WSPD )
+                  CALL PREPLM( .FALSE., EMLYRS,
+     &               Met_Data % PBL   ( C,R ),   EM % STKHT( IJ ), PSFC,
+     &               Met_Data % TEMP2 ( C,R ),   DDZF,
+     &               Met_Data % QV    ( C,R,: ), Met_Data % TA     ( C,R,: ),
+     &               Met_Data % UWINDA( C,R,: ), Met_Data % VWINDA ( C,R,: ),
+     &               Met_Data % ZH    ( C,R,: ), Met_Data % ZF     ( C,R,: ),
+     &               PRESF, LSTK, LPBL, TSTK, WSTK,
+     &               DTHDZ, WSPD )
 
 C Trap USTAR at a minimum realistic value
-               USTMP = MAX( Met_Data % USTAR( C,R ), USTARMIN )
+                  USTMP = MAX( Met_Data % USTAR( C,R ), USTARMIN )
 
 C Convert heat flux (watts/m2 to m K /s )
-               HFLX = Met_Data % HFX( C,R ) / ( CPD * Met_Data % DENS1( C,R ) )
+                  HFLX = Met_Data % HFX( C,R ) / ( CPD * Met_Data % DENS1( C,R ) )
 
-               CALL PLMRIS( EMLYRS, LSTK, HFLX, Met_Data % PBL( C,R ),
-     &            EM % STKDM( IJ ), EM % STKHT( IJ ),
-     &            EM % STKTK( IJ ), EM % STKVE( IJ ),
-     &            TSTK, USTMP,
-     &            DTHDZ, Met_Data % TA( C,R,: ),
-     &            WSPD, ZZF,
-     &            Met_Data % ZH( C,R,: ), ZSTK,
-     &            WSTK, ZPLM )
+                  CALL PLMRIS( EMLYRS, LSTK, HFLX, Met_Data % PBL( C,R ),
+     &               EM % STKDM( IJ ), EM % STKHT( IJ ),
+     &               EM % STKTK( IJ ), EM % STKVE( IJ ),
+     &               TSTK, USTMP,
+     &               DTHDZ, Met_Data % TA( C,R,: ),
+     &               WSPD, ZZF,
+     &               Met_Data % ZH( C,R,: ), ZSTK,
+     &               WSTK, ZPLM )
 
 C Determine the bottom and top heights of the plume.
 C Default Turner approach.  Plume thickness = amount of plume rise
 C Plume rise DH = ZPLM minus the stack height STKHT
-               ZTOP = EM % STKHT( IJ )
-     &              + 1.5 * ( ZPLM - EM % STKHT( IJ ) )
-               ZBOT = EM % STKHT( IJ )
-     &              + 0.5 * ( ZPLM - EM % STKHT( IJ ) )
+                  ZTOP = EM % STKHT( IJ )
+     &                 + 1.5 * ( ZPLM - EM % STKHT( IJ ) )
+                  ZBOT = EM % STKHT( IJ )
+     &                 + 0.5 * ( ZPLM - EM % STKHT( IJ ) )
 
 C Set up for computing plume fractions, assuming uniform distribution in pressure
 C (~mass concentration -- minor hydrostatic assumption) from bottom to top.
 
-               IF ( ZTOP .LT. EM % STKHT( IJ ) ) THEN
-                  WRITE( CINT,'( I8 )' ) S
-                  WRITE( XMSG,94010 ) 'ERROR: Top of plume is less than '
-     &                                // 'top of stack for source:' // CINT
-                  CALL M3MESG( XMSG )
-                  WRITE( LOGDEV,* ) '    Zbot: ', ZBOT, ' Ztop: ', ZTOP
-                  WRITE( LOGDEV,* ) '    Stack Top: ', EM % STKHT( IJ ),
-     &                              ' Plume Top: ', ZPLM
-                  CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT2 )
-               END IF
+                  IF ( ZTOP .LT. EM % STKHT( IJ ) ) THEN
+                     WRITE( CINT,'( I8 )' ) S
+                     WRITE( XMSG,94010 ) 'ERROR: Top of plume is less than '
+     &                                   // 'top of stack for source:' // CINT
+                     CALL M3MESG( XMSG )
+                     WRITE( LOGDEV,* ) '    Zbot: ', ZBOT, ' Ztop: ', ZTOP
+                     WRITE( LOGDEV,* ) '    Stack Top: ', EM % STKHT( IJ ),
+     &                                 ' Plume Top: ', ZPLM
+                     CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT2 )
+                  END IF
 
 C Allocate plume to layers (compute layer plume fractions)
 
@@ -343,97 +346,102 @@ C Compute LBOT, LTOP such that
 C  ZZF( LBOT-1 ) <= ZBOT < ZZF( LBOT ) and
 C  ZZF( LTOP-1 ) <= ZTOP < ZZF( LTOP )
 
-               DO L = 1, EMLYRS - 1
-c                 IF ( ZBOT .LE. Met_Data % ZF( C,R,L ) ) THEN
-                  IF ( ZBOT .LE. ZZF( L ) ) THEN
-                     LBOT = L
-                     GO TO  122
-                  ELSE
-                     TFRAC( L ) = 0.0             ! fractions below plume
-                  END IF
-               END DO
-               LBOT = EMLYRS                      !  fallback
-
-122            CONTINUE                           !  loop exit:  bottom found at LBOT
-
-C              IF ( ZTOP .LE. Met_Data % ZF( C,R,LBOT ) ) THEN  ! plume in this layer
-               IF ( ZTOP .LE. ZZF( LBOT ) ) THEN  ! plume in this layer
-
-                  TFRAC( LBOT ) = 1.0
-                  LTOP = LBOT
-
-                  DO L = LBOT + 1, EMLYRS         ! fractions above plume
-                     TFRAC( L ) = 0.0
-                  END DO
-
-               ELSE IF ( LBOT .EQ. EMLYRS ) THEN  ! plume above top layer
-
-                  TFRAC( LBOT ) = 1.0
-
-                  DO L = 1, EMLYRS - 1            ! fractions below plume
-                     TFRAC( L ) = 0.0
-                  END DO
-
-               ELSE                               ! plume crosses layers
-
-                  DO L = LBOT + 1, EMLYRS
-c                    IF ( ZTOP .LE. Met_Data % ZF( C,R,L ) ) THEN
-                     IF ( ZTOP .LE. ZZF( L ) ) THEN
-                        LTOP = L
-                        GO TO 126
+                  DO L = 1, EMLYRS - 1
+c                    IF ( ZBOT .LE. Met_Data % ZF( C,R,L ) ) THEN
+                     IF ( ZBOT .LE. ZZF( L ) ) THEN
+                        LBOT = L
+                        GO TO  122
+                     ELSE
+                        TFRAC( L ) = 0.0             ! fractions below plume
                      END IF
                   END DO
-                  LTOP = EMLYRS                   !  fallback
+                  LBOT = EMLYRS                      !  fallback
 
-126               CONTINUE
+122               CONTINUE                           !  loop exit:  bottom found at LBOT
 
-                  ZDIFF = ZTOP - ZBOT
-                  IF ( ZDIFF .GT. 0.0 ) THEN
+                  IF ( ZTOP .LE. ZZF( LBOT ) ) THEN  ! plume in this layer
 
-                     DDZ  = 1.0 / ZDIFF
-c                    TFRAC( LBOT ) = DDZ * ( Met_Data % ZF( C,R,LBOT ) - ZBOT )
-c                    TFRAC( LTOP ) = DDZ * ( ZTOP - Met_Data % ZF( C,R,LTOP-1 ) )
-                     TFRAC( LBOT ) = DDZ * ( ZZF( LBOT ) - ZBOT )
-                     TFRAC( LTOP ) = DDZ * ( ZTOP - ZZF( LTOP-1 ) )
-
-                  ELSE   ! ZDIFF .le. 0
-
-                     WRITE( CINT,'( I8 )' ) S
-                     WRITE( XMSG,94020 )
-     &                  'Infinitely small plume created for source:,'
-     &                  // CINT // CRLF() // BLANK10
-     &                  // 'All emissions put in first layer.'
-                     CALL M3WARN( PNAME, JDATE, JTIME, XMSG )
-                     LBOT = 1; LTOP = 1
                      TFRAC( LBOT ) = 1.0
+                     LTOP = LBOT
+
+                     DO L = LBOT + 1, EMLYRS         ! fractions above plume
+                        TFRAC( L ) = 0.0
+                     END DO
+
+                  ELSE IF ( LBOT .EQ. EMLYRS ) THEN  ! plume above top layer
+
+                     TFRAC( LBOT ) = 1.0
+
+                     DO L = 1, EMLYRS - 1            ! fractions below plume
+                        TFRAC( L ) = 0.0
+                     END DO
+
+                  ELSE                               ! plume crosses layers
+
+                     DO L = LBOT + 1, EMLYRS
+c                       IF ( ZTOP .LE. Met_Data % ZF( C,R,L ) ) THEN
+                        IF ( ZTOP .LE. ZZF( L ) ) THEN
+                           LTOP = L
+                           GO TO 126
+                        END IF
+                     END DO
+                     LTOP = EMLYRS                   !  fallback
+
+126                  CONTINUE
+
+                     ZDIFF = ZTOP - ZBOT
+                     IF ( ZDIFF .GT. 0.0 ) THEN
+
+                        DDZ  = 1.0 / ZDIFF
+c                       TFRAC( LBOT ) = DDZ * ( Met_Data % ZF( C,R,LBOT ) - ZBOT )
+c                       TFRAC( LTOP ) = DDZ * ( ZTOP - Met_Data % ZF( C,R,LTOP-1 ) )
+                        TFRAC( LBOT ) = DDZ * ( ZZF( LBOT ) - ZBOT )
+                        TFRAC( LTOP ) = DDZ * ( ZTOP - ZZF( LTOP-1 ) )
+
+                     ELSE   ! ZDIFF .le. 0
+
+                        WRITE( CINT,'( I8 )' ) S
+                        WRITE( XMSG,94020 )
+     &                     'Infinitely small plume created for source:,'
+     &                     // CINT // CRLF() // BLANK10
+     &                     // 'All emissions put in first layer.'
+                        CALL M3WARN( PNAME, JDATE, JTIME, XMSG )
+                        LBOT = 1; LTOP = 1
+                        TFRAC( LBOT ) = 1.0
+
+                     END IF
+
+                     DO L = LBOT + 1, LTOP - 1       ! layers in plume
+                        TFRAC( L ) = DDZ * ( Met_Data % ZF( C,R,L ) - Met_Data % ZF( C,R,L-1 ) )
+                     END DO
+
+                     DO L = LTOP + 1, EMLYRS         ! fractions above plume
+                        TFRAC( L ) = 0.0
+                     END DO
 
                   END IF
 
-                  DO L = LBOT + 1, LTOP - 1       ! layers in plume
-                     TFRAC( L ) = DDZ * ( Met_Data % ZF( C,R,L ) - Met_Data % ZF( C,R,L-1 ) )
-                  END DO
-
-                  DO L = LTOP + 1, EMLYRS         ! fractions above plume
-                     TFRAC( L ) = 0.0
-                  END DO
-
-               END IF
-
 C If layer fractions are negative, put in the first layer
-               MV = MINVAL( TFRAC( 1:EMLYRS ) )
-               IF ( MV .LT. 0.0 ) THEN
+                  MV = MINVAL( TFRAC( 1:EMLYRS ) )
+                  IF ( MV .LT. 0.0 ) THEN
 
-                  WRITE( CINT,'( I8 )' ) S
-                  WRITE( XMSG,94010 ) 'WARNING: One or more negative plume '
-     &                     // 'fractions found for source:' // CINT
-     &                     // CRLF() // BLANK10 // 'Plume reset to '
-     &                     // 'put all emissions in surface layer.'
-                  CALL M3MESG( XMSG )
+                     WRITE( CINT,'( I8 )' ) S
+                     WRITE( XMSG,94010 ) 'WARNING: One or more negative plume '
+     &                        // 'fractions found for source:' // CINT
+     &                        // CRLF() // BLANK10 // 'Plume reset to '
+     &                        // 'put all emissions in surface layer.'
+                     CALL M3MESG( XMSG )
 
-                  TFRAC( 1 ) = 1.0
-                  TFRAC( 2:EMLYRS ) = 0.0
+                     TFRAC( 1 ) = 1.0
+                     TFRAC( 2:EMLYRS ) = 0.0
 
-               END IF
+                  END IF
+
+                ELSE
+
+                  TFRAC( 1:EMLYRS ) = 1.0
+
+                END IF
 
                ! -- add emissions
                DO L = 1, EMLYRS
@@ -448,7 +456,9 @@ C If layer fractions are negative, put in the first layer
 
          ! -- free up memory
 
-         DEALLOCATE ( BUFFER, DDZF, DTHDZ, PRESF, TFRAC, WSPD, ZSTK, ZZF )
+         DEALLOCATE ( BUFFER, TFRAC )
+
+         IF ( EMLYRS .GT. 1 ) DEALLOCATE ( DDZF, DTHDZ, PRESF, WSPD, ZSTK, ZZF )
 
 C------------------  FORMAT  STATEMENTS   ------------------------------
 

@@ -197,12 +197,13 @@ contains
       em(item) % type = ""
       em(item) % path = ""
       em(item) % file = ""
-      em(item) % frequency = ""
-      em(item) % format = "netcdf"
-      em(item) % iomode = "read"
-      em(item) % iofmt = AQMIO_FMT_NETCDF
-      em(item) % irec  = 0
-      em(item) % count  = 0
+      em(item) % frequency   = ""
+      em(item) % format      = "netcdf"
+      em(item) % iomode      = "read"
+      em(item) % iofmt       = AQMIO_FMT_NETCDF
+      em(item) % irec        = 0
+      em(item) % count       = 0
+      em(item) % layers      = 1
       em(item) % scalefactor = 1.0
       em(item) % gridded     = .true.
       em(item) % sync        = .false.
@@ -624,6 +625,32 @@ contains
         if (em % verbose) then
           call ESMF_LogWrite(trim(em % logprefix)//": "//pName &
             //": plume_rise: "//trim(em % plumerise), ESMF_LOGMSG_INFO, rc=localrc)
+          if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__,  &
+            file=__FILE__,  &
+            rcToReturn=rc)) &
+            return  ! bail out
+        end if
+        ! -- get emission layers
+        call ESMF_ConfigGetAttribute(config, em % layers, &
+          label=trim(em % name)//"_layers:", default=1, rc=localrc)
+        if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__,  &
+          file=__FILE__,  &
+          rcToReturn=rc)) &
+          return  ! bail out
+        if (em % layers <= 0) then
+          call ESMF_LogSetError(ESMF_RC_NOT_VALID, &
+            msg="- layers must be greater than 0", &
+            line=__LINE__,  &
+            file=__FILE__,  &
+            rcToReturn=rc)
+          return  ! bail out
+        end if
+        if (em % verbose) then
+          write(msgString, '(a,": ",a,": layers: ",i0)') trim(em % logprefix), &
+            trim(pName), em % layers
+          call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=localrc)
           if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
             line=__LINE__,  &
             file=__FILE__,  &
@@ -1364,11 +1391,15 @@ contains
 
     if (associated(em)) then
       if (present(nlays)) then
+        ! -- get number of vertical levels from model
+        call aqm_model_domain_get(nl=nlays, rc=localrc)
+        if (aqm_rc_check(localrc, msg="Failure to retrieve model layers", &
+          file=__FILE__, line=__LINE__)) return
         select case (trim(em % plumerise))
-          case ("briggs","sofiev","default")
-            call aqm_model_domain_get(nl=nlays, rc=localrc)
-            if (aqm_rc_check(localrc, msg="Failure to retrieve model layers", &
-              file=__FILE__, line=__LINE__)) return
+          case ("briggs","default")
+            nlays = min(nlays, em % layers)
+          case ("sofiev")
+            ! -- use full vertical column for fire emissions
           case default
             nlays = 1
         end select

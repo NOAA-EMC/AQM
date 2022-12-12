@@ -236,9 +236,11 @@ list(APPEND aqm_CCTM_files
 	${localCCTM}/o3totcol.f
 	${localCCTM}/vdiffacmx.F
 	${localCCTM}/PTMAP.F
+	${localCCTM}/PT3D_DATA_MOD.F
 	${localCCTM}/PT3D_DEFN.F
-	${localCCTM}/PT3D_EMIS_DEFN.F
+	${localCCTM}/PT3D_FIRE_DEFN.F
+	${localCCTM}/PT3D_STKS_DEFN.F
 	${localCCTM}/ASX_DATA_MOD.F
 	${localCCTM}/DUST_EMIS.F
-  ${localCCTM}/AERO_PHOTDATA.F
+        ${localCCTM}/AERO_PHOTDATA.F
 )

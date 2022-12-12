@@ -182,7 +182,6 @@ am_libCCTM_a_OBJECTS = $(AERO)/libCCTM_a-AERO_DATA.$(OBJEXT) \
 	$(MECHS)/libCCTM_a-RXNS_FUNC_MODULE.$(OBJEXT) \
 	$(PA)/libCCTM_a-PA_DEFN.$(OBJEXT) \
 	$(PA)/libCCTM_a-pa_update.$(OBJEXT) \
-	$(PHOT)/libCCTM_a-AERO_PHOTDATA.$(OBJEXT) \
 	$(PHOT)/libCCTM_a-CLOUD_OPTICS.$(OBJEXT) \
 	$(PHOT)/libCCTM_a-complex_number_module.$(OBJEXT) \
 	$(PHOT)/libCCTM_a-CSQY_DATA.$(OBJEXT) \
@@ -232,12 +231,16 @@ am_libCCTM_a_OBJECTS = $(AERO)/libCCTM_a-AERO_DATA.$(OBJEXT) \
 	$(VDIFF)/libCCTM_a-VDIFF_DIAG.$(OBJEXT) \
 	$(VDIFF)/libCCTM_a-VDIFF_MAP.$(OBJEXT) \
 	$(VDIFF)/libCCTM_a-vdiffproc.$(OBJEXT) \
-	$(localCCTM)/libCCTM_a-o3totcol.$(OBJEXT) \
-	$(localCCTM)/libCCTM_a-vdiffacmx.$(OBJEXT) \
-	$(localCCTM)/libCCTM_a-PTMAP.$(OBJEXT) \
-	$(localCCTM)/libCCTM_a-PT3D_DEFN.$(OBJEXT) \
-	$(localCCTM)/libCCTM_a-ASX_DATA_MOD.$(OBJEXT) \
-	$(localCCTM)/libCCTM_a-DUST_EMIS.$(OBJEXT)
+	${localCCTM}/libCCTM_a-o3totcol.$(OBJEXT) \
+	${localCCTM}/libCCTM_a-vdiffacmx.$(OBJEXT) \
+	${localCCTM}/libCCTM_a-PTMAP.$(OBJEXT) \
+	${localCCTM}/libCCTM_a-PT3D_DATA_MOD.$(OBJEXT) \
+	${localCCTM}/libCCTM_a-PT3D_DEFN.$(OBJEXT) \
+	${localCCTM}/libCCTM_a-PT3D_FIRE_DEFN.$(OBJEXT) \
+	${localCCTM}/libCCTM_a-PT3D_STKS_DEFN.$(OBJEXT) \
+	${localCCTM}/libCCTM_a-ASX_DATA_MOD.$(OBJEXT) \
+	${localCCTM}/libCCTM_a-DUST_EMIS.$(OBJEXT) \
+	${localCCTM}/libCCTM_a-AERO_PHOTDATA.$(OBJEXT)
 libCCTM_a_OBJECTS = $(am_libCCTM_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -483,12 +486,12 @@ libCCTM_a_SOURCES = $(AERO)/AERO_DATA.F $(AERO)/aero_depv.F \
 	$(ICL)/emctrl/EMISPRM.EXT $(ICL)/filenames/FILES_CTM.EXT \
 	$(ICL)/mpi/PE_COMM.EXT $(INIT)/initscen.F $(INIT)/load_cgrid.F \
 	$(MECHS)/RXNS_DATA_MODULE.F90 $(MECHS)/RXNS_FUNC_MODULE.F90 \
-	$(PA)/PA_DEFN.F $(PA)/pa_update.F $(PHOT)/AERO_PHOTDATA.F \
-	$(PHOT)/CLOUD_OPTICS.F $(PHOT)/complex_number_module.F90 \
-	$(PHOT)/CSQY_DATA.F $(PHOT)/OMI_1979_to_2015.dat \
-	$(PHOT)/opphot.F $(PHOT)/phot.F $(PHOT)/PHOT_MET_DATA.F \
-	$(PHOT)/PHOT_MOD.F $(PHOT)/PHOTOLYSIS_ALBEDO.F \
-	$(PHOT)/PHOT_OPTICS.dat $(PHOT)/SEAS_STRAT_O3_MIN.F \
+	$(PA)/PA_DEFN.F $(PA)/pa_update.F $(PHOT)/CLOUD_OPTICS.F \
+	$(PHOT)/complex_number_module.F90 $(PHOT)/CSQY_DATA.F \
+	$(PHOT)/OMI_1979_to_2015.dat $(PHOT)/opphot.F $(PHOT)/phot.F \
+	$(PHOT)/PHOT_MET_DATA.F $(PHOT)/PHOT_MOD.F \
+	$(PHOT)/PHOTOLYSIS_ALBEDO.F $(PHOT)/PHOT_OPTICS.dat \
+	$(PHOT)/SEAS_STRAT_O3_MIN.F \
 	$(PHOT)/twoway_rrtmg_aero_optics.F90 $(PLRISE)/delta_zs.f \
 	$(PLRISE)/fire_plmris.F $(PLRISE)/openlayout.F \
 	$(PLRISE)/oppt3d_diag.F $(PLRISE)/plmris.F $(PLRISE)/plsprd.f \
@@ -508,10 +511,12 @@ libCCTM_a_SOURCES = $(AERO)/AERO_DATA.F $(AERO)/aero_depv.F \
 	$(VDIFF)/opddep.F $(VDIFF)/opddep_fst.F $(VDIFF)/opddep_mos.F \
 	$(VDIFF)/rddepv.F $(VDIFF)/SEDIMENTATION.F $(VDIFF)/tri.F \
 	$(VDIFF)/VDIFF_DIAG.F $(VDIFF)/VDIFF_MAP.F \
-	$(VDIFF)/vdiffproc.F $(localCCTM)/o3totcol.f \
-	$(localCCTM)/vdiffacmx.F $(localCCTM)/PTMAP.F \
-	$(localCCTM)/PT3D_DEFN.F $(localCCTM)/ASX_DATA_MOD.F \
-	$(localCCTM)/DUST_EMIS.F
+	$(VDIFF)/vdiffproc.F ${localCCTM}/o3totcol.f \
+	${localCCTM}/vdiffacmx.F ${localCCTM}/PTMAP.F \
+	${localCCTM}/PT3D_DATA_MOD.F ${localCCTM}/PT3D_DEFN.F \
+	${localCCTM}/PT3D_FIRE_DEFN.F ${localCCTM}/PT3D_STKS_DEFN.F \
+	${localCCTM}/ASX_DATA_MOD.F ${localCCTM}/DUST_EMIS.F \
+	${localCCTM}/AERO_PHOTDATA.F
 
 # local version of CCTM source files
 localCCTM = $(builddir)/src
@@ -598,8 +603,8 @@ libCCTM_a_CPPFLAGS = -DSUBST_FILES_ID=\"FILES_CTM.EXT\" \
 	-D_AQM_
 libCCTM_a_FFLAGS = $(CCTM_FFLAGS) -I $(ICL)/filenames -I $(ICL)/const \
 	-I $(ICL)/emctrl -I$(ICL)/mpi -I $(top_builddir)/src/io/ioapi \
-	-I $(top_builddir)/src/shr -I $(top_builddir)/src/io/aqmio \
-	$(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) \
+	-I $(top_builddir)/src/shr -I $(top_builddir)/src/io/aqmio -I \
+	$(AERO) $(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) \
 	$(ESMF_F90COMPILEFREECPP) $(ESMF_F90COMPILECPPFLAGS)
 libCCTM_a_FCFLAGS = $(CCTM_FCFLAGS) -I $(top_builddir)/src/io/ioapi
 all: all-am
@@ -873,8 +878,6 @@ $(PHOT)/$(am__dirstamp):
 $(PHOT)/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) $(PHOT)/$(DEPDIR)
 	@: > $(PHOT)/$(DEPDIR)/$(am__dirstamp)
-$(PHOT)/libCCTM_a-AERO_PHOTDATA.$(OBJEXT): $(PHOT)/$(am__dirstamp) \
-	$(PHOT)/$(DEPDIR)/$(am__dirstamp)
 $(PHOT)/libCCTM_a-CLOUD_OPTICS.$(OBJEXT): $(PHOT)/$(am__dirstamp) \
 	$(PHOT)/$(DEPDIR)/$(am__dirstamp)
 $(PHOT)/libCCTM_a-complex_number_module.$(OBJEXT):  \
@@ -1003,29 +1006,41 @@ $(VDIFF)/libCCTM_a-VDIFF_MAP.$(OBJEXT): $(VDIFF)/$(am__dirstamp) \
 	$(VDIFF)/$(DEPDIR)/$(am__dirstamp)
 $(VDIFF)/libCCTM_a-vdiffproc.$(OBJEXT): $(VDIFF)/$(am__dirstamp) \
 	$(VDIFF)/$(DEPDIR)/$(am__dirstamp)
-$(localCCTM)/$(am__dirstamp):
-	@$(MKDIR_P) $(localCCTM)
-	@: > $(localCCTM)/$(am__dirstamp)
-$(localCCTM)/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) $(localCCTM)/$(DEPDIR)
-	@: > $(localCCTM)/$(DEPDIR)/$(am__dirstamp)
-$(localCCTM)/libCCTM_a-o3totcol.$(OBJEXT):  \
-	$(localCCTM)/$(am__dirstamp) \
-	$(localCCTM)/$(DEPDIR)/$(am__dirstamp)
-$(localCCTM)/libCCTM_a-vdiffacmx.$(OBJEXT):  \
-	$(localCCTM)/$(am__dirstamp) \
-	$(localCCTM)/$(DEPDIR)/$(am__dirstamp)
-$(localCCTM)/libCCTM_a-PTMAP.$(OBJEXT): $(localCCTM)/$(am__dirstamp) \
-	$(localCCTM)/$(DEPDIR)/$(am__dirstamp)
-$(localCCTM)/libCCTM_a-PT3D_DEFN.$(OBJEXT):  \
-	$(localCCTM)/$(am__dirstamp) \
-	$(localCCTM)/$(DEPDIR)/$(am__dirstamp)
-$(localCCTM)/libCCTM_a-ASX_DATA_MOD.$(OBJEXT):  \
-	$(localCCTM)/$(am__dirstamp) \
-	$(localCCTM)/$(DEPDIR)/$(am__dirstamp)
-$(localCCTM)/libCCTM_a-DUST_EMIS.$(OBJEXT):  \
-	$(localCCTM)/$(am__dirstamp) \
-	$(localCCTM)/$(DEPDIR)/$(am__dirstamp)
+${localCCTM}/$(am__dirstamp):
+	@$(MKDIR_P) ${localCCTM}
+	@: > ${localCCTM}/$(am__dirstamp)
+${localCCTM}/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) ${localCCTM}/$(DEPDIR)
+	@: > ${localCCTM}/$(DEPDIR)/$(am__dirstamp)
+${localCCTM}/libCCTM_a-o3totcol.$(OBJEXT):  \
+	${localCCTM}/$(am__dirstamp) \
+	${localCCTM}/$(DEPDIR)/$(am__dirstamp)
+${localCCTM}/libCCTM_a-vdiffacmx.$(OBJEXT):  \
+	${localCCTM}/$(am__dirstamp) \
+	${localCCTM}/$(DEPDIR)/$(am__dirstamp)
+${localCCTM}/libCCTM_a-PTMAP.$(OBJEXT): ${localCCTM}/$(am__dirstamp) \
+	${localCCTM}/$(DEPDIR)/$(am__dirstamp)
+${localCCTM}/libCCTM_a-PT3D_DATA_MOD.$(OBJEXT):  \
+	${localCCTM}/$(am__dirstamp) \
+	${localCCTM}/$(DEPDIR)/$(am__dirstamp)
+${localCCTM}/libCCTM_a-PT3D_DEFN.$(OBJEXT):  \
+	${localCCTM}/$(am__dirstamp) \
+	${localCCTM}/$(DEPDIR)/$(am__dirstamp)
+${localCCTM}/libCCTM_a-PT3D_FIRE_DEFN.$(OBJEXT):  \
+	${localCCTM}/$(am__dirstamp) \
+	${localCCTM}/$(DEPDIR)/$(am__dirstamp)
+${localCCTM}/libCCTM_a-PT3D_STKS_DEFN.$(OBJEXT):  \
+	${localCCTM}/$(am__dirstamp) \
+	${localCCTM}/$(DEPDIR)/$(am__dirstamp)
+${localCCTM}/libCCTM_a-ASX_DATA_MOD.$(OBJEXT):  \
+	${localCCTM}/$(am__dirstamp) \
+	${localCCTM}/$(DEPDIR)/$(am__dirstamp)
+${localCCTM}/libCCTM_a-DUST_EMIS.$(OBJEXT):  \
+	${localCCTM}/$(am__dirstamp) \
+	${localCCTM}/$(DEPDIR)/$(am__dirstamp)
+${localCCTM}/libCCTM_a-AERO_PHOTDATA.$(OBJEXT):  \
+	${localCCTM}/$(am__dirstamp) \
+	${localCCTM}/$(DEPDIR)/$(am__dirstamp)
 
 libCCTM.a: $(libCCTM_a_OBJECTS) $(libCCTM_a_DEPENDENCIES) $(EXTRA_libCCTM_a_DEPENDENCIES) 
 	$(AM_V_at)-rm -f libCCTM.a
@@ -1050,7 +1065,7 @@ mostlyclean-compile:
 	-rm -f $(STENEX)/*.$(OBJEXT)
 	-rm -f $(UTIL)/*.$(OBJEXT)
 	-rm -f $(VDIFF)/*.$(OBJEXT)
-	-rm -f $(localCCTM)/*.$(OBJEXT)
+	-rm -f ${localCCTM}/*.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
@@ -1499,12 +1514,6 @@ $(PA)/libCCTM_a-pa_update.o: $(PA)/pa_update.F
 $(PA)/libCCTM_a-pa_update.obj: $(PA)/pa_update.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(PA)/libCCTM_a-pa_update.obj `if test -f '$(PA)/pa_update.F'; then $(CYGPATH_W) '$(PA)/pa_update.F'; else $(CYGPATH_W) '$(srcdir)/$(PA)/pa_update.F'; fi`
 
-$(PHOT)/libCCTM_a-AERO_PHOTDATA.o: $(PHOT)/AERO_PHOTDATA.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(PHOT)/libCCTM_a-AERO_PHOTDATA.o `test -f '$(PHOT)/AERO_PHOTDATA.F' || echo '$(srcdir)/'`$(PHOT)/AERO_PHOTDATA.F
-
-$(PHOT)/libCCTM_a-AERO_PHOTDATA.obj: $(PHOT)/AERO_PHOTDATA.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(PHOT)/libCCTM_a-AERO_PHOTDATA.obj `if test -f '$(PHOT)/AERO_PHOTDATA.F'; then $(CYGPATH_W) '$(PHOT)/AERO_PHOTDATA.F'; else $(CYGPATH_W) '$(srcdir)/$(PHOT)/AERO_PHOTDATA.F'; fi`
-
 $(PHOT)/libCCTM_a-CLOUD_OPTICS.o: $(PHOT)/CLOUD_OPTICS.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(PHOT)/libCCTM_a-CLOUD_OPTICS.o `test -f '$(PHOT)/CLOUD_OPTICS.F' || echo '$(srcdir)/'`$(PHOT)/CLOUD_OPTICS.F
 
@@ -1679,35 +1688,59 @@ $(VDIFF)/libCCTM_a-vdiffproc.o: $(VDIFF)/vdiffproc.F
 $(VDIFF)/libCCTM_a-vdiffproc.obj: $(VDIFF)/vdiffproc.F
 	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(VDIFF)/libCCTM_a-vdiffproc.obj `if test -f '$(VDIFF)/vdiffproc.F'; then $(CYGPATH_W) '$(VDIFF)/vdiffproc.F'; else $(CYGPATH_W) '$(srcdir)/$(VDIFF)/vdiffproc.F'; fi`
 
-$(localCCTM)/libCCTM_a-vdiffacmx.o: $(localCCTM)/vdiffacmx.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(localCCTM)/libCCTM_a-vdiffacmx.o `test -f '$(localCCTM)/vdiffacmx.F' || echo '$(srcdir)/'`$(localCCTM)/vdiffacmx.F
+${localCCTM}/libCCTM_a-vdiffacmx.o: ${localCCTM}/vdiffacmx.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o ${localCCTM}/libCCTM_a-vdiffacmx.o `test -f '${localCCTM}/vdiffacmx.F' || echo '$(srcdir)/'`${localCCTM}/vdiffacmx.F
 
-$(localCCTM)/libCCTM_a-vdiffacmx.obj: $(localCCTM)/vdiffacmx.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(localCCTM)/libCCTM_a-vdiffacmx.obj `if test -f '$(localCCTM)/vdiffacmx.F'; then $(CYGPATH_W) '$(localCCTM)/vdiffacmx.F'; else $(CYGPATH_W) '$(srcdir)/$(localCCTM)/vdiffacmx.F'; fi`
+${localCCTM}/libCCTM_a-vdiffacmx.obj: ${localCCTM}/vdiffacmx.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o ${localCCTM}/libCCTM_a-vdiffacmx.obj `if test -f '${localCCTM}/vdiffacmx.F'; then $(CYGPATH_W) '${localCCTM}/vdiffacmx.F'; else $(CYGPATH_W) '$(srcdir)/${localCCTM}/vdiffacmx.F'; fi`
 
-$(localCCTM)/libCCTM_a-PTMAP.o: $(localCCTM)/PTMAP.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(localCCTM)/libCCTM_a-PTMAP.o `test -f '$(localCCTM)/PTMAP.F' || echo '$(srcdir)/'`$(localCCTM)/PTMAP.F
+${localCCTM}/libCCTM_a-PTMAP.o: ${localCCTM}/PTMAP.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o ${localCCTM}/libCCTM_a-PTMAP.o `test -f '${localCCTM}/PTMAP.F' || echo '$(srcdir)/'`${localCCTM}/PTMAP.F
 
-$(localCCTM)/libCCTM_a-PTMAP.obj: $(localCCTM)/PTMAP.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(localCCTM)/libCCTM_a-PTMAP.obj `if test -f '$(localCCTM)/PTMAP.F'; then $(CYGPATH_W) '$(localCCTM)/PTMAP.F'; else $(CYGPATH_W) '$(srcdir)/$(localCCTM)/PTMAP.F'; fi`
+${localCCTM}/libCCTM_a-PTMAP.obj: ${localCCTM}/PTMAP.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o ${localCCTM}/libCCTM_a-PTMAP.obj `if test -f '${localCCTM}/PTMAP.F'; then $(CYGPATH_W) '${localCCTM}/PTMAP.F'; else $(CYGPATH_W) '$(srcdir)/${localCCTM}/PTMAP.F'; fi`
 
-$(localCCTM)/libCCTM_a-PT3D_DEFN.o: $(localCCTM)/PT3D_DEFN.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(localCCTM)/libCCTM_a-PT3D_DEFN.o `test -f '$(localCCTM)/PT3D_DEFN.F' || echo '$(srcdir)/'`$(localCCTM)/PT3D_DEFN.F
+${localCCTM}/libCCTM_a-PT3D_DATA_MOD.o: ${localCCTM}/PT3D_DATA_MOD.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o ${localCCTM}/libCCTM_a-PT3D_DATA_MOD.o `test -f '${localCCTM}/PT3D_DATA_MOD.F' || echo '$(srcdir)/'`${localCCTM}/PT3D_DATA_MOD.F
 
-$(localCCTM)/libCCTM_a-PT3D_DEFN.obj: $(localCCTM)/PT3D_DEFN.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(localCCTM)/libCCTM_a-PT3D_DEFN.obj `if test -f '$(localCCTM)/PT3D_DEFN.F'; then $(CYGPATH_W) '$(localCCTM)/PT3D_DEFN.F'; else $(CYGPATH_W) '$(srcdir)/$(localCCTM)/PT3D_DEFN.F'; fi`
+${localCCTM}/libCCTM_a-PT3D_DATA_MOD.obj: ${localCCTM}/PT3D_DATA_MOD.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o ${localCCTM}/libCCTM_a-PT3D_DATA_MOD.obj `if test -f '${localCCTM}/PT3D_DATA_MOD.F'; then $(CYGPATH_W) '${localCCTM}/PT3D_DATA_MOD.F'; else $(CYGPATH_W) '$(srcdir)/${localCCTM}/PT3D_DATA_MOD.F'; fi`
 
-$(localCCTM)/libCCTM_a-ASX_DATA_MOD.o: $(localCCTM)/ASX_DATA_MOD.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(localCCTM)/libCCTM_a-ASX_DATA_MOD.o `test -f '$(localCCTM)/ASX_DATA_MOD.F' || echo '$(srcdir)/'`$(localCCTM)/ASX_DATA_MOD.F
+${localCCTM}/libCCTM_a-PT3D_DEFN.o: ${localCCTM}/PT3D_DEFN.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o ${localCCTM}/libCCTM_a-PT3D_DEFN.o `test -f '${localCCTM}/PT3D_DEFN.F' || echo '$(srcdir)/'`${localCCTM}/PT3D_DEFN.F
 
-$(localCCTM)/libCCTM_a-ASX_DATA_MOD.obj: $(localCCTM)/ASX_DATA_MOD.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(localCCTM)/libCCTM_a-ASX_DATA_MOD.obj `if test -f '$(localCCTM)/ASX_DATA_MOD.F'; then $(CYGPATH_W) '$(localCCTM)/ASX_DATA_MOD.F'; else $(CYGPATH_W) '$(srcdir)/$(localCCTM)/ASX_DATA_MOD.F'; fi`
+${localCCTM}/libCCTM_a-PT3D_DEFN.obj: ${localCCTM}/PT3D_DEFN.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o ${localCCTM}/libCCTM_a-PT3D_DEFN.obj `if test -f '${localCCTM}/PT3D_DEFN.F'; then $(CYGPATH_W) '${localCCTM}/PT3D_DEFN.F'; else $(CYGPATH_W) '$(srcdir)/${localCCTM}/PT3D_DEFN.F'; fi`
 
-$(localCCTM)/libCCTM_a-DUST_EMIS.o: $(localCCTM)/DUST_EMIS.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(localCCTM)/libCCTM_a-DUST_EMIS.o `test -f '$(localCCTM)/DUST_EMIS.F' || echo '$(srcdir)/'`$(localCCTM)/DUST_EMIS.F
+${localCCTM}/libCCTM_a-PT3D_FIRE_DEFN.o: ${localCCTM}/PT3D_FIRE_DEFN.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o ${localCCTM}/libCCTM_a-PT3D_FIRE_DEFN.o `test -f '${localCCTM}/PT3D_FIRE_DEFN.F' || echo '$(srcdir)/'`${localCCTM}/PT3D_FIRE_DEFN.F
 
-$(localCCTM)/libCCTM_a-DUST_EMIS.obj: $(localCCTM)/DUST_EMIS.F
-	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(localCCTM)/libCCTM_a-DUST_EMIS.obj `if test -f '$(localCCTM)/DUST_EMIS.F'; then $(CYGPATH_W) '$(localCCTM)/DUST_EMIS.F'; else $(CYGPATH_W) '$(srcdir)/$(localCCTM)/DUST_EMIS.F'; fi`
+${localCCTM}/libCCTM_a-PT3D_FIRE_DEFN.obj: ${localCCTM}/PT3D_FIRE_DEFN.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o ${localCCTM}/libCCTM_a-PT3D_FIRE_DEFN.obj `if test -f '${localCCTM}/PT3D_FIRE_DEFN.F'; then $(CYGPATH_W) '${localCCTM}/PT3D_FIRE_DEFN.F'; else $(CYGPATH_W) '$(srcdir)/${localCCTM}/PT3D_FIRE_DEFN.F'; fi`
+
+${localCCTM}/libCCTM_a-PT3D_STKS_DEFN.o: ${localCCTM}/PT3D_STKS_DEFN.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o ${localCCTM}/libCCTM_a-PT3D_STKS_DEFN.o `test -f '${localCCTM}/PT3D_STKS_DEFN.F' || echo '$(srcdir)/'`${localCCTM}/PT3D_STKS_DEFN.F
+
+${localCCTM}/libCCTM_a-PT3D_STKS_DEFN.obj: ${localCCTM}/PT3D_STKS_DEFN.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o ${localCCTM}/libCCTM_a-PT3D_STKS_DEFN.obj `if test -f '${localCCTM}/PT3D_STKS_DEFN.F'; then $(CYGPATH_W) '${localCCTM}/PT3D_STKS_DEFN.F'; else $(CYGPATH_W) '$(srcdir)/${localCCTM}/PT3D_STKS_DEFN.F'; fi`
+
+${localCCTM}/libCCTM_a-ASX_DATA_MOD.o: ${localCCTM}/ASX_DATA_MOD.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o ${localCCTM}/libCCTM_a-ASX_DATA_MOD.o `test -f '${localCCTM}/ASX_DATA_MOD.F' || echo '$(srcdir)/'`${localCCTM}/ASX_DATA_MOD.F
+
+${localCCTM}/libCCTM_a-ASX_DATA_MOD.obj: ${localCCTM}/ASX_DATA_MOD.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o ${localCCTM}/libCCTM_a-ASX_DATA_MOD.obj `if test -f '${localCCTM}/ASX_DATA_MOD.F'; then $(CYGPATH_W) '${localCCTM}/ASX_DATA_MOD.F'; else $(CYGPATH_W) '$(srcdir)/${localCCTM}/ASX_DATA_MOD.F'; fi`
+
+${localCCTM}/libCCTM_a-DUST_EMIS.o: ${localCCTM}/DUST_EMIS.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o ${localCCTM}/libCCTM_a-DUST_EMIS.o `test -f '${localCCTM}/DUST_EMIS.F' || echo '$(srcdir)/'`${localCCTM}/DUST_EMIS.F
+
+${localCCTM}/libCCTM_a-DUST_EMIS.obj: ${localCCTM}/DUST_EMIS.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o ${localCCTM}/libCCTM_a-DUST_EMIS.obj `if test -f '${localCCTM}/DUST_EMIS.F'; then $(CYGPATH_W) '${localCCTM}/DUST_EMIS.F'; else $(CYGPATH_W) '$(srcdir)/${localCCTM}/DUST_EMIS.F'; fi`
+
+${localCCTM}/libCCTM_a-AERO_PHOTDATA.o: ${localCCTM}/AERO_PHOTDATA.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o ${localCCTM}/libCCTM_a-AERO_PHOTDATA.o `test -f '${localCCTM}/AERO_PHOTDATA.F' || echo '$(srcdir)/'`${localCCTM}/AERO_PHOTDATA.F
+
+${localCCTM}/libCCTM_a-AERO_PHOTDATA.obj: ${localCCTM}/AERO_PHOTDATA.F
+	$(AM_V_PPF77)$(F77) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libCCTM_a_CPPFLAGS) $(CPPFLAGS) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o ${localCCTM}/libCCTM_a-AERO_PHOTDATA.obj `if test -f '${localCCTM}/AERO_PHOTDATA.F'; then $(CYGPATH_W) '${localCCTM}/AERO_PHOTDATA.F'; else $(CYGPATH_W) '$(srcdir)/${localCCTM}/AERO_PHOTDATA.F'; fi`
 .F.f:
 	$(F77COMPILE) -F $<
 
@@ -1909,11 +1942,11 @@ $(UTIL)/libCCTM_a-get_envlist.o: $(UTIL)/get_envlist.f
 $(UTIL)/libCCTM_a-get_envlist.obj: $(UTIL)/get_envlist.f
 	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(UTIL)/libCCTM_a-get_envlist.obj `if test -f '$(UTIL)/get_envlist.f'; then $(CYGPATH_W) '$(UTIL)/get_envlist.f'; else $(CYGPATH_W) '$(srcdir)/$(UTIL)/get_envlist.f'; fi`
 
-$(localCCTM)/libCCTM_a-o3totcol.o: $(localCCTM)/o3totcol.f
-	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(localCCTM)/libCCTM_a-o3totcol.o `test -f '$(localCCTM)/o3totcol.f' || echo '$(srcdir)/'`$(localCCTM)/o3totcol.f
+${localCCTM}/libCCTM_a-o3totcol.o: ${localCCTM}/o3totcol.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o ${localCCTM}/libCCTM_a-o3totcol.o `test -f '${localCCTM}/o3totcol.f' || echo '$(srcdir)/'`${localCCTM}/o3totcol.f
 
-$(localCCTM)/libCCTM_a-o3totcol.obj: $(localCCTM)/o3totcol.f
-	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o $(localCCTM)/libCCTM_a-o3totcol.obj `if test -f '$(localCCTM)/o3totcol.f'; then $(CYGPATH_W) '$(localCCTM)/o3totcol.f'; else $(CYGPATH_W) '$(srcdir)/$(localCCTM)/o3totcol.f'; fi`
+${localCCTM}/libCCTM_a-o3totcol.obj: ${localCCTM}/o3totcol.f
+	$(AM_V_F77)$(F77) $(libCCTM_a_FFLAGS) $(FFLAGS) -c -o ${localCCTM}/libCCTM_a-o3totcol.obj `if test -f '${localCCTM}/o3totcol.f'; then $(CYGPATH_W) '${localCCTM}/o3totcol.f'; else $(CYGPATH_W) '$(srcdir)/${localCCTM}/o3totcol.f'; fi`
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
@@ -2027,6 +2060,8 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-rm -f ${localCCTM}/$(DEPDIR)/$(am__dirstamp)
+	-rm -f ${localCCTM}/$(am__dirstamp)
 	-test -z "$(AERO)/$(DEPDIR)/$(am__dirstamp)" || rm -f $(AERO)/$(DEPDIR)/$(am__dirstamp)
 	-test -z "$(AERO)/$(am__dirstamp)" || rm -f $(AERO)/$(am__dirstamp)
 	-test -z "$(BIOG)/$(DEPDIR)/$(am__dirstamp)" || rm -f $(BIOG)/$(DEPDIR)/$(am__dirstamp)
@@ -2059,8 +2094,6 @@ distclean-generic:
 	-test -z "$(UTIL)/$(am__dirstamp)" || rm -f $(UTIL)/$(am__dirstamp)
 	-test -z "$(VDIFF)/$(DEPDIR)/$(am__dirstamp)" || rm -f $(VDIFF)/$(DEPDIR)/$(am__dirstamp)
 	-test -z "$(VDIFF)/$(am__dirstamp)" || rm -f $(VDIFF)/$(am__dirstamp)
-	-test -z "$(localCCTM)/$(DEPDIR)/$(am__dirstamp)" || rm -f $(localCCTM)/$(DEPDIR)/$(am__dirstamp)
-	-test -z "$(localCCTM)/$(am__dirstamp)" || rm -f $(localCCTM)/$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -2423,12 +2456,6 @@ $(libPA)pa_update.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/emctrl/EMISPRM.EXT $
 	$(libGRID)PAGRD_DEFN.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
 
 # phot
-$(libPHOT)AERO_PHOTDATA.$(OBJEXT) : $(ICL)/const/CONST.EXT \
-	$(libAERO)AERO_DATA.$(OBJEXT) $(libAERO)AEROMET_DATA.$(OBJEXT) \
-	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libPHOT)twoway_rrtmg_aero_optics.$(OBJEXT) \
-	$(libPHOT)CSQY_DATA.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
-	$(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libAERO)SOA_DEFN.$(OBJEXT) \
-	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
 $(libPHOT)CLOUD_OPTICS.$(OBJEXT) : \
 	$(libPHOT)CSQY_DATA.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
 	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
@@ -2440,7 +2467,7 @@ $(libPHOT)opphot.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
 	$(libPHOT)PHOT_MOD.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) \
 	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
 $(libPHOT)phot.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
-	$(libAERO)AERO_DATA.$(OBJEXT) $(libPHOT)AERO_PHOTDATA.$(OBJEXT) \
+	$(libAERO)AERO_DATA.$(OBJEXT) $(liblocalCCTM)AERO_PHOTDATA.$(OBJEXT) \
 	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libPHOT)CLOUD_OPTICS.$(OBJEXT) \
 	$(libSTENEX)noop_modules.$(OBJEXT) $(libGRID)PCGRID_DEFN.$(OBJEXT) \
 	$(libPHOT)PHOT_MET_DATA.$(OBJEXT) $(libPHOT)PHOT_MOD.$(OBJEXT) \
@@ -2450,7 +2477,7 @@ $(libPHOT)PHOT_MET_DATA.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/filenames/FILE
 	$(libPHOT)CLOUD_OPTICS.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
 	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
 $(libPHOT)PHOT_MOD.$(OBJEXT) : $(ICL)/const/CONST.EXT \
-	$(libPHOT)AERO_PHOTDATA.$(OBJEXT) $(libPHOT)CLOUD_OPTICS.$(OBJEXT) \
+	$(liblocalCCTM)AERO_PHOTDATA.$(OBJEXT) $(libPHOT)CLOUD_OPTICS.$(OBJEXT) \
 	$(libPHOT)CSQY_DATA.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) \
 	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
 $(libPHOT)PHOTOLYSIS_ALBEDO.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
@@ -2553,9 +2580,18 @@ $(liblocalCCTM)vdiffacmx.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
 	$(libVDIFF)VDIFF_MAP.$(OBJEXT)
 $(liblocalCCTM)PTMAP.$(OBJEXT) : $(libAERO)AERO_DATA.$(OBJEXT) \
 	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
-$(liblocalCCTM)PT3D_DEFN.$(OBJEXT) : $(libAERO)AERO_DATA.$(OBJEXT) \
+$(liblocalCCTM)PT3D_DEFN.$(OBJEXT) : $(libGRID)GRID_CONF.$(OBJEXT) \
+	$(liblocalCCTM)PTMAP.$(OBJEXT) $(liblocalCCTM)PT3D_FIRE_DEFN.$(OBJEXT) \
+	$(liblocalCCTM)PT3D_STKS_DEFN.$(OBJEXT)
+$(liblocalCCTM)PT3D_FIRE_DEFN.$(OBJEXT) : $(libAERO)AERO_DATA.$(OBJEXT) \
 	$(libGRID)GRID_CONF.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
+	$(liblocalCCTM)PT3D_DATA_MOD.$(OBJEXT) \
 	$(liblocalCCTM)PTMAP.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) \
+	$(libEMIS)STK_EMIS.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(liblocalCCTM)PT3D_STKS_DEFN.$(OBJEXT) : $(libAERO)AERO_DATA.$(OBJEXT) \
+	$(liblocalCCTM)ASX_DATA_MOD.$(OBJEXT) \
+	$(libGRID)GRID_CONF.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
+	$(liblocalCCTM)PT3D_DATA_MOD.$(OBJEXT) $(liblocalCCTM)PTMAP.$(OBJEXT) \
 	$(libEMIS)STK_EMIS.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
 $(liblocalCCTM)ASX_DATA_MOD.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/filenames/FILES_CTM.EXT $(ICL)/mpi/PE_COMM.EXT \
         $(libDEPV)DEPVVARS.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
@@ -2565,6 +2601,12 @@ $(liblocalCCTM)DUST_EMIS.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/filenames/FIL
        $(libAERO)AERO_DATA.$(OBJEXT) $(liblocalCCTM)ASX_DATA_MOD.$(OBJEXT) \
        $(libGRID)GRID_CONF.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT) \
        $(libEMIS)LUS_DEFN.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(liblocalCCTM)AERO_PHOTDATA.$(OBJEXT) : $(ICL)/const/CONST.EXT \
+	$(libAERO)AERO_DATA.$(OBJEXT) $(libAERO)AEROMET_DATA.$(OBJEXT) \
+	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libPHOT)twoway_rrtmg_aero_optics.$(OBJEXT) \
+	$(libPHOT)CSQY_DATA.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
+	$(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libAERO)SOA_DEFN.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

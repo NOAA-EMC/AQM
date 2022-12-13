@@ -903,7 +903,7 @@ contains
 
       if (fieldCount > 0) then
         ! -- create I/O component for emissions
-        em % IO = AQMIO_Create(grid, allpes=.not.em % gridded, rc=localrc)
+        em % IO = AQMIO_Create(grid, rc=localrc)
         if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
           line=__LINE__,  &
           file=__FILE__,  &

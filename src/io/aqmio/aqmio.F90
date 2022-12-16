@@ -1184,7 +1184,7 @@ contains
 
     ! -- local variables
     integer :: localrc
-    integer :: ilen, jlen, lbuf, lde, localpe, rank
+    integer :: ilen, jlen, lbuf, lde, rank
     integer :: varId, ncStatus, ndims, xtype
     integer :: kmin, kmax, klen, uid
     integer, dimension(3) :: elb, eub
@@ -1272,13 +1272,7 @@ contains
       file=__FILE__, &
       rcToReturn=rc)) return  ! bail out
 
-    call ESMF_VMGet(vm, localPet=localpe, rc=localrc)
-    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__, &
-      rcToReturn=rc)) return  ! bail out
-
-    if (localpe == 0) then
+    if (IO % IOLayout(lde) % localIOflag) then
       if (IO % IOLayout(lde) % ncid > 0) then
 #if HAVE_NETCDF
         dataSetName = "NetCDF data set"
@@ -1653,7 +1647,7 @@ contains
 
     ! -- local variables
     integer :: localrc
-    integer :: ilen, lde, rank, localpe
+    integer :: ilen, lde, rank
     integer :: varId, ncStatus, ndims, xtype
     integer :: uid
     integer :: ibuf(1)
@@ -1692,13 +1686,7 @@ contains
       file=__FILE__, &
       rcToReturn=rc)) return  ! bail out
 
-    call ESMF_VMGet(vm, localPet=localpe, rc=localrc)
-    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__, &
-      rcToReturn=rc)) return  ! bail out
-
-    if (localpe == 0) then
+    if (IO % IOLayout(lde) % localIOflag) then
       if (IO % IOLayout(lde) % ncid > 0) then
 #if HAVE_NETCDF
         dataSetName = "NetCDF data set"
@@ -1826,7 +1814,7 @@ contains
 
     fArray = 0._ESMF_KIND_R4
 
-    if (localpe == 0) then
+    if (IO % IOLayout(lde) % localIOflag) then
       if (IO % IOLayout(lde) % ncid > 0) then
 
         deallocate(dimids, stat=localrc)
@@ -1866,7 +1854,7 @@ contains
       file=__FILE__, &
       rcToReturn=rc)) return  ! bail out
 
-    if (localpe == 0) then
+    if (IO % IOLayout(lde) % localIOflag) then
       if (IO % IOLayout(lde) % ncid > 0) then
         ! -- nothing else to do
 #else
@@ -2085,7 +2073,7 @@ contains
 
     ! -- local variables
     integer :: localrc
-    integer :: ilen, jlen, lbuf, lde, localpe
+    integer :: ilen, jlen, lbuf, lde
     integer :: varId, ncStatus
     integer :: ndims, rank
     integer :: kmin, kmax, klen
@@ -2134,12 +2122,6 @@ contains
     lbuf = ilen * jlen * klen
 
     call ESMF_GridCompGet(IO % IOLayout(lde) % taskComp, vm=vm, rc=localrc)
-    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__, &
-      rcToReturn=rc)) return  ! bail out
-
-    call ESMF_VMGet(vm, localPet=localpe, rc=localrc)
     if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__, &
@@ -2331,7 +2313,7 @@ contains
       return  ! bail out
     end if
 
-    if (localpe == 0) then
+    if (IO % IOLayout(lde) % localIOflag) then
       if (IO % IOLayout(lde) % ncid > 0) then
 #if HAVE_NETCDF
         dataSetName = "NetCDF data set"

@@ -1732,6 +1732,7 @@ contains
           line=__LINE__, &
           file=__FILE__, &
           rcToReturn=rc)) return  ! bail out
+
         ncStatus = nf90_inquire_variable(IO % IOLayout(lde) % ncid, varId, dimIds=dimids)
         if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
           msg="Error inquiring variable "//trim(variableName)//" in "//trim(dataSetName), &

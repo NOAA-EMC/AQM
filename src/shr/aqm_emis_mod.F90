@@ -1103,6 +1103,15 @@ contains
 
         em => is % wrap % emis(item)
 
+        if (associated(em % sources)) then
+          deallocate(em % sources, stat=stat)
+          if (ESMF_LogFoundDeallocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__,  &
+            file=__FILE__,  &
+            rcToReturn=rc)) &
+            return  ! bail out
+          nullify(em % sources)
+        end if
         if (associated(em % species)) then
           deallocate(em % species, stat=stat)
           if (ESMF_LogFoundDeallocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
@@ -1173,8 +1182,107 @@ contains
             return  ! bail out
           nullify(em % fields)
         end if
-        ! --------- ADD PT SECTION -- TODO
-
+        if (associated(em % lat)) then
+          deallocate(em % lat, stat=stat)
+          if (ESMF_LogFoundDeallocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__,  &
+            file=__FILE__,  &
+            rcToReturn=rc)) &
+            return  ! bail out
+          nullify(em % lat)
+        end if
+        if (associated(em % lon)) then
+          deallocate(em % lon, stat=stat)
+          if (ESMF_LogFoundDeallocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__,  &
+            file=__FILE__,  &
+            rcToReturn=rc)) &
+            return  ! bail out
+          nullify(em % lon)
+        end if
+        if (associated(em % stkdm)) then
+          deallocate(em % stkdm, stat=stat)
+          if (ESMF_LogFoundDeallocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__,  &
+            file=__FILE__,  &
+            rcToReturn=rc)) &
+            return  ! bail out
+          nullify(em % stkdm)
+        end if
+        if (associated(em % stkht)) then
+          deallocate(em % stkht, stat=stat)
+          if (ESMF_LogFoundDeallocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__,  &
+            file=__FILE__,  &
+            rcToReturn=rc)) &
+            return  ! bail out
+          nullify(em % stkht)
+        end if
+        if (associated(em % stktk)) then
+          deallocate(em % stktk, stat=stat)
+          if (ESMF_LogFoundDeallocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__,  &
+            file=__FILE__,  &
+            rcToReturn=rc)) &
+            return  ! bail out
+          nullify(em % stktk)
+        end if
+        if (associated(em % stkve)) then
+          deallocate(em % stkve, stat=stat)
+          if (ESMF_LogFoundDeallocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__,  &
+            file=__FILE__,  &
+            rcToReturn=rc)) &
+            return  ! bail out
+          nullify(em % stkve)
+        end if
+        if (associated(em % ip)) then
+          deallocate(em % ip, stat=stat)
+          if (ESMF_LogFoundDeallocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__,  &
+            file=__FILE__,  &
+            rcToReturn=rc)) &
+            return  ! bail out
+          nullify(em % ip)
+        end if
+        if (associated(em % jp)) then
+          deallocate(em % jp, stat=stat)
+          if (ESMF_LogFoundDeallocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__,  &
+            file=__FILE__,  &
+            rcToReturn=rc)) &
+            return  ! bail out
+          nullify(em % jp)
+        end if
+        if (associated(em % ijmap)) then
+          deallocate(em % ijmap, stat=stat)
+          if (ESMF_LogFoundDeallocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__,  &
+            file=__FILE__,  &
+            rcToReturn=rc)) &
+            return  ! bail out
+          nullify(em % ijmap)
+        end if
+        if (associated(em % rates)) then
+          do n = 1, size(em % rates)
+            if (associated(em % rates(n) % values)) then
+              deallocate(em % rates(n) % values, stat=stat)
+              if (ESMF_LogFoundDeallocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
+                line=__LINE__,  &
+                file=__FILE__,  &
+                rcToReturn=rc)) &
+                return
+              nullify(em % rates(n) % values)
+            end if
+          end do
+          deallocate(em % rates, stat=stat)
+          if (ESMF_LogFoundDeallocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__,  &
+            file=__FILE__,  &
+            rcToReturn=rc)) &
+            return  ! bail out
+          nullify(em % rates)
+        end if
         call ESMF_AlarmDestroy(em % alarm, rc=localrc)
         if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
           line=__LINE__,  &
@@ -1219,6 +1327,7 @@ contains
     end if
 
   end subroutine aqm_emis_finalize
+
 
   subroutine aqm_emis_update(model, rc)
     type(ESMF_GridComp)            :: model
@@ -1337,6 +1446,7 @@ contains
 
   end subroutine aqm_emis_update
 
+
   function aqm_emis_get(etype) result (ep)
     character(len=*), intent(in) :: etype
     type(aqm_internal_emis_type), pointer :: ep
@@ -1356,6 +1466,7 @@ contains
 
   end function aqm_emis_get
 
+
   function aqm_emis_data_get() result (ep)
     type(aqm_internal_emis_type), pointer :: ep(:)
 
@@ -1365,12 +1476,14 @@ contains
 
   end function aqm_emis_data_get
 
+
   logical function aqm_emis_ispresent(etype)
     character(len=*), intent(in) :: etype
 
     aqm_emis_ispresent = associated(aqm_emis_get(etype))
 
   end function aqm_emis_ispresent
+
 
   subroutine aqm_emis_desc( etype, nlays, nvars, vnames, units )
     character(len=*),            intent(in)  :: etype
@@ -1416,6 +1529,7 @@ contains
     end if
 
   end subroutine aqm_emis_desc
+
 
   subroutine aqm_emis_grd_read(em, spcname, buffer, localDe, rc)
     type(aqm_internal_emis_type)     :: em
@@ -1521,6 +1635,7 @@ contains
 
   end subroutine aqm_emis_grd_read
 
+
   subroutine aqm_emis_pts_read(em, spcname, buffer, ip, jp, ijmap, localDe, rc)
     type(aqm_internal_emis_type)     :: em
     character(len=*),  intent(in)    :: spcname
@@ -1619,6 +1734,7 @@ contains
     end do
 
   end subroutine aqm_emis_pts_read
+
 
   subroutine aqm_emis_read(etype, spcname, buffer, ip, jp, ijmap, localDe, rc)
     character(len=*),  intent(in)    :: etype
@@ -2019,82 +2135,6 @@ contains
 
   end subroutine aqm_emis_pts_map
 
-
-  subroutine aqm_emis_pts_clear(em, rc)
-    type(aqm_internal_emis_type)            :: em
-    integer, optional,          intent(out) :: rc
-
-    ! -- local variables
-    integer :: localrc, stat
-    integer :: n
-
-    ! -- begin
-    if (present(rc)) rc = ESMF_SUCCESS
-
-    if (associated(em % lat)) then
-      deallocate(em % lat, stat=stat)
-      if (ESMF_LogFoundDeallocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__,  &
-        file=__FILE__,  &
-        rcToReturn=rc)) &
-        return
-      nullify(em % lat)
-    end if
-    if (associated(em % lon)) then
-      deallocate(em % lon, stat=stat)
-      if (ESMF_LogFoundDeallocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__,  &
-        file=__FILE__,  &
-        rcToReturn=rc)) &
-        return
-      nullify(em % lon)
-    end if
-
-    if (associated(em % ip)) then
-      deallocate(em % ip, stat=stat)
-      if (ESMF_LogFoundDeallocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__,  &
-        file=__FILE__,  &
-        rcToReturn=rc)) &
-        return
-      nullify(em % ip)
-    end if
-
-    if (associated(em % jp)) then
-      deallocate(em % jp, stat=stat)
-      if (ESMF_LogFoundDeallocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__,  &
-        file=__FILE__,  &
-        rcToReturn=rc)) &
-        return
-      nullify(em % jp)
-    end if
-
-    if (associated(em % ijmap)) then
-      deallocate(em % ijmap, stat=stat)
-      if (ESMF_LogFoundDeallocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__,  &
-        file=__FILE__,  &
-        rcToReturn=rc)) &
-        return
-      nullify(em % ijmap)
-    end if
-
-    do n = 1, size(em % sources)
-      if (associated(em % rates(n) % values)) then
-        deallocate(em % rates(n) % values, stat=stat)
-        if (ESMF_LogFoundDeallocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
-          line=__LINE__,  &
-          file=__FILE__,  &
-          rcToReturn=rc)) &
-          return
-        nullify(em % rates(n) % values)
-      end if
-    end do
-
-    em % count = 0
-
-  end subroutine aqm_emis_pts_clear
 
   subroutine aqm_emis_pts_init(model, em, rc)
     type(ESMF_GridComp)                     :: model

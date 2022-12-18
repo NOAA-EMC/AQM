@@ -4,8 +4,6 @@
 
       IMPLICIT NONE
 
-      LOGICAL              :: PT3DEMIS   ! flag in-lining plume rise
-      INTEGER              :: NPTGRPS    ! no. pt src input file groups
       REAL,    ALLOCATABLE :: VFRAC( :,:,: ) ! vertical fraction
       REAL,    ALLOCATABLE :: BUFFER( : ) ! emission buffer
 
@@ -31,8 +29,7 @@ C Species name for Fire Radiative Power
 
       PRIVATE
 
-      PUBLIC PT3DEMIS, NPTGRPS, VDEMIS_PT, VDEMIS_PT_FIRE, PMEMIS_PT,
-     &       PT3D_FIRE_INIT, GET_PT3D_FIRE_EMIS
+      PUBLIC PT3D_FIRE_INIT, GET_PT3D_FIRE_EMIS
 
       CONTAINS
 
@@ -44,14 +41,13 @@ C=======================================================================
          USE AQM_EMIS_MOD
          USE GRID_CONF                  ! horizontal & vertical domain specifications
          USE CGRID_SPCS                 ! CGRID mechanism species
-         USE STK_EMIS, ONLY : STKSPC    ! hourly point source emissions
          USE PTMAP                      ! defines pt src species mapping to VDEMIS* arrays
          USE UTILIO_DEFN
 
          IMPLICIT NONE
 
 C Includes:
-C        INCLUDE SUBST_FILES_ID  ! file name parameters (for CTM_PT3D_DIAG)
+C        None
 
 C Arguments:
          INTEGER, INTENT( IN ) :: N_SPC_EMIS ! total no. of model emissions species
@@ -61,21 +57,15 @@ C Arguments:
 
          LOGICAL          SUCCESS
 
-C External Functions:
-         INTEGER,         EXTERNAL :: SETUP_LOGDEV
-
 C Parameters:
 
 C Local Variables:
-         CHARACTER( 16 ), SAVE :: CTM_PT3DEMIS = 'CTM_PT3DEMIS    ' ! env var for in-line
-                                                                    ! 3d pt src emis
          CHARACTER( 16 )       :: PNAME = 'PT3D_INIT       ' ! procedure name
          CHARACTER( 16 )       :: VNAME    ! variable name buffer
          CHARACTER( 16 ), SAVE, ALLOCATABLE :: STKGNAME( : ) ! stack groups file name
 
          INTEGER          IOS            ! i/o and allocate memory status
 
-         INTEGER          LOGDEV
 
          INTEGER IDX
          INTEGER N, NSPC, NSPC1, NSPC2, NSPC3
@@ -91,34 +81,10 @@ C-----------------------------------------------------------------------
 
          SUCCESS = .TRUE.
 
-         LOGDEV = SETUP_LOGDEV()
-
-C In-line 3D point source emissions?
-
-         PT3DEMIS = ENVYN( 'CTM_PT3DEMIS',
-     &                   'Flag for in-line 3d point source emissions',
-     &                   .FALSE., IOS )
-
-         IF ( PT3DEMIS ) THEN
-            XMSG = 'Using in-line 3d point source emissions option'
-            CALL M3MSG2( XMSG )
-         ELSE
-            RETURN
-         END IF
-
 C check if emissions are being provided
 
          EM => AQM_EMIS_GET( ETYPE )
          IF ( .NOT.ASSOCIATED( EM ) ) RETURN
-
-C get number of different file groups (sectors)
-
-         NPTGRPS = 0
-
-C create point source internal array
-
-         ALLOCATE( STKSPC( NPTGRPS ), STAT = IOS )
-         CALL CHECKMEM( IOS, 'STKSPC', PNAME )
 
 C set number of emissions layers depending on whether plumerise is on
 
@@ -173,10 +139,6 @@ C Time step part of laypoint
          USE UTILIO_DEFN
 
          IMPLICIT NONE
-
-C Includes:
-C        INCLUDE SUBST_CONST     ! physical and mathematical constants
-C        INCLUDE SUBST_FILES_ID  ! file name parameters (for CTM_PT3D_DIAG)
 
 C Arguments:
          INTEGER, INTENT( IN ) :: JDATE, JTIME

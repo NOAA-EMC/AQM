@@ -62,8 +62,6 @@ c     CHARACTER( * ),  PARAMETER :: ETYPE = 'gbbepx'
 
 C-----------------------------------------------------------------------
 
-c        LOGDEV = SETUP_LOGDEV()
-
          SUCCESS = .TRUE.
 
 C check if emissions are being provided
@@ -229,9 +227,7 @@ C        ... aerosol species ...
 
          LOGICAL SUCCESS
 
-         INTEGER, EXTERNAL :: SETUP_LOGDEV
-
-         INTEGER IOS, LOGDEV
+         INTEGER IOS
 
          INTEGER IDX
          INTEGER N, N_GAS_EMIS, NSPC, NSPC1, NSPC2, NSPC3
@@ -242,8 +238,6 @@ C        ... aerosol species ...
          CHARACTER( * ), PARAMETER :: PNAME = 'PTEM_TYPE_MAP'  ! procedure name
 
 C-----------------------------------------------------------------------
-
-         LOGDEV = SETUP_LOGDEV()
 
          SUCCESS = .TRUE.
 

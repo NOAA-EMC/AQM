@@ -203,7 +203,7 @@ C Allocate Buffer space for Reading Emissions
             ALLOCATE ( WSPD( EMLYRS ), STAT = IOS )
             CALL CHECKMEM( IOS, 'WSPD', PNAME )
 
-            ALLOCATE ( ZZF( EMLYRS ), STAT = IOS )
+            ALLOCATE ( ZZF( 0:EMLYRS ), STAT = IOS )
             CALL CHECKMEM( IOS, 'ZZF', PNAME )
 
             ALLOCATE ( ZSTK( EMLYRS ), STAT = IOS )
@@ -403,9 +403,8 @@ C If layer fractions are negative, put in the first layer
          ! -- (1) non-PM emissions
 
          DO S = 1, N_GSPC_STKS_EMIS
-            V = SPC_PTEM_STKS_FAC( S )
-            IF ( V .LT. 1 ) CYCLE
             M = PTEM_STKS_MAP( S )
+            IF ( M .LT. 1 ) CYCLE
             N = PTEM_MAP( S )
 
             BUFFER = 0.0

@@ -1,5 +1,6 @@
       MODULE PT3D_DEFN
 
+      USE PT3D_DATA_MOD
       USE PT3D_FIRE_DEFN
       USE PT3D_STKS_DEFN
 
@@ -17,6 +18,8 @@
 
          USE GRID_CONF                       ! horizontal & vertical domain specifications
          USE PTMAP
+         USE STK_EMIS, ONLY : STKSPC         ! hourly point source emissions
+         USE UTILIO_DEFN
 
          IMPLICIT NONE
 
@@ -38,6 +41,19 @@
          ! -- begin
 
          SUCCESS = .TRUE.
+
+         ! -- In-line 3D point source emissions?
+
+         PT3DEMIS = ENVYN( CTM_PT3DEMIS,
+     &                   'Flag for in-line 3d point source emissions',
+     &                   .FALSE., IOS )
+
+         IF ( PT3DEMIS ) THEN
+            XMSG = 'Using in-line 3d point source emissions option'
+            CALL M3MSG2( XMSG )
+         ELSE
+            RETURN
+         END IF
 
          ! -- initialize emission types
 
@@ -74,6 +90,15 @@
          ALLOCATE ( PMEMIS_PT( NCOLS, NROWS, EMLAYS, N_SPC_PTPM ), STAT = IOS )
          CALL CHECKMEM( IOS, 'PMEMIS_PT', PNAME )
          PMEMIS_PT = 0.0   ! array
+
+         ! -- get number of different file groups (sectors)
+
+         NPTGRPS = 0
+
+         ! -- create point source internal array
+
+         ALLOCATE( STKSPC( NPTGRPS ), STAT = IOS )
+         CALL CHECKMEM( IOS, 'STKSPC', PNAME )
 
          END FUNCTION PT3D_INIT
 

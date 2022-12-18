@@ -2165,7 +2165,6 @@ contains
       file=__FILE__,  &
       rcToReturn=rc)) &
       return  ! bail out
-
     call AQMIO_DataRead(em % IO, em % lon, em % lonname, rc=localrc)
     if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__,  &

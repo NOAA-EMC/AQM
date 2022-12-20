@@ -454,20 +454,10 @@ module AQM
               rcToReturn=rc)
             return  ! bail out
           end if
-
-          call aqm_model_domain_coord_set(item, coord, de=localDe, rc=rc)
-
-          if (aqm_rc_check(rc)) then
-            call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, &
-              msg="Failed to set coordinates for air quality model", &
-              line=__LINE__, &
-              file=__FILE__, &
-              rcToReturn=rc)
-            return  ! bail out
-          end if
         end do
 
       end do
+
       deallocate(minIndexPDe, maxIndexPDe, minIndexPTile, maxIndexPTile, &
         computationalLBound, computationalUBound, &
         deToTileMap, localDeToDeMap, stat=localrc)

@@ -30,6 +30,7 @@ module aqm_internal_mod
     logical                        :: sync
     logical                        :: verbose
     real                           :: scalefactor
+    real                           :: topfraction
     integer(ESMF_KIND_I4)          :: layers
     integer                        :: count
     integer                        :: irec

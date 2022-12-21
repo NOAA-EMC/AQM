@@ -205,6 +205,7 @@ contains
       em(item) % count       = 0
       em(item) % layers      = 1
       em(item) % scalefactor = 1.0
+      em(item) % topfraction = -1.0
       em(item) % gridded     = .true.
       em(item) % sync        = .false.
       em(item) % verbose     = .false.
@@ -605,6 +606,33 @@ contains
             file=__FILE__,  &
             rcToReturn=rc)) &
             return  ! bail out
+        end if
+        if (trim(em % plumerise) /= "none") then
+          call ESMF_ConfigGetAttribute(config, em % topfraction, &
+            label=trim(em % name)//"_plume_top_fraction:", default=-1.0, rc=localrc)
+          if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__,  &
+            file=__FILE__,  &
+            rcToReturn=rc)) &
+            return  ! bail out
+          if (em % verbose) then
+            write(msgString,'(g20.8)') em % topfraction
+            call ESMF_LogWrite(trim(em % logprefix)//": "//pName &
+              //": plume_top_fraction: "//adjustl(msgString), ESMF_LOGMSG_INFO, rc=localrc)
+            if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+              line=__LINE__,  &
+              file=__FILE__,  &
+              rcToReturn=rc)) &
+              return  ! bail out
+          end if
+          if (em % topfraction > 1.0) then
+            call ESMF_LogSetError(ESMF_RC_NOT_VALID, &
+              msg="plume top fraction must not exceed 1.0", &
+              line=__LINE__,  &
+              file=__FILE__,  &
+              rcToReturn=rc)
+            return  ! bail out
+          end if
         end if
       case ("point-source")
         em % gridded = .false.

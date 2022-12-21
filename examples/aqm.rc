@@ -128,6 +128,11 @@ myemis_frequency: hourly
 # supported schemes are: sofiev, none
 #
 #myemis_plume_rise: sofiev
+#
+# Optionally, provide an empirical weight for the top plume layer.
+# If this option is absent, or a value < 0.0 is provided, fire
+# emissions will be distributed linearly among the plume layers
+#myemis_plume_top_fraction: 0.8
 
 # list of emission species
 # input emissions can be manipulated by adding multiple

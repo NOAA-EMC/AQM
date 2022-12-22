@@ -55,6 +55,14 @@
             RETURN
          END IF
 
+         ! -- merge PM maps from fire and point-source emissions
+
+         IF ( .NOT. PTMAP_INIT( ) ) THEN
+            XMSG = 'Could not merge point source mappings'
+            CALL M3WARN ( PNAME, JDATE, JTIME, XMSG )
+            SUCCESS = .FALSE.; RETURN
+         END IF
+
          ! -- initialize emission types
 
          IF ( .NOT. PT3D_FIRE_INIT ( N_SPC_EMIS, EMLAYS, JDATE, JTIME ) ) THEN
@@ -65,14 +73,6 @@
 
          IF ( .NOT. PT3D_STKS_INIT ( ) ) THEN
             XMSG = 'Could not initialize point-source emissions'
-            CALL M3WARN ( PNAME, JDATE, JTIME, XMSG )
-            SUCCESS = .FALSE.; RETURN
-         END IF
-
-         ! -- merge PM maps from fire and point-source emissions
-
-         IF ( .NOT. PTMAP_INIT( ) ) THEN
-            XMSG = 'Could not merge point source mappings'
             CALL M3WARN ( PNAME, JDATE, JTIME, XMSG )
             SUCCESS = .FALSE.; RETURN
          END IF

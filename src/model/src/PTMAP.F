@@ -16,9 +16,6 @@ C Mapping for point source non-PM emissions (maps only GC, NR and TR)
       INTEGER, SAVE :: N_SPC_PTEM = 0   ! merged no. of unique species
       INTEGER, SAVE :: N_SPC_PTPM = 0   ! merged no. of unique species for PM
 
-C Emission type
-c     CHARACTER( * ),  PARAMETER :: ETYPE = 'gbbepx'
-
       PRIVATE
 
       PUBLIC :: N_GSPC_EMIS, N_SPC_PTEM, N_SPC_PTPM

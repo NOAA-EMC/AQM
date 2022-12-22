@@ -1649,8 +1649,8 @@ contains
             return
         end select
         if (em % verbose) then
-          write(msgString, '(a12,": read",12x,": ",a16,": min/max = ",2g20.8)') &
-            em % logprefix, spcname, minval(fptr), maxval(fptr)
+          write(msgString, '(a,": read: ",a16,": min/max = ",2g20.8)') &
+            trim(em % logprefix), spcname, minval(fptr), maxval(fptr)
           call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=localrc)
           if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
             line=__LINE__,  &
@@ -1749,8 +1749,8 @@ contains
             em_min = min( em_min, em % rates(item) % values(n) )
             em_max = max( em_max, em % rates(item) % values(n) )
           end do
-          write(msgString, '(a12,": read",12x,": ",a16,": min/max = ",2g20.8)') &
-            em % logprefix, spcname, em_min, em_max
+          write(msgString, '(a,": read: ",a16,": min/max = ",2g20.8)') &
+            trim(em % logprefix), spcname, em_min, em_max
           call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=localrc)
           if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
             line=__LINE__,  &

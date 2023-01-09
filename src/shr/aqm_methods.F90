@@ -91,6 +91,7 @@ LOGICAL FUNCTION DESC3( FNAME )
  
   integer :: localrc
   integer :: is, ie, js, je
+  integer :: EMLAYS
   type(aqm_config_type), pointer :: config
 
   ! -- begin
@@ -127,7 +128,16 @@ LOGICAL FUNCTION DESC3( FNAME )
 
   ELSE IF ( TRIM( FNAME ) .EQ. TRIM( EMIS_1 ) ) THEN
 
-    call aqm_emis_desc("anthropogenic", NLAYS3D, NVARS3D, VNAME3D, UNITS3D)
+    NLAYS3D = 0
+
+    call aqm_emis_desc("gbbepx",        NLAYS=EMLAYS)
+    NLAYS3D = MAX(EMLAYS, NLAYS3D)
+
+    call aqm_emis_desc("point-source",  NLAYS=EMLAYS)
+    NLAYS3D = MAX(EMLAYS, NLAYS3D)
+
+    call aqm_emis_desc("anthropogenic", NLAYS=EMLAYS, NVARS=NVARS3D, VNAMES=VNAME3D, UNITS=UNITS3D)
+    NLAYS3D = MAX(EMLAYS, NLAYS3D)
 
   ELSE IF ( TRIM( FNAME ) .EQ. TRIM( GRID_DOT_2D ) ) THEN
     NVARS3D = 1
@@ -208,7 +218,7 @@ LOGICAL FUNCTION DESC3( FNAME )
 
     GDNAM3D = 'Cubed-Sphere'
     VGTYP3D = VGSGPN3 ! non-hydrostatic sigma-P
-    VGTOP3D = 20.
+    VGTOP3D = 20. * 101.325
     ! -- actual sigma levels are not required for AQM since transport
     ! -- is performed in the atmosphere. Bogus sigma levels are set
     ! -- to satisfy d(sigma) = 1
@@ -216,22 +226,24 @@ LOGICAL FUNCTION DESC3( FNAME )
       VGLVS3D( is ) = DBLE(NLAYS3D + 1 - is)
     END DO
 
-    NVARS3D = 11
+    NVARS3D = 14
     VNAME3D( 1:NVARS3D ) = &
     (/ 'JACOBF          ', 'JACOBM          ',            &
        'DENSA_J         ', 'TA              ',            &
        'QV              ', 'QC              ',            &
        'PRES            ', 'DENS            ',            &
+       'UWINDA          ', 'VWINDA          ',            &
        'ZH              ', 'ZF              ',            &
-       'CFRAC_3D        '                                 &
+       'CFRAC_3D        ', 'PRESF           '             &
     /)
     UNITS3D( 1:NVARS3D ) = &
     (/ 'M               ', 'M               ',            &
        'KG/M**2         ', 'K               ',            &
        'KG/KG           ', 'KG/KG           ',            &
        'Pa              ', 'KG/M**3         ',            &
+       'M/S             ', 'M/S             ',            &
        'M               ', 'M               ',            &
-       'FRACTION        '                                 &
+       'FRACTION        ', 'Pa              '             &
     /)
 
     call aqm_model_get(config=config, rc=localrc)
@@ -353,7 +365,8 @@ logical function envyn(name, description, defaultval, status)
     case ('CTM_PHOTODIAG')
       envyn = config % ctm_photodiag
     case ('CTM_PT3DEMIS')
-      envyn = aqm_emis_ispresent("gbbepx")
+      envyn = aqm_emis_ispresent("gbbepx") .or. &
+              aqm_emis_ispresent("point-source")
     case ('CTM_GRAV_SETL')
       envyn = .false.
     case ('CTM_WBDUST_FENGSHA')
@@ -887,6 +900,8 @@ logical function interpx( fname, vname, pname, &
         end do
       case ("PRES")
         p3d => stateIn % prl
+      case ("PRESF")
+        p3d => stateIn % pri
       case ("CFRAC_3D")
         p3d => stateIn % cldfl
       case ("PV")
@@ -917,6 +932,10 @@ logical function interpx( fname, vname, pname, &
           p3d => stateIn % tr(:,:,:,config % species % p_atm_qg)
           set_non_neg = .true.
         end if
+      case ("UWINDA")
+        p3d => stateIn % uwind
+      case ("VWINDA")
+        p3d => stateIn % vwind
       case ("ZF")
         k = 0
         do l = lay0, lay1

@@ -205,7 +205,7 @@ contains
     else
 
       if (btest(verbosity,8)) then
-        write(msgString,'(a,": ",a,": types : none")') trim(name), &
+        write(msgString,'(a,": ",a,": ",a,": types: none")') trim(name), &
           trim(rName), trim(pName)
         call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=localrc)
         if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &

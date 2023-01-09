@@ -443,11 +443,12 @@ contains
     type(aqm_internal_emis_type), pointer :: em
 
     ! -- local parameters
-    character(len=*), parameter :: etype(4) = (/ &
+    character(len=*), parameter :: etype(5) = (/ &
       "anthropogenic", &
       "biogenic     ", &
       "fengsha      ", &
-      "gbbepx       "  &
+      "gbbepx       ", &
+      "point-source "  &
     /)
 
     ! -- begin
@@ -465,7 +466,7 @@ contains
       if (associated(em)) then
 
         select case (trim(etype(item)))
-          case ("anthropogenic", "gbbepx")
+          case ("anthropogenic", "gbbepx", "point-source")
 
           ! -- check if internal emissions reference table was allocated
           if (aqm_rc_test(.not.associated(em % table), &

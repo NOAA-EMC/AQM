@@ -39,6 +39,7 @@ module AQMIO
   public :: AQMIO_Close
   public :: AQMIO_Read
   public :: AQMIO_ReadTimes
+  public :: AQMIO_DataRead
   public :: AQMIO_Sync
   public :: AQMIO_Write
 
@@ -46,16 +47,17 @@ contains
 
 !------------------------------------------------------------------------------
 
-  function AQMIO_Create(grid, vm, rc)
+  function AQMIO_Create(grid, vm, allpes, rc)
     type(ESMF_Grid), intent(in)            :: grid
     type(ESMF_VM),   intent(in),  optional :: vm
+    logical,         intent(in),  optional :: allpes
     integer,         intent(out), optional :: rc
 
     type(ESMF_GridComp) :: AQMIO_Create
 
     ! -- local variables
     integer             :: localrc
-    integer             :: i, localDe, localDeCount, localpe, peCount, npe
+    integer             :: i, iope, localDe, localDeCount, localpe, peCount, npe
     integer             :: tile, tileCount
     integer, dimension(:), allocatable :: localTile, tileToPet, pes, recvpes
     type(ESMF_GridComp) :: IOComp, taskComp
@@ -256,6 +258,11 @@ contains
       file=__FILE__, &
       rcToReturn=rc)) return  ! bail out
 
+    iope = 0
+    if (present(allpes)) then
+      if (allpes) iope = localpe
+    end if
+
     ! -- flag PET if local I/O must be performed
     do localDe = 0, localDeCount - 1
       call ESMF_GridCompGet(is % IO % IOLayout(localDe) % taskComp, vm=tasksVM, rc=localrc)
@@ -268,7 +275,7 @@ contains
         line=__LINE__, &
         file=__FILE__, &
         rcToReturn=rc)) return  ! bail out
-      is % IO % IOLayout(localDe) % localIOflag = (localpe == 0)
+      is % IO % IOLayout(localDe) % localIOflag = (localpe == iope)
     end do
 
     AQMIO_Create = IOComp
@@ -1177,7 +1184,7 @@ contains
 
     ! -- local variables
     integer :: localrc
-    integer :: ilen, jlen, lbuf, lde, localpe, rank
+    integer :: ilen, jlen, lbuf, lde, rank
     integer :: varId, ncStatus, ndims, xtype
     integer :: kmin, kmax, klen, uid
     integer, dimension(3) :: elb, eub
@@ -1265,13 +1272,7 @@ contains
       file=__FILE__, &
       rcToReturn=rc)) return  ! bail out
 
-    call ESMF_VMGet(vm, localPet=localpe, rc=localrc)
-    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__, &
-      rcToReturn=rc)) return  ! bail out
-
-    if (localpe == 0) then
+    if (IO % IOLayout(lde) % localIOflag) then
       if (IO % IOLayout(lde) % ncid > 0) then
 #if HAVE_NETCDF
         dataSetName = "NetCDF data set"
@@ -1636,6 +1637,251 @@ contains
 
 !------------------------------------------------------------------------------
 
+  subroutine AQMIO_DataRead(IOComp, fArray, variableName, timeSlice, localDe, rc)
+    type(ESMF_GridComp),   intent(inout)         :: IOComp
+    real(ESMF_KIND_R4),    pointer               :: fArray(:)
+    character(len=*),      intent(in)            :: variableName
+    integer,               intent(in),  optional :: timeSlice
+    integer,               intent(in),  optional :: localDe
+    integer,               intent(out), optional :: rc
+
+    ! -- local variables
+    integer :: localrc
+    integer :: ilen, lde, rank
+    integer :: varId, ncStatus, ndims, xtype
+    integer :: uid
+    integer :: ibuf(1)
+    integer,               dimension(:),     allocatable :: dimids
+    integer,               dimension(:),     allocatable :: elemCount
+    integer,               dimension(:),     allocatable :: elemStart
+    real(ESMF_KIND_R4),    dimension(:),     allocatable :: buf
+    real(ESMF_KIND_R4),    dimension(:),     pointer     :: fp
+    character(len=ESMF_MAXSTR) :: dataSetName
+    type(ESMF_VM)         :: vm
+    type(ioWrapper)       :: is
+    type(ioData), pointer :: IO
+
+    ! -- begin
+    if (present(rc)) rc = ESMF_SUCCESS
+
+    if (.not.ESMF_GridCompIsPetLocal(IOComp)) return
+
+    call ESMF_GridCompGetInternalState(IOComp, is, localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__, &
+      rcToReturn=rc)) return  ! bail out
+
+    if (.not.associated(is % IO)) return
+    if (.not.associated(is % IO % IOLayout)) return
+
+    IO => is % IO
+
+    lde = 0
+    if (present(localDe)) lde = localDe
+
+    call ESMF_GridCompGet(IO % IOLayout(lde) % taskComp, vm=vm, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__, &
+      rcToReturn=rc)) return  ! bail out
+
+    if (IO % IOLayout(lde) % localIOflag) then
+      if (IO % IOLayout(lde) % ncid > 0) then
+#if HAVE_NETCDF
+        dataSetName = "NetCDF data set"
+
+        ncStatus = nf90_inquire(IO % IOLayout(lde) % ncid, unlimitedDimId=uid)
+        if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
+          msg="No unlimited dimension (time) in "//trim(dataSetName), &
+          line=__LINE__, &
+          file=__FILE__, &
+          rcToReturn=rc)) return  ! bail out
+
+        ncStatus = nf90_inq_varid(IO % IOLayout(lde) % ncid, trim(variableName), varId)
+        if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
+          msg="Variable "//trim(variableName)//" not defined in "//trim(dataSetName), &
+          line=__LINE__, &
+          file=__FILE__, &
+          rcToReturn=rc)) return  ! bail out
+
+        ncStatus = nf90_inquire_variable(IO % IOLayout(lde) % ncid, varId, &
+          xtype=xtype, ndims=ndims)
+        if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
+          msg="Error inquiring variable "//trim(variableName)//" in "//trim(dataSetName), &
+          line=__LINE__, &
+          file=__FILE__, &
+          rcToReturn=rc)) return  ! bail out
+
+        call AQMIO_VariableCheckType(variableName, xtype, ESMF_TYPEKIND_R4, rc=localrc)
+        if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, &
+          file=__FILE__, &
+          rcToReturn=rc)) return  ! bail out
+
+        allocate(elemStart(ndims), elemCount(ndims), stat=localrc)
+        if (ESMF_LogFoundAllocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, &
+          file=__FILE__, &
+          rcToReturn=rc)) return  ! bail out
+        elemStart = 1
+        elemCount = 1
+
+        allocate(dimids(ndims), stat=localrc)
+        if (ESMF_LogFoundAllocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, &
+          file=__FILE__, &
+          rcToReturn=rc)) return  ! bail out
+
+        ncStatus = nf90_inquire_variable(IO % IOLayout(lde) % ncid, varId, dimIds=dimids)
+        if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
+          msg="Error inquiring variable "//trim(variableName)//" in "//trim(dataSetName), &
+          line=__LINE__, &
+          file=__FILE__, &
+          rcToReturn=rc)) return  ! bail out
+
+        if (uid == -1) then
+          if (present(timeSlice)) then
+            if (timeSlice == 1) then
+              call ESMF_LogWrite("No time record found in "//trim(dataSetName) &
+                // " - proceed only for first time step", &
+                ESMF_LOGMSG_WARNING, rc=localrc)
+              if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+                line=__LINE__, &
+                file=__FILE__, &
+                rcToReturn=rc)) return  ! bail out
+            else
+              call ESMF_LogSetError(ESMF_RC_NOT_FOUND, &
+                msg="No time record found in "//dataSetName, &
+                line=__LINE__, &
+                file=__FILE__, &
+                rcToReturn=rc)
+              return  ! bail out
+            end if
+          end if
+        else
+          if (dimids(ndims) == uid) then
+            if (present(timeSlice)) elemStart(ndims) = timeSlice
+            ndims = ndims - 1
+          else
+            if (present(timeSlice)) then
+              call ESMF_LogSetError(ESMF_RC_NOT_FOUND, &
+                msg="No time record found for variable "// variableName, &
+                line=__LINE__, &
+                file=__FILE__, &
+                rcToReturn=rc)
+              return  ! bail out
+            end if
+          end if
+        end if
+
+        rank = 1
+
+        if (rank /= ndims) localrc = ESMF_RC_ARG_INCOMP
+        if (ESMF_LogFoundError(rcToCheck=localrc, &
+          msg="Variable rank incompatible with netCDF variable "//trim(variableName), &
+          line=__LINE__, &
+          file=__FILE__, &
+          rcToReturn=rc)) return  ! bail out
+
+        ! -- allocate array according to dimension on file
+        ncStatus = nf90_inquire_dimension(IO % IOLayout(lde) % ncid, dimids(ndims), len=ibuf(1))
+        if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
+          msg="Error inquiring dimension for "//trim(variableName)//" in "//trim(dataSetName), &
+          line=__LINE__, &
+          file=__FILE__, &
+          rcToReturn=rc)) return  ! bail out
+      end if
+    end if
+
+    call ESMF_VMBroadcast(vm, ibuf, 1, 0, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__, &
+      rcToReturn=rc)) return  ! bail out
+
+    ilen = ibuf(1)
+
+    if (associated(fArray)) then
+      ilen = min(ilen,size(fArray))
+    else
+      allocate(fp(ilen), stat=localrc)
+      if (ESMF_LogFoundAllocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__, &
+        file=__FILE__, &
+        rcToReturn=rc)) return  ! bail out
+      fArray => fp
+    end if
+
+    fArray = 0._ESMF_KIND_R4
+
+    if (IO % IOLayout(lde) % localIOflag) then
+      if (IO % IOLayout(lde) % ncid > 0) then
+
+        deallocate(dimids, stat=localrc)
+        if (ESMF_LogFoundDeallocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, &
+          file=__FILE__, &
+          rcToReturn=rc)) return  ! bail out
+
+        elemCount(1) = ilen
+
+        allocate(buf(ilen), stat=localrc)
+        if (ESMF_LogFoundAllocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, &
+          file=__FILE__, &
+          rcToReturn=rc)) return  ! bail out
+
+        ncStatus = nf90_get_var(IO % IOLayout(lde) % ncid, varId, fArray, &
+          start=elemStart, count=elemCount)
+        if (ESMF_LogFoundNetCDFError(ncerrToCheck=ncStatus, &
+          msg="Error reading field "//trim(variableName)//" from "//trim(dataSetName), &
+          line=__LINE__, &
+          file=__FILE__, &
+          rcToReturn=rc)) return  ! bail out
+
+        deallocate(elemStart, elemCount, stat=localrc)
+        if (ESMF_LogFoundDeallocError(statusToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+          line=__LINE__, &
+          file=__FILE__, &
+          rcToReturn=rc)) return  ! bail out
+
+      end if
+    end if
+
+    call ESMF_VMBroadcast(vm, fArray, ilen, 0, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__, &
+      rcToReturn=rc)) return  ! bail out
+
+    if (IO % IOLayout(lde) % localIOflag) then
+      if (IO % IOLayout(lde) % ncid > 0) then
+        ! -- nothing else to do
+#else
+        call ESMF_LogSetError(rcToCheck=ESMF_RC_LIB_NOT_PRESENT, &
+          msg="- netCDF support is unavailable", &
+          line=__LINE__, &
+          file=__FILE__, &
+          rcToReturn=rc)
+        return
+#endif
+      else if (IO % IOLayout(lde) % iounit > 0) then
+
+        call ESMF_LogSetError(rcToCheck=ESMF_RC_LIB_NOT_PRESENT, &
+          msg="- binary format is not supported", &
+          line=__LINE__, &
+          file=__FILE__, &
+          rcToReturn=rc)
+        return
+
+      end if
+    end if
+
+  end subroutine AQMIO_DataRead
+
+!------------------------------------------------------------------------------
+
   subroutine AQMIO_TimesRead(IO, variableName, timesList, localDe, rc)
     type(ioData),     intent(in)            :: IO
     character(len=*), intent(in)            :: variableName
@@ -1828,7 +2074,7 @@ contains
 
     ! -- local variables
     integer :: localrc
-    integer :: ilen, jlen, lbuf, lde, localpe
+    integer :: ilen, jlen, lbuf, lde
     integer :: varId, ncStatus
     integer :: ndims, rank
     integer :: kmin, kmax, klen
@@ -1877,12 +2123,6 @@ contains
     lbuf = ilen * jlen * klen
 
     call ESMF_GridCompGet(IO % IOLayout(lde) % taskComp, vm=vm, rc=localrc)
-    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__, &
-      rcToReturn=rc)) return  ! bail out
-
-    call ESMF_VMGet(vm, localPet=localpe, rc=localrc)
     if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__, &
@@ -2074,7 +2314,7 @@ contains
       return  ! bail out
     end if
 
-    if (localpe == 0) then
+    if (IO % IOLayout(lde) % localIOflag) then
       if (IO % IOLayout(lde) % ncid > 0) then
 #if HAVE_NETCDF
         dataSetName = "NetCDF data set"

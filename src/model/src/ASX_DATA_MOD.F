@@ -133,6 +133,7 @@ C-------------------------------------------------------------------------------
 !> 3-D meteorological fields:
          Real,    Allocatable :: KZMIN    ( :,:,: )  ! minimum Kz [m**2/s]
          Real,    Allocatable :: PRES     ( :,:,: )  ! layer 1 pressure [Pa]
+         Real,    Allocatable :: PRESF    ( :,:,: )  ! full layer pressure [Pa]
          Real,    Allocatable :: QV       ( :,:,: )  ! water vapor mixing ratio
          Real,    Allocatable :: QC       ( :,:,: )  ! cloud water mixing ratio
          Real,    Allocatable :: THETAV   ( :,:,: )  ! potential temp
@@ -144,6 +145,8 @@ C-------------------------------------------------------------------------------
          Real,    Allocatable :: RJACM    ( :,:,: )  ! reciprocal mid-layer Jacobian
          Real,    Allocatable :: RJACF    ( :,:,: )  ! reciprocal full-layer Jacobian
          Real,    Allocatable :: RRHOJ    ( :,:,: )  ! reciprocal density X Jacobian
+         Real,    Allocatable :: UWINDA   ( :,:,: )  ! [m/s]
+         Real,    Allocatable :: VWINDA   ( :,:,: )  ! [m/s]
       End Type MET_Type
       
       Type :: GRID_Type
@@ -496,10 +499,13 @@ C-----------------------------------------------------------------------
      &             Met_Data%CONVCT   ( NCOLS,NROWS ),
      &             Met_Data%PBL      ( NCOLS,NROWS ),
      &             Met_Data%NACL_EMIS( NCOLS,NROWS ),
+     &             Met_Data%UWINDA   ( NCOLS,NROWS,NLAYS ),
+     &             Met_Data%VWINDA   ( NCOLS,NROWS,NLAYS ),
      &             Met_Data%UWIND    ( NCOLS+1,NROWS+1,NLAYS ),
      &             Met_Data%VWIND    ( NCOLS+1,NROWS+1,NLAYS ),
      &             Met_Data%KZMIN    ( NCOLS,NROWS,NLAYS ),
      &             Met_Data%PRES     ( NCOLS,NROWS,NLAYS ),
+     &             Met_Data%PRESF    ( NCOLS,NROWS,1:NLAYS+1 ),
      &             Met_Data%QV       ( NCOLS,NROWS,NLAYS ),
      &             Met_Data%QC       ( NCOLS,NROWS,NLAYS ),
      &             Met_Data%THETAV   ( NCOLS,NROWS,NLAYS ),
@@ -963,6 +969,14 @@ C-------------------------------- MET_CRO_3D --------------------------------
             Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          End If 
 
+         VNAME = 'PRESF'
+         If ( .Not. INTERPX( MET_CRO_3D, VNAME, PNAME,
+     &                       STRTCOLMC3,ENDCOLMC3, STRTROWMC3,ENDROWMC3, 1,NLAYS+1,
+     &                       JDATE, JTIME, Met_Data%PRESF ) ) Then
+            XMSG = MSG1 // TRIM( VNAME ) // ' from ' // MET_CRO_3D
+            Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+         End If
+
          VNAME = 'ZF'
          If ( .Not. INTERPX( MET_CRO_3D, VNAME, PNAME,
      &                       STRTCOLMC3,ENDCOLMC3, STRTROWMC3,ENDROWMC3, 1,NLAYS,
@@ -1034,6 +1048,22 @@ C-------------------------------- MET_CRO_3D --------------------------------
             XMSG = MSG1 // TRIM( VNAME ) // ' from ' // MET_CRO_3D
             CALL M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          END IF
+
+         VNAME = 'UWINDA'
+         If ( .Not. INTERPX( MET_CRO_2D, VNAME, PNAME,
+     &                       STRTCOLMC2,ENDCOLMC2, STRTROWMC2,ENDROWMC2, 1,NLAYS,
+     &                       JDATE, JTIME, Met_Data%UWINDA ) ) Then
+            XMSG = MSG1 // TRIM( VNAME ) // ' from ' // MET_CRO_2D
+            Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+         End If
+
+         VNAME = 'VWINDA'
+         If ( .Not. INTERPX( MET_CRO_2D, VNAME, PNAME,
+     &                       STRTCOLMC2,ENDCOLMC2, STRTROWMC2,ENDROWMC2, 1,NLAYS,
+     &                       JDATE, JTIME, Met_Data%VWINDA ) ) Then
+            XMSG = MSG1 // TRIM( VNAME ) // ' from ' // MET_CRO_2D
+            Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+         End If
 
 C-------------------------------- MET_CRO_2D --------------------------------
 C Vegetation and surface vars

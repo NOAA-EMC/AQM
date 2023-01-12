@@ -36,6 +36,7 @@ module aqm_state_mod
     real(AQM_KIND_R8), dimension(:,:,:),   pointer :: dkt      => null()
     real(AQM_KIND_R8), dimension(:,:,:),   pointer :: phii     => null()
     real(AQM_KIND_R8), dimension(:,:,:),   pointer :: phil     => null()
+    real(AQM_KIND_R8), dimension(:,:,:),   pointer :: pri      => null()
     real(AQM_KIND_R8), dimension(:,:,:),   pointer :: prl      => null()
     real(AQM_KIND_R8), dimension(:,:,:),   pointer :: smois    => null()
     real(AQM_KIND_R8), dimension(:,:,:),   pointer :: stemp    => null()

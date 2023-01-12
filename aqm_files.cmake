@@ -11,8 +11,10 @@ list(APPEND aqm_shr_files
     src/shr/aqm_const_mod.F90
     src/shr/aqm_domain_mod.F90
     src/shr/aqm_emis_mod.F90
+    src/shr/aqm_prod_mod.F90
     src/shr/aqm_fires_mod.F90
     src/shr/aqm_internal_mod.F90
+    src/shr/aqm_logger_mod.F90
     src/shr/aqm_model_mod.F90
     src/shr/aqm_rc_mod.F90
     src/shr/aqm_methods.F90
@@ -85,7 +87,6 @@ set(VDIFF "${CCTM_ROOT}/vdiff/acm2")
 set(localCCTM "src/model/src")
 list(APPEND aqm_CCTM_files
 	${AERO}/AERO_DATA.F
-	${AERO}/aero_depv.F
 	${AERO}/aero_driver.F
 	${AERO}/AERO_EMIS.F
 	${AERO}/AEROMET_DATA.F
@@ -180,7 +181,6 @@ list(APPEND aqm_CCTM_files
 	${MECHS}/RXNS_FUNC_MODULE.F90
 	${PA}/PA_DEFN.F
 	${PA}/pa_update.F
-	${PHOT}/AERO_PHOTDATA.F
 	${PHOT}/CLOUD_OPTICS.F
 	${PHOT}/complex_number_module.F90
 	${PHOT}/CSQY_DATA.F
@@ -234,9 +234,14 @@ list(APPEND aqm_CCTM_files
 	${localCCTM}/o3totcol.f
 	${localCCTM}/vdiffacmx.F
 	${localCCTM}/PTMAP.F
+	${localCCTM}/PT3D_DATA_MOD.F
 	${localCCTM}/PT3D_DEFN.F
-        ${localCCTM}/ASX_DATA_MOD.F
-        ${localCCTM}/DUST_EMIS.F
-        ${localCCTM}/phot.F
-        ${localCCTM}/centralized_io_util_module.F
+	${localCCTM}/PT3D_FIRE_DEFN.F
+	${localCCTM}/PT3D_STKS_DEFN.F
+	${localCCTM}/ASX_DATA_MOD.F
+	${localCCTM}/DUST_EMIS.F
+	${localCCTM}/phot.F
+	${localCCTM}/centralized_io_util_module.F
+	${localCCTM}/AERO_PHOTDATA.F
+	${localCCTM}/aero_depv.F
 )

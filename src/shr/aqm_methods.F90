@@ -928,10 +928,6 @@ logical function interpx( fname, vname, pname, &
             end do
           end do
         end do
-      case ("UWINDA")
-        p3d => stateIn % uwind
-      case ("VWINDA")
-        p3d => stateIn % vwind
       case ("PRES")
         p3d => stateIn % prl
       case ("PRESF")

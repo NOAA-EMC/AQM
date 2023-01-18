@@ -163,7 +163,6 @@ libCCTM_a_SOURCES += \
 PHOT = $(CCTM)/phot/inline
 libPHOT = $(PHOT)/$(libCCTM)-
 libCCTM_a_SOURCES += \
-	$(PHOT)/AERO_PHOTDATA.F \
 	$(PHOT)/CLOUD_OPTICS.F \
 	$(PHOT)/complex_number_module.F90 \
 	$(PHOT)/CSQY_DATA.F \
@@ -244,13 +243,16 @@ libCCTM_a_SOURCES += \
 # local replacements for CCTM files
 liblocalCCTM = $(localCCTM)/$(libCCTM)-
 libCCTM_a_SOURCES += \
-	$(localCCTM)/o3totcol.f \
-	$(localCCTM)/vdiffacmx.F \
-	$(localCCTM)/PTMAP.F \
-	$(localCCTM)/PT3D_DEFN.F \
-	$(localCCTM)/ASX_DATA_MOD.F \
-	$(localCCTM)/DUST_EMIS.F
-
+	${localCCTM}/o3totcol.f \
+	${localCCTM}/vdiffacmx.F \
+	${localCCTM}/PTMAP.F \
+	${localCCTM}/PT3D_DATA_MOD.F \
+	${localCCTM}/PT3D_DEFN.F \
+	${localCCTM}/PT3D_FIRE_DEFN.F \
+	${localCCTM}/PT3D_STKS_DEFN.F \
+	${localCCTM}/ASX_DATA_MOD.F \
+	${localCCTM}/DUST_EMIS.F \
+	${localCCTM}/AERO_PHOTDATA.F
 
 
 libCCTM_a_CPPFLAGS  = -DSUBST_FILES_ID=\"FILES_CTM.EXT\"
@@ -272,7 +274,8 @@ libCCTM_a_FFLAGS = $(CCTM_FFLAGS)
 libCCTM_a_FFLAGS += \
 	-I $(ICL)/filenames -I $(ICL)/const -I $(ICL)/emctrl -I$(ICL)/mpi \
 	-I $(top_builddir)/src/io/ioapi -I $(top_builddir)/src/shr \
-	-I $(top_builddir)/src/io/aqmio
+	-I $(top_builddir)/src/io/aqmio \
+	-I $(AERO)
 
 libCCTM_a_FCFLAGS  = $(CCTM_FCFLAGS)
 libCCTM_a_FCFLAGS += -I $(top_builddir)/src/io/ioapi
@@ -546,12 +549,6 @@ $(libPA)pa_update.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/emctrl/EMISPRM.EXT $
 	$(libGRID)PAGRD_DEFN.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
 
 # phot
-$(libPHOT)AERO_PHOTDATA.$(OBJEXT) : $(ICL)/const/CONST.EXT \
-	$(libAERO)AERO_DATA.$(OBJEXT) $(libAERO)AEROMET_DATA.$(OBJEXT) \
-	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libPHOT)twoway_rrtmg_aero_optics.$(OBJEXT) \
-	$(libPHOT)CSQY_DATA.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
-	$(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libAERO)SOA_DEFN.$(OBJEXT) \
-	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
 $(libPHOT)CLOUD_OPTICS.$(OBJEXT) : \
 	$(libPHOT)CSQY_DATA.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
 	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
@@ -563,7 +560,7 @@ $(libPHOT)opphot.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
 	$(libPHOT)PHOT_MOD.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) \
 	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
 $(libPHOT)phot.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
-	$(libAERO)AERO_DATA.$(OBJEXT) $(libPHOT)AERO_PHOTDATA.$(OBJEXT) \
+	$(libAERO)AERO_DATA.$(OBJEXT) $(liblocalCCTM)AERO_PHOTDATA.$(OBJEXT) \
 	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libPHOT)CLOUD_OPTICS.$(OBJEXT) \
 	$(libSTENEX)noop_modules.$(OBJEXT) $(libGRID)PCGRID_DEFN.$(OBJEXT) \
 	$(libPHOT)PHOT_MET_DATA.$(OBJEXT) $(libPHOT)PHOT_MOD.$(OBJEXT) \
@@ -573,7 +570,7 @@ $(libPHOT)PHOT_MET_DATA.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/filenames/FILE
 	$(libPHOT)CLOUD_OPTICS.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
 	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
 $(libPHOT)PHOT_MOD.$(OBJEXT) : $(ICL)/const/CONST.EXT \
-	$(libPHOT)AERO_PHOTDATA.$(OBJEXT) $(libPHOT)CLOUD_OPTICS.$(OBJEXT) \
+	$(liblocalCCTM)AERO_PHOTDATA.$(OBJEXT) $(libPHOT)CLOUD_OPTICS.$(OBJEXT) \
 	$(libPHOT)CSQY_DATA.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) \
 	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
 $(libPHOT)PHOTOLYSIS_ALBEDO.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
@@ -676,9 +673,18 @@ $(liblocalCCTM)vdiffacmx.$(OBJEXT) : $(ICL)/filenames/FILES_CTM.EXT \
 	$(libVDIFF)VDIFF_MAP.$(OBJEXT)
 $(liblocalCCTM)PTMAP.$(OBJEXT) : $(libAERO)AERO_DATA.$(OBJEXT) \
 	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
-$(liblocalCCTM)PT3D_DEFN.$(OBJEXT) : $(libAERO)AERO_DATA.$(OBJEXT) \
+$(liblocalCCTM)PT3D_DEFN.$(OBJEXT) : $(libGRID)GRID_CONF.$(OBJEXT) \
+	$(liblocalCCTM)PTMAP.$(OBJEXT) $(liblocalCCTM)PT3D_FIRE_DEFN.$(OBJEXT) \
+	$(liblocalCCTM)PT3D_STKS_DEFN.$(OBJEXT)
+$(liblocalCCTM)PT3D_FIRE_DEFN.$(OBJEXT) : $(libAERO)AERO_DATA.$(OBJEXT) \
 	$(libGRID)GRID_CONF.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
+	$(liblocalCCTM)PT3D_DATA_MOD.$(OBJEXT) \
 	$(liblocalCCTM)PTMAP.$(OBJEXT) $(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) \
+	$(libEMIS)STK_EMIS.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(liblocalCCTM)PT3D_STKS_DEFN.$(OBJEXT) : $(libAERO)AERO_DATA.$(OBJEXT) \
+	$(liblocalCCTM)ASX_DATA_MOD.$(OBJEXT) \
+	$(libGRID)GRID_CONF.$(OBJEXT) $(libSPCS)CGRID_SPCS.$(OBJEXT) \
+	$(liblocalCCTM)PT3D_DATA_MOD.$(OBJEXT) $(liblocalCCTM)PTMAP.$(OBJEXT) \
 	$(libEMIS)STK_EMIS.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
 $(liblocalCCTM)ASX_DATA_MOD.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/filenames/FILES_CTM.EXT $(ICL)/mpi/PE_COMM.EXT \
         $(libDEPV)DEPVVARS.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
@@ -688,3 +694,9 @@ $(liblocalCCTM)DUST_EMIS.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/filenames/FIL
        $(libAERO)AERO_DATA.$(OBJEXT) $(liblocalCCTM)ASX_DATA_MOD.$(OBJEXT) \
        $(libGRID)GRID_CONF.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT) \
        $(libEMIS)LUS_DEFN.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(liblocalCCTM)AERO_PHOTDATA.$(OBJEXT) : $(ICL)/const/CONST.EXT \
+	$(libAERO)AERO_DATA.$(OBJEXT) $(libAERO)AEROMET_DATA.$(OBJEXT) \
+	$(libSPCS)CGRID_SPCS.$(OBJEXT) $(libPHOT)twoway_rrtmg_aero_optics.$(OBJEXT) \
+	$(libPHOT)CSQY_DATA.$(OBJEXT) $(libGRID)GRID_CONF.$(OBJEXT) \
+	$(libMECHS)RXNS_DATA_MODULE.$(OBJEXT) $(libAERO)SOA_DEFN.$(OBJEXT) \
+	$(libUTIL)UTILIO_DEFN.$(OBJEXT)

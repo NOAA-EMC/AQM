@@ -10,6 +10,10 @@ module aqm_const_mod
   real(AQM_KIND_R8), parameter :: one  = 1.0_AQM_KIND_R8
   real(AQM_KIND_R8), parameter :: half = 0.5_AQM_KIND_R8
 
+  real(AQM_KIND_R8), parameter :: aqm_pi = 3.14159265358979323846_AQM_KIND_R8
+  real(AQM_KIND_R8), parameter :: deg_to_rad = aqm_pi / 180._AQM_KIND_R8
+  real(AQM_KIND_R8), parameter :: rad_to_deg = 180._AQM_KIND_R8 / aqm_pi
+
   ! -- include CMAQ constants
 
   include SUBST_CONST

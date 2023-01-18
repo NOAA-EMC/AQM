@@ -91,6 +91,7 @@ LOGICAL FUNCTION DESC3( FNAME )
  
   integer :: localrc
   integer :: is, ie, js, je
+  integer :: EMLAYS
   type(aqm_config_type), pointer :: config
 
   ! -- begin
@@ -127,7 +128,16 @@ LOGICAL FUNCTION DESC3( FNAME )
 
   ELSE IF ( TRIM( FNAME ) .EQ. TRIM( EMIS_1 ) ) THEN
 
-    call aqm_emis_desc("anthropogenic", NLAYS3D, NVARS3D, VNAME3D, UNITS3D)
+    NLAYS3D = 0
+
+    call aqm_emis_desc("gbbepx",        NLAYS=EMLAYS)
+    NLAYS3D = MAX(EMLAYS, NLAYS3D)
+
+    call aqm_emis_desc("point-source",  NLAYS=EMLAYS)
+    NLAYS3D = MAX(EMLAYS, NLAYS3D)
+
+    call aqm_emis_desc("anthropogenic", NLAYS=EMLAYS, NVARS=NVARS3D, VNAMES=VNAME3D, UNITS=UNITS3D)
+    NLAYS3D = MAX(EMLAYS, NLAYS3D)
 
   ELSE IF ( TRIM( FNAME ) .EQ. TRIM( GRID_DOT_2D ) ) THEN
     NVARS3D = 1
@@ -208,7 +218,7 @@ LOGICAL FUNCTION DESC3( FNAME )
 
     GDNAM3D = 'Cubed-Sphere'
     VGTYP3D = VGSGPN3 ! non-hydrostatic sigma-P
-    VGTOP3D = 20.
+    VGTOP3D = 20. * 101.325
     ! -- actual sigma levels are not required for AQM since transport
     ! -- is performed in the atmosphere. Bogus sigma levels are set
     ! -- to satisfy d(sigma) = 1
@@ -216,22 +226,24 @@ LOGICAL FUNCTION DESC3( FNAME )
       VGLVS3D( is ) = DBLE(NLAYS3D + 1 - is)
     END DO
 
-    NVARS3D = 11
+    NVARS3D = 14
     VNAME3D( 1:NVARS3D ) = &
     (/ 'JACOBF          ', 'JACOBM          ',            &
        'DENSA_J         ', 'TA              ',            &
        'QV              ', 'QC              ',            &
        'PRES            ', 'DENS            ',            &
+       'UWINDA          ', 'VWINDA          ',            &
        'ZH              ', 'ZF              ',            &
-       'CFRAC_3D        '                                 &
+       'CFRAC_3D        ', 'PRESF           '             &
     /)
     UNITS3D( 1:NVARS3D ) = &
     (/ 'M               ', 'M               ',            &
        'KG/M**2         ', 'K               ',            &
        'KG/KG           ', 'KG/KG           ',            &
        'Pa              ', 'KG/M**3         ',            &
+       'M/S             ', 'M/S             ',            &
        'M               ', 'M               ',            &
-       'FRACTION        '                                 &
+       'FRACTION        ', 'Pa              '             &
     /)
 
     call aqm_model_get(config=config, rc=localrc)
@@ -304,7 +316,8 @@ END FUNCTION DESC3
 
 logical function envyn(name, description, defaultval, status)
 
-  use aqm_emis_mod,  only : aqm_internal_emis_type, aqm_emis_get
+  use aqm_emis_mod,  only : aqm_internal_emis_type, &
+                            aqm_emis_get, aqm_emis_ispresent
   use aqm_model_mod, only : aqm_config_type, aqm_model_get
   use aqm_rc_mod,    only : aqm_rc_check
 
@@ -344,9 +357,7 @@ logical function envyn(name, description, defaultval, status)
     case ('CTM_AOD')
       envyn = config % ctm_aod
     case ('CTM_BIOGEMIS')
-      envyn = .false.
-      em => aqm_emis_get("biogenic")
-      envyn = associated(em)
+      envyn = aqm_emis_ispresent("biogenic")
     case ('CTM_DEPVFILE')
       envyn = config % ctm_depvfile
     case ('CTM_PMDIAG')
@@ -354,12 +365,16 @@ logical function envyn(name, description, defaultval, status)
     case ('CTM_PHOTODIAG')
       envyn = config % ctm_photodiag
     case ('CTM_PT3DEMIS')
-      em => aqm_emis_get("gbbepx")
-      envyn = associated(em)
+      envyn = aqm_emis_ispresent("gbbepx") .or. &
+              aqm_emis_ispresent("point-source")
     case ('CTM_GRAV_SETL')
       envyn = .false.
-    case ('CTM_FENGSHA')
-      envyn = config % fengsha_yn
+    case ('CTM_WBDUST_FENGSHA')
+      envyn = aqm_emis_ispresent("fengsha")
+    case ('CTM_WB_DUST')
+      envyn = config % ctm_wb_dust
+    case ('MIE_OPTICS')
+      envyn = config % mie_optics
     case ('INITIAL_RUN')
       envyn = .true.
     case default
@@ -425,13 +440,31 @@ end function envint
 
 
 REAL FUNCTION ENVREAL( LNAME, DESC, DEFAULT, STAT )
+
+  USE AQM_EMIS_MOD,  ONLY : AQM_INTERNAL_EMIS_TYPE, AQM_EMIS_GET
+
   IMPLICIT NONE
+
   CHARACTER*(*), INTENT(IN   ) :: LNAME
   CHARACTER*(*), INTENT(IN   ) :: DESC
   REAL         , INTENT(IN   ) :: DEFAULT
   INTEGER      , INTENT(  OUT) :: STAT
+
+  ! -- local variables
+  TYPE(AQM_INTERNAL_EMIS_TYPE), POINTER :: EM
+
+  ! -- begin
   ENVREAL = DEFAULT
   STAT = 0
+
+  SELECT CASE ( TRIM(LNAME) )
+    CASE ( 'CTM_WBDUST_FENGSHA_ALPHA' )
+      EM => AQM_EMIS_GET("fengsha")
+      IF (ASSOCIATED(EM)) ENVREAL = EM % SCALEFACTOR
+    CASE DEFAULT
+      ! Nothing to do
+  END SELECT
+
 END FUNCTION ENVREAL
 
 
@@ -770,48 +803,12 @@ logical function interpx( fname, vname, pname, &
            buffer(k) = 0.01 * stateIn % zorl(c,r)
          end do
         end do
-        
-      ! fengsha variables
-      case ("CLAYF")
-      ! p2d => stateIn % cclayf
-       if (config % fengsha_yn) then
+      case ("CLAYF","DRAG","SANDF","UTHR")
+        ! -- read in fengsha variables
         call aqm_emis_read("fengsha", vname, buffer, rc=localrc)
         if (aqm_rc_test((localrc /= 0), &
-          msg="Failure to read fengsha for " // vname, &
+          msg="Failure to read fengsha input for " // vname, &
           file=__FILE__, line=__LINE__)) return
-       else
-         buffer(1:lbuf) = 0.
-       end if
-      case ("SANDF")
-      ! p2d => stateIn % csandf
-       if (config % fengsha_yn) then
-        call aqm_emis_read("fengsha", vname, buffer, rc=localrc)
-        if (aqm_rc_test((localrc /= 0), &
-          msg="Failure to read fengsha for " // vname, &
-          file=__FILE__, line=__LINE__)) return
-       else
-         buffer(1:lbuf) = 0.
-       end if
-      case ("DRAG")
-      ! p2d => stateIn % cdrag
-       if (config % fengsha_yn) then
-        call aqm_emis_read("fengsha", vname, buffer, rc=localrc)
-        if (aqm_rc_test((localrc /= 0), &
-          msg="Failure to read fengsha for " // vname, &
-          file=__FILE__, line=__LINE__)) return
-       else
-         buffer(1:lbuf) = 0.
-       end if
-      case ("UTHR")
-      ! p2d => stateIn % cuthr
-       if (config % fengsha_yn) then
-        call aqm_emis_read("fengsha", vname, buffer, rc=localrc)
-        if (aqm_rc_test((localrc /= 0), &
-          msg="Failure to read fengsha for " // vname, &
-          file=__FILE__, line=__LINE__)) return
-       else
-         buffer(1:lbuf) = 0.
-       end if
       case default
     !   return
     end select
@@ -903,6 +900,8 @@ logical function interpx( fname, vname, pname, &
         end do
       case ("PRES")
         p3d => stateIn % prl
+      case ("PRESF")
+        p3d => stateIn % pri
       case ("CFRAC_3D")
         p3d => stateIn % cldfl
       case ("PV")
@@ -933,6 +932,10 @@ logical function interpx( fname, vname, pname, &
           p3d => stateIn % tr(:,:,:,config % species % p_atm_qg)
           set_non_neg = .true.
         end if
+      case ("UWINDA")
+        p3d => stateIn % uwind
+      case ("VWINDA")
+        p3d => stateIn % vwind
       case ("ZF")
         k = 0
         do l = lay0, lay1
@@ -1261,7 +1264,7 @@ LOGICAL FUNCTION WRITE3_REAL4D( FNAME, VNAME, JDATE, JTIME, BUFFER )
       if (aqm_rc_check(localrc, msg="Failure to retrieve model output state", &
         file=__FILE__, line=__LINE__)) return
 
-      do s = 0, config % species % ndiag - 1
+      do s = 0, config % species % ndiag - 2
         stateOut % tr(:,:,:,config % species % p_diag_beg + s) = &
           buffer(:,:,:,p_pm25at + s)
       end do

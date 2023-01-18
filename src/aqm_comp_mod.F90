@@ -6,8 +6,10 @@ module aqm_comp_mod
   use aqm_rc_mod
   use aqm_config_mod
   use aqm_types_mod, only : AQM_MAXSTR
+  use aqm_logger_mod
   use aqm_model_mod
   use aqm_emis_mod
+  use aqm_prod_mod
   use aqm_internal_mod
   use cmaq_model_mod
 
@@ -90,6 +92,12 @@ contains
     call aqm_emis_init(model, rc=localrc)
     if (ESMF_LogFoundError(rcToCheck=localrc, &
       msg="Failed to initialize emissions subsystem", &
+      line=__LINE__, file=__FILE__, rcToReturn=rc)) return  ! bail out
+
+    ! -- initialize products
+    call aqm_prod_init(model, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, &
+      msg="Failed to initialize products", &
       line=__LINE__, file=__FILE__, rcToReturn=rc)) return  ! bail out
 
   end subroutine aqm_comp_create
@@ -197,6 +205,13 @@ contains
         line=__LINE__, file=__FILE__, rcToReturn=rc)
       return  ! bail out
     end if
+
+    ! -- update output products if needed
+    call aqm_prod_update(model, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg="Failed to update products", &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
 
   end subroutine aqm_comp_advance
 
@@ -458,6 +473,12 @@ contains
               return  ! bail
           case ("inst_pres_height_surface")
             call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % psfc, rc=rc)
+            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+              line=__LINE__, &
+              file=__FILE__)) &
+              return  ! bail
+          case ("inst_pres_interface")
+            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % pri, rc=rc)
             if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
               line=__LINE__, &
               file=__FILE__)) &

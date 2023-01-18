@@ -8,11 +8,12 @@ module AQM
   use NUOPC_Model, inheritModel => SetServices
 
   use aqm_comp_mod
+  use aqm_const_mod, only: rad_to_deg
   
   implicit none
 
   ! -- import fields
-  integer, parameter :: importFieldCount = 35
+  integer, parameter :: importFieldCount = 36
   character(len=*), dimension(importFieldCount), parameter :: &
     importFieldNames = (/ &
       "canopy_moisture_storage                  ", &
@@ -30,6 +31,7 @@ module AQM
       "inst_net_sw_flx                          ", &
       "inst_pbl_height                          ", &
       "inst_pres_height_surface                 ", &
+      "inst_pres_interface                      ", &
       "inst_pres_levels                         ", &
       "inst_rainfall_amount                     ", &
       "inst_sensi_heat_flx                      ", &
@@ -61,9 +63,6 @@ module AQM
 
   private
 
-  real(ESMF_KIND_R8), parameter :: pi = 3.1415926535897931
-  real(ESMF_KIND_R8), parameter :: rad2deg = 180./pi
-  
   public SetServices
   
   !-----------------------------------------------------------------------------
@@ -252,7 +251,6 @@ module AQM
     type(ESMF_Array)              :: array
 
     integer                       :: de, item, localrc, localDe, tile
-    integer                       :: comm, localPet
     real(ESMF_KIND_R8), dimension(:,:), pointer :: coord
 
     integer :: dimCount, tileCount, deCount, localDeCount
@@ -265,10 +263,8 @@ module AQM
     real(ESMF_KIND_R8)         :: dts
     type(ESMF_Time)            :: startTime
     type(ESMF_TimeInterval)    :: TimeStep
-    type(ESMF_CoordSys_Flag)   :: aqmGridCoordSys
+    type(ESMF_CoordSys_Flag)   :: coordSys
     character(len=ESMF_MAXSTR) :: msgString, name
-!test:
-    integer :: tlb(2), tub(2)
 
 
     ! begin
@@ -378,12 +374,6 @@ module AQM
         return  ! bail out
       end if
 
-      call ESMF_VMGet(vm, localPet=localPet, rc=rc)
-      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__, &
-        file=__FILE__)) &
-        return  ! bail out
-
       do localDe = 0, localDeCount-1
         de   = localDeToDeMap(localDe+1) + 1
         tile = deToTileMap(de)
@@ -422,7 +412,7 @@ module AQM
         end if
 
         ! -- get local coordinate arrays
-        call ESMF_GridGet(grid, coordSys=aqmGridCoordSys, rc=rc)
+        call ESMF_GridGet(grid, coordSys=coordSys, rc=rc)
         if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
             line=__LINE__, &
             file=__FILE__)) &
@@ -430,21 +420,35 @@ module AQM
          
         do item = 1, 2
           call ESMF_GridGetCoord(grid, coordDim=item, staggerloc=ESMF_STAGGERLOC_CENTER, &
-            totalLBound=tlb, totalUBound=tub, &
             localDE=localDe, farrayPtr=coord, rc=rc)
           if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
             line=__LINE__, &
             file=__FILE__)) &
             return  ! bail out
-          if (aqmGridCoordSys == ESMF_COORDSYS_SPH_RAD) then
-            coord = coord * rad2deg
-          endif
 
-          call aqm_model_domain_coord_set(item, coord, de=localDe, rc=rc)
-
-          if (aqm_rc_check(rc)) then
+          if (coordSys == ESMF_COORDSYS_SPH_RAD) then
+            call aqm_model_domain_coord_set(item, coord, scale=rad_to_deg, de=localDe, rc=rc)
+            if (aqm_rc_check(rc)) then
+              call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, &
+                msg="Failed to set coordinates for air quality model", &
+                line=__LINE__, &
+                file=__FILE__, &
+                rcToReturn=rc)
+              return  ! bail out
+            end if
+          else if (coordSys == ESMF_COORDSYS_SPH_DEG) then
+            call aqm_model_domain_coord_set(item, coord, de=localDe, rc=rc)
+            if (aqm_rc_check(rc)) then
+              call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, &
+                msg="Failed to set coordinates for air quality model", &
+                line=__LINE__, &
+                file=__FILE__, &
+                rcToReturn=rc)
+              return  ! bail out
+            end if
+          else
             call ESMF_LogSetError(ESMF_RC_INTNRL_BAD, &
-              msg="Failed to set coordinates for air quality model", &
+              msg="Unsupported coordinate system - Failed to set coordinates for air quality model", &
               line=__LINE__, &
               file=__FILE__, &
               rcToReturn=rc)
@@ -453,6 +457,7 @@ module AQM
         end do
 
       end do
+
       deallocate(minIndexPDe, maxIndexPDe, minIndexPTile, maxIndexPTile, &
         computationalLBound, computationalUBound, &
         deToTileMap, localDeToDeMap, stat=localrc)
@@ -476,6 +481,13 @@ module AQM
         rcToReturn=rc)
       return  ! bail out
     end if
+
+    ! -- initialize logger
+    call aqm_logger_init(model, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
 
     ! -- create & initialize model component (infrastructure)
     call aqm_comp_create(model, rc=rc)
@@ -552,30 +564,8 @@ module AQM
       file=__FILE__)) &
       return  ! bail out
 
-    ! HERE THE MODEL ADVANCES: currTime -> currTime + timeStep
-    
-    ! Because of the way that the internal Clock was set in SetClock(),
-    ! its timeStep is likely smaller than the parent timeStep. As a consequence
-    ! the time interval covered by a single parent timeStep will result in 
-    ! multiple calls to the ModelAdvance() routine. Every time the currTime
-    ! will come in by one internal timeStep advanced. This goes until the
-    ! stopTime of the internal Clock has been reached.
-    
-    call ESMF_ClockPrint(clock, options="currTime", &
-      preString="------>Advancing AQM from: ", rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-    
-    call ESMF_ClockGet(clock, currTime=currTime, timeStep=timeStep, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-    
-    call ESMF_TimePrint(currTime + timeStep, &
-      preString="---------------------> to: ", rc=rc)
+    ! log current time step
+    call aqm_logger_logstep(model, "AQM", rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &

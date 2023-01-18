@@ -70,7 +70,6 @@ C  2 Feb 16 J.Young: move dust aero speciation table to AERO_DATA
 C-----------------------------------------------------------------------
       use lus_defn
       use aero_data
-      USE ASX_DATA_MOD, ONLY : MET_DATA !uses met data
 
       implicit none 
 
@@ -119,6 +118,9 @@ C of Binkowski & Roselle (2003)
 C Number of soil types: For both WRF and MM5-PX met models, there are 16 types;
 C the first 12 soil types are used and the rest lumped into Other.
       integer, parameter :: nsltyp = 13
+
+C Variables for FENGSHA dust scheme
+      real, save :: dust_alpha    ! tuning parameter for FENGSHA dust emission flux
 
 C Variables for the windblown dust diagnostic file:
       logical, save      :: dustem_diag      ! flag for dustemis diagnostic file
@@ -214,10 +216,10 @@ C External Functions:
          integer, external :: setup_logdev
 
 C Local variables:
-         character( 16 ) :: ctm_dustem_diag = 'CTM_DUSTEM_DIAG' ! env var for
-                                                            ! diagnostic file
-         character( 16 ) :: ctm_erode_agland = 'CTM_ERODE_AGLAND' ! env var to
-                                                       ! use erodible cropland
+         character( 16 ) :: ctm_dustem_diag   = 'CTM_DUSTEM_DIAG' ! env var for
+                                                              ! diagnostic file
+         character( 16 ) :: ctm_erode_agland  = 'CTM_ERODE_AGLAND' ! env var to
+                                                        ! use erodible cropland
          character( 16 ) :: pname = 'DUST_EMIS_INIT'
          character( 16 ) :: vname
          character( 80 ) :: vardesc
@@ -270,6 +272,28 @@ C Allocate emissions array
             call m3warn( pname, jdate, jtime, xmsg )
             success = .false.; return
          end if
+
+         if ( fengsha ) then
+
+C Disable diagnostic output if FENGSHA is used
+         dustem_diag = .false.
+
+C Allocate private arrays
+         allocate( tfb( ncols,nrows ), stat = status )
+
+         if ( status .ne. 0 ) then
+            xmsg = '*** Failure allocating WMAX or TFB'
+            call m3warn( pname, jdate, jtime, xmsg )
+            success = .false.; return
+         end if
+
+C Initialize land use/cover variables
+         if ( .not. lus_init( jdate, jtime ) ) then
+            xmsg = 'Failure initializing land use module'
+            call m3exit( pname, jdate, jtime, xmsg, xstat2 )
+         end if
+
+         else
 
 C Allocate private arrays
          allocate( agland( ncols,nrows ),
@@ -548,6 +572,8 @@ C Get env var for erodible agriculture land fraction
             end do
          end if
 
+         end if    ! dust scheme
+
 C Get transport factor within canopy and 4 land use type percents
          call tfbelow ( jdate, jtime, tfb )
 
@@ -725,8 +751,8 @@ C Parameters:
          real, parameter :: sigb_mb  = sigb * mb   ! = 0.5
          real, parameter :: betab_mb = betab * mb  ! = 45.0
 
-         real, parameter :: alpha = 0.7
-
+         character( 24 ) :: ctm_wbdust_fengsha_alpha = 'CTM_WBDUST_FENGSHA_ALPHA' ! env var to
+                                               ! retrieve FENGSHA scaling factor
          character( 16 ) :: pname = 'GET_DUST_EMIS'
          character( 16 ) :: vname
          character( 96 ) :: xmsg
@@ -765,16 +791,29 @@ C Parameters:
          real       :: lambdav           ! vegetation roughness density - Shao et. al [Aus. J. Soil Res., 1996]
          real       :: flxfac1, flxfac2  ! combined soli type mapping factors
          real       :: hflux, vflux      ! horizontal and vertical dust flux
+         real       :: v2h               ! vertical/horizontal dust flux ratio
+         real       :: wm                ! max adsorb water [%]
          real       :: jday
          integer    :: emap( n_dlcat+1 )
 
-C---FENGSHA FLAG
-
-C         CHARACTER( 20 ), SAVE :: CTM_FENGHSA = 'CTM_FENGSHA    ' ! env var for in-line
-C         LOGICAL,         SAVE :: FENGSHA   ! flag in-lining canopy shading
-
 C---Height for veg elements
          real :: hv( 4 )
+
+C---Vegetation fraction for 4 land types  ! not used
+C from Federal Geographic Data Committee [1997]
+C Note: All other landuse types are mapped into these 4 types.
+!        real :: vegfra( 4 ) =
+!    &           (/ 0.11,     ! shrubland
+!    &              0.17,     ! shrubgrass
+!    &              0.01,     ! barrenland
+!    &              0.30 /)   ! cropland
+
+C---Height for solid elements
+!        real :: hb( 4 ) =
+!    &           (/ 0.01,     ! shrubland
+!    &              0.02,     ! shrubgrass
+!    &              0.005,    ! barrenland
+!    &              0.02 /)   ! cropland
 
 C---Roughness density for solid elements
 C from Darmenova et al. [JGR,2009] and Xi and Sokolik [JGR,2015]
@@ -793,6 +832,7 @@ C---Compound for computational efficiency
 
 C Soil moisture limit: 13 types and 3 variables, which are:
 C    1 - saturation moisture limit, (gravimetric units assumed, Kg/Kg)
+             !!!! This is probably volumetric-- NOAH
 C    2 - fill capacity, and   <- not used
 C    3 - wilting point        <- not used
 C Modified values compatiable with both MM5 & NAM.
@@ -816,6 +856,22 @@ C    &              0.482,  0.367,  0.286,     ! Clay
 C    &              0.482,  0.367,  0.286 /),  ! Other
 C    &           (/ nsltyp,3 /), order = (/ 2,1 /) ) ! fill columns first
 
+C Since only soilml( nsltyp,1 ) is used, set the following:
+!        real :: soilml1( nsltyp ) =
+!    &           (/ 0.395,     ! Sand
+!    &              0.410,     ! Loamy Sand
+!    &              0.435,     ! Sandy Loam
+!    &              0.485,     ! Silt Loam
+!    &              0.476,     ! Silt
+!    &              0.451,     ! Loam
+!    &              0.420,     ! Sandy Clay Loam
+!    &              0.477,     ! Silty Clay Loam
+!    &              0.476,     ! Clay Loam
+!    &              0.426,     ! Sandy Clay
+!    &              0.482,     ! Silty Clay
+!    &              0.482,     ! Clay
+!    &              0.482 /)   ! Other
+
 C converted to gravimetric [kg/kg]
          real :: soilml1( nsltyp ) =
      &           (/ 0.242,     ! Sand
@@ -831,6 +887,39 @@ C converted to gravimetric [kg/kg]
      &              0.357,     ! Silty Clay
      &              0.344,     ! Clay
      &              0.363 /)   ! Other
+
+!! FROM NCAR LSM Group 17 Apr 2007   "volumetric"
+!! ALSO in Spyrou, et al. [JGR,2010]
+!        real :: soilml1( nsltyp ) =
+!    &           (/ 0.339,     ! Sand
+!    &              0.421,     ! Loamy Sand
+!    &              0.434,     ! Sandy Loam
+!    &              0.476,     ! Silt Loam
+!    &              0.476,     ! Silt
+!    &              0.439,     ! Loam
+!    &              0.404,     ! Sandy Clay Loam
+!    &              0.464,     ! Silty Clay Loam
+!    &              0.465,     ! Clay Loam
+!    &              0.406,     ! Sandy Clay
+!    &              0.468,     ! Silty Clay
+!    &              0.468,     ! Clay
+!    &              0.482 /)   ! Other
+
+C convert to gravimetric [kg/kg]
+!        real :: soilml1( nsltyp ) =
+!    &           (/ 0.208,     ! Sand
+!    &              0.264,     ! Loamy Sand
+!    &              0.286,     ! Sandy Loam
+!    &              0.344,     ! Silt Loam
+!    &              0.350,     ! Silt
+!    &              0.299,     ! Loam
+!    &              0.266,     ! Sandy Clay Loam
+!    &              0.341,     ! Silty Clay Loam
+!    &              0.324,     ! Clay Loam
+!    &              0.271,     ! Sandy Clay
+!    &              0.347,     ! Silty Clay
+!    &              0.334,     ! Clay
+!    &              0.363 /)   ! Other
 
 C---Soil texture: the amount of
 C   1: Coarse sand, 2: Fine-medium sand, 3: Silt, 4: Clay
@@ -859,7 +948,6 @@ C   Chatenet et al. [Sedimentology,1996] and Menut et al. [JGR,2013]
      &              125.0E-6,     ! Silt
      &                2.0E-6 /)   ! Clay
 
-
          interface
             subroutine tfabove ( tfa )
                real,    intent( out ) :: tfa( :,: )
@@ -874,30 +962,94 @@ C   Chatenet et al. [Sedimentology,1996] and Menut et al. [JGR,2013]
 C-----------------------------------------------------------------------
 
          if ( firstime ) then
-
-!            FENGHSA = ENVYN( 'CTM_FENGSHA',
-!     &                   'Flag for fengsha dust emission module',
-!     &                   .FALSE., IOSX )
-!            print *,'Hello From Dust Module'
-            IF ( FENGSHA ) THEN
-               XMSG = 'Using Fengsha dust emission module '
-               CALL M3MSG2( XMSG )
-            END IF
-
             firstime = .false.
-            allocate ( ustr( ncols,nrows,n_dlcat+1 ),
-     &                  qam( ncols,nrows,n_dlcat+1 ),
-     &                 fruf( ncols,nrows,n_dlcat+1 ),
-     &                  kvh( ncols,nrows,n_dlcat+1 ),
-     &                 elus( ncols,nrows,n_dlcat+1 ), stat = status )
-            if ( status .ne. 0 ) then
-               xmsg = '*** Failure allocating USTR, QAM, FRUF, KVH, or ELUS'
-               call m3exit( pname, jdate, jtime, xmsg, xstat1 )
+            if ( fengsha ) then
+              dust_alpha = 0.05    ! default
+              dust_alpha = envreal( ctm_wbdust_fengsha_alpha,
+     &          'Emission global scaling factor for FENGSHA dust scheme',
+     &          dust_alpha, status )
+              if ( status .ne. 0 ) then
+                 xmsg = '*** Failure retrieving FENGSHA scaling factor'
+                 call m3exit( pname, jdate, jtime, xmsg, xstat1 )
+              end if
+              write(xmsg,'("Using FENGSHA alpha = ",g12.5)') dust_alpha
+              call m3msg2 ( xmsg )
+            else
+              allocate ( ustr( ncols,nrows,n_dlcat+1 ),
+     &                    qam( ncols,nrows,n_dlcat+1 ),
+     &                   fruf( ncols,nrows,n_dlcat+1 ),
+     &                    kvh( ncols,nrows,n_dlcat+1 ),
+     &                   elus( ncols,nrows,n_dlcat+1 ), stat = status )
+              if ( status .ne. 0 ) then
+                 xmsg = '*** Failure allocating USTR, QAM, FRUF, KVH, or ELUS'
+                 call m3exit( pname, jdate, jtime, xmsg, xstat1 )
+              end if
             end if
          end if
 
 C---Calculate transport factor above the canopy
          call tfabove ( tfa )
+
+C---Select dust scheme
+         if ( fengsha ) then
+
+         do r = 1, my_nrows
+         do c = 1, my_ncols
+
+            dust_em( c,r ) = 0.0
+            soimt( c,r )   = 0.0
+            fmoit( c,r )   = 0.0
+
+            if ( (Grid_Data%lwmask( c,r ) .gt. 0.0) .and.
+     &        (Met_Data%rn( c,r ) + Met_Data%rc( c,r ) .le. 0.0254) .and. ! rn, rc = [cm]
+     &        (Met_Data%snocov( c,r ) .lt. 0.001) .and.
+     &        (Met_Data%drag( c,r ) .gt. 0.0) ) then ! less than 0.1% snow coverage
+
+C Calculate maximum amount of the adsorbed water
+C    w` = 0.0014(%clay)**2 + 0.17(%clay) - w` in %
+C    Fecan et al. [1999,Annales Geophys.,17,144-157]
+               wm = ( 14.0 * Met_Data%clayf( c,r ) + 17.0 )
+     &              * Met_Data%clayf( c,r )
+
+C Change soil moisture units from volumetric (m**3/m**3) to gravimetric (Kg/Kg)
+               soimt( c,r ) = Met_Data%soim1( c,r ) ! <- [m**3/m**3]
+     &                      * 1000.0 / ( 2650.0 * ( 0.511 + 0.126
+     &                                          * Met_Data%sandf( c,r ) ) )
+
+C---Soil moisture effect on U*t
+               if ( soimt( c,r ) .le. 0.01 * wm ) then   ! wm in [%]
+                  fmoit( c,r ) = 1.0
+               else
+                  fmoit( c,r ) = sqrt( 1.0 + 1.21 * ( 100.0 * soimt( c,r ) - wm ) ** 0.68 )
+               end if
+
+C Calculate Vertical to Horizontal Mass Flux Ratio
+C -- This is based on MB95
+               if ( Met_Data%clayf(c,r) < 0.2) then
+                  v2h = 10. ** (13.4 * Met_Data%clayf( c,r ) - 6.0)
+               else
+                  v2h = 4.0e-4
+               endif
+C Horizontal Flux
+               hflux = dust_hflux_fengsha( Met_Data%USTAR( c,r ),
+     &                                     fmoit( c,r ),
+     &                                     Met_Data%drag( c,r ),
+     &                                     Met_Data%uthr( c,r ),
+     &                                     1.0, ! ssm = 1
+     &                                     Met_Data%dens1( c,r ) )
+
+               vflux = v2h * hflux         !  [g/m**2/s]
+
+               rlay1hgt = rjacm ( c,r ) / cellhgt
+
+               dust_em( c,r ) = dust_alpha * vflux * rlay1hgt * tfa(c,r) * tfb(c,r)
+
+           end if   ! if rain & land & snow & drag
+
+         end do   ! c
+         end do   ! r
+
+         else     ! default dust scheme
 
 C---Get Julian day number in year
          jday = float( mod( jdate,1000 ) )
@@ -975,60 +1127,9 @@ C                           5. desert type or ag landuse
 C                           6. erodible landuse
 C                           7. friction velocity > threshold
 
-!-----------------------------------------------------------
-!---------------------- FENGSHA Option ---------------------
-!-----------------------------------------------------------
-
-             if ( ( FENGSHA.eq. .true.) .and. ( Grid_Data%lwmask( c,r ) .gt. 0.0 ) .and.
-     &            ( Met_Data%rn( c,r ) + Met_Data%rc( c,r ) .le. 0.0254 ) .and. ! rn, rc = [cm]
-     &            ( Met_Data%snocov( c,r ) .lt. 0.001 ) .and. 
-     &            ( Met_Data%drag(c,r) .gt. 0.0 ) ) then ! less than 0.1% snow coverage
-!                print *,' Hello from Fengsha'
-C Calculate maximum amount of the water absorbed
-C    w` = 0.0014(%clay)**2 + 0.17(%clay) - w` in %
-C     Fecan et al. [1999,Annales Geophys.,17,144-157]
-               wmax  ( c,r ) = (100.*Met_Data%clayf( c,r )) *
-     &                         (100.*Met_Data%clayf( c,r )) *
-     &                         .0014d0 + 0.17d0 * (100.*Met_Data%clayf( c,r ))
-               
-               soimt(  c,r ) = dust_volumetric_to_gravimetric( Met_Data%soim1( c,r ), Met_Data%clayf( c,r ), Met_Data%sandf( c,r ))
-
-C---Soil moisture effect on U*t
-               if ( soimt( c,r ) .le. 0.01 * wmax( c,r ) ) then   ! wmax in [%]
-                  fmoit( c,r ) = 1.0
-               else
-                  fmoit( c,r ) = sqrt( 1.0 + 1.2 * ( 100.0 * soimt( c,r ) - wmax( c,r ) ) ** 0.68 )
-               end if
-
-C Calculate Vertical to Horizontal Mass Flux Ratio
-C -- This is based on MB95
-               if ( Met_Data%clayf(c,r) < 0.2) then
-                  kvh( c,r,1 ) = 10. ** (0.134 * (Met_Data%clayf( c,r )*100.) - 6.0)
-               else
-                  kvh(c,r,1) = 4.0e-4
-               endif
-C Horizontal Flux
-               hflux = dust_hflux_fengsha( Met_Data%USTAR( c,r ),
-     &                                fmoit( c,r),
-     &                                Met_Data%drag( c,r ),
-     &                                Met_Data%uthr( c,r ),
-     &                                1.0, ! ssm = 1
-     &                                Met_Data%dens1( c,r ) )
-               vflux = hflux * kvh( c,r,1 )                    ! [g/m**2/s]
-
-               qam (c,r,1) = qam(c,r,1) + vflux * rlay1hgt * alpha
-
-               dust_em( c,r ) = dust_em( c,r ) + qam(c,r,1) * tfa(c,r) * tfb(c,r)
-
-            
-!--------------------------------------------------------------------
-!--------------------- END OF FENGSHA -------------------------------
-!--------------------------------------------------------------------
-
-             else if ( ( Grid_Data%lwmask( c,r ) .gt. 0.0 ) .and.
-     &              ( Met_Data%rn( c,r ) + Met_Data%rc( c,r ) .le. 0.0254 ) .and. ! rn, rc = [cm]
-     &              ( Met_Data%snocov( c,r ) .lt. 0.001 ) ) then ! less than 0.1% snow coverage
-     
+            if ( ( Grid_Data%lwmask( c,r ) .gt. 0.0 ) .and.
+     &           ( Met_Data%rn( c,r ) + Met_Data%rc( c,r ) .le. 0.0254 ) .and. ! rn, rc = [cm]
+     &           ( Met_Data%snocov( c,r ) .lt. 0.001 ) ) then ! less than 0.1% snow coverage
 C---Dust possiblity 1,2,3
 
                j = Grid_Data%sltyp( c,r )
@@ -1203,6 +1304,8 @@ C --------- ###### End Main Loop ##### ---------
      &                                          out of total cells:',
      &                                          dryhit, (c-1)*(r-1)
 #endif
+
+         end if  ! dust scheme
 
          do r = 1, my_nrows
          do c = 1, my_ncols
@@ -1444,64 +1547,14 @@ C---Horiz. Flux from Owen (1964)
 
          end function dust_hflux
 
-C==============================================================================
-        function dust_volumetric_to_gravimetric(vsoilm,clay,sand)
-     &       result ( gwc )
-C usage: H = dust_volumetric_to_gravimetric(vsoilm(c,r),
-C                           clay(c,r),
-C                           sand(c,r))
-
-            implicit none
-            ! INPUTS
-            real, intent(in) :: vsoilm ! volumetric soil moisture
-            real, intent(in) :: clay   ! clay fraction (0 -> 1)
-            real, intent(in) :: sand   ! sand fraction (0 -> 1)
-            ! OUTPUTS
-            real :: H
-            ! LOCAL
-            real :: gwc               ! gravimetric soil moisture
-            real :: bulk_dens_dry     ! bulk density
-            real :: limit             ! fecan soil moisture limit
-            real :: wsat              ! saturated volumentric water content
-            real :: mpot              ! saturated soil matric potential
-
-            ! parameters
-            real*8, parameter   :: bulk_dens = 2650.0d0
-            real*8, parameter   :: h20_dens = 1000.0d0
-
-            ! saturated soil matric potential [ mm H2O ]
-            mpot = 10.d0 * (10.0d0 ** (1.88d0 - 0.0131d0 * sand  ))
-
-            ! saturated volumentric water content [ m3 m-3 ]
-            wsat = 0.489d0 - 0.00126d0 * sand
-
-            ! Bulk density of dry surface soil  [kg m-3]
-            bulk_dens_dry = bulk_dens * ( 1.0d0 - wsat)
-
-        ! Gravimetric water content [ kg kg-1]
-            gwc = VSOILM * h20_dens / bulk_dens_dry
-        if (gwc.ge.1.0e10) then
-        gwc = 0.d0
-            endif
-
-          end function dust_volumetric_to_gravimetric
-
-C=======================================================================
          function dust_hflux_fengsha( ustar, fmoit, drag, uthr, ssm, dens )
      &      result( hflux )
-
-C                         hflux = dust_hflux( Met_Data%ustar( c,r),
-C     &                                      fmoit( c,r ),
-C     &                                      drag( c,r ),
-C     &                                      uthr( c,r ),
-C     &                                      ssm( c,r ),
-C     &                                      Met_Data%dens1( c,r ) )
 
             implicit none
 
             include SUBST_CONST   ! for grav
 
-            real,    intent( in ) :: ustar, fmoit, drag, uthr, ssm, dens
+            real, intent( in ) :: ustar, fmoit, drag, uthr, ssm, dens
             real hflux
             real rustar
             real u_sum
@@ -1518,10 +1571,8 @@ C     &                                      Met_Data%dens1( c,r ) )
             u_thresh = uthr * fmoit
             u_sum = rustar * u_thresh
 
-
             hflux = max(0., rustar - u_thresh) * u_sum * u_sum * fac * ssm
 
          end function dust_hflux_fengsha
 
       end module dust_emis
-

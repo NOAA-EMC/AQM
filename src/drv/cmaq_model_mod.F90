@@ -74,7 +74,12 @@ contains
 
     ! -- initialize emissions
     call cmaq_emis_init(rc=localrc)
-    if (aqm_rc_check(localrc, msg="Failed to initialize CMAQ", &
+    if (aqm_rc_check(localrc, msg="Failed to initialize emissions", &
+      file=__FILE__, line=__LINE__, rc=rc)) return
+
+    ! -- initialize products
+    call cmaq_prod_init(rc=localrc)
+    if (aqm_rc_check(localrc, msg="Failed to initialize products", &
       file=__FILE__, line=__LINE__, rc=rc)) return
 
   end subroutine cmaq_model_init
@@ -129,6 +134,13 @@ contains
     ! -- export updated species mixing ratios
     call cmaq_export(stateOut % tr, stateIn % prl, stateIn % temp, config % species % p_aqm_beg)
     if (config % verbose) call cmaq_conc_log(trim(config % name) // ": export")
+
+    if (config % ctm_pmdiag) call cmaq_pm_export(stateOut % tr, config % species % p_diag_beg)
+
+    ! -- update products
+    call cmaq_prod_update(stateOut % tr, config % species % p_diag_beg, config % ctm_pmdiag, rc=localrc)
+    if (aqm_rc_check(localrc, msg="Failed to update products", &
+      file=__FILE__, line=__LINE__, rc=rc)) return
 
   end subroutine cmaq_model_advance
 

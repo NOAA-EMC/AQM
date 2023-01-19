@@ -821,7 +821,7 @@ logical function interpx( fname, vname, pname, &
            k = k + 1
            buffer(k) = 0.01 * stateIn % zorl(c,r)
          end do
-        end do        
+        end do
       case ("CLAYF","DRAG","SANDF","UTHR")
         ! -- fengsha variables
         call aqm_emis_read("fengsha", vname, buffer, rc=localrc)
@@ -838,7 +838,6 @@ logical function interpx( fname, vname, pname, &
         else
           buffer(1:lbuf) = 0.
         end if
-
       case default
     !   return
     end select

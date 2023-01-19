@@ -165,8 +165,6 @@ contains
 
     CALL CHEM ( CGRID, JDATE, JTIME, TSTEP )
 
-    CALL CLDPROC ( CGRID, JDATE, JTIME, TSTEP )
-
     if (run_aero) then
       CALL AERO ( CGRID, JDATE, JTIME, TSTEP )
     end if

@@ -679,8 +679,6 @@ logical function interpx( fname, vname, pname, &
       select case (trim(vname))
         case ('HT')
           p2d => stateIn % ht
-	case ('AREA')
-	  p2d => stateIN % area
         case ('LAT')
           p2d => lat
         case ('LON')

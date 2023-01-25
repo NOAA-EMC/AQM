@@ -65,19 +65,19 @@ C     USE PT3D_EMIS_DEFN
       CHARACTER( 120 ) :: XMSG = ' '
 
 C Arguments:
-      REAL*8, INTENT( IN )    :: DTSEC                ! model time step in seconds
+      REAL, INTENT( IN )    :: DTSEC                ! model time step in seconds
 C--- SEDDY is strictly an input, but it gets modified here
-      REAL*8, INTENT( INOUT ) :: SEDDY    ( :,:,: )   ! flipped EDDYV
-      REAL*8, INTENT( INOUT ) :: DDEP     ( :,:,: )   ! ddep accumulator
-      REAL*8, INTENT( INOUT ) :: ICMP     ( :,:,: )   ! component flux accumlator 
-      REAL*8, INTENT( INOUT ), OPTIONAL :: DDEPJ    ( :,:,:,: ) ! ddep for mosaic
-      REAL*8, INTENT( INOUT ), OPTIONAL :: DDEPJ_FST( :,:,:,: ) ! ddep for stomtal/cuticular pathway
+      REAL, INTENT( INOUT ) :: SEDDY    ( :,:,: )   ! flipped EDDYV
+      REAL, INTENT( INOUT ) :: DDEP     ( :,:,: )   ! ddep accumulator
+      REAL, INTENT( INOUT ) :: ICMP     ( :,:,: )   ! component flux accumlator 
+      REAL, INTENT( INOUT ), OPTIONAL :: DDEPJ    ( :,:,:,: ) ! ddep for mosaic
+      REAL, INTENT( INOUT ), OPTIONAL :: DDEPJ_FST( :,:,:,: ) ! ddep for stomtal/cuticular pathway
       REAL, INTENT( INOUT ) :: CNGRD    ( :,:,:,: ) ! cgrid replacement
 
 C Parameters:
 
 C explicit, THETA = 0, implicit, THETA = 1     ! Crank-Nicholson: THETA = 0.5
-      REAL*8, PARAMETER :: THETA = 0.5,
+      REAL, PARAMETER :: THETA = 0.5,
      &                   THBAR = 1.0 - THETA
 
 C External Functions: None
@@ -88,26 +88,26 @@ C Local Variables:
 
       LOGICAL, SAVE :: FIRSTIME = .TRUE.
 
-      REAL*8, ALLOCATABLE, SAVE :: DD_FAC     ( : )   ! combined subexpression
-      REAL*8, ALLOCATABLE, SAVE :: DDBF       ( : )   ! secondary DDEP
-      REAL*8, ALLOCATABLE, SAVE :: CMPF       ( : )   ! intermediate CMP
-      REAL*8, ALLOCATABLE, SAVE :: CONC       ( :,: ) ! secondary CGRID expression
-      REAL*8, ALLOCATABLE, SAVE :: EMIS       ( :,: ) ! emissions subexpression
-      REAL*8        DTDENS1                       ! DT * layer 1 air density
+      REAL, ALLOCATABLE, SAVE :: DD_FAC     ( : )   ! combined subexpression
+      REAL, ALLOCATABLE, SAVE :: DDBF       ( : )   ! secondary DDEP
+      REAL, ALLOCATABLE, SAVE :: CMPF       ( : )   ! intermediate CMP
+      REAL, ALLOCATABLE, SAVE :: CONC       ( :,: ) ! secondary CGRID expression
+      REAL, ALLOCATABLE, SAVE :: EMIS       ( :,: ) ! emissions subexpression
+      REAL        DTDENS1                       ! DT * layer 1 air density
 
 C ACM Local Variables
-      REAL*8        DFACP, DFACQ
-      REAL*8        RP, RQ
-      REAL*8, ALLOCATABLE, SAVE :: DEPVCR     ( : )   ! dep vel in one cell
-      REAL*8, ALLOCATABLE, SAVE :: EFAC1 ( : )
-      REAL*8, ALLOCATABLE, SAVE :: EFAC2 ( : )
-      REAL*8, ALLOCATABLE, SAVE :: POL   ( : )    ! prodn/lossrate = PLDV/DEPV
-      REAL*8        PLDV_HONO                     ! PLDV for HONO
-      REAL*8        DEPV_NO2                      ! dep vel of NO2
-      REAL*8        DEPV_HNO3                     ! dep vel of HNO3
+      REAL        DFACP, DFACQ
+      REAL        RP, RQ
+      REAL, ALLOCATABLE, SAVE :: DEPVCR     ( : )   ! dep vel in one cell
+      REAL, ALLOCATABLE, SAVE :: EFAC1 ( : )
+      REAL, ALLOCATABLE, SAVE :: EFAC2 ( : )
+      REAL, ALLOCATABLE, SAVE :: POL   ( : )    ! prodn/lossrate = PLDV/DEPV
+      REAL        PLDV_HONO                     ! PLDV for HONO
+      REAL        DEPV_NO2                      ! dep vel of NO2
+      REAL        DEPV_HNO3                     ! dep vel of HNO3
       INTEGER, SAVE :: NO2_HIT, HONO_HIT, HNO3_HIT, NO2_MAP, HNO3_MAP
       INTEGER, SAVE :: NH3_HIT
-      REAL*8        DTS
+      REAL        DTS
 
       INTEGER, SAVE :: LOGDEV
       INTEGER     ASTAT
@@ -222,11 +222,7 @@ C is accounted as depositional loss; calculate increased deposition loss
                IF ( V .EQ. HNO3_HIT ) THEN
                   S = HNO3_MAP
                   CONC( S,1 ) = POL( V ) + ( CONC( S,1 ) - POL( V ) ) * EFAC1( V )
-                  IF (CONC( NO2_MAP,1 ) .NE. 0) THEN
-                      DEPV_HNO3 = DEPVCR( V ) + PLDV_HONO / CONC( NO2_MAP,1 )
-                  ELSE
-                      DEPV_HNO3 = DEPVCR( V )
-                  END IF
+                  DEPV_HNO3 = DEPVCR( V ) + PLDV_HONO / CONC( NO2_MAP,1 )
                   DD_FAC( V ) = DTDENS1 * DD_CONV( V ) * DEPV_HNO3
                   DDBF( V ) = DDBF( V ) + THETA * DD_FAC( V ) * CONC( S,1 )
 
@@ -237,11 +233,7 @@ C to the regular deposition velocity (increased dep. vel.).  This will
 C reduce the NO2 conc. in the atmosphere without affecting the depositional loss.
                ELSE IF ( V .EQ. NO2_HIT ) THEN
                   S = NO2_MAP
-                  IF (CONC( S,1 ) .NE. 0) THEN
-                      DEPV_NO2 = DEPVCR( V ) + 2.0 * PLDV_HONO / CONC( S,1 )
-                  ELSE
-                      DEPV_NO2 = DEPVCR( V )
-                  END IF
+                  DEPV_NO2 = DEPVCR( V ) + 2.0 * PLDV_HONO / CONC( S,1 )
                   EFAC1 ( V ) = EXP( -DEPV_NO2 * RP )
                   EFAC2 ( V ) = EXP( -DEPV_NO2 * RQ )
                   POL   ( V ) = PLDV( V,C,R ) / DEPV_NO2

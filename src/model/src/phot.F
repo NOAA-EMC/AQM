@@ -1026,12 +1026,12 @@ C In-line canopy shading option? (default = false)
                             !conditions for grid cells that do NOT have
                             !a continuous forest canopy
                             IF ( Met_Data%LAIE( COL,ROW ) .LT. 0.1
-     &                         .OR. Met_Data%FCH( COL,ROW ) .LT. 0.5
+     &                         .OR. Met_Data%FCH( COL,ROW ) .LT. 0.5 ) THEN
 !     &                         .OR. Met_Data%FCH( COL,ROW ) .LT. 10.0
-     &                         .OR. MAX(0.0, 1.0 - Met_Data%FRT( COL,ROW)) .GT. 0.5
-     &                         .OR. Met_Data%POPU( COL,ROW ) .GT.10000.0
-     &                         .OR. EXP(-0.5*Met_Data%LAIE( COL,ROW)*Met_Data%CLU( COL,ROW )) .GT. 0.45
-     &                                               .AND. Met_Data%FCH(COL,ROW ) .LT. 18.0 ) THEN
+!     &                         .OR. MAX(0.0, 1.0 - Met_Data%FRT( COL,ROW)) .GT. 0.5
+!     &                         .OR. Met_Data%POPU( COL,ROW ) .GT.10000.0
+!     &                         .OR. EXP(-0.5*Met_Data%LAIE( COL,ROW)*Met_Data%CLU( COL,ROW )) .GT. 0.45
+!     &                                               .AND. Met_Data%FCH(COL,ROW ) .LT. 18.0 ) THEN
                                 RJ( COL,ROW, 1, : ) = RJ( COL,ROW, 1, :)
                             ELSE ! There is a contiguous forest canopy,apply correctoin
                             !RJ_CORR effectly represents the beam attenuation and reduces photolysis.

@@ -86,15 +86,29 @@ contains
         if (associated(aqm_model(de) % config % species)) then
           deallocate(aqm_model(de) % config % species, stat=localrc)
           if (aqm_rc_test((localrc /= 0), &
-            msg="Failure to allocate model species memory", &
+            msg="Failure to deallocate model species memory", &
             file=__FILE__, line=__LINE__, rc=rc)) return
           nullify(aqm_model(de) % config % species)
         end if
         deallocate(aqm_model(de) % config, stat=localrc)
         if (aqm_rc_test((localrc /= 0), &
-          msg="Failure to allocate model config memory", &
+          msg="Failure to deallocate model config memory", &
           file=__FILE__, line=__LINE__, rc=rc)) return
         nullify(aqm_model(de) % config)
+        if (associated(aqm_model(de) % domain % lon)) then
+          deallocate(aqm_model(de) % domain % lon, stat=localrc)
+          if (aqm_rc_test((localrc /= 0), &
+            msg="Failure to deallocate model domain longitudes memory", &
+            file=__FILE__, line=__LINE__, rc=rc)) return
+          nullify(aqm_model(de) % domain % lon)
+        end if
+        if (associated(aqm_model(de) % domain % lat)) then
+          deallocate(aqm_model(de) % domain % lat, stat=localrc)
+          if (aqm_rc_test((localrc /= 0), &
+            msg="Failure to deallocate model domain latitudes memory", &
+            file=__FILE__, line=__LINE__, rc=rc)) return
+          nullify(aqm_model(de) % domain % lat)
+        end if
       end if
       deallocate(aqm_model, stat=localrc)
       if (aqm_rc_test((localrc /= 0), msg="Failure to allocate model memory", &
@@ -195,15 +209,17 @@ contains
   end subroutine aqm_model_domain_set
 
 
-  subroutine aqm_model_domain_coord_set(coordDim, coord, de, rc)
+  subroutine aqm_model_domain_coord_set(coordDim, coord, scale, de, rc)
 
-    integer,            intent(in)  :: coordDim
-    real(AQM_KIND_R8), pointer     :: coord(:,:)
-    integer, optional,  intent(in)  :: de
-    integer, optional,  intent(out) :: rc
+    integer,                     intent(in)  :: coordDim
+    real(AQM_KIND_R8),           intent(in)  :: coord(:,:)
+    real(AQM_KIND_R8), optional, intent(in)  :: scale
+    integer,           optional, intent(in)  :: de
+    integer,           optional, intent(out) :: rc
 
     !-- local variables
-    integer                        :: deCount, localrc
+    integer                       :: deCount, localrc
+    real(AQM_KIND_R8)             :: fscale
     type(aqm_model_type), pointer :: model
 
     !-- begin
@@ -215,11 +231,20 @@ contains
 
     if (deCount < 1) return
 
+    fscale = 1._AQM_KIND_R8
+    if (present(scale)) fscale = scale
+
     select case (coordDim)
       case(1)
-        model % domain % lon => coord
+        allocate(model % domain % lon, source=fscale * coord, stat=localrc)
+        if (aqm_rc_test((localrc /= 0), &
+          msg="Failure to allocate model config memory", &
+          file=__FILE__, line=__LINE__, rc=rc)) return
       case(2)
-        model % domain % lat => coord
+        allocate(model % domain % lat, source=fscale * coord, stat=localrc)
+        if (aqm_rc_test((localrc /= 0), &
+          msg="Failure to allocate model config memory", &
+          file=__FILE__, line=__LINE__, rc=rc)) return
       case default
         call aqm_rc_set(AQM_RC_FAILURE, &
           msg="coordDim can only be 1 or 2.", &

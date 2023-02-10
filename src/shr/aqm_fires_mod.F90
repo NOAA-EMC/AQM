@@ -25,6 +25,7 @@ contains
     integer :: c, r, l
     integer :: lev0, lev1
     real    :: Hp, pblh, th0, th1, dz
+    real    :: tfrac, w
     real(AQM_KIND_R8) :: hbl
     real(AQM_KIND_R8),    pointer :: phi(:)
     type(aqm_state_type), pointer :: state
@@ -44,15 +45,22 @@ contains
     ! -- get model info
     call aqm_model_get(stateIn=state, rc=localrc)
     if (aqm_rc_check(localrc, msg="Failed to retrieve model state", &
-      file=__FILE__, line=__LINE__)) return
+      file=__FILE__, line=__LINE__, rc=rc)) return
 
     ! -- get domain info
     call aqm_model_domain_get(ids=is, ide=ie, jds=js, jde=je, nl=nl, rc=localrc)
     if (aqm_rc_check(localrc, msg="Failed to retrieve grid coordinates", &
-      file=__FILE__, line=__LINE__)) return
+      file=__FILE__, line=__LINE__, rc=rc)) return
 
     nx = ie - is + 1
     ny = je - js + 1
+
+    ! -- compute layer empirical weights
+    if (aqm_rc_test((em % topfraction > 1.0), &
+      msg="Plume top fraction must be between 0.0 and 1.0", &
+      file=__FILE__, line=__LINE__, rc=rc)) return
+
+    w = min( 1.0 - em % topfraction, 1.0 )
 
     ! -- select free-troposphere vertical level
     k = 0
@@ -64,11 +72,11 @@ contains
         lev0 = minloc(phi, 1, mask=phi >= hbl)
         if (aqm_rc_test((phi(lev0) < hbl), &
           msg="Could not find first free-troposphere layer", &
-          file=__FILE__, line=__LINE__)) return
+          file=__FILE__, line=__LINE__,rc=rc)) return
         lev1 = lev0 + 1
         if (aqm_rc_test((lev1 > nl), &
           msg="Not enough vertical levels", &
-          file=__FILE__, line=__LINE__)) return
+          file=__FILE__, line=__LINE__,rc=rc)) return
 
         dz   = onebg * ( phi(lev1) - phi(lev0) )
         th0  = state % temp(c,r,lev0) * (p_ref / state % prl(c,r,lev0)) ** rcp
@@ -84,10 +92,13 @@ contains
          
         if (lev1 > lev0) then
           dz = 0.0
-          do l = lev0, lev1
-            profile(c,r,l) = ( phi(l) - dz ) / phi(lev1)
+          tfrac = 0.0
+          do l = lev0, lev1-1
+            profile(c,r,l) = w * ( phi(l) - dz ) / phi(lev1)
             dz = phi(l)
+            tfrac = tfrac + profile(c,r,l)
           end do
+          profile(c,r,lev1) = 1.0 - tfrac
         else
           profile(c,r,lev0) = 1.0
         end if

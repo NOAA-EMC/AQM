@@ -60,9 +60,19 @@ canopy_species::
 ::
 
 #
-# Run aerosol module
+# Run options:
+#
+# - enable aerosol module
 #
 run_aerosol: true
+#
+# - enable wet deposition processes in resolved-scale clouds
+#
+run_rescld: true
+#
+# - compute aerosol optical properties using Mie theory (default: false)
+#
+mie_optics: false
 
 #
 # Microphysics scheme used by coupled atmospheric model
@@ -81,19 +91,13 @@ ctm_aod: true
 ctm_pmdiag: true
 
 #
-# Fengsha Dust Emission Option
+# Output verbosity
 #
-fengsha_yn: true
-
-fengsha_format: netcdf
-
-fengsha_file: /scratch1/RDARCH/rda-arl-gpu/Barry.Baker/emissions/nexus/FENGSHA/FENGSHA_FILES.nc
-
-fengsha_species::
-    clayf      1.00000   clayf    1
-    sandf      1.00000   sandf    1
-    drag       1.00000   drag     1
-    uthr       1.00000   uthr     1
+# Set standard output verbosity level. Options are:
+# - all         (enable output from all PETs - default)
+# - maintask    (enable output only from main PET)
+# - none        (disable output)
+ctm_stdout: all
 
 #
 #  Input emissions
@@ -104,7 +108,7 @@ fengsha_species::
 emission_sources: myemis
 
 #
-#  Emission type: anthropogenic, biogenic, gbbepx, canopy
+#  Emission type: anthropogenic, biogenic, gbbepx, fengsha, canopy
 #
 myemis_type: anthropogenic
 
@@ -149,6 +153,11 @@ myemis_frequency: hourly
 # supported schemes are: sofiev, none
 #
 #myemis_plume_rise: sofiev
+#
+# Optionally, provide an empirical weight for the top plume layer.
+# If this option is absent, or a value < 0.0 is provided, fire
+# emissions will be distributed linearly among the plume layers
+#myemis_plume_top_fraction: 0.8
 
 # list of emission species
 # input emissions can be manipulated by adding multiple
@@ -235,3 +244,22 @@ myemis_species::
 ::
 
 
+#
+# Fengsha Dust Emission Option
+#
+myemis_type: fengsha
+
+myemis_format: netcdf
+
+myemis_frequency: static
+
+myemis_file: /scratch1/RDARCH/rda-arl-gpu/Barry.Baker/emissions/nexus/FENGSHA/FENGSHA_FILES.nc
+
+myemis_alpha: 0.05
+
+myemis_species::
+    clayf      1.00000   clayf    1
+    sandf      1.00000   sandf    1
+    drag       1.00000   drag     1
+    uthr       1.00000   uthr     1
+::

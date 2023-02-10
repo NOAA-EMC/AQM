@@ -87,6 +87,7 @@ set(VDIFF "${CCTM_ROOT}/vdiff/acm2")
 set(localCCTM "src/model/src")
 list(APPEND aqm_CCTM_files
 	${AERO}/AERO_DATA.F
+	${AERO}/aero_depv.F
 	${AERO}/aero_driver.F
 	${AERO}/AERO_EMIS.F
 	${AERO}/AEROMET_DATA.F
@@ -243,5 +244,4 @@ list(APPEND aqm_CCTM_files
 	${localCCTM}/phot.F
 	${localCCTM}/centralized_io_util_module.F
 	${localCCTM}/AERO_PHOTDATA.F
-	${localCCTM}/aero_depv.F
 )

@@ -436,114 +436,114 @@ C *** array indices hardcoded to match SUBROUTINE AERO_DEPV
      &                      VDSCOR = 9   ! coarse mode surface area
 
 C modal Knudsen numbers
-      REAL KNATK   ! Aitken mode Knudsen number
-      REAL KNACC   ! accumulation "
-      REAL KNCOR   ! coarse mode
+      REAL*8 KNATK   ! Aitken mode Knudsen number
+      REAL*8 KNACC   ! accumulation "
+      REAL*8 KNCOR   ! coarse mode
 
 C modal particle diffusivities for number, 2nd, and 3rd moment, or mass:
-      REAL DCHAT0N, DCHAT0A, DCHAT0C
-      REAL DCHAT2N, DCHAT2A, DCHAT2C
-      REAL DCHAT3N, DCHAT3A, DCHAT3C
+      REAL*8 DCHAT0N, DCHAT0A, DCHAT0C
+      REAL*8 DCHAT2N, DCHAT2A, DCHAT2C
+      REAL*8 DCHAT3N, DCHAT3A, DCHAT3C
 
 C modal sedimentation velocities for number, 2nd, and 3rd moment, or mass:
-      REAL VGHAT0N, VGHAT0A, VGHAT0C
-      REAL VGHAT2N, VGHAT2A, VGHAT2C
-      REAL VGHAT3N, VGHAT3A, VGHAT3C
+      REAL*8 VGHAT0N, VGHAT0A, VGHAT0C
+      REAL*8 VGHAT2N, VGHAT2A, VGHAT2C
+      REAL*8 VGHAT3N, VGHAT3A, VGHAT3C
 
       INTEGER NCELL, J, C, R
 
-      REAL DCONST1, DCONST1N, DCONST1A, DCONST1C
-      REAL DCONST2, DCONST3N, DCONST3A, DCONST3C
-      REAL SC0N, SC0A, SC0C     ! Schmidt numbers for number
-      REAL SC2N, SC2A, SC2C     ! Schmidt numbers for 2ND MOMENT
-      REAL SC3N, SC3A, SC3C     ! Schmidt numbers for 3rd moment
-      REAL(8) STOKEN, STOKEA, STOKEC ! Stokes numbers for each mode
-      REAL RD0N, RD0A, RD0C     ! canopy resistance for number
-      REAL RD2N, RD2A, RD2C     ! canopy resistance for 2nd moment
-      REAL RD3N, RD3A, RD3C     ! canopy resisteance for 3rd moment
-      REAL UTSCALE              ! scratch function of USTAR and WSTAR
-      REAL NU                   ! kinematic viscosity [ m**2 s**-1 ]
-      REAL USTFAC               ! scratch function of USTAR, NU, and GRAV
-      REAL TWOXLM               ! 2 X atmospheric mean free path
+      REAL*8 DCONST1, DCONST1N, DCONST1A, DCONST1C
+      REAL*8 DCONST2, DCONST3N, DCONST3A, DCONST3C
+      REAL*8 SC0N, SC0A, SC0C     ! Schmidt numbers for number
+      REAL*8 SC2N, SC2A, SC2C     ! Schmidt numbers for 2ND MOMENT
+      REAL*8 SC3N, SC3A, SC3C     ! Schmidt numbers for 3rd moment
+      REAL*8 STOKEN, STOKEA, STOKEC ! Stokes numbers for each mode
+      REAL*8 RD0N, RD0A, RD0C     ! canopy resistance for number
+      REAL*8 RD2N, RD2A, RD2C     ! canopy resistance for 2nd moment
+      REAL*8 RD3N, RD3A, RD3C     ! canopy resisteance for 3rd moment
+      REAL*8 UTSCALE              ! scratch function of USTAR and WSTAR
+      REAL*8 NU                   ! kinematic viscosity [ m**2 s**-1 ]
+      REAL*8 USTFAC               ! scratch function of USTAR, NU, and GRAV
+      REAL*8 TWOXLM               ! 2 X atmospheric mean free path
 
-      REAL, PARAMETER :: BHAT    = 1.246 ! Constant from Cunningham slip correction
-      REAL, PARAMETER :: THREEPI = 3.0 * PI
-      REAL, PARAMETER :: TWO3    = 2.0 / 3.0
+      REAL*8, PARAMETER :: BHAT    = 1.246 ! Constant from Cunningham slip correction
+      REAL*8, PARAMETER :: THREEPI = 3.0 * PI
+      REAL*8, PARAMETER :: TWO3    = 2.0 / 3.0
 
 C Scalar variables for VARIABLE standard deviations.
 
-      REAL    L2SGAT, L2SGAC   ! see usage
-      REAL    L2SGCO
+      REAL*8    L2SGAT, L2SGAC   ! see usage
+      REAL*8    L2SGCO
 
-      REAL    EAT1             ! Aitken mode exp( log^2( sigmag )/8 )
-      REAL    EAC1             ! accumulation mode exp( log^2( sigmag )/8 )
-      REAL    ECO1             ! coarse mode exp( log^2( sigmag )/8 )
+      REAL*8    EAT1             ! Aitken mode exp( log^2( sigmag )/8 )
+      REAL*8    EAC1             ! accumulation mode exp( log^2( sigmag )/8 )
+      REAL*8    ECO1             ! coarse mode exp( log^2( sigmag )/8 )
 
-      REAL    ESAT04           ! Aitken       " **4
-      REAL    ESAC04           ! accumulation "
-      REAL    ESCO04           ! coarse       "
+      REAL*8    ESAT04           ! Aitken       " **4
+      REAL*8    ESAC04           ! accumulation "
+      REAL*8    ESCO04           ! coarse       "
 
-      REAL    ESAT08           ! Aitken       " **8
-      REAL    ESAC08           ! accumulation "
-      REAL    ESCO08           ! coarse       "
+      REAL*8    ESAT08           ! Aitken       " **8
+      REAL*8    ESAC08           ! accumulation "
+      REAL*8    ESCO08           ! coarse       "
 
-      REAL    ESAT12           ! Aitken       " **12
-      REAL    ESAC12           ! accumulation "     
-      REAL    ESCO12           ! coarse       "     
+      REAL*8    ESAT12           ! Aitken       " **12
+      REAL*8    ESAC12           ! accumulation "     
+      REAL*8    ESCO12           ! coarse       "     
 
-      REAL    ESAT16           ! Aitken       " **16
-      REAL    ESAC16           ! accumulation "
-      REAL    ESCO16           ! coarse       "
+      REAL*8    ESAT16           ! Aitken       " **16
+      REAL*8    ESAC16           ! accumulation "
+      REAL*8    ESCO16           ! coarse       "
 
-      REAL    ESAT20           ! Aitken       " **20
-      REAL    ESAC20           ! accumulation "
-      REAL    ESCO20           ! coarse       "
+      REAL*8    ESAT20           ! Aitken       " **20
+      REAL*8    ESAC20           ! accumulation "
+      REAL*8    ESCO20           ! coarse       "
 
-      REAL    ESAT28           ! Aitken       " **28
-      REAL    ESAC28           ! accumulation "
-      REAL    ESCO28           ! coarse       "
+      REAL*8    ESAT28           ! Aitken       " **28
+      REAL*8    ESAC28           ! accumulation "
+      REAL*8    ESCO28           ! coarse       "
 
-      REAL    ESAT32           ! Aitken       " **32
-      REAL    ESAC32           ! accumulation "
-      REAL    ESCO32           ! coarse       "
+      REAL*8    ESAT32           ! Aitken       " **32
+      REAL*8    ESAC32           ! accumulation "
+      REAL*8    ESCO32           ! coarse       "
 
-      REAL    ESAT36           ! Aitken       " **36
-      REAL    ESAC36           ! accumulation "
-      REAL    ESCO36           ! coarse       "
+      REAL*8    ESAT36           ! Aitken       " **36
+      REAL*8    ESAC36           ! accumulation "
+      REAL*8    ESCO36           ! coarse       "
 
-      REAL    ESAT48           ! Aitken       " **48
-      REAL    ESAC48           ! accumulation "     
-      REAL    ESCO48           ! coarse       "     
+      REAL*8    ESAT48           ! Aitken       " **48
+      REAL*8    ESAC48           ! accumulation "     
+      REAL*8    ESCO48           ! coarse       "     
 
-      REAL    ESAT64           ! Aitken       " **64
-      REAL    ESAC64           ! accumulation "
-      REAL    ESCO64           ! coarse       "
+      REAL*8    ESAT64           ! Aitken       " **64
+      REAL*8    ESAC64           ! accumulation "
+      REAL*8    ESCO64           ! coarse       "
 
-      REAL    ESAT128          ! Aitken       " **128
-      REAL    ESAC128          ! accumulation "
-      REAL(8)    ESCO128          ! coarse       "
+      REAL*8    ESAT128          ! Aitken       " **128
+      REAL*8    ESAC128          ! accumulation "
+      REAL*8    ESCO128          ! coarse       "
 
-      REAL    ESAT160          ! Aitken       " **160
-      REAL    ESAC160          ! accumulation "
-      REAL    ESCO160          ! coarse       "
+      REAL*8    ESAT160          ! Aitken       " **160
+      REAL*8    ESAC160          ! accumulation "
+      REAL*8    ESCO160          ! coarse       "
 
-      REAL    ESATM12          ! Aitken       " **(-12)
-      REAL    ESACM12          ! accumulation "        
-      REAL    ESCOM12          ! coarse       "        
+      REAL*8    ESATM12          ! Aitken       " **(-12)
+      REAL*8    ESACM12          ! accumulation "        
+      REAL*8    ESCOM12          ! coarse       "        
 
-      REAL    ESATM16          ! Aitken       " **(-16)
-      REAL    ESACM16          ! accumulation "        
-      REAL    ESCOM16          ! coarse       "        
+      REAL*8    ESATM16          ! Aitken       " **(-16)
+      REAL*8    ESACM16          ! accumulation "        
+      REAL*8    ESCOM16          ! coarse       "        
 
-      REAL    ESATM20          ! Aitken       " **(-20)
-      REAL    ESACM20          ! accumulation "
-      REAL    ESCOM20          ! coarse       "
+      REAL*8    ESATM20          ! Aitken       " **(-20)
+      REAL*8    ESACM20          ! accumulation "
+      REAL*8    ESCOM20          ! coarse       "
 
-      REAL    ESATM32          ! Aitken       " **(-32)
-      REAL    ESACM32          ! accumulation "
-      REAL    ESCOM32          ! coarse       "
+      REAL*8    ESATM32          ! Aitken       " **(-32)
+      REAL*8    ESACM32          ! accumulation "
+      REAL*8    ESCOM32          ! coarse       "
 
-      REAL(8)    EIM              ! Impaction efficiency
+      REAL*8    EIM              ! Impaction efficiency
 
 C-----------------------------------------------------------------------
 

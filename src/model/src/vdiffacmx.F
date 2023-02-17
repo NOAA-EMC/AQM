@@ -88,7 +88,7 @@ C Local Variables:
 
       LOGICAL, SAVE :: FIRSTIME = .TRUE.
 
-      REAL, ALLOCATABLE, SAVE :: DD_FAC     ( : )   ! combined subexpression
+      REAL*8, ALLOCATABLE, SAVE :: DD_FAC     ( : )   ! combined subexpression
       REAL, ALLOCATABLE, SAVE :: DDBF       ( : )   ! secondary DDEP
       REAL, ALLOCATABLE, SAVE :: CMPF       ( : )   ! intermediate CMP
       REAL, ALLOCATABLE, SAVE :: CONC       ( :,: ) ! secondary CGRID expression
@@ -98,13 +98,13 @@ C Local Variables:
 C ACM Local Variables
       REAL        DFACP, DFACQ
       REAL        RP, RQ
-      REAL, ALLOCATABLE, SAVE :: DEPVCR     ( : )   ! dep vel in one cell
+      REAL*8, ALLOCATABLE, SAVE :: DEPVCR     ( : )   ! dep vel in one cell
       REAL, ALLOCATABLE, SAVE :: EFAC1 ( : )
       REAL, ALLOCATABLE, SAVE :: EFAC2 ( : )
       REAL, ALLOCATABLE, SAVE :: POL   ( : )    ! prodn/lossrate = PLDV/DEPV
       REAL        PLDV_HONO                     ! PLDV for HONO
-      REAL        DEPV_NO2                      ! dep vel of NO2
-      REAL        DEPV_HNO3                     ! dep vel of HNO3
+      REAL*8      DEPV_NO2                      ! dep vel of NO2
+      REAL*8      DEPV_HNO3                     ! dep vel of HNO3
       INTEGER, SAVE :: NO2_HIT, HONO_HIT, HNO3_HIT, NO2_MAP, HNO3_MAP
       INTEGER, SAVE :: NH3_HIT
       REAL        DTS
@@ -193,15 +193,52 @@ C ------------------------------------------- Row, Col LOOPS -----------
             END DO
          END DO
 
+         
+#if 0
+c        N_GAS_DEPV = N_GC_DEPV + N_NR_DEPV + N_TR_DEPV
+c        N_SPC_DEPV = N_GAS_DEPV + N_AE_DEPV
+
+         DO L = 1, N_GC_DEPV
+            V = L
+            IF (ABS(DEPV(V,C,R)) .GT. 1.E+8) THEN
+               PRINT *,'DEPV: '//TRIM(GC_DEPV(L)),V,DEPV(V,C,R)
+               FLUSH 6
+            END IF
+         END DO
+         DO L = 1, N_NR_DEPV
+            V = L + N_GC_DEPV
+            IF (ABS(DEPV(V,C,R)) .GT. 1.E+8) THEN
+               PRINT *,'DEPV: '//TRIM(NR_DEPV(L)),V,DD_CONV(V),DEPV(V,C,R)
+               FLUSH 6
+            END IF
+         END DO
+         DO L = 1, N_TR_DEPV
+            V = L + N_GC_DEPV + N_NR_DEPV
+            IF (ABS(DEPV(V,C,R)) .GT. 1.E+8) THEN
+               PRINT *,'DEPV: '//TRIM(TR_DEPV(L)),V,DD_CONV(V),DEPV(V,C,R)
+               FLUSH 6
+            END IF
+         END DO
+         DO L = 1, N_AE_DEPV
+            V = L + N_GC_DEPV + N_NR_DEPV + N_TR_DEPV
+            IF (ABS(DEPV(V,C,R)) .GT. 1.E+8) THEN
+               PRINT *,'DEPV: '//TRIM(AE_DEPV(L)),V,DD_CONV(V),DEPV(V,C,R)
+               FLUSH 6
+            END IF
+         END DO
+#endif
+
          RP = DFACP * Met_Data%RDEPVHT( C,R )
          RQ = DFACQ * Met_Data%RDEPVHT( C,R )
          DO V = 1, N_SPC_DEPV
             DDBF( V )   = DDEP( V,C,R )
             DEPVCR( V ) = DEPV( V,C,R )
+c           print *,'DEPV: ',v,c,r,depv(v,c,r);flush 6
+c           DD_FAC( V ) = DTDENS1 * dble(DD_CONV( V ) * dble(DEPVCR( V )))
             DD_FAC( V ) = DTDENS1 * DD_CONV( V ) * DEPVCR( V )
             EFAC1 ( V ) = EXP( -DEPVCR( V ) * RP )
             EFAC2 ( V ) = EXP( -DEPVCR( V ) * RQ )
-            POL   ( V ) = PLDV( V,C,R ) / DEPVCR( V )
+            POL   ( V ) = PLDV( V,C,R ) / dble(DEPVCR( V ))
             IF ( ABFLUX .AND. V .EQ. NH3_HIT ) THEN
                DO I = 1, LCMP          
                   CMPF( I ) = ICMP( I,C,R )

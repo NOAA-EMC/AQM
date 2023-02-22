@@ -270,7 +270,7 @@ C to the regular deposition velocity (increased dep. vel.).  This will
 C reduce the NO2 conc. in the atmosphere without affecting the depositional loss.
                ELSE IF ( V .EQ. NO2_HIT ) THEN
                   S = NO2_MAP
-                  DEPV_NO2 = DEPVCR( V ) + 2.0 * PLDV_HONO / CONC( S,1 )
+                  DEPV_NO2 = DBLE(DEPVCR( V )) + 2.0 * PLDV_HONO / DBLE(CONC( S,1 ))
                   EFAC1 ( V ) = EXP( -DEPV_NO2 * RP )
                   EFAC2 ( V ) = EXP( -DEPV_NO2 * RQ )
                   POL   ( V ) = PLDV( V,C,R ) / DEPV_NO2

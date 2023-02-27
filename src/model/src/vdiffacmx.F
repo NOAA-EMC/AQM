@@ -193,41 +193,6 @@ C ------------------------------------------- Row, Col LOOPS -----------
             END DO
          END DO
 
-         
-#if 0
-c        N_GAS_DEPV = N_GC_DEPV + N_NR_DEPV + N_TR_DEPV
-c        N_SPC_DEPV = N_GAS_DEPV + N_AE_DEPV
-
-         DO L = 1, N_GC_DEPV
-            V = L
-            IF (ABS(DEPV(V,C,R)) .GT. 1.E+8) THEN
-               PRINT *,'DEPV: '//TRIM(GC_DEPV(L)),V,DEPV(V,C,R)
-               FLUSH 6
-            END IF
-         END DO
-         DO L = 1, N_NR_DEPV
-            V = L + N_GC_DEPV
-            IF (ABS(DEPV(V,C,R)) .GT. 1.E+8) THEN
-               PRINT *,'DEPV: '//TRIM(NR_DEPV(L)),V,DD_CONV(V),DEPV(V,C,R)
-               FLUSH 6
-            END IF
-         END DO
-         DO L = 1, N_TR_DEPV
-            V = L + N_GC_DEPV + N_NR_DEPV
-            IF (ABS(DEPV(V,C,R)) .GT. 1.E+8) THEN
-               PRINT *,'DEPV: '//TRIM(TR_DEPV(L)),V,DD_CONV(V),DEPV(V,C,R)
-               FLUSH 6
-            END IF
-         END DO
-         DO L = 1, N_AE_DEPV
-            V = L + N_GC_DEPV + N_NR_DEPV + N_TR_DEPV
-            IF (ABS(DEPV(V,C,R)) .GT. 1.E+8) THEN
-               PRINT *,'DEPV: '//TRIM(AE_DEPV(L)),V,DD_CONV(V),DEPV(V,C,R)
-               FLUSH 6
-            END IF
-         END DO
-#endif
-
          RP = DFACP * Met_Data%RDEPVHT( C,R )
          RQ = DFACQ * Met_Data%RDEPVHT( C,R )
          DO V = 1, N_SPC_DEPV

@@ -92,6 +92,7 @@ list(APPEND aqm_CCTM_files
 	${AERO}/AEROMET_DATA.F
 	${AERO}/AEROSOL_CHEMISTRY.F
 	${AERO}/aero_subs.F
+	${AERO}/aero_depv.F
 	${AERO}/AOD_DEFN.F
 	${AERO}/coags.f
 	${AERO}/getpar.f
@@ -241,6 +242,5 @@ list(APPEND aqm_CCTM_files
 	${localCCTM}/PT3D_STKS_DEFN.F
 	${localCCTM}/ASX_DATA_MOD.F
 	${localCCTM}/DUST_EMIS.F
-  ${localCCTM}/AERO_PHOTDATA.F
-  ${localCCTM}/aero_depv.F
+	${localCCTM}/AERO_PHOTDATA.F
 )

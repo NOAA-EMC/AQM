@@ -81,8 +81,6 @@ C check if emissions are being provided
 
          ALLOCATE ( EMSPC( NSPC ), STAT = IOS )
          CALL CHECKMEM( IOS, 'EMSPC', PNAME )
-         MAP = 0
-
          EMSPC = ""
 
          ! -- merge emission tables and remove duplicates

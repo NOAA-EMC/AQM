@@ -229,7 +229,7 @@ C Loop through sources and compute plume rise
 C Set surface pressure (convert to mb from Pa)
                PSFC = CNVPA2MB * Met_Data % PRSFC( C,R )
 
-               PRESF( 0:EMLYRS ) = CNVPA2MB * Met_Data % PRESF( C,R,: )
+               PRESF( 0:EMLYRS ) = CNVPA2MB * Met_Data % PRESF( C,R,1:EMLYRS+1 )
 
 C Compute vertical gradient quantities
                ZF0 = Met_Data % ZF( C,R,1 )

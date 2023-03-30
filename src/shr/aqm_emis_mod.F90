@@ -273,7 +273,7 @@ contains
     character(len=ESMF_MAXSTR), allocatable :: tmpUnitsList(:)
     real(ESMF_KIND_R4)         :: factor
     real(ESMF_KIND_R4), allocatable :: tmpFactorList(:)
-    type(ESMF_Time)            :: startTime
+    type(ESMF_Time)            :: startTime, currTime
     type(ESMF_TimeInterval)    :: timeInterval
     type(ESMF_Clock)           :: clock
     type(ESMF_Config)          :: config
@@ -471,12 +471,15 @@ contains
         return
     end select
 
-    call ESMF_ClockGet(clock, startTime=startTime, rc=localrc)
+    call ESMF_ClockGet(clock, startTime=startTime, currTime=currTime, rc=localrc)
     if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__,  &
       file=__FILE__,  &
       rcToReturn=rc)) &
       return  ! bail out
+
+    ! -- set input time record according to start type (startup/continue)
+    em % irec = (currTime - startTime) / timeInterval
 
     em % alarm = ESMF_AlarmCreate(clock, ringTime=startTime, &
       ringInterval=timeInterval, name=trim(em % name)//"_alarm", rc=localrc)

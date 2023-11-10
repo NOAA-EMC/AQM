@@ -184,7 +184,6 @@ list(APPEND aqm_CCTM_files
 	${PA}/pa_update.F
 	${PHOT}/CLOUD_OPTICS.F
 	${PHOT}/complex_number_module.F90
-	${PHOT}/CSQY_DATA.F
 	${PHOT}/OMI_1979_to_2015.dat
 	${PHOT}/opphot.F
 	${PHOT}/phot.F
@@ -235,4 +234,5 @@ list(APPEND aqm_CCTM_files
 	${localCCTM}/DUST_EMIS.F
 	${localCCTM}/AERO_PHOTDATA.F
 	${localCCTM}/noop_modules.f
+	${localCCTM}/CSQY_DATA.F
 )

@@ -96,7 +96,6 @@ list(APPEND aqm_CCTM_files
 	${AERO}/AOD_DEFN.F
 	${AERO}/coags.f
 	${AERO}/getpar.f
-	${AERO}/isocom.f
 	${AERO}/isofwd.f
 	${AERO}/isorev.f
 	${AERO}/isrpia.inc
@@ -235,4 +234,5 @@ list(APPEND aqm_CCTM_files
 	${localCCTM}/AERO_PHOTDATA.F
 	${localCCTM}/noop_modules.f
 	${localCCTM}/CSQY_DATA.F
+	${localCCTM}/isocom.f
 )

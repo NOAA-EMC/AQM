@@ -205,15 +205,6 @@ list(APPEND aqm_CCTM_files
 	${PLRISE}/write3_distr.f
 	${SPCS}/CGRID_SPCS.F
 	${STENEX}/noop_comm_module.f
-	${STENEX}/noop_data_copy_module.f
-	${STENEX}/noop_gather_module.f
-	${STENEX}/noop_global_max_module.f
-	${STENEX}/noop_global_min_module.f
-	${STENEX}/noop_global_sum_module.f
-	${STENEX}/noop_init_module.f
-	${STENEX}/noop_modules.f
-	${STENEX}/noop_slice_module.f
-	${STENEX}/noop_term_module.f
 	${STENEX}/noop_util_module.f
 	${UTIL}/bmatvec.F
 	${UTIL}/findex.f
@@ -243,4 +234,5 @@ list(APPEND aqm_CCTM_files
 	${localCCTM}/ASX_DATA_MOD.F
 	${localCCTM}/DUST_EMIS.F
 	${localCCTM}/AERO_PHOTDATA.F
+	${localCCTM}/noop_modules.f
 )

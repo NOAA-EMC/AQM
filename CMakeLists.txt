@@ -84,6 +84,7 @@ target_include_directories(CCTM PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY
                                         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/model/CMAQ/CCTM/src/ICL/fixed/const>
                                         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/model/CMAQ/CCTM/src/ICL/fixed/emctrl>
                                         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/model/CMAQ/CCTM/src/ICL/fixed/mpi>
+					$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/model/CMAQ/CCTM/src/aero/aero6>
 					$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src/shr>
                                         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src/io/ioapi>
                                         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src/io/aqmio>)

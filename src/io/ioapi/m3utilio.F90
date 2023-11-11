@@ -189,7 +189,7 @@ contains
     INTEGER      , INTENT(IN   ) :: LAYER           !  layer number, or 0
     INTEGER      , INTENT(IN   ) :: JDATE           !  date, formatted YYYYDDD
     INTEGER      , INTENT(IN   ) :: JTIME           !  time, formatted HHMMSS
-    INTEGER      , INTENT(  OUT) :: BUFFER(*)       !  input buffer array
+    INTEGER      , INTENT(INOUT) :: BUFFER(*)       !  input buffer array
 
     READ3_INTEGER = .TRUE.
 
@@ -204,7 +204,7 @@ contains
     INTEGER      , INTENT(IN   ) :: LAYER           !  layer number, or 0
     INTEGER      , INTENT(IN   ) :: JDATE           !  date, formatted YYYYDDD
     INTEGER      , INTENT(IN   ) :: JTIME           !  time, formatted HHMMSS
-    REAL         , INTENT(  OUT) :: BUFFER(*)       !  input buffer array
+    REAL         , INTENT(INOUT) :: BUFFER(*)       !  input buffer array
 
     READ3_REAL = .TRUE.
 

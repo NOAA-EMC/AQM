@@ -92,7 +92,6 @@ list(APPEND aqm_CCTM_files
 	${AERO}/AEROMET_DATA.F
 	${AERO}/AEROSOL_CHEMISTRY.F
 	${AERO}/aero_subs.F
-	${AERO}/aero_depv.F
 	${AERO}/AOD_DEFN.F
 	${AERO}/coags.f
 	${AERO}/getpar.f
@@ -235,4 +234,5 @@ list(APPEND aqm_CCTM_files
 	${localCCTM}/noop_modules.f
 	${localCCTM}/CSQY_DATA.F
 	${localCCTM}/isocom.f
+	${localCCTM}/aero_depv.F
 )

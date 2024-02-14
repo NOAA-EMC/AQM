@@ -34,7 +34,7 @@ module aqm_config_mod
     logical                   :: biosw_yn      = .false.
     logical                   :: ctm_aod       = .false.
     logical                   :: ctm_depvfile  = .false.
-    logical                   :: ctm_photodiag = .false.
+    logical                   :: ctm_photdiag  = .true.  !IVAI
     logical                   :: ctm_pmdiag    = .false.
     logical                   :: ctm_wb_dust   = .false.
     logical                   :: mie_optics    = .false.
@@ -183,6 +183,17 @@ contains
       rcToReturn=rc)) &
       return  ! bail out
 
+!IVAI
+    ! -- read diagnostic settings
+    call ESMF_ConfigGetAttribute(cf, config % ctm_photdiag, &
+      label="ctm_photdiag:", default=.false., rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+!IVAI
+
     call ESMF_ConfigGetAttribute(cf, config % ctm_pmdiag, &
       label="ctm_pmdiag:", default=.false., rc=localrc)
     if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -242,7 +253,6 @@ contains
 
     ! -- set other default values
     config % ctm_depvfile  = .false.
-    config % ctm_photodiag = .false.
 
   end subroutine aqm_config_read
 
@@ -555,6 +565,25 @@ contains
         rcToReturn=rc)) &
         return  ! bail out
     end if
+!IVAI
+    if (config % ctm_photdiag) then
+      call ESMF_LogWrite(trim(name) // ": config: read: ctm_photdiag: true", &
+        ESMF_LOGMSG_INFO, rc=localrc)
+      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__,  &
+        file=__FILE__,  &
+        rcToReturn=rc)) &
+        return  ! bail out
+    else
+      call ESMF_LogWrite(trim(name) // ": config: read: ctm_photdiag: false", &
+        ESMF_LOGMSG_INFO, rc=localrc)
+      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__,  &
+        file=__FILE__,  &
+        rcToReturn=rc)) &
+        return  ! bail out
+    end if
+!IVAI
     if (config % ctm_wb_dust) then
       call ESMF_LogWrite(trim(name) // ": config: read: ctm_wb_dust: true", &
         ESMF_LOGMSG_INFO, rc=localrc)

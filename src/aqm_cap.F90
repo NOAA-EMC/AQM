@@ -64,7 +64,7 @@ module AQM
 !      "cum_lai_frac4_eccc                       ", &
     /)
   ! -- export fields
-  integer, parameter :: exportFieldCount = 2+3+5  !IVAI: add 3 photolysis inst_tracer_diag_*
+  integer, parameter :: exportFieldCount = 2+3+5  !IVAI: add 3 photolysis inst_tracer_diag_* and five canopy variables
   character(len=*), dimension(exportFieldCount), parameter :: &
     exportFieldNames = (/ &
       "inst_tracer_mass_frac                ", &

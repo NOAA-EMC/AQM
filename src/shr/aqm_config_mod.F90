@@ -34,7 +34,7 @@ module aqm_config_mod
     logical                   :: biosw_yn      = .false.
     logical                   :: ctm_aod       = .false.
     logical                   :: ctm_depvfile  = .false.
-    logical                   :: ctm_photdiag  = .true.  !IVAI
+    logical                   :: ctm_photdiag  = .false.  !IVAI
     logical                   :: ctm_pmdiag    = .false.
     logical                   :: ctm_wb_dust   = .false.
     logical                   :: mie_optics    = .false.

@@ -1017,137 +1017,128 @@ C In-line canopy shading option? (default = false)
 !Makar, P., Staebler, R., Akingunola, A. et al. The effects of forest canopy shading and turbulence on boundary layer ozone.
 !Nat Commun 8, 15243 (2017). https://doi.org/10.1038/ncomms15243
 
-               IF ( CANOPY_SHADE ) THEN ! compute canopy shade reduction factor (RJ_CORR)
+                      IF ( CANOPY_SHADE ) THEN ! compute canopy shade reduction factor (RJ_CORR)
 
-               DO LEV = 1, NLAYS !loop through model layers
+                        DO LEV = 1, NLAYS !loop through model layers
 
-                  IF (LEV .EQ. 1) THEN !first model layer
-                     KCAN = 1
-                  ELSE               !check subsequent model layers
-                     IF (  Met_Data%FCH( COL,ROW ) .GT. Met_Data%ZF( COL,ROW,LEV-1 )
-     &               .AND. Met_Data%FCH( COL,ROW ) .LE. Met_Data%ZF( COL,ROW,LEV ) ) THEN
-                        KCAN = 1
-                     ELSE
-                        KCAN = 0
-                     END IF
-                  END IF
+                          IF (LEV .EQ. 1) THEN !first model layer
+                            KCAN = 1
+                          ELSE               !check subsequent model layers
+                            IF (  Met_Data%FCH( COL,ROW ) .GT. Met_Data%ZF( COL,ROW,LEV-1 )
+     &                      .AND. Met_Data%FCH( COL,ROW ) .LE. Met_Data%ZF( COL,ROW,LEV ) ) THEN
+                              KCAN = 1
+                            ELSE
+                              KCAN = 0
+                            END IF
+                          END IF
 
-                  IF (KCAN .EQ. 1) THEN !canopy could be inside model layer
-
-                     !check for other conditions for grid cells that do NOT have a continuos forest canopy
-                     IF (   Met_Data%LAIE( COL,ROW ) .LT. 0.1
-     &                 .OR. Met_Data%FCH ( COL,ROW ) .LT. 0.5
-!IVAI: Modified condition with the new canopy data
-!     &                .OR. MAX(0.0, 1.0 - Met_Data%FRT( COL,ROW)) .GT. 0.5
-     &                 .OR. MAX(0.0, 1.0 - Met_Data%FRT( COL,ROW)) .GT. 0.75
-!IVAI
-     &                 .OR. Met_Data%POPU( COL,ROW ) .GT.10000.0
-     &                 .OR. (EXP(-0.5*Met_Data%LAIE( COL,ROW )*
-     &                                Met_Data%CLU ( COL,ROW )).GT. 0.45
-     &                          .AND. Met_Data%FCH ( COL,ROW ) .LT. 18.0) ) THEN
-
-                        RJ( COL,ROW, LEV, : ) = RJ( COL,ROW, LEV, :)
-
-                     ELSE ! There is a contiguous forest canopy,apply correctoin
-                     !RJ_CORR effectly represents the beam attenuation and reduces photolysis.
-                     !Nilson, T. A theoretical analysis of the frequency of gaps in plant stands. Agric.
-                     !Meterol. 8, 25⚌~Z~L~@~S38 (1971).
+                          IF (KCAN .EQ. 1) THEN !canopy could be inside model layer
+                            !check for otherconditions for grid cells that do NOT have
+                            !a continuos forest canopy
+                            IF ( Met_Data%LAIE( COL,ROW ) .LT. 0.1
+     &                         .OR. Met_Data%FCH( COL,ROW ) .LT. 0.5
+!    &                         .OR. MAX(0.0, 1.0 - Met_Data%FRT( COL,ROW)) .GT. 0.5  !IVAI: old canopy data
+     &                         .OR. MAX(0.0, 1.0 - Met_Data%FRT( COL,ROW)) .GT.  0.75  !IVAI: new canopy data
+     &                         .OR. Met_Data%POPU( COL,ROW ) .GT.10000.0
+     &                         .OR. (EXP(-0.5*Met_Data%LAIE( COL,ROW)*Met_Data%CLU( COL,ROW )) .GT. 0.45
+     &                                               .AND. Met_Data%FCH(COL,ROW ) .LT. 18.0 )) THEN
+                                 RJ( COL,ROW, LEV, : ) = RJ( COL,ROW, LEV, :)
+                            ELSE ! There is a contiguous forest canopy,apply correctoin
+                            !RJ_CORR effectly represents the beam attenuation and reduces photolysis.
+                            !Nilson, T. A theoretical analysis of the frequency of gaps in plant stands. Agric.
+                            !Meterol. 8, 25⚌~Z~L~@~S38 (1971).
 
 !Calculate attenuation at different set cumulative LAI fractions downward through canopy (C1R, C2R, C3R, C4R data from ECCC)
-                        RJ_CORR_C1R( COL,ROW ) = MAX(1.0E-10, EXP(-1.0*(0.5*(Met_Data%LAIE( COL,ROW )
+                                RJ_CORR_C1R( COL,ROW ) = MAX(1.0E-10, EXP(-1.0*(0.5*(Met_Data%LAIE( COL,ROW )
      &                                         *Met_Data%C1R( COL,ROW ))*Met_Data%CLU( COL,ROW ))/MAX(0.05, COSZEN)))
-                        RJ_CORR_C2R( COL,ROW ) = MAX(1.0E-10, EXP(-1.0*(0.5*(Met_Data%LAIE( COL,ROW )
+                                RJ_CORR_C2R( COL,ROW ) = MAX(1.0E-10, EXP(-1.0*(0.5*(Met_Data%LAIE( COL,ROW )
      &                                         *Met_Data%C2R( COL,ROW ))*Met_Data%CLU( COL,ROW ))/MAX(0.05, COSZEN)))
-                        RJ_CORR_C3R( COL,ROW ) = MAX(1.0E-10, EXP(-1.0*(0.5*(Met_Data%LAIE( COL,ROW )
+                                RJ_CORR_C3R( COL,ROW ) = MAX(1.0E-10, EXP(-1.0*(0.5*(Met_Data%LAIE( COL,ROW )
      &                                         *Met_Data%C3R( COL,ROW ))*Met_Data%CLU( COL,ROW ))/MAX(0.05, COSZEN)))
-                        RJ_CORR_C4R( COL,ROW ) = MAX(1.0E-10, EXP(-1.0*(0.5*(Met_Data%LAIE( COL,ROW )
+                                RJ_CORR_C4R( COL,ROW ) = MAX(1.0E-10, EXP(-1.0*(0.5*(Met_Data%LAIE( COL,ROW )
      &                                         *Met_Data%C4R( COL,ROW ))*Met_Data%CLU( COL,ROW ))/MAX(0.05, COSZEN)))
-                        RJ_CORR_BOT( COL,ROW ) = MAX(1.0E-10, EXP(-1.0*(0.5*Met_Data%LAIE( COL,ROW )
+                                RJ_CORR_BOT( COL,ROW ) = MAX(1.0E-10, EXP(-1.0*(0.5*Met_Data%LAIE( COL,ROW )
      &                                         *Met_Data%CLU( COL,ROW ))/MAX(0.05, COSZEN)))
 
 !Interpolate to get attenuation profile below canopy inside respective model layer 
-                        ZFL = Met_Data%ZF( COL,ROW,LEV )
-                        ZCAN = ZFL    ! Initialize top (m) = Bottom of model layer
-                        COUNTCAN = 0  ! Initialize canopy layers
+                                ZFL = Met_Data%ZF( COL,ROW,LEV )
+                                ZCAN = ZFL    ! Initialize top (m) = Bottom of model layer
+                                COUNTCAN = 0  ! Initialize canopy layers
 
-                        IF (LEV .EQ. 1) THEN  !Find bottom in each model layer
-                           BOTCAN = 0.5
-                        ELSE
-                           BOTCAN = Met_Data%ZF( COL,ROW,LEV-1 )
-                        END IF
+                                IF (LEV .EQ. 1) THEN  !Find bottom in each model layer
+                                    BOTCAN = 0.5
+                                ELSE
+                                    BOTCAN = Met_Data%ZF( COL,ROW,LEV-1 )
+                                END IF
 
-                        DO WHILE (ZCAN.GE.BOTCAN)
-                           IF ( ZCAN .GT. Met_Data%FCH( COL,ROW ) ) THEN
-                              COUNTCAN = COUNTCAN + 1
-                              ZCANX(COUNTCAN) = ZCAN
-                              RJ_CORRX (COUNTCAN) = 1.0
-                           ELSE IF  ( ZCAN .LE. Met_Data%FCH( COL,ROW )   .AND.
-     &                                ZCAN .GT. Met_Data%FCH( COL,ROW )*0.75 ) THEN
-                              COUNTCAN = COUNTCAN + 1
-                              XCAN(2) = Met_Data%FCH( COL,ROW )
-                              YCAN(2) = 1.0
-                              XCAN(1) = Met_Data%FCH( COL,ROW )*0.75
-                              YCAN(1) = RJ_CORR_C1R( COL,ROW )
-                              XCANOUT = ZCAN
-                              ZCANX(COUNTCAN) = ZCAN
-                              RJ_CORRX (COUNTCAN) = interp_linear1_internal(XCAN,YCAN,XCANOUT)
-                           ELSE IF ( ZCAN .LE. Met_Data%FCH( COL,ROW )*0.75   .AND.
-     &                               ZCAN .GT. Met_Data%FCH( COL,ROW )*0.50 ) THEN
-                              COUNTCAN = COUNTCAN + 1
-                              XCAN(2) = Met_Data%FCH( COL,ROW )*0.75
-                              YCAN(2) = RJ_CORR_C1R( COL,ROW )
-                              XCAN(1) = Met_Data%FCH( COL,ROW )*0.50
-                              YCAN(1) = RJ_CORR_C2R( COL,ROW )
-                              XCANOUT = ZCAN
-                              ZCANX(COUNTCAN) = ZCAN
-                              RJ_CORRX (COUNTCAN) = interp_linear1_internal(XCAN,YCAN,XCANOUT)
-                           ELSE IF ( ZCAN .LE. Met_Data%FCH( COL,ROW )*0.50   .AND.
-     &                               ZCAN .GT. Met_Data%FCH( COL,ROW )*0.35 ) THEN
-                              COUNTCAN = COUNTCAN + 1
-                              XCAN(2) = Met_Data%FCH( COL,ROW )*0.50
-                              YCAN(2) = RJ_CORR_C2R( COL,ROW )
-                              XCAN(1) = Met_Data%FCH( COL,ROW )*0.35
-                              YCAN(1) = RJ_CORR_C3R( COL,ROW )
-                              XCANOUT = ZCAN
-                              ZCANX(COUNTCAN) = ZCAN
-                              RJ_CORRX (COUNTCAN) = interp_linear1_internal(XCAN,YCAN,XCANOUT)
-                           ELSE IF ( ZCAN .LE. Met_Data%FCH( COL,ROW )*0.35  .AND.
-     &                               ZCAN .GT. Met_Data%FCH( COL,ROW )*0.20 ) THEN
-                              COUNTCAN = COUNTCAN + 1
-                              XCAN(2) = Met_Data%FCH( COL,ROW )*0.35
-                              YCAN(2) = RJ_CORR_C3R( COL,ROW )
-                              XCAN(1) = Met_Data%FCH( COL,ROW )*0.20
-                              YCAN(1) = RJ_CORR_C4R( COL,ROW )
-                              XCANOUT = ZCAN
-                              ZCANX(COUNTCAN) = ZCAN
-                              RJ_CORRX (COUNTCAN) = interp_linear1_internal(XCAN,YCAN,XCANOUT)
-                           ELSE IF ( ZCAN .LE. Met_Data%FCH( COL,ROW )*0.20 ) THEN
-                              COUNTCAN = COUNTCAN + 1
-                              XCAN(2) = Met_Data%FCH( COL,ROW )*0.20
-                              YCAN(2) = RJ_CORR_C4R( COL,ROW )
-                              XCAN(1) = 0.5
-                              YCAN(1) = RJ_CORR_BOT( COL,ROW )
-                              XCANOUT = ZCAN
-                              ZCANX(COUNTCAN) = ZCAN
-                              RJ_CORRX (COUNTCAN) = interp_linear1_internal(XCAN,YCAN,XCANOUT)
-                           END IF
-                           ZCAN = ZCAN-0.5  !step down in-canopy resolution of 0.5 m
-                        END DO !end loop on canopy layers
+                                DO WHILE (ZCAN.GE.BOTCAN)
+                                   IF ( ZCAN .GT. Met_Data%FCH( COL,ROW ) ) THEN
+                                     COUNTCAN = COUNTCAN + 1
+                                     ZCANX(COUNTCAN) = ZCAN
+                                     RJ_CORRX (COUNTCAN) = 1.0
+                                   ELSE IF  ( ZCAN .LE. Met_Data%FCH( COL,ROW )   .AND.
+     &                                        ZCAN .GT. Met_Data%FCH( COL,ROW )*0.75 ) THEN
+                                     COUNTCAN = COUNTCAN + 1
+                                     XCAN(2) = Met_Data%FCH( COL,ROW )
+                                     YCAN(2) = 1.0
+                                     XCAN(1) = Met_Data%FCH( COL,ROW )*0.75
+                                     YCAN(1) = RJ_CORR_C1R( COL,ROW )
+                                     XCANOUT = ZCAN
+                                     ZCANX(COUNTCAN) = ZCAN
+                                     RJ_CORRX (COUNTCAN) = interp_linear1_internal(XCAN,YCAN,XCANOUT)
+                                   ELSE IF ( ZCAN .LE. Met_Data%FCH( COL,ROW )*0.75   .AND.
+     &                                       ZCAN .GT. Met_Data%FCH( COL,ROW )*0.50 ) THEN
+                                     COUNTCAN = COUNTCAN + 1
+                                     XCAN(2) = Met_Data%FCH( COL,ROW )*0.75
+                                     YCAN(2) = RJ_CORR_C1R( COL,ROW )
+                                     XCAN(1) = Met_Data%FCH( COL,ROW )*0.50
+                                     YCAN(1) = RJ_CORR_C2R( COL,ROW )
+                                     XCANOUT = ZCAN
+                                     ZCANX(COUNTCAN) = ZCAN
+                                     RJ_CORRX (COUNTCAN) = interp_linear1_internal(XCAN,YCAN,XCANOUT)
+                                   ELSE IF ( ZCAN .LE. Met_Data%FCH( COL,ROW )*0.50   .AND.
+     &                                       ZCAN .GT. Met_Data%FCH( COL,ROW )*0.35 ) THEN
+                                     COUNTCAN = COUNTCAN + 1
+                                     XCAN(2) = Met_Data%FCH( COL,ROW )*0.50
+                                     YCAN(2) = RJ_CORR_C2R( COL,ROW )
+                                     XCAN(1) = Met_Data%FCH( COL,ROW )*0.35
+                                     YCAN(1) = RJ_CORR_C3R( COL,ROW )
+                                     XCANOUT = ZCAN
+                                     ZCANX(COUNTCAN) = ZCAN
+                                     RJ_CORRX (COUNTCAN) = interp_linear1_internal(XCAN,YCAN,XCANOUT)
+                                   ELSE IF ( ZCAN .LE. Met_Data%FCH( COL,ROW )*0.35  .AND.
+     &                                       ZCAN .GT. Met_Data%FCH( COL,ROW )*0.20 ) THEN
+                                     COUNTCAN = COUNTCAN + 1
+                                     XCAN(2) = Met_Data%FCH( COL,ROW )*0.35
+                                     YCAN(2) = RJ_CORR_C3R( COL,ROW )
+                                     XCAN(1) = Met_Data%FCH( COL,ROW )*0.20
+                                     YCAN(1) = RJ_CORR_C4R( COL,ROW )
+                                     XCANOUT = ZCAN
+                                     ZCANX(COUNTCAN) = ZCAN
+                                     RJ_CORRX (COUNTCAN) = interp_linear1_internal(XCAN,YCAN,XCANOUT)
+                                   ELSE IF ( ZCAN .LE. Met_Data%FCH( COL,ROW )*0.20 ) THEN
+                                     COUNTCAN = COUNTCAN + 1
+                                     XCAN(2) = Met_Data%FCH( COL,ROW )*0.20
+                                     YCAN(2) = RJ_CORR_C4R( COL,ROW )
+                                     XCAN(1) = 0.5
+                                     YCAN(1) = RJ_CORR_BOT( COL,ROW )
+                                     XCANOUT = ZCAN
+                                     ZCANX(COUNTCAN) = ZCAN
+                                     RJ_CORRX (COUNTCAN) = interp_linear1_internal(XCAN,YCAN,XCANOUT)
+                                   END IF
+                                   ZCAN = ZCAN-0.5  !step down in-canopy resolution of 0.5 m
+                                END DO !end loop on canopy layers
 
 !Integrate to get best attenuation value to use within canopy
-                        RJ_CORR( COL,ROW ) = IntegrateTrapezoid(ZCANX(COUNTCAN:1:-1),RJ_CORRX(COUNTCAN:1:-1)) /
+                                RJ_CORR( COL,ROW ) = IntegrateTrapezoid(ZCANX(COUNTCAN:1:-1),RJ_CORRX(COUNTCAN:1:-1)) /
      &                                               ZFL
 !Apply attenuation factors above and below canopy
-                        RJ( COL,ROW, LEV, : ) = RJ( COL,ROW, LEV, : )*RJ_CORR( COL,ROW )
+                                RJ( COL,ROW, LEV, : ) = RJ( COL,ROW, LEV, : )*RJ_CORR( COL,ROW )
 !Apply attenuation value within canopy and take average above and within canopy values
-
-                     END IF  !other contiguous canopy conditions
-
-                  END IF  !canopy height could be inside model layer
-
-               END DO  !end loop on model layers
-
-               END IF  !canopy shade 
+                            END IF  !other contiguous canopy conditions
+                          END IF  !canopy height could be inside model layer
+                        END DO  !end loop on model layers
+                      END IF  !canopy shade 
 
                IF ( JTIME_CHK ) THEN ! compute clear sky reflection and transmission coefficients
                   IF ( ANY( CLOUDS ) ) THEN

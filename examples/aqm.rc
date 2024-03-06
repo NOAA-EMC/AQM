@@ -35,6 +35,31 @@ omi_data:    /scratch1/NCEPDEV/nems/Raffaele.Montuoro/dev/aqm/epa/data/omi_cmaq_
 init_concentrations: true
 
 #
+# Inline Canopy Effects
+#
+canopy_yn: true
+
+canopy_type: canopy
+
+canopy_format: netcdf
+
+canopy_file: /scratch2/NAGAPE/arl/Patrick.C.Campbell/canopy_geofiles/gfs.t12z.geo.08.canopy_regrid.nc
+
+canopy_frequency: static
+
+canopy_species::
+    FCH        1.00000   FCH      m
+    FRT        1.00000   FRT      1
+    CLU        1.00000   CLU      1
+    POPU       1.00000   POPU     10000_people/10km2
+    LAIE       1.00000   LAIE     1
+    C1R        1.00000   C1R      1
+    C2R        1.00000   C2R      1
+    C3R        1.00000   C3R      1
+    C4R        1.00000   C4R      1
+::
+
+#
 # Run options:
 #
 # - enable aerosol module
@@ -83,7 +108,7 @@ ctm_stdout: all
 emission_sources: myemis
 
 #
-#  Emission type: anthropogenic, biogenic, gbbepx, fengsha
+#  Emission type: anthropogenic, biogenic, gbbepx, fengsha, canopy
 #
 myemis_type: anthropogenic
 

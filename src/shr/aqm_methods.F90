@@ -88,7 +88,7 @@ LOGICAL FUNCTION DESC3( FNAME )
   CHARACTER(LEN=*), INTENT(IN) :: FNAME
 
   INCLUDE SUBST_FILES_ID
- 
+
   integer :: localrc
   integer :: is, ie, js, je
   integer :: EMLAYS
@@ -162,7 +162,7 @@ LOGICAL FUNCTION DESC3( FNAME )
 
   ELSE IF ( TRIM( FNAME ) .EQ. TRIM( MET_CRO_2D ) ) THEN
 
-    NVARS3D = 35
+    NVARS3D = 44
     VNAME3D( 1:NVARS3D ) = &
     (/ 'PRSFC           ', 'USTAR           ',            &
        'WSTAR           ', 'PBL             ',            &
@@ -180,6 +180,11 @@ LOGICAL FUNCTION DESC3( FNAME )
        'SEAICE          ', 'SOIM1           ',            &
        'SOIM2           ', 'SOIT1           ',            &
        'SOIT2           ', 'LH              ',            &
+       'FCH             ', 'FRT             ',            &
+       'CLU             ', 'POPU            ',            &
+       'LAIE            ', 'C1R             ',            &
+       'C2R             ', 'C3R             ',            &
+       'C4R             ',                                &
        'CLAYF           ', 'SANDF           ',            &
        'DRAG            ', 'UTHR            ' /)
     UNITS3D( 1:NVARS3D ) = &
@@ -199,6 +204,11 @@ LOGICAL FUNCTION DESC3( FNAME )
        'FRACTION        ', 'M**3/M**3       ',            &
        'M**3/M**3       ', 'K               ',            &
        'K               ', 'WATTS/M**2      ',            &
+       'M               ', 'NO UNIT         ',            &
+       'NO UNIT         ', 'PEOPLE/KM**2    ',            &
+       'NO UNIT         ', 'NO UNIT         ',            &
+       'NO UNIT         ', 'NO UNIT         ',            &
+       'NO UNIT         ',                                &
        '1               ', '1               ',            &
        '1               ', 'M/S             ' /)
 
@@ -362,13 +372,15 @@ logical function envyn(name, description, defaultval, status)
       envyn = config % ctm_depvfile
     case ('CTM_PMDIAG')
       envyn = config % ctm_pmdiag
-    case ('CTM_PHOTODIAG')
-      envyn = config % ctm_photodiag
+    case ('CTM_PHOTDIAG')
+      envyn = config % ctm_photdiag
     case ('CTM_PT3DEMIS')
       envyn = aqm_emis_ispresent("gbbepx") .or. &
               aqm_emis_ispresent("point-source")
     case ('CTM_GRAV_SETL')
       envyn = .false.
+    case ('CTM_CANOPY_SHADE')
+      envyn = config % canopy_yn
     case ('CTM_WBDUST_FENGSHA')
       envyn = aqm_emis_ispresent("fengsha")
     case ('CTM_WB_DUST')
@@ -539,7 +551,6 @@ INTEGER FUNCTION PROMPTFFILE( PROMPT, RDONLY, FMTTED, DEFAULT, CALLER )
 
 END FUNCTION PROMPTFFILE
 
-
 subroutine nameval(name, eqname)
 
   use aqm_emis_mod,  only : aqm_internal_emis_type, aqm_emis_get
@@ -588,7 +599,7 @@ subroutine nameval(name, eqname)
     case default
       ! -- nothing to do
   end select
-  
+
 end subroutine nameval
 
 
@@ -623,6 +634,7 @@ logical function interpx( fname, vname, pname, &
   real(AQM_KIND_R8), dimension(:,:,:), pointer     :: p3d
   type(aqm_config_type),               pointer     :: config
   type(aqm_state_type),                pointer     :: stateIn
+  type(aqm_state_type),                pointer     :: stateOut   !IVAI
 
   ! -- constants
   include SUBST_FILES_ID
@@ -639,6 +651,7 @@ logical function interpx( fname, vname, pname, &
   nullify(p3d)
   nullify(config)
   nullify(stateIn)
+  nullify(stateOut)  !IVAI
   set_non_neg = .false.
 
   if (trim(fname) == trim(GRID_CRO_2D)) then
@@ -703,7 +716,7 @@ logical function interpx( fname, vname, pname, &
     call aqm_model_get(stateIn=stateIn, rc=localrc)
     if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
       file=__FILE__, line=__LINE__)) return
-    
+
     call aqm_model_get(config=config, stateIn=stateIn, rc=localrc)
     if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
       file=__FILE__, line=__LINE__)) return
@@ -804,14 +817,131 @@ logical function interpx( fname, vname, pname, &
          end do
         end do
       case ("CLAYF","DRAG","SANDF","UTHR")
-        ! -- read in fengsha variables
+        ! -- fengsha variables
         call aqm_emis_read("fengsha", vname, buffer, rc=localrc)
         if (aqm_rc_test((localrc /= 0), &
           msg="Failure to read fengsha input for " // vname, &
           file=__FILE__, line=__LINE__)) return
+      case ("FCH","FRT","CLU","POPU","LAIE","C1R","C2R","C3R","C4R")
+        ! -- canopy variables
+        if (config % canopy_yn) then
+          call aqm_emis_read("canopy", vname, buffer, rc=localrc)
+          if (aqm_rc_test((localrc /= 0), &
+            msg="Failure to read canopy input for " // vname, &
+            file=__FILE__, line=__LINE__)) return
+        else
+          buffer(1:lbuf) = 0.
+        end if
       case default
     !   return
     end select
+
+!IVAI
+    print*, 'AQM_METHODS: FNAME= ', FNAME, VNAME   !IVAI : MET_CRO_2D
+
+    IF ( TRIM( VNAME ) .EQ. TRIM('LAIE') ) THEN
+
+      print*, 'AQM_METHODS: VNAME= ', VNAME             !IVAI: LAIE
+!      print*, 'AQM_METHODS: LAIE = ', buffer(1:lbuf)
+
+      nullify(stateOut)
+      call aqm_model_get(stateOut=stateOut, rc=localrc)
+      if (aqm_rc_check(localrc, msg="Failure to retrieve model output state", &
+        file=__FILE__, line=__LINE__)) return
+
+      k = 0
+      do r = row0, row1
+        do c = col0, col1
+           k = k + 1
+
+           stateOut % CLAIE (c,r) = buffer(k)
+        end do
+      end do
+
+
+    END IF
+    IF ( TRIM( VNAME ) .EQ. TRIM('FCH') ) THEN
+
+      print*, 'AQM_METHODS: VNAME= ', VNAME             !IVAI: FCH
+!      print*, 'AQM_METHODS: FCH = ', buffer(1:lbuf)
+
+      nullify(stateOut)
+      call aqm_model_get(stateOut=stateOut, rc=localrc)
+      if (aqm_rc_check(localrc, msg="Failure to retrieve model output state", &
+        file=__FILE__, line=__LINE__)) return
+
+      k = 0
+      do r = row0, row1
+        do c = col0, col1
+           k = k + 1
+
+           stateOut % CFCH (c,r) = buffer(k)
+        end do
+      end do
+
+    END IF
+    IF ( TRIM( VNAME ) .EQ. TRIM('FRT') ) THEN
+
+      print*, 'AQM_METHODS: VNAME= ', VNAME             !IVAI: FRT
+!      print*, 'AQM_METHODS: FRT = ', buffer(1:lbuf)
+
+      nullify(stateOut)
+      call aqm_model_get(stateOut=stateOut, rc=localrc)
+      if (aqm_rc_check(localrc, msg="Failure to retrieve model output state", &
+        file=__FILE__, line=__LINE__)) return
+
+      k = 0
+      do r = row0, row1
+        do c = col0, col1
+           k = k + 1
+
+           stateOut % CFRT(c,r) = buffer(k)
+        end do
+      end do
+
+    END IF
+    IF ( TRIM( VNAME ) .EQ. TRIM('CLU') ) THEN
+
+      print*, 'AQM_METHODS: VNAME= ', VNAME             !IVAI: CLU
+!      print*, 'AQM_METHODS: CLU = ', buffer(1:lbuf)
+
+      nullify(stateOut)
+      call aqm_model_get(stateOut=stateOut, rc=localrc)
+      if (aqm_rc_check(localrc, msg="Failure to retrieve model output state", &
+        file=__FILE__, line=__LINE__)) return
+
+      k = 0
+      do r = row0, row1
+        do c = col0, col1
+           k = k + 1
+
+           stateOut % CCLU(c,r) = buffer(k)
+        end do
+      end do
+
+    END IF
+    IF ( TRIM( VNAME ) .EQ. TRIM('POPU') ) THEN
+
+      print*, 'AQM_METHODS: VNAME= ', VNAME             !IVAI: POPU
+!      print*, 'AQM_METHODS: POPU= ', buffer(1:lbuf)
+
+      nullify(stateOut)
+      call aqm_model_get(stateOut=stateOut, rc=localrc)
+      if (aqm_rc_check(localrc, msg="Failure to retrieve model output state", &
+        file=__FILE__, line=__LINE__)) return
+
+      k = 0
+      do r = row0, row1
+        do c = col0, col1
+           k = k + 1
+
+           stateOut % CPOPU(c,r) = buffer(k)
+        end do
+      end do
+
+    END IF
+
+!IVAI
 
   else if (trim(fname) == trim(OCEAN_1)) then
 
@@ -1210,7 +1340,11 @@ LOGICAL FUNCTION WRITE3_REAL2D( FNAME, VNAME, JDATE, JTIME, BUFFER )
 
     WRITE3_REAL2D = .FALSE.
 
+!    print*, 'AQM_METHODS: FNAME, VNAME= ', FNAME, VNAME !IVAI: CTM_AOD_1 ALL
+
     IF ( TRIM( VNAME ) .EQ. TRIM( ALLVAR3 ) ) THEN
+
+!      print*, 'AQM_METHODS: VNAME= ', VNAME         !IVAI: ADO
 
       nullify(stateOut)
       call aqm_model_get(stateOut=stateOut, rc=localrc)
@@ -1219,11 +1353,77 @@ LOGICAL FUNCTION WRITE3_REAL2D( FNAME, VNAME, JDATE, JTIME, BUFFER )
 
       stateOut % aod = BUFFER
 
+!      print*, 'AQM_METHODS: AOD  pointer = ', aod   !IVAI
+!      print*, 'AQM_METHODS: AOD = ', stateOut % aod !IVAI
+
     END IF
 
     WRITE3_REAL2D = .TRUE.
 
   END IF
+
+!IVAI
+  WRITE3_REAL2D = .TRUE.
+
+  IF ( TRIM( FNAME ) .EQ. TRIM( CTM_RJ_1 ) ) THEN
+
+    WRITE3_REAL2D = .FALSE.
+
+    print*, 'AQM_METHODS: FNAME= ', FNAME, VNAME   !IVAI: JO3O1D JNO2 ... (list of 15 vars)
+
+    IF ( TRIM( VNAME ) .EQ. TRIM('COSZENS') ) THEN
+
+!      print*, 'AQM_METHODS: VNAME= ', VNAME             !IVAI: COSZENS
+
+      nullify(stateOut)
+      call aqm_model_get(stateOut=stateOut, rc=localrc)
+      if (aqm_rc_check(localrc, msg="Failure to retrieve model output state", &
+        file=__FILE__, line=__LINE__)) return
+
+      stateOut % coszens = BUFFER
+
+!      print*, 'AQM_METHODS: COSZENS pointer = ', coszens
+!      print*, 'AQM_METHODS: COSZENS = ',  BUFFER
+
+    END IF
+
+    IF ( TRIM( VNAME ) .EQ. TRIM('JO3O1D') ) THEN
+
+!      print*, 'AQM_METHODS: VNAME= ', VNAME             !IVAI: JO3O1D
+
+      nullify(stateOut)
+      call aqm_model_get(stateOut=stateOut, rc=localrc)
+      if (aqm_rc_check(localrc, msg="Failure to retrieve model output state", &
+        file=__FILE__, line=__LINE__)) return
+
+      stateOut % JO3O1D = BUFFER
+
+!      print*, 'AQM_METHODS: JO3O1D pointer = ', JO3O1D
+!      print*, 'AQM_METHODS: JO3O1D = ', BUFFER
+
+    END IF
+
+    IF ( TRIM( VNAME ) .EQ. TRIM('JNO2') ) THEN
+
+!      print*, 'AQM_METHODS: VNAME= ', VNAME             !IVAI: JNO2
+
+      nullify(stateOut)
+      call aqm_model_get(stateOut=stateOut, rc=localrc)
+      if (aqm_rc_check(localrc, msg="Failure to retrieve model output state", &
+        file=__FILE__, line=__LINE__)) return
+
+      stateOut % JNO2 = BUFFER
+
+!      print*, 'AQM_METHODS: JNO2 pointer = ', JNO2
+!      print*, 'AQM_METHODS: JNO2 = ', BUFFER
+
+    END IF
+
+    WRITE3_REAL2D = .TRUE.
+
+  END IF ! CTM_RJ_1
+
+!IVAI
 
 END FUNCTION WRITE3_REAL2D
 

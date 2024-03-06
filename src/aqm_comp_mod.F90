@@ -325,6 +325,57 @@ contains
               line=__LINE__, &
               file=__FILE__)) &
               return  ! bail
+!IVAI: canopy fields read in via 'aqm_emiss_read'
+          case ("inst_tracer_diag_claie")
+            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateOut % claie, rc=rc)
+            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+              line=__LINE__, &
+              file=__FILE__)) &
+              return  ! bail
+          case ("inst_tracer_diag_cfch")
+            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateOut % cfch, rc=rc)
+            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+              line=__LINE__, &
+              file=__FILE__)) &
+              return  ! bail
+          case ("inst_tracer_diag_cfrt")
+            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateOut % cfrt, rc=rc)
+            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+              line=__LINE__, &
+              file=__FILE__)) &
+              return  ! bail
+          case ("inst_tracer_diag_cclu")
+            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateOut % cclu, rc=rc)
+            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+              line=__LINE__, &
+              file=__FILE__)) &
+              return  ! bail
+          case ("inst_tracer_diag_cpopu")
+            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateOut % cpopu, rc=rc)
+            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+              line=__LINE__, &
+              file=__FILE__)) &
+              return  ! bail
+!IVAI: photdiag CTM_RJ_1 fields
+          case ("inst_tracer_diag_coszens")
+            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateOut % coszens, rc=rc)
+            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+              line=__LINE__, &
+              file=__FILE__)) &
+              return  ! bail
+          case ("inst_tracer_diag_jo3o1d")
+            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateOut % jo3o1d, rc=rc)
+            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+              line=__LINE__, &
+              file=__FILE__)) &
+              return  ! bail
+          case ("inst_tracer_diag_jno2")
+            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateOut % jno2, rc=rc)
+            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+              line=__LINE__, &
+              file=__FILE__)) &
+              return  ! bail
+!IVAI
           case default
             ! -- unused field
         end select
@@ -605,6 +656,61 @@ contains
               line=__LINE__, &
               file=__FILE__)) &
               return  ! bail
+!canopy variables
+!          case ("forest_canopy_height")
+!            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % stemp, rc=rc)
+!            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+!              line=__LINE__, &
+!              file=__FILE__)) &
+!              return  ! bail
+!          case ("forest_fraction")
+!            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % stemp, rc=rc)
+!            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+!              line=__LINE__, &
+!              file=__FILE__)) &
+!              return  ! bail
+!          case ("clumping_index")
+!            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % stemp, rc=rc)
+!            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+!              line=__LINE__, &
+!              file=__FILE__)) &
+!              return  ! bail
+!          case ("population_density")
+!            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % stemp, rc=rc)
+!            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+!              line=__LINE__, &
+!              file=__FILE__)) &
+!              return  ! bail
+!          case ("leaf_area_index_eccc")
+!            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % stemp, rc=rc)
+!            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+!              line=__LINE__, &
+!              file=__FILE__)) &
+!              return  ! bail
+!          case ("cum_lai_frac1_eccc")
+!            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % stemp, rc=rc)
+!            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+!              line=__LINE__, &
+!              file=__FILE__)) &
+!              return  ! bail
+!          case ("cum_lai_frac2_eccc")
+!            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % stemp, rc=rc)
+!            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+!              line=__LINE__, &
+!              file=__FILE__)) &
+!              return  ! bail
+!          case ("cum_lai_frac3_eccc")
+!            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % stemp, rc=rc)
+!            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+!              line=__LINE__, &
+!              file=__FILE__)) &
+!              return  ! bail
+!          case ("cum_lai_frac4_eccc")
+!            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % stemp, rc=rc)
+!            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+!              line=__LINE__, &
+!              file=__FILE__)) &
+!              return  ! bail
           case default
             ! -- unused field
         end select

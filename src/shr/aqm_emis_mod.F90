@@ -1600,6 +1600,12 @@ contains
           return  ! bail out
         end if
 
+        if (trim(em % type) == "canopy") then
+           ! -- ensure canopy variables are not normalized by area like
+           ! -- emissions conversions below
+           em % dens_flag(item) = 1
+        end if
+
         select case (em % dens_flag(item))
           case (:-1)
             ! -- this case indicates that input emissions are provided as totals/cell

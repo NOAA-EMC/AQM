@@ -34,7 +34,7 @@ module aqm_config_mod
     logical                   :: biosw_yn      = .false.
     logical                   :: ctm_aod       = .false.
     logical                   :: ctm_depvfile  = .false.
-    logical                   :: ctm_photodiag = .false.
+    logical                   :: ctm_photdiag  = .false.  !IVAI
     logical                   :: ctm_pmdiag    = .false.
     logical                   :: ctm_wb_dust   = .false.
     logical                   :: mie_optics    = .false.
@@ -42,6 +42,7 @@ module aqm_config_mod
     logical                   :: run_aero      = .false.
     logical                   :: run_rescld    = .false.
     logical                   :: verbose       = .false.
+    logical                   :: canopy_yn     = .false.
     type(aqm_species_type), pointer :: species => null()
   end type aqm_config_type
 
@@ -182,6 +183,17 @@ contains
       rcToReturn=rc)) &
       return  ! bail out
 
+!IVAI
+    ! -- read diagnostic settings
+    call ESMF_ConfigGetAttribute(cf, config % ctm_photdiag, &
+      label="ctm_photdiag:", default=.false., rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+!IVAI
+
     call ESMF_ConfigGetAttribute(cf, config % ctm_pmdiag, &
       label="ctm_pmdiag:", default=.false., rc=localrc)
     if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -197,7 +209,16 @@ contains
       file=__FILE__,  &
       rcToReturn=rc)) &
       return  ! bail out
-    
+
+    ! Canopy Options
+    call ESMF_ConfigGetAttribute(cf, config % canopy_yn, &
+      label="canopy_yn:", default=.false., rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
     call ESMF_ConfigGetAttribute(cf, value, &
       label="ctm_stdout:", default="all", rc=localrc)
     if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -232,7 +253,6 @@ contains
 
     ! -- set other default values
     config % ctm_depvfile  = .false.
-    config % ctm_photodiag = .false.
 
   end subroutine aqm_config_read
 
@@ -545,6 +565,25 @@ contains
         rcToReturn=rc)) &
         return  ! bail out
     end if
+!IVAI
+    if (config % ctm_photdiag) then
+      call ESMF_LogWrite(trim(name) // ": config: read: ctm_photdiag: true", &
+        ESMF_LOGMSG_INFO, rc=localrc)
+      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__,  &
+        file=__FILE__,  &
+        rcToReturn=rc)) &
+        return  ! bail out
+    else
+      call ESMF_LogWrite(trim(name) // ": config: read: ctm_photdiag: false", &
+        ESMF_LOGMSG_INFO, rc=localrc)
+      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__,  &
+        file=__FILE__,  &
+        rcToReturn=rc)) &
+        return  ! bail out
+    end if
+!IVAI
     if (config % ctm_wb_dust) then
       call ESMF_LogWrite(trim(name) // ": config: read: ctm_wb_dust: true", &
         ESMF_LOGMSG_INFO, rc=localrc)
@@ -555,6 +594,23 @@ contains
         return  ! bail out
     else
       call ESMF_LogWrite(trim(name) // ": config: read: ctm_wb_dust: false", &
+        ESMF_LOGMSG_INFO, rc=localrc)
+      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__,  &
+        file=__FILE__,  &
+        rcToReturn=rc)) &
+        return  ! bail out
+    end if
+    if (config % canopy_yn) then
+      call ESMF_LogWrite(trim(name) // ": config: read: canopy_yn: true", &
+        ESMF_LOGMSG_INFO, rc=localrc)
+      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__,  &
+        file=__FILE__,  &
+        rcToReturn=rc)) &
+        return  ! bail out
+    else
+      call ESMF_LogWrite(trim(name) // ": config: read: canopy_yn: false", &
         ESMF_LOGMSG_INFO, rc=localrc)
       if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
         line=__LINE__,  &

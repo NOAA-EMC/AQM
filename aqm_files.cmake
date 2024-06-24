@@ -88,7 +88,6 @@ set(localCCTM "src/model/src")
 list(APPEND aqm_CCTM_files
 	${AERO}/AERO_DATA.F
 	${AERO}/aero_driver.F
-	${AERO}/AERO_EMIS.F
 	${AERO}/AEROMET_DATA.F
 	${AERO}/AEROSOL_CHEMISTRY.F
 	${AERO}/aero_subs.F
@@ -180,7 +179,6 @@ list(APPEND aqm_CCTM_files
 	${MECHS}/RXNS_FUNC_MODULE.F90
 	${PA}/PA_DEFN.F
 	${PA}/pa_update.F
-	${PHOT}/CLOUD_OPTICS.F
 	${PHOT}/complex_number_module.F90
 	${PHOT}/OMI_1979_to_2015.dat
 	${PHOT}/opphot.F
@@ -235,4 +233,6 @@ list(APPEND aqm_CCTM_files
 	${localCCTM}/CSQY_DATA.F
 	${localCCTM}/isocom.f
 	${localCCTM}/aero_depv.F
+	${localCCTM}/AERO_EMIS.F
+	${localCCTM}/CLOUD_OPTICS.F
 )

@@ -7,12 +7,22 @@ module aqm_logger_mod
   integer, parameter :: aqm_logger_task = 0
   integer, parameter :: aqm_logger_unit = 6
 
+  integer, parameter :: aqm_logger_info = 0
+  integer, parameter :: aqm_logger_warn = 1
+  integer, parameter :: aqm_logger_err  = 2
+
+  character(len=128) :: aqm_logger_name
+
   private
 
   public :: aqm_logger_init
   public :: aqm_logger_log
   public :: aqm_logger_logstep
   public :: aqm_logger_active
+
+  public :: aqm_logger_info
+  public :: aqm_logger_warn
+  public :: aqm_logger_err
 
 contains
 
@@ -36,7 +46,7 @@ contains
     if (present(rc)) rc = ESMF_SUCCESS
 
     ! -- retrieve component's VM
-    call ESMF_GridCompGet(model, vm=vm, rc=localrc)
+    call ESMF_GridCompGet(model, name=aqm_logger_name, vm=vm, rc=localrc)
     if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__,  &
       file=__FILE__,  &
@@ -55,15 +65,19 @@ contains
 
   end subroutine aqm_logger_init
 
-  subroutine aqm_logger_log(msg, logUnit, rc)
+  subroutine aqm_logger_log(msg, logUnit, level, rc)
 
     character(len=*),           intent(in)  :: msg
     integer,          optional, intent(in)  :: logUnit
+    integer,          optional, intent(in)  :: level
     integer,          optional, intent(out) :: rc
 
     ! -- local variables
     integer                    :: localrc
+    integer                    :: localLevel
     integer                    :: unit
+    character(len=8)           :: infoString
+    type(ESMF_LogMsg_Flag)     :: logmsgFlag
 
     ! print timestep details
 
@@ -73,9 +87,30 @@ contains
     unit = aqm_logger_unit
     if (present(logUnit)) unit = logUnit
 
-    if (is_logger_on) write(unit, '(a)') trim(msg)
+    localLevel = aqm_logger_info
+    if (present(level)) localLevel = level
 
-    call ESMF_LogWrite(trim(msg), rc=localrc)
+    ! -- defaults
+    infoString = ""
+    logmsgFlag = ESMF_LOGMSG_INFO
+
+    select case (localLevel)
+      case (aqm_logger_info)
+        ! -- default
+      case (aqm_logger_warn)
+        infoString = "WARNING:"
+        logmsgFlag = ESMF_LOGMSG_WARNING
+      case (aqm_logger_err )
+        infoString = "ERROR:"
+        logmsgFlag = ESMF_LOGMSG_ERROR
+      case default
+        ! -- default
+    end select
+
+    if (is_logger_on) write(unit, '(a)') trim(aqm_logger_name) // ":" &
+      // trim(infoString) // trim(msg)
+
+    call ESMF_LogWrite(trim(aqm_logger_name) // ":" // trim(msg), logmsgFlag=logmsgFlag, rc=localrc)
     if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__, &

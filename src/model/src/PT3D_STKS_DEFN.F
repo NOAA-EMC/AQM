@@ -60,9 +60,6 @@ C Local Variables:
          INTEGER           :: IJ, IS
          INTEGER           :: NSRC, NP
          INTEGER           :: IOS, LOCALRC
-         INTEGER, POINTER  :: IP( : )
-         INTEGER, POINTER  :: JP( : )
-         INTEGER, POINTER  :: IJMAP( : )
          REAL              :: MV         ! mininum LFRAC
          REAL              :: PSFC       ! surface pressure [Pa]
          REAL              :: TSTK       ! temperature at top of stack [K]
@@ -216,9 +213,9 @@ C Allocate Buffer space for Reading Emissions
          ! -- loop over mapped emissions only
 
          DO IS = 1, NSRC
-            IJ = EM % IJMAP( IS )
-            C  = EM % IP( IJ )
-            R  = EM % JP( IJ )
+            IJ = EM % IJMAP( IS ) % NLOC
+            C  = EM % IJMAP( IS ) % I
+            R  = EM % IJMAP( IS ) % J
 
             IF ( EMLYRS .GT. 1 ) THEN
 C Loop through sources and compute plume rise
@@ -280,9 +277,13 @@ C Set up for computing plume fractions, assuming uniform distribution in pressur
 C (~mass concentration -- minor hydrostatic assumption) from bottom to top.
 
                IF ( ZTOP .LT. EM % STKHT( IJ ) ) THEN
-                  WRITE( CINT,'( I8 )' ) S
+                  WRITE( CINT,'( I8 )' ) IJ
                   WRITE( XMSG,94010 ) 'ERROR: Top of plume is less than '
      &                                // 'top of stack for source:' // CINT
+                  CALL M3MESG( XMSG )
+                  WRITE( XMSG,'("    Zbot: ",F12.6," Ztop: ",F12.6' //
+     &                         '"    Stack Top: ",F12.6," Plume Top: ",F12.6)')
+     &                         ZBOT, ZTOP, EM % STKHT( IJ ), ZPLM
                   CALL M3MESG( XMSG )
                   WRITE( LOGDEV,* ) '    Zbot: ', ZBOT, ' Ztop: ', ZTOP
                   WRITE( LOGDEV,* ) '    Stack Top: ', EM % STKHT( IJ ),
@@ -350,7 +351,7 @@ c                       TFRAC( LTOP ) = DDZ * ( ZTOP - Met_Data % ZF( C,R,LTOP-1
 
                   ELSE   ! ZDIFF .le. 0
 
-                     WRITE( CINT,'( I8 )' ) S
+                     WRITE( CINT,'( I8 )' ) IJ
                      WRITE( XMSG,94020 )
      &                  'Infinitely small plume created for source:,'
      &                  // CINT // CRLF() // BLANK10
@@ -375,7 +376,7 @@ C If layer fractions are negative, put in the first layer
                MV = MINVAL( TFRAC( 1:EMLYRS ) )
                IF ( MV .LT. 0.0 ) THEN
 
-                  WRITE( CINT,'( I8 )' ) S
+                  WRITE( CINT,'( I8 )' ) IJ
                   WRITE( XMSG,94010 ) 
      &                  'WARNING: One or more negative plume '
      &               // 'fractions found for source:' // CINT
@@ -425,9 +426,9 @@ C If layer fractions are negative, put in the first layer
             ! -- add emissions
             DO L = 1, EMLYRS
                DO IS = 1, NSRC
-                  IJ = EM % IJMAP( IS )
-                  C  = EM % IP( IJ )
-                  R  = EM % JP( IJ )
+                  IJ = EM % IJMAP( IS ) % NLOC
+                  C  = EM % IJMAP( IS ) % I
+                  R  = EM % IJMAP( IS ) % J
                   VDEMIS_PT( C,R,L,N ) = VDEMIS_PT( C,R,L,N )
      &                                 + VFRAC( IS, L ) * BUFFER( IJ )
                END DO
@@ -446,9 +447,9 @@ C If layer fractions are negative, put in the first layer
      &         FILE=__FILE__, LINE=__LINE__)) RETURN
             DO L = 1, EMLYRS
                DO IS = 1, NSRC
-                  IJ = EM % IJMAP( IS )
-                  C  = EM % IP( IJ )
-                  R  = EM % JP( IJ )
+                  IJ = EM % IJMAP( IS ) % NLOC
+                  C  = EM % IJMAP( IS ) % I
+                  R  = EM % IJMAP( IS ) % J
                   PMEMIS_PT( C,R,L,N ) = PMEMIS_PT( C,R,L,N )
      &                                 + VFRAC( IS, L ) * BUFFER( IJ )
                END DO

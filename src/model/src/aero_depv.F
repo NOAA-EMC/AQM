@@ -390,6 +390,7 @@ C-----------------------------------------------------------------------
       USE LSM_MOD, Only: n_lufrac      ! to get n_lufrac
       USE AEROMET_DATA   ! Includes CONST.EXT
       USE ASX_DATA_MOD, Only: Met_Data, Mosaic_Data, Grid_Data
+      USE, INTRINSIC :: ISO_C_BINDING, Only: C_FLOAT
 
       IMPLICIT NONE
 
@@ -545,6 +546,13 @@ C Scalar variables for VARIABLE standard deviations.
 
       REAL    EIM              ! Impaction efficiency
 
+      INTERFACE
+        REAL(C_FLOAT) FUNCTION EXPM1F(X) BIND(C, NAME="expm1f")
+          IMPORT C_FLOAT
+          REAL(C_FLOAT), VALUE, INTENT(IN) :: X
+        END FUNCTION EXPM1F
+      END INTERFACE
+
 C-----------------------------------------------------------------------
 
       VDEP  = 0.0   ! array assignment
@@ -690,8 +698,7 @@ C  Aitken mode
             EIM = MIN( EIM, 1.0 )
             RD0N = 1.0 / ( UTSCALE * ( SC0N ** ( -TWO3 ) + EIM ) )
 
-            VDEP( C,R,VDNATK ) = VGHAT0N
-     &             / ( 1.D0 - EXP( -VGHAT0N * ( Met_Data%RA( C,R ) + RD0N ) ) )
+            VDEP( C,R,VDNATK ) = VD( VGHAT0N, Met_Data%RA( C,R ) + RD0N )
 
 C accumulation mode
             SC0A = NU / DCHAT0A
@@ -699,8 +706,7 @@ C accumulation mode
             EIM = MIN( EIM, 1.0 )
             RD0A = 1.0 / ( UTSCALE * ( SC0A ** ( -TWO3 ) + EIM ) )
 
-            VDEP( C,R,VDNACC ) = VGHAT0A
-     &             / ( 1.D0 - EXP( -VGHAT0A * ( Met_Data%RA( C,R ) + RD0A ) ) )
+            VDEP( C,R,VDNACC ) = VD( VGHAT0A, Met_Data%RA( C,R ) + RD0A )
 
 C coarse mode
             SC0C = NU / DCHAT0C
@@ -708,8 +714,7 @@ C coarse mode
             EIM = MIN( EIM, 1.0 )
             RD0C = 1.0 / ( UTSCALE * ( SC0C ** ( -TWO3 ) + EIM ) )
 
-            VDEP( C,R,VDNCOR ) = VGHAT0C
-     &             / ( 1.D0 - EXP( -VGHAT0C * ( Met_Data%RA( C,R ) + RD0C ) ) )
+            VDEP( C,R,VDNCOR ) = VD( VGHAT0C, Met_Data%RA( C,R ) + RD0C )
 
 C now do 2nd moment for the deposition of surface area
 
@@ -719,8 +724,7 @@ C  Aitken mode
             EIM = MIN( EIM, 1.0 )
             RD2N = 1.0 / ( UTSCALE * ( SC2N ** ( -TWO3 ) + EIM ) )
 
-            VDEP( C,R,VDSATK ) = VGHAT2N
-     &             / ( 1.D0 - EXP( -VGHAT2N * ( Met_Data%RA( C,R ) + RD2N ) ) )
+            VDEP( C,R,VDSATK ) = VD( VGHAT2N, Met_Data%RA( C,R ) + RD2N )
 
 C accumulation mode
             SC2A = NU / DCHAT2A
@@ -728,8 +732,7 @@ C accumulation mode
             EIM = MIN( EIM, 1.0 )
             RD2A = 1.0 / ( UTSCALE * ( SC2A ** ( -TWO3 ) + EIM ) )
 
-            VDEP( C,R,VDSACC ) = VGHAT2A
-     &             / ( 1.D0 - EXP( -VGHAT2A * ( Met_Data%RA( C,R ) + RD2A ) ) )
+            VDEP( C,R,VDSACC ) = VD( VGHAT2A, Met_Data%RA( C,R ) + RD2A )
 
 C coarse mode
             SC2C = NU / DCHAT2C
@@ -737,8 +740,7 @@ C coarse mode
             EIM = MIN( EIM, 1.0 )
             RD2C = 1.0 / ( UTSCALE * ( SC2C ** ( -TWO3 ) + EIM ) )
 
-            VDEP( C,R,VDSCOR ) = VGHAT2C
-     &             / ( 1.D0 - EXP( -VGHAT2C * ( Met_Data%RA( C,R ) + RD2C ) ) )
+            VDEP( C,R,VDSCOR ) = VD( VGHAT2C, Met_Data%RA( C,R ) + RD2C )
 
 C now do 3rd moment for the deposition of mass
 
@@ -748,8 +750,7 @@ C  Aitken mode
             EIM = MIN( EIM, 1.0 )
             RD3N = 1.0 / ( UTSCALE * ( SC3N ** ( -TWO3 ) + EIM ) )
 
-            VDEP( C,R,VDMATK ) = VGHAT3N
-     &             / ( 1.D0 - EXP( -VGHAT3N * ( Met_Data%RA( C,R ) + RD3N ) ) )
+            VDEP( C,R,VDMATK ) = VD( VGHAT3N, Met_Data%RA( C,R ) + RD3N )
 
 C accumulation mode
             SC3A = NU / DCHAT3A
@@ -757,8 +758,7 @@ C accumulation mode
             EIM = MIN( EIM, 1.0 )
             RD3A = 1.0 / ( UTSCALE * ( SC3A ** ( -TWO3 ) + EIM ) )
 
-            VDEP( C,R,VDMACC ) = VGHAT3A
-     &             / ( 1.D0 - EXP( -VGHAT3A * ( Met_Data%RA( C,R ) + RD3A ) ) )
+            VDEP( C,R,VDMACC ) = VD( VGHAT3A, Met_Data%RA( C,R ) + RD3A )
 
 C coarse mode
             SC3C = NU / DCHAT3C
@@ -766,8 +766,7 @@ C coarse mode
             EIM = MIN( EIM, 1.0 )
             RD3C = 1.0 / ( UTSCALE * ( SC3C ** ( -TWO3 ) + EIM ) )
 
-            VDEP( C,R,VDMCOR ) = VGHAT3C
-     &             / ( 1.D0 - EXP( -VGHAT3C * ( Met_Data%RA( C,R ) + RD3C ) ) )
+            VDEP( C,R,VDMCOR ) = VD( VGHAT3C, Met_Data%RA( C,R ) + RD3C )
 
 C Do mosaic calculations - essentially a repeat of the above, using the mosaic vars
             IF ( MOSAIC ) THEN
@@ -795,8 +794,7 @@ C  Aitken mode
                      EIM = MIN( EIM, 1.0 )
                      RD0N = 1.0 / ( UTSCALE * ( SC0N ** ( -TWO3 ) + EIM ) )
 
-                     VDEPJ( J,C,R,VDNATK ) = VGHAT0N
-     &                       / ( 1.D0 - EXP(-VGHAT0N * ( Mosaic_Data%RA( C,R,J ) + RD0N ) ) )
+                     VDEPJ( J,C,R,VDNATK ) = VD( VGHAT0N, Mosaic_Data%RA( C,R,J ) + RD0N )
 
 C accumulation mode
 
@@ -805,8 +803,7 @@ C accumulation mode
                      EIM = MIN( EIM, 1.0 )
                      RD0A = 1.0 / ( UTSCALE * ( SC0A ** ( -TWO3 ) + EIM ) )
 
-                     VDEPJ( J,C,R,VDNACC ) = VGHAT0A
-     &                       / ( 1.D0 - EXP(-VGHAT0A * ( Mosaic_Data%RA( C,R,J ) + RD0A ) ) )
+                     VDEPJ( J,C,R,VDNACC ) = VD( VGHAT0A, Mosaic_Data%RA( C,R,J ) + RD0A )
 
 C coarse mode
 
@@ -815,8 +812,7 @@ C coarse mode
                      EIM = MIN( EIM, 1.0 )
                      RD0C = 1.0 / ( UTSCALE * ( SC0C ** ( -TWO3 ) + EIM ) )
 
-                     VDEPJ( J,C,R,VDNCOR ) = VGHAT0C
-     &                       / ( 1.D0 - EXP(-VGHAT0C * ( Mosaic_Data%RA( C,R,J ) + RD0C ) ) )
+                     VDEPJ( J,C,R,VDNCOR ) = VD( VGHAT0C, Mosaic_Data%RA( C,R,J ) + RD0C )
 
 C now do 2nd moment for the deposition of surface area
 
@@ -827,8 +823,7 @@ C  Aitken mode
                      EIM = MIN( EIM, 1.0 )
                      RD2N = 1.0 / ( UTSCALE * ( SC2N ** ( -TWO3 ) + EIM ) )
 
-                     VDEPJ( J,C,R,VDSATK ) = VGHAT2N
-     &                     / ( 1.D0 - EXP(-VGHAT2N * ( Mosaic_Data%RA( C,R,J ) + RD2N ) ) )
+                     VDEPJ( J,C,R,VDSATK ) = VD( VGHAT2N, Mosaic_Data%RA( C,R,J ) + RD2N )
 
 C accumulation mode
 
@@ -837,8 +832,7 @@ C accumulation mode
                      EIM = MIN( EIM, 1.0 )
                      RD2A = 1.0 / ( UTSCALE * ( SC2A ** ( -TWO3 ) + EIM ) )
 
-                     VDEPJ( J,C,R,VDSACC ) = VGHAT2A
-     &                       / ( 1.D0 - EXP(-VGHAT2A * ( Mosaic_Data%RA( C,R,J ) + RD2A ) ) )
+                     VDEPJ( J,C,R,VDSACC ) = VD( VGHAT2A, Mosaic_Data%RA( C,R,J ) + RD2A )
 
 C coarse mode
 
@@ -847,8 +841,7 @@ C coarse mode
                      EIM = MIN( EIM, 1.0 )
                      RD2C = 1.0 / ( UTSCALE * ( SC2C ** ( -TWO3 ) + EIM ) )
 
-                     VDEPJ( J,C,R,VDSCOR ) = VGHAT2C
-     &                       / ( 1.D0 - EXP(-VGHAT2C * ( Mosaic_Data%RA( C,R,J ) + RD2C ) ) )
+                     VDEPJ( J,C,R,VDSCOR ) = VD( VGHAT2C, Mosaic_Data%RA( C,R,J ) + RD2C )
 
 C now do 3rd moment for the deposition of mass
 
@@ -859,8 +852,7 @@ C  Aitken mode
                      EIM = MIN( EIM, 1.0 )
                      RD3N = 1.0 / ( UTSCALE * ( SC3N ** ( -TWO3 ) + EIM ) )
 
-                     VDEPJ( J,C,R,VDMATK ) = VGHAT3N
-     &                       / ( 1.D0 - EXP(-VGHAT3N * ( Mosaic_Data%RA( C,R,J ) + RD3N ) ) )
+                     VDEPJ( J,C,R,VDMATK ) = VD( VGHAT3N, Mosaic_Data%RA( C,R,J ) + RD3N )
 
 C accumulation mode
 
@@ -869,8 +861,7 @@ C accumulation mode
                      EIM = MIN( EIM, 1.0 )
                      RD3A = 1.0 / ( UTSCALE * ( SC3A ** ( -TWO3 ) + EIM ) )
 
-                     VDEPJ( J,C,R,VDMACC ) = VGHAT3A
-     &                       / ( 1.D0 - EXP(-VGHAT3A * ( Mosaic_Data%RA( C,R,J ) + RD3A ) ) )
+                     VDEPJ( J,C,R,VDMACC ) = VD( VGHAT3A, Mosaic_Data%RA( C,R,J ) + RD3A )
 
 C coarse mode
 
@@ -879,8 +870,7 @@ C coarse mode
                      EIM = MIN( EIM, 1.0 )
                      RD3C = 1.0 / ( UTSCALE * ( SC3C ** ( -TWO3 ) + EIM ) )
 
-                     VDEPJ( J,C,R,VDMCOR ) = VGHAT3C
-     &                     / ( 1.D0 - EXP(-VGHAT3C * ( Mosaic_Data%RA( C,R,J ) + RD3C ) ) )
+                     VDEPJ( J,C,R,VDMCOR ) = VD( VGHAT3C, Mosaic_Data%RA( C,R,J ) + RD3C )
 
                   END IF ! RA > 0
 
@@ -891,4 +881,27 @@ C coarse mode
       END DO ! end loop on R
 
       RETURN
+
+      CONTAINS
+
+        REAL FUNCTION VD( V, R )
+
+          DOUBLE PRECISION, INTENT(IN) :: V
+          REAL,             INTENT(IN) :: R
+
+          REAL(C_FLOAT) :: X
+          REAL(C_FLOAT), PARAMETER :: ZERO = 0._C_FLOAT
+
+          X = V * R
+
+          IF (X .NE. X) THEN
+            VD = X
+          ELSE IF (X. EQ. ZERO) THEN
+            VD = ZERO
+          ELSE
+            VD = -REAL(V, KIND=C_FLOAT) / EXPM1F(-X)
+          END IF
+
+        END FUNCTION VD
+
       END SUBROUTINE GETDEP_V

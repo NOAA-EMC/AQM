@@ -314,7 +314,7 @@ C        ... gas species ...
            END IF
          END DO
 
-         N_GSPC_TYPE_EMIS = N
+         N_GSPC_TYPE_EMIS = N_GAS_EMIS
 
 C        ... aerosol species ...
 

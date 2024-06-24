@@ -48,6 +48,11 @@ run_rescld: true
 # - compute aerosol optical properties using Mie theory (default: false)
 #
 mie_optics: false
+#
+# - scale surface aerosol emissions over snow (fugitive dust correction)
+#   disabled if keyword is missing or value outside [0.,1.]
+#
+fugitive_dust_scale: 0.01
 
 #
 # Microphysics scheme used by coupled atmospheric model

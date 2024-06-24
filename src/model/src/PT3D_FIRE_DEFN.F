@@ -225,7 +225,6 @@ C        ... gas species ...
             M = PTEM_FIRE_MAP( S )
             IF ( M .GT. 0 ) THEN
                N = PTEM_MAP( S )
-c           IF ( N .GT. 0 ) THEN
                BUFFER = 0.0
                CALL AQM_EMIS_READ( ETYPE, EM % TABLE( M, 1 ),
      &                             BUFFER, RC=LOCALRC )

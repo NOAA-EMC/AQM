@@ -5,7 +5,9 @@ module aqm_config_mod
   use NUOPC_Model, only : NUOPC_ModelGet
 
   use aqm_rc_mod
-  use aqm_logger_mod,  only : aqm_logger_active
+  use aqm_logger_mod,  only : aqm_logger_active, &
+                              aqm_logger_log,    &
+                              aqm_logger_warn
   use aqm_types_mod,   only : AQM_MAXSTR
   use aqm_species_mod, only : aqm_species_type
 
@@ -42,6 +44,7 @@ module aqm_config_mod
     logical                   :: run_aero      = .false.
     logical                   :: run_rescld    = .false.
     logical                   :: verbose       = .false.
+    real                      :: fg_dust_scale = -1.0
     type(aqm_species_type), pointer :: species => null()
   end type aqm_config_type
 
@@ -158,6 +161,14 @@ contains
 
     call ESMF_ConfigGetAttribute(cf, config % mie_optics, &
       label="mie_optics:", default=.false., rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+    call ESMF_ConfigGetAttribute(cf, config % fg_dust_scale, &
+      label="fugitive_dust_scale:", default=-1.0, rc=localrc)
     if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__,  &
       file=__FILE__,  &
@@ -438,7 +449,6 @@ contains
       return  ! bail out
     end if
 
-    ! -- set model's name and verbosity level based on the component standard diagnostic level
     config % name    = name
     config % verbose = btest(diagnostic, 17)
 
@@ -451,6 +461,14 @@ contains
         m3io_enabled = .false.
     end select
 
+    ! -- perform sanity check
+    if (config % fg_dust_scale > 1.0 .or. config % fg_dust_scale < 0.) then
+      config % fg_dust_scale = -1.0
+      call aqm_logger_log("config: init: " &
+        // "disabling fugitive dust correction (scale factor outside [0,1])", level=aqm_logger_warn)
+    end if
+
+    ! -- set model's name and verbosity level based on the component standard diagnostic level
     if (btest(verbosity,8)) then
       call aqm_config_log(config, name, rc=localrc)
       if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -635,6 +653,25 @@ contains
       file=__FILE__,  &
       rcToReturn=rc)) &
       return  ! bail out
+
+    if (config % fg_dust_scale > 0.0) then
+      write(msgString, '(a,": config: read: fugitive_dust_scale: ",f8.5)') &
+        trim(name), config % fg_dust_scale
+      call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=localrc)
+      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__,  &
+        file=__FILE__,  &
+        rcToReturn=rc)) &
+        return  ! bail out
+    else
+      call ESMF_LogWrite(trim(name) // ": config: read: fugitive_dust_scale: (disabled)", &
+        ESMF_LOGMSG_INFO, rc=localrc)
+      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__,  &
+        file=__FILE__,  &
+        rcToReturn=rc)) &
+        return  ! bail out
+    end if
 
     write(msgString, '(a,": config: init: mp_tracer_map: ",a,": ",i0," tracers")') &
       trim(name), trim(config % mp_map), config % species % p_aqm_beg - 1

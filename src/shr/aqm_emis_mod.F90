@@ -233,8 +233,6 @@ contains
       nullify(em(item) % stkve)
       nullify(em(item) % rates)
       nullify(em(item) % dens_flag)
-      nullify(em(item) % ip)
-      nullify(em(item) % jp)
       nullify(em(item) % ijmap)
       nullify(em(item) % table)
 
@@ -1267,24 +1265,6 @@ contains
             return  ! bail out
           nullify(em % stkve)
         end if
-        if (associated(em % ip)) then
-          deallocate(em % ip, stat=stat)
-          if (ESMF_LogFoundDeallocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
-            line=__LINE__,  &
-            file=__FILE__,  &
-            rcToReturn=rc)) &
-            return  ! bail out
-          nullify(em % ip)
-        end if
-        if (associated(em % jp)) then
-          deallocate(em % jp, stat=stat)
-          if (ESMF_LogFoundDeallocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
-            line=__LINE__,  &
-            file=__FILE__,  &
-            rcToReturn=rc)) &
-            return  ! bail out
-          nullify(em % jp)
-        end if
         if (associated(em % ijmap)) then
           deallocate(em % ijmap, stat=stat)
           if (ESMF_LogFoundDeallocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
@@ -1667,15 +1647,13 @@ contains
   end subroutine aqm_emis_grd_read
 
 
-  subroutine aqm_emis_pts_read(em, spcname, buffer, ip, jp, ijmap, localDe, rc)
-    type(aqm_internal_emis_type)     :: em
-    character(len=*),  intent(in)    :: spcname
-    real,              intent(inout) :: buffer(*)
-    integer, optional, pointer       :: ip(:)
-    integer, optional, pointer       :: jp(:)
-    integer, optional, pointer       :: ijmap(:)
-    integer, optional, intent(in)    :: localDe
-    integer, optional, intent(out)   :: rc
+  subroutine aqm_emis_pts_read(em, spcname, buffer, ijmap, localDe, rc)
+    type(aqm_internal_emis_type)                    :: em
+    character(len=*),                 intent(in)    :: spcname
+    real,                             intent(inout) :: buffer(*)
+    type(aqm_internal_psrc_type), optional, pointer :: ijmap(:)
+    integer, optional,                intent(in)    :: localDe
+    integer, optional,                intent(out)   :: rc
 
     ! -- local variables
     integer :: localrc
@@ -1700,8 +1678,6 @@ contains
       file=__FILE__, line=__LINE__, rc=rc)) return
 
     ! -- return grid locations and map
-    if (present(ip))    ip    => em % ip
-    if (present(jp))    jp    => em % jp
     if (present(ijmap)) ijmap => em % ijmap
 
     do item = 1, size(em % species)
@@ -1712,9 +1688,9 @@ contains
             ! -- this case indicates that input emissions are provided as totals/cell
             ! -- while surface densities are required and should never occur in CMAQ
             do m = 1, size(em % ijmap)
-              n = em % ijmap(m)
-              i = em % ip(n)
-              j = em % jp(n)
+              n = em % ijmap(m) % nloc
+              i = em % ijmap(m) % i
+              j = em % ijmap(m) % j
               buffer(n) = buffer(n) &
                 + em % factors(item) * em % rates(item) % values(n) / stateIn % area(i,j) &
                                                                     / stateIn % area(i,j)
@@ -1722,16 +1698,16 @@ contains
           case (0)
             ! -- emissions are totals over each grid cell
             do m = 1, size(em % ijmap)
-              n = em % ijmap(m)
-              i = em % ip(n)
-              j = em % jp(n)
+              n = em % ijmap(m) % nloc
+              i = em % ijmap(m) % i
+              j = em % ijmap(m) % j
               buffer(n) = buffer(n) &
                 + em % factors(item) * em % rates(item) % values(n) / stateIn % area(i,j)
             end do
           case (1:)
             ! -- emissions are already provided as surface densities, no need to normalize
             do m = 1, size(em % ijmap)
-              n = em % ijmap(m)
+              n = em % ijmap(m) % nloc
               buffer(n) = buffer(n) &
                 + em % factors(item) * em % rates(item) % values(n)
             end do
@@ -1748,7 +1724,7 @@ contains
           em_min = huge(0._ESMF_KIND_R4)
           em_max = -em_min
           do m = 1, size(em % ijmap)
-            n = em % ijmap(m)
+            n = em % ijmap(m) % nloc
             em_min = min( em_min, em % rates(item) % values(n) )
             em_max = max( em_max, em % rates(item) % values(n) )
           end do
@@ -1767,15 +1743,13 @@ contains
   end subroutine aqm_emis_pts_read
 
 
-  subroutine aqm_emis_read(etype, spcname, buffer, ip, jp, ijmap, localDe, rc)
-    character(len=*),  intent(in)    :: etype
-    character(len=*),  intent(in)    :: spcname
-    real,              intent(inout) :: buffer(*)
-    integer, optional, pointer       :: ip(:)
-    integer, optional, pointer       :: jp(:)
-    integer, optional, pointer       :: ijmap(:)
-    integer, optional, intent(in)    :: localDe
-    integer, optional, intent(out)   :: rc
+  subroutine aqm_emis_read(etype, spcname, buffer, ijmap, localDe, rc)
+    character(len=*),                     intent(in)    :: etype
+    character(len=*),                     intent(in)    :: spcname
+    real,                                 intent(inout) :: buffer(*)
+    type(aqm_internal_psrc_type), optional, pointer     :: ijmap(:)
+    integer,                      optional, intent(in)  :: localDe
+    integer,                      optional, intent(out) :: rc
 
     ! -- local variables
     type(aqm_internal_emis_type), pointer :: em
@@ -1796,40 +1770,13 @@ contains
     if (em % gridded) then
       call aqm_emis_grd_read(em, spcname, buffer, localDe=localDe, rc=rc)
     else
-      call aqm_emis_pts_read(em, spcname, buffer, ip=ip, jp=jp, ijmap=ijmap, localDe=localDe, rc=rc)
+      call aqm_emis_pts_read(em, spcname, buffer, ijmap=ijmap, localDe=localDe, rc=rc)
     end if
 
   end subroutine aqm_emis_read
 
 
   subroutine aqm_emis_pts_map(model, em, rc)
-! ---------------------------------------------------------------------------------
-!
-!  This subroutine is based on source code included in NASA's MAPL library:
-!
-!  https://github.com/GEOS-ESM/MAPL
-!
-!  MAPL is licensed under the Apache license version 2.0. See notice below:
-!
-! ---------------------------------------------------------------------------------
-!
-!  NASA Docket No. GSC-15,354-1, and identified as "GEOS-5 GCM Modeling Software
-!
-!  Copyright (C) 2008 United States Government as represented by the Administrator
-!  of the National Aeronautics and Space Administration. All Rights Reserved.
-!
-!  Licensed under the Apache License, Version 2.0 (the "License"); you may not use
-!  this file except in compliance with the License. You may obtain a copy of the
-!  License at
-!
-!  http://www.apache.org/licenses/LICENSE-2.0
-!
-!  Unless required by applicable law or agreed to in writing, software distributed
-!  under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-!  CONDITIONS OF ANY KIND, either express or implied. See the License for the
-!  specific language governing permissions and limitations under the License.
-!
-! ---------------------------------------------------------------------------------
 
     type(ESMF_GridComp)                     :: model
     type(aqm_internal_emis_type)            :: em
@@ -1837,42 +1784,32 @@ contains
 
     ! -- local variables
     integer :: localrc, stat
-    integer :: localDeCount
-    integer :: ic, jc, ijcount
-    integer :: m, n
-    integer, dimension(2) :: ec, tc
+    integer :: deCount, localDeCount
+    integer :: lb, ub
+    integer :: i, ij, j, m, n, nx
+    integer :: ids, ide, jds, jde, its, ite, jts
+    integer,               dimension(:),   allocatable :: globalMap, localMap
+    integer(ESMF_KIND_I4), dimension(:),   pointer     :: ploc
+    integer(ESMF_KIND_I4), dimension(:,:), pointer     :: factorIndexList
+    real(ESMF_KIND_R8),    dimension(:),   pointer     :: plat, plon
+    type(ESMF_DistGrid)    :: distgrid
+    type(ESMF_Field)       :: locField, grdField
+    type(ESMF_Grid)        :: grid
+    type(ESMF_Index_Flag)  :: indexflag
+    type(ESMF_LocStream)   :: locstream
+    type(ESMF_RouteHandle) :: rh
+    type(ESMF_VM)          :: vm
+    type(aqm_internal_psrc_type), dimension(:), allocatable :: pmap
 
-    real(AQM_KIND_R8), allocatable :: lon(:,:)
-    real(AQM_KIND_R8), allocatable :: lat(:,:)
-    real(AQM_KIND_R8), allocatable :: lonc(:,:)
-    real(AQM_KIND_R8), allocatable :: latc(:,:)
-    real(AQM_KIND_R8), allocatable :: lonp(:)
-    real(AQM_KIND_R8), allocatable :: latp(:)
-
-    real(ESMF_KIND_R8), pointer :: fp(:,:)
-    real(ESMF_KIND_R8), pointer :: coord(:,:)
-
-    type(ESMF_Grid)             :: grid
-    type(ESMF_Field)            :: field
-    type(ESMF_RouteHandle)      :: rh
-    type(ESMF_CoordSys_Flag)    :: coordSys
-    type(ESMF_Index_Flag)       :: indexflag
-
-    real(AQM_KIND_R8)          :: emin, emax, fmin, fmax
-    character(len=ESMF_MAXSTR) :: msg
-
-    character(len=*), parameter :: pName = "init: source"
 
     ! -- begin
     if (present(rc)) rc = ESMF_SUCCESS
 
-    nullify(fp)
-
-    ! -- bail out if this is not point source
-    if (trim(em % type) /= "point-source") return
-
     ! -- bail out if this is a product
     if (trim(em % iomode) /= "read") return
+
+    ! -- bail out if emission type isn't point source
+    if (trim(em % type) /= "point-source") return
 
     ! -- get model grid
     call ESMF_GridCompGet(model, grid=grid, rc=localrc)
@@ -1882,273 +1819,251 @@ contains
       rcToReturn=rc)) &
       return  ! bail out
 
-    ! -- create work field to compute grid coordinate halos
-    field = ESMF_FieldCreate(grid, ESMF_TYPEKIND_R8, staggerLoc=ESMF_STAGGERLOC_CORNER, &
-      totalLWidth=[1,1], totalUWidth=[1,1], rc=localrc)
+    ! -- get information on horizontal decomposition from grid
+    call ESMF_GridGet(grid, distgrid=distgrid, indexflag=indexflag, rc=localrc)
     if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__,  &
       file=__FILE__,  &
       rcToReturn=rc)) &
       return  ! bail out
 
-    call ESMF_FieldHaloStore(field, rh, rc=localrc)
+    call ESMF_DistGridGet(distgrid, deCount=deCount, localDeCount=localDeCount, rc=localrc)
     if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__,  &
       file=__FILE__,  &
       rcToReturn=rc)) &
       return  ! bail out
 
-    ! -- compute halos only on active PETs
-    call ESMF_GridGet(grid, localDeCount=localDeCount, rc=localrc)
+    ! -- create locstream only on active DEs to store emission locations
+    locstream = ESMF_LocStreamCreate(regDecomp=deCount, minIndex=1, maxIndex=em % count, &
+      indexflag=ESMF_INDEX_GLOBAL, rc=localrc)
     if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__,  &
       file=__FILE__,  &
       rcToReturn=rc)) &
       return  ! bail out
 
+    ! -- add location's latitudes and longitudes
+    ! -- add lat/lon keys
+    call ESMF_LocStreamAddKey(locstream,                    &
+                              keyName="ESMF:Lat",           &
+                              keyTypeKind=ESMF_TYPEKIND_R8, &
+                              keyUnits="Degrees",           &
+                              keyLongName="Latitude",       &
+                              rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+    call ESMF_LocStreamAddKey(locstream,                    &
+                              keyName="ESMF:Lon",           &
+                              keyTypeKind=ESMF_TYPEKIND_R8, &
+                              keyUnits="Degrees",           &
+                              keyLongName="Longitude",      &
+                              rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+    ! -- now add coordinates if available
     if (localDeCount > 0) then
 
-      ! -- get coordinate system
-      call ESMF_GridGet(grid, coordSys=coordSys, rc=localrc)
+      call ESMF_LocStreamGetKey(locstream,                    &
+                                keyName="ESMF:Lat",           &
+                                farray=plat,                  &
+                                rc=localrc)
       if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
         line=__LINE__,  &
         file=__FILE__,  &
         rcToReturn=rc)) &
         return  ! bail out
 
-      ! -- (1) center coordinates
-      call ESMF_GridGet(grid, staggerloc=ESMF_STAGGERLOC_CENTER, &
-        localDe=0, exclusiveCount=ec, rc=localrc)
+      call ESMF_LocStreamGetKey(locstream,                    &
+                                keyName="ESMF:Lon",           &
+                                computationalLBound=lb,       &
+                                computationalUBound=ub,       &
+                                farray=plon,                  &
+                                rc=localrc)
       if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
         line=__LINE__,  &
         file=__FILE__,  &
         rcToReturn=rc)) &
         return  ! bail out
 
-      ic = ec(1)
-      jc = ec(2)
-
-      call ESMF_GridGetCoord(grid, coordDim=1, staggerloc=ESMF_STAGGERLOC_CENTER, &
-        fArrayPtr=coord, totalCount=tc, rc=localrc)
-      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__,  &
-        file=__FILE__,  &
-        rcToReturn=rc)) &
-        return  ! bail out
-
-      allocate(lon(ic, jc), lat(ic, jc), lonc(ic+1, jc+1), latc(ic+1, jc+1), stat=stat)
-      if (ESMF_LogFoundAllocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__,  &
-        file=__FILE__,  &
-        rcToReturn=rc)) &
-        return
-
-      lon = coord
-
-      call ESMF_GridGetCoord(grid, coordDim=2, staggerloc=ESMF_STAGGERLOC_CENTER, &
-        fArrayPtr=coord, rc=localrc)
-      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__,  &
-        file=__FILE__,  &
-        rcToReturn=rc)) &
-        return  ! bail out
-
-      lat = coord
-
-      ! -- (2) corner coordinates
-      call ESMF_GridGetCoord(grid, coordDim=1, staggerloc=ESMF_STAGGERLOC_CORNER, &
-        fArrayPtr=coord, totalCount=tc, rc=localrc)
-      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__,  &
-        file=__FILE__,  &
-        rcToReturn=rc)) &
-        return  ! bail out
-
-      call ESMF_FieldGet(field, farrayPtr=fp, rc=localrc)
-      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__,  &
-        file=__FILE__,  &
-        rcToReturn=rc)) &
-        return  ! bail out
-
-      fp(1:tc(1),1:tc(2)) = coord
-
-    end if
-
-    call ESMF_FieldHalo(field, rh, rc=localrc)
-    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__,  &
-      file=__FILE__,  &
-      rcToReturn=rc)) &
-      return  ! bail out
-
-    if (localDeCount > 0) then
-
-      lonc = fp(1:ec(1)+1,1:ec(2)+1)
-
-      call ESMF_GridGetCoord(grid, coordDim=2, staggerloc=ESMF_STAGGERLOC_CORNER, &
-        fArrayPtr=coord, totalCount=tc, rc=localrc)
-      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__,  &
-        file=__FILE__,  &
-        rcToReturn=rc)) &
-        return  ! bail out
-
-      fp(1:tc(1),1:tc(2)) = coord
-
-    end if
-
-    call ESMF_FieldHalo(field, rh, rc=localrc)
-    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__,  &
-      file=__FILE__,  &
-      rcToReturn=rc)) &
-      return  ! bail out
-
-    if (localDeCount > 0) latc = fp(1:ec(1)+1,1:ec(2)+1)
-
-    call ESMF_FieldDestroy(field, rc=localrc)
-    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__,  &
-      file=__FILE__,  &
-      rcToReturn=rc)) &
-      return  ! bail out
-
-    call ESMF_FieldHaloRelease(rh, rc=localrc)
-    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__,  &
-      file=__FILE__,  &
-      rcToReturn=rc)) &
-      return  ! bail out
-
-    if (localDeCount < 1) return
-
-    if (em % count == 0) return
-
-    if      (coordSys == ESMF_COORDSYS_SPH_DEG) then
-      lon  = lon  * deg_to_rad
-      lat  = lat  * deg_to_rad
-      lonc = lonc * deg_to_rad
-      latc = latc * deg_to_rad
-    else if (coordSys == ESMF_COORDSYS_SPH_RAD) then
-      ! -- nothing to do
-    else
-      ! -- unsupported coordinate system
-      call ESMF_LogSetError(ESMF_RC_NOT_VALID, &
-        msg="coordinate system unsupported by emission mapping method.", &
-        line=__LINE__, &
-        file=__FILE__, &
-        rcToReturn=rc)
-      return
-    end if
-
-    allocate(lonp(em % count), latp(em % count), stat=stat)
-    if (ESMF_LogFoundAllocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__,  &
-      file=__FILE__,  &
-      rcToReturn=rc)) &
-      return
-
-    ! -- emission coordinates are expected in degrees
-    lonp = em % lon * deg_to_rad
-    latp = em % lat * deg_to_rad
-
-    allocate(em % ip(em % count), em % jp(em % count), stat=stat)
-    if (ESMF_LogFoundAllocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__,  &
-      file=__FILE__,  &
-      rcToReturn=rc)) &
-      return
-
-    ! -- map point-source locations to grid
-    call aqm_gridloc_get(lon, lat, lonc, latc, lonp, latp, em % ip, em % jp, ijcount)
-
-    if (ijcount > 0) then
-      allocate(em % ijmap(ijcount), stat=stat)
-      if (ESMF_LogFoundAllocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__,  &
-        file=__FILE__,  &
-        rcToReturn=rc)) &
-        return
-      m = 0
-      do n = 1, em % count
-        if (em % ip(n) > 0 .and. em % jp(n) > 0) then
-           m = m + 1
-           em % ijmap(m) = n
-        end if
+      do n = lb, ub
+        plat(n) = em % lat(n)
+        plon(n) = em % lon(n)
       end do
-      em % count = m
-    else
-      ! -- no local sources, disable emissions
-      em % count = 0
+
     end if
 
-    if (em % verbose) then
+    ! -- create temporary fields to map point source locations to grid
 
-      ! -- log coordinates
-      lon  = lon  * rad_to_deg
-      lat  = lat  * rad_to_deg
-      lonc = lonc * rad_to_deg
-      latc = latc * rad_to_deg
-      lonp = lonp * rad_to_deg
-      latp = latp * rad_to_deg
+    ! -- (1) location field
 
-      if      (coordSys == ESMF_COORDSYS_SPH_DEG) then
-        call ESMF_LogWrite(trim(em % logprefix) // ": " // trim(pName) // &
-          ": grid coord. in degrees", ESMF_LOGMSG_INFO, rc=localrc)
-        if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-          line=__LINE__,  &
-          file=__FILE__,  &
-          rcToReturn=rc)) &
-          return  ! bail out
-      else if (coordSys == ESMF_COORDSYS_SPH_RAD) then
-        call ESMF_LogWrite(trim(em % logprefix) // ": " // trim(pName) // &
-          ": grid coord. in radians", ESMF_LOGMSG_INFO, rc=localrc)
-        if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-          line=__LINE__,  &
-          file=__FILE__,  &
-          rcToReturn=rc)) &
-          return  ! bail out
+    locField = ESMF_FieldCreate(locstream, ESMF_TYPEKIND_I4, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+    ! -- populate field with location index number
+
+    if (localDeCount > 0) then
+
+      call ESMF_FieldGet(locField, farrayPtr=ploc, rc=localrc)
+      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__,  &
+        file=__FILE__,  &
+        rcToReturn=rc)) &
+        return  ! bail out
+
+      do n = lb, ub
+        ploc(n) = n
+      end do
+
+    end if
+
+    ! -- (2) gridded field
+
+    grdField = ESMF_FieldCreate(grid, ESMF_TYPEKIND_I4, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+    ! -- regrid emissions from locstream to grid
+
+    call ESMF_FieldRegridStore(locField, grdField, regridmethod=ESMF_REGRIDMETHOD_NEAREST_DTOS, &
+      routehandle=rh, factorIndexList=factorIndexList, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+    call ESMF_FieldRegrid(locField, grdField, rh, zeroregion=ESMF_REGION_TOTAL, &
+      termorderflag=ESMF_TERMORDER_SRCSEQ, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+    ! -- assemble internal map
+
+    allocate(localMap(em % count), globalMap(em % count), stat=stat)
+    if (ESMF_LogFoundAllocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+    ! -- store local map from location index to grid index as created by ESMF_FieldRegridStore()
+    ! -- grid indices are assigned by interpreting the gridded field as a sequence of elements
+    ! -- here we assume the default index rule is used to assign sequence indices to field elements
+    ! -- see ESMF Reference Manual, Sect. 28.2.18 for details
+    if (localDeCount > 0) then
+      localMap  = 0
+      globalMap = 0
+      do n = 1, size(factorIndexList,2)
+        localMap(factorIndexList(1,n)) = factorIndexList(2,n)
+      end do
+    end if
+
+    deallocate(factorIndexList, stat=stat)
+    if (ESMF_LogFoundDeallocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+    ! -- build global location map only on PETs with available data using I/O component's VM
+
+    call ESMF_GridCompGet(em % IO, vm=vm, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+    call ESMF_VMAllReduce(vm, localMap, globalMap, em % count, ESMF_REDUCE_SUM, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+    deallocate(localMap, stat=stat)
+    if (ESMF_LogFoundDeallocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+    if (localDeCount > 0) then
+
+    ! -- retrieve index space information
+      call aqm_model_domain_get(ids=ids, ide=ide, jds=jds, jde=jde, its=its, ite=ite, jts=jts, rc=localrc)
+      if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
+        file=__FILE__, &
+        line=__LINE__, &
+        rc=rc))        &
+        return
+
+      nx = ite - its + 1
+
+      allocate(pmap(em % count), stat=stat)
+      if (ESMF_LogFoundAllocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__,  &
+        file=__FILE__,  &
+        rcToReturn=rc)) &
+        return  ! bail out
+
+      ! -- map to global grid
+      ij = 0
+      do m = 1, em % count
+        n = globalMap(m)
+        j = n / nx + jts
+        if (j > jde .or. j < jds) cycle
+        i = n - (j-1)*nx + its - 1
+        if (i > ide .or. i < ids) cycle
+        ij = ij + 1
+        pmap(ij) % nloc = m
+        pmap(ij) % i    = i
+        pmap(ij) % j    = j
+      end do
+
+      if (indexflag == ESMF_INDEX_DELOCAL) then
+        ! -- map to local domain
+        i = ids - 1
+        j = jds - 1
+        do m = 1, ij
+          pmap(m) % i = pmap(m) % i - i
+          pmap(m) % j = pmap(m) % j - j
+        end do
       end if
 
-      where(lon  < 0.) lon  = lon  + 360.
-      where(lonc < 0.) lonc = lonc + 360.
-      where(lonp < 0.) lonp = lonp + 360.
-
-      write( msg, '(": mapping: centers: min/max: ",4g20.5)') &
-        minval(lon), maxval(lon), minval(lat), maxval(lat)
-      call ESMF_LogWrite(trim(em % logprefix) // ": " // trim(pName) // &
-        msg, ESMF_LOGMSG_INFO, rc=localrc)
-      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__,  &
-        file=__FILE__,  &
-        rcToReturn=rc)) &
-        return  ! bail out
-      write( msg, '(": mapping: corners: min/max: ",4g20.5)') &
-        minval(lonc), maxval(lonc), minval(latc), maxval(latc)
-      call ESMF_LogWrite(trim(em % logprefix) // ": " // trim(pName) // &
-        msg, ESMF_LOGMSG_INFO, rc=localrc)
-      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      allocate(em % ijmap(ij), stat=stat)
+      if (ESMF_LogFoundAllocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
         line=__LINE__,  &
         file=__FILE__,  &
         rcToReturn=rc)) &
         return  ! bail out
 
-      emin = huge(0.0)
-      fmin = huge(0.0)
-      emax = -emin
-      fmax = -fmin
-      do n = 1, em % count
-        m = em % ijmap(n)
-        emin = min(emin,latp(m))
-        emax = max(emax,latp(m))
-        fmin = min(fmin,lonp(m))
-        fmax = max(fmax,lonp(m))
-      end do
-      write( msg, '(": mapping: pt-srcs: min/max: ",4g20.5)') fmin, fmax, emin, emax
-      call ESMF_LogWrite(trim(em % logprefix) // ": " // trim(pName) // &
-        msg, ESMF_LOGMSG_INFO, rc=localrc)
-      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      em % ijmap = pmap(1:ij)
+
+      ! -- set emission count to local mapped count
+      em % count = ij
+
+      deallocate(pmap, stat=stat)
+      if (ESMF_LogFoundDeallocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
         line=__LINE__,  &
         file=__FILE__,  &
         rcToReturn=rc)) &
@@ -2157,12 +2072,41 @@ contains
     end if
 
     ! -- free up memory
-    deallocate(lat, latc, latp, lon, lonc, lonp, stat=stat)
+
+    deallocate(globalMap, stat=stat)
     if (ESMF_LogFoundDeallocError(statusToCheck=stat, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__,  &
       file=__FILE__,  &
       rcToReturn=rc)) &
-      return
+      return  ! bail out
+
+    call ESMF_FieldDestroy(locField, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+    call ESMF_FieldDestroy(grdField, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+    call ESMF_FieldRegridRelease(rh, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+    call ESMF_LocStreamDestroy(locstream, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
 
   end subroutine aqm_emis_pts_map
 

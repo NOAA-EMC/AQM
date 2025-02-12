@@ -138,6 +138,7 @@ C...modules
 !Used for canopy shade calculation
       USE ASX_DATA_MOD, ONLY : MET_DATA, GRID_DATA     !uses met data
 !IVAI
+! NB. Moved NLAYC/NLAYT definitions to GRID_CONF (Jan 9 2025)
       use can_mask             !FRT_mask
       use can_levs_defn
       use can_trans_mod
@@ -467,16 +468,18 @@ C In-line canopy shading option? (default = false)
          
          CALL INIT_CLOUD_OPTICS(  )
 
-!IVAI: IF ( FIRSTIME ) THEN
-         IF ( CANOPY_SHADE ) THEN  ! IF ( FIRSTIME ) THEN
-            CALL init_can_mask( JDATE, JTIME, MDATE, MTIME )         ! FIRSTIME
-            CALL init_can_levs( CGRID, JDATE, JTIME, MDATE, MTIME )  ! FIRSTIME
+!IVAI
+         IF ( CANOPY_SHADE ) THEN                      ! FIRSTIME
+            CALL init_can_mask( JDATE, JTIME )         ! FIRSTIME
+
+            CALL init_can_levs( CGRID, JDATE, JTIME )  ! FIRSTIME
 ! ================
 ! Out:
 !      CGRID_MOD        <= CGRID    ! ALL CANOPY & NON-CANOPY COLUMNS !
 !      CGRID_CAN(1,2,3) <= CGRID(1) ! ALL CANOPY & NON-CANOPY COLUMNS !
 ! ===============
-            CALL init_can_trans(CGRID, JDATE, JTIME, MDATE, MTIME )  ! FIRSTIME
+
+            CALL init_can_trans(CGRID, JDATE, JTIME )  ! FIRSTIME
          END IF
 !IVAI
 
@@ -745,14 +748,16 @@ C In-line canopy shading option? (default = false)
 
 !IVAI
       IF (CANOPY_SHADE ) THEN
-        CALL get_can_mask( JDATE, JTIME, MDATE, MTIME)
+
+! Move to rbdriver/hrdriver NB. Need NLAYC/NLAYT dims for block arrays
+        CALL get_can_mask( JDATE, JTIME)
 
 ! ===============
 ! In get_can_levs, the vertical layers are going down (reversed to phot)
 !
 ! k = 1, NLAYT from  top to bottom of augmented canopy+resolved model layers
-!      1 = top model layer 
-!  NLAYS = bottom resolved model layer 
+!      1 = top model layer
+!  NLAYS = bottom resolved model layer
 !  NLAYC = 3 canopy layers
 !  NLAYT = NLAYS + NLAYC, augmented canopy plus resolved model layers
 ! NLAYS+1= top    canopy layer at 1.0*CH
@@ -781,13 +786,13 @@ C In-line canopy shading option? (default = false)
 !   frctr2c(NLAYT,2,:,:)        :  Fractional contribution of the original model level to canopy level k
 !   frctc2r(NLAYT,2,:,:)        :  Fractional contribution of the canopy level to the original model level
 !
-
 !===============================================================================
 ! Distribute tracer concentration from model resolved layers into canopy layers
 ! flag = 0 "resolved_to_canopy"
 !===============================================================================
 
-        CALL canopy_transfer(CGRID, JDATE, JTIME, MDATE, MTIME, 0 )
+! Jan9: move to rbdriver
+        CALL canopy_transfer(CGRID, JDATE, JTIME, 0 )
 
 ! ==============
 !  Input:
@@ -807,33 +812,32 @@ C In-line canopy shading option? (default = false)
 
           KOUNT = 0
 
-! In If (CANOPY_SHADE)
+! In (CANOPY_SHADE)
           IF ( FRT_MASK(COL,ROW) > 0.) THEN  ! CANOPY_SHADE & FRT_MASK
 
             IF (.FALSE.) THEN
             IF ( KOUNT < 3 )  THEN
 
-!             print*, 'PHOT: AFTER R2C CAN L=1 ', 
-!    &           frctr2c(NLAYT,1,COL,ROW), 
-!    &           frctr2c(NLAYT,2,COL,ROW),! 1cy: order is 1=top NLAYT=1cy
-!    &       float(nfrct(NLAYT,  COL,ROW  ))
-!    &             DENS_CAN(C,R,L)
+              print*, 'PHOT: AFTER R2C CAN L=1 ', 
+     &           frctr2c(NLAYT,1,COL,ROW), 
+     &           frctr2c(NLAYT,2,COL,ROW),! 1cy: order is 1=top NLAYT=1cy
+     &       float(nfrct(NLAYT,  COL,ROW  ))
 
-!             print*, 'PHOT: AFTER R2C MOD: ', L,
-!    &           TA( COL,ROW,L ),  PRES( COL,ROW, L ), DENS( COL,ROW, L ),
-!    &           ZM( COL,ROW,L ), ZFULL( COL,ROW, L ),
+              print*, 'PHOT: AFTER R2C MOD: ', L,
+     &           TA( COL,ROW,L ),  PRES( COL,ROW, L ), DENS( COL,ROW, L ),
+     &           ZM( COL,ROW,L ), ZFULL( COL,ROW, L )
 
 
-!             print*, 'PHOT: AFTER R2C CAN L= ', NLAYC + L,
-!    &             TA_CAN(COL,ROW, NLAYC + L),
-!    &           PRES_CAN(COL,ROW, NLAYC + L), DENS_CAN(COL,ROW, NLAYC + L),
-!    &             ZH_CAN(COL,ROW, NLAYC + L),   ZF_CAN(COL,ROW, NLAYC + L),
+              print*, 'PHOT: AFTER R2C CAN L= ', NLAYC + L,
+     &             TA_CAN(COL,ROW, NLAYC + L),
+     &           PRES_CAN(COL,ROW, NLAYC + L), DENS_CAN(COL,ROW, NLAYC + L),
+     &             ZH_CAN(COL,ROW, NLAYC + L),   ZF_CAN(COL,ROW, NLAYC + L)
 
 ! Print 3 canopy levels only at KOUNT number of canopy columns
-!             print*, 'PHOT AFTER, CAN L= ', L,
-!    &               TA_CAN(COL,ROW, L),
-!    &             PRES_CAN(COL,ROW, L), DENS_CAN(COL,ROW, L),
-!    &               ZH_CAN(COL,ROW, L),   ZF_CAN(COL,ROW, L),
+              print*, 'PHOT AFTER, CAN L= ', L,
+     &               TA_CAN(COL,ROW, L),
+     &             PRES_CAN(COL,ROW, L), DENS_CAN(COL,ROW, L),
+     &               ZH_CAN(COL,ROW, L),   ZF_CAN(COL,ROW, L)
 
             DO SPC = 1, NUMB_MECH_SPC
 
@@ -845,13 +849,13 @@ C In-line canopy shading option? (default = false)
               if (L < 3) 
      &          print*, 'PHOT: AFTER R2C SPC: ', S, L,
      &        CGRID    ( COL,ROW, L,         S ), 
-     &        CGRID_CAN( COL,ROW, NLAYC + L, S )  ! L= NLAYC+1, NLAYT
+     &        CONC_CAN( COL,ROW, NLAYC + L, S )  ! L= NLAYC+1, NLAYT
 
               if (L == 1) 
      &          print*, 'PHOT: AFTER R2C SPC: ', S, L,
-     &        CGRID_CAN( COL,ROW, 3,         S ), 
-     &        CGRID_CAN( COL,ROW, 2,         S ),
-     &        CGRID_CAN( COL,ROW, 1,         S )
+     &        CONC_CAN( COL,ROW, 3,         S ), 
+     &        CONC_CAN( COL,ROW, 2,         S ),
+     &        CONC_CAN( COL,ROW, 1,         S )
 
             END DO ! species loop
 
@@ -864,7 +868,7 @@ C In-line canopy shading option? (default = false)
           END IF ! CANOPY_SHADE & FRT_MASK
 
 ! Temporary output
-!            aux2d_03( COL,ROW ) = CGRID_CAN(COL,ROW, 1, LGC_O3 )
+!            aux2d_03( COL,ROW ) = CONC_CAN(COL,ROW, 1, LGC_O3 )
 
           END DO
         END DO
@@ -1060,8 +1064,8 @@ C In-line canopy shading option? (default = false)
 !              BLKO3_CAN ( NLAYC + L ) = CGRID( COL,ROW,L,LGC_O3  ) * MSCALE_CAN
 !              BLKNO2_CAN( NLAYC + L ) = CGRID( COL,ROW,L,LGC_NO2 ) * MSCALE_CAN
 ! Uncomment to use values from canopy_transfer "resolved_to_canopy" BAD ! ??
-               BLKO3_CAN ( NLAYC + L ) = CGRID_CAN( COL,ROW,NLAYC + L,LGC_O3  ) * MSCALE_CAN
-               BLKNO2_CAN( NLAYC + L ) = CGRID_CAN( COL,ROW,NLAYC + L,LGC_NO2 ) * MSCALE_CAN
+               BLKO3_CAN ( NLAYC + L ) = CONC_CAN( COL,ROW,NLAYC + L,LGC_O3  ) * MSCALE_CAN
+               BLKNO2_CAN( NLAYC + L ) = CONC_CAN( COL,ROW,NLAYC + L,LGC_NO2 ) * MSCALE_CAN
 
             END DO ! loop on resolved model layers NLAYS
 
@@ -1092,8 +1096,8 @@ C In-line canopy shading option? (default = false)
 !              BLKO3_CAN ( L ) = CGRID( COL,ROW,1,LGC_O3  ) * MSCALE_CAN
 !              BLKNO2_CAN( L ) = CGRID( COL,ROW,1,LGC_NO2 ) * MSCALE_CAN
 ! Uncomment to use values from canopy_transfer "resolved_to_canopy" BAD !! ???
-               BLKO3_CAN ( L ) = CGRID_CAN( COL,ROW,L,LGC_O3  ) * MSCALE_CAN  ! from canopy_transfer
-               BLKNO2_CAN( L ) = CGRID_CAN( COL,ROW,L,LGC_NO2 ) * MSCALE_CAN  ! from canopy_transfer
+               BLKO3_CAN ( L ) = CONC_CAN( COL,ROW,L,LGC_O3  ) * MSCALE_CAN  ! from canopy_transfer
+               BLKNO2_CAN( L ) = CONC_CAN( COL,ROW,L,LGC_NO2 ) * MSCALE_CAN  ! from canopy_transfer
             END DO
 
 
@@ -1775,20 +1779,20 @@ C In-line canopy shading option? (default = false)
 !                 print*, 'PHOT RJ_CORR MOD: L= ', L,
 !    &              RJ( COL,ROW, L, LO3O1D), RJ_CORR( COL,ROW )
 
-!                 print*, 'PHOT RJ_CORR CAN: L= ', NLAYC + L,
+!                print*, 'PHOT RJ_CORR CAN: L= ', NLAYC + L,
 !    &              RJ_CAN( COL,ROW, NLAYC + L, LO3O1D), RJ_CORRM( COL,ROW, NLAYC + L )
 
-!              END DO ! NLAYS
+!             END DO ! NLAYS
 
-!              DO L = 1, NLAYC ! from bottom to top of canopy
-!                 print*, 'PHOT RJ_CORR CAN: L= ', L,
+!             DO L = 1, NLAYC ! from bottom to top of canopy
+!                print*, 'PHOT RJ_CORR CAN: L= ', L,
 !    &              RJ_CAN( COL,ROW, L, LO3O1D), RJ_CORRM( COL,ROW, L )
-!              END DO
+!             END DO
 
-!           END IF ! KOUNT
+!          END IF ! KOUNT
 
 ! Print up to KOUNT canopy columns
-!           KOUNT = KOUNT + 1
+!          KOUNT = KOUNT + 1
 
 ! End Print
 !IVAI
@@ -1850,15 +1854,15 @@ C In-line canopy shading option? (default = false)
 !IVAI: 
 ! hrdriver & phot:
 !    &      o3old ( :,:,1 )          ) ) THEN ! 
-!    &      AUX2D_03                 ) ) THEN ! "rj_can" hrdriver/phot
+     &      AUX2D_03                 ) ) THEN ! "rj_can" hrdriver/phot
 !    &      AUX2D_02                 ) ) THEN ! "o3_new_can" hrdriver
 !    &      AUX2D_01                 ) ) THEN ! "o3_tend_can" hrdriver
 !
 ! canopy_transfer:
-!    &      CGRID_MOD  (:,:, 2  , LGC_O3 )  ) ) THEN  ! O3 = 4
+!    &      CONC_MOD  (:,:, 2  , LGC_O3 )  ) ) THEN  ! O3 = 4
 !    &      CGRID      (:,:, 1  , LGC_O3 )  ) ) THEN  ! O3 = 4
-!    &      CGRID_CAN  (:,:, 4  , LGC_O3 )  ) ) THEN  !
-     &      CGRID_2M   (:,:,      LGC_NO2)  ) ) THEN  !
+!    &      CONC_CAN  (:,:, 4  , LGC_O3 )  ) ) THEN  !
+!    &      CONC_2M   (:,:,      LGC_NO2)  ) ) THEN  !
 !    &      frctc2r(NLAYS    ,1,:,:)     ) ) THEN
 ! NB. nfrct(NLAYS    ) = 1-2
 !      "   (NLAYS + 1) = 1
@@ -1987,12 +1991,12 @@ C In-line canopy shading option? (default = false)
 ! hrdriver:
 !    &      o3new ( :,:,1 )          ) ) THEN
 !    &      AUX2D_03                 ) ) THEN ! "rj_can" hrdriver/phot
-!    &      AUX2D_02                 ) ) THEN ! "o3_new_can" hrdriver
-!    &      AUX2D_01                 ) ) THEN ! "o3_tend_can" hrdriver
+     &      AUX2D_02                 ) ) THEN ! "o3_new_can" hrdriver
+!    &      AUX2D_01                 ) ) THEN ! "o3_tend_can" hrdriver/rbdriver
 ! canopy_transfer:
-!    &      CGRID_MOD  (:,:, 1  , LGC_NO2)  ) ) THEN
-!    &      CGRID_CAN  (:,:, 3  , LGC_O3 )  ) ) THEN
-!    &      CGRID_2M   (:,:,    , LGC_NO2)  ) ) THEN
+!    &      CONC_MOD  (:,:, 1  , LGC_NO2)  ) ) THEN
+!    &      CONC_CAN  (:,:, 3  , LGC_O3 )  ) ) THEN
+!    &      CONC_2M   (:,:,    , LGC_NO2)  ) ) THEN
 ! NB. ifrct (NLAYS +1, 1) = 63-64  (resolved to canopy)
 !       "   (NLAYS +1, 1) = 64
 !       "   (NLAYS +2, 1) = 64  ifrct (NLAYS +1, 2) = 64
@@ -2003,9 +2007,9 @@ C In-line canopy shading option? (default = false)
 !    & float(ifrct (NLAYT    ,1,:,:))    ) ) THEN   ! 1st (bot) canopy layer
 !
 ! phot:
-     &      RJ       ( :,:,1, LNO2  )) ) THEN
+!    &      RJ       ( :,:,1, LNO2  )) ) THEN
 !    &      RJ       ( :,:,1, LO3O1D)) ) THEN
-!    &      RJ_CAN   ( :,:,3, LO3O1D)) ) THEN
+!    &      RJ_CAN   ( :,:,1, LNO2  )) ) THEN
 !    &      RJ_CORRM ( :,:,1 )       ) ) THEN  
 !
 ! can_levs_defn:
@@ -2035,15 +2039,16 @@ C In-line canopy shading option? (default = false)
          VARNM = 'JO3O1D'
          IF ( .NOT. WRITE3( CTM_RJ_1, VARNM, ODATE, OTIME, 
 !IVAI
-! hrdriver:
+! rbdriver/hrdriver:
+!    &      o3tend( :,:,1 )          ) ) THEN
 !    &      AUX2D_03                 ) ) THEN ! "rj_can" hrdriver/phot
-!    &      AUX2D_02                 ) ) THEN ! "o3_new_can" hrdriver
+!    &      AUX2D_02                 ) ) THEN ! "o3_new_can" hrdriver/rbdriver
 !    &      AUX2D_01                 ) ) THEN ! "o3_tend_can"/"o3_mod_1hy"
 ! canopy_transfer:
-!    &      CGRID_MOD  (:,:, 1  , LGC_O3 )  ) ) THEN  ! 1hy model layer
-!    &      CGRID_CAN  (:,:, 1  , LGC_O3 )  ) ) THEN  ! 1st (bot) canopy payer
-!    &      CGRID_CAN  (:,:, 1  , LGC_O3 )  ) ) THEN
-     &      CGRID_2M   (:,:,      LGC_O3 )  ) ) THEN
+!    &      CONC_MOD  (:,:, 1  , LGC_O3 )  ) ) THEN  ! 1hy model layer
+!    &      CONC_CAN  (:,:, 1  , LGC_O3 )  ) ) THEN  ! 1st (bot) canopy payer
+!    &      CONC_CAN  (:,:, 1  , LGC_O3 )  ) ) THEN
+!    &      CONC_2M   (:,:,      LGC_O3 )  ) ) THEN
 !    &          massair(:,:,NLAYS - 1 )    ) ) THEN  ! 2hy layer
 !    &      massair_can(:,:,NLAYT)    ) ) THEN 
 !
@@ -2059,7 +2064,7 @@ C In-line canopy shading option? (default = false)
 !    &      frctr2c(NLAYT    ,1,:,:)      ) ) THEN  ! 1st (bot) canopy layer
 ! phot:
 !    &      RJ       ( :,:,1 ,LO3O1D) ) ) THEN   ! bottom model  layer
-!    &      RJ_CAN   ( :,:,1 ,LO3O1D) ) ) THEN  
+     &      RJ_CAN   ( :,:,1 ,LO3O1D) ) ) THEN  
 !    &      RJ_CORRM ( :,:,1 )        ) ) THEN
 ! can_levs_defn:
 !    &      TA_CAN   ( :,:,1 )        ) ) THEN   ! 1st canopy layer

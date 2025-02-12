@@ -41,13 +41,13 @@
    real  (kind=4), dimension( :, :, : ), allocatable, save :: DENS_CAN       ! mass density (Kg/m^3)
 ! gas-phase arrays
    real (kind=8), dimension( :, :, :, : ), allocatable, save :: KHETERO_CAN ! aerosols heterogeneous rx rates
-   real (kind=4), dimension( :, :, :, : ), allocatable, save :: CGRID_CAN   ! concentrations (including gas and aerosols)
-   real (kind=4), dimension( :, :, :, : ), allocatable, save :: CGRID_MOD   ! concentrations (including gas and aerosols)
+   real (kind=4), dimension( :, :, :, : ), allocatable, save :: CONC_CAN   ! concentrations (including gas and aerosols)
+   real (kind=4), dimension( :, :, :, : ), allocatable, save :: CONC_MOD   ! concentrations (including gas and aerosols)
 ! gas-phase tendencies
    real  (kind=4), dimension( :, :, : ), allocatable, save :: o3_new_can,  o3_old_can,  o3_tend_can
    real  (kind=4), dimension( :, :, : ), allocatable, save :: no2_new_can, no2_old_can, no2_tend_can
 ! gas-phase conc. 2m diagnostics
-   real  (kind=4), dimension( :, :, : ), allocatable, save :: CGRID_2M
+   real  (kind=4), dimension( :, :, : ), allocatable, save :: CONC_2M
 
    integer(kind=4), dimension(:,:), allocatable :: ka, kl
 
@@ -59,7 +59,7 @@
               RJ_CAN,  &
               ZH_CAN, ZF_CAN, &
               TA_CAN, QV_CAN, WS_CAN, PRES_CAN, DENS_CAN, &
-              KHETERO_CAN, CGRID_CAN, CGRID_MOD, CGRID_2M, &
+              KHETERO_CAN, CONC_CAN, CONC_MOD, CONC_2M, &
               o3_new_can, o3_old_can, o3_tend_can, &
               no2_new_can, no2_old_can, no2_tend_can, &
               init_can_levs, get_can_levs
@@ -71,13 +71,12 @@
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 
-   subroutine init_can_levs(CGRID, JDATE, JTIME, MDATE, MTIME)
+   subroutine init_can_levs(CONC, JDATE, JTIME)
 
    USE GRID_CONF               ! horizontal & vertical domain specifications
-   USE UTILIO_DEFN
+   USE UTILIO_DEFN             ! IO routines & utilties
 
    use can_mask   !FRT_mask
-   USE RXNS_DATA, ONLY : NPHOTAB
    USE CGRID_SPCS                ! CGRID mechanism species, NSPCSD number of CGRID species
    USE RXNS_DATA, ONLY : NPHOTAB, NHETERO, NUMB_MECH_SPC, CGRID_INDEX
 ! NHETERO = Number of unique heteorogenous rate constants aerosols
@@ -85,13 +84,11 @@
 
    IMPLICIT NONE
 
-! *** CGRID is concentration field (including gas and aerosol variables)
-   REAL, POINTER :: CGRID( :,:,:,: )              !  concentrations volume mixing ratio ppmv
+! *** CONC is concentration field (including gas and aerosol variables)
+   REAL, POINTER :: CONC( :,:,:,: )              !  concentrations volume mixing ratio ppmv
 
 !...Arguments:
 
-   INTEGER, INTENT( IN ) :: MDATE         ! "centered" Julian date (YYYYDDD)
-   INTEGER, INTENT( IN ) :: MTIME         ! "centered" time (HHMMSS)
    INTEGER, INTENT( IN ) :: JDATE         ! current Julian date (YYYYDDD)
    INTEGER, INTENT( IN ) :: JTIME         ! current time (HHMMSS)
 
@@ -102,9 +99,9 @@
    allocate (                                         &
              kmod      (NCOLS, NROWS, NLAYS),         &
 ! gas-phase array
-             CGRID_MOD (NCOLS, NROWS, NLAYS, NSPCSD), &
-             CGRID_CAN (NCOLS, NROWS, NLAYT, NSPCSD), &
-             CGRID_2M  (NCOLS, NROWS,        NSPCSD), &
+             CONC_MOD (NCOLS, NROWS, NLAYS, NSPCSD), &
+             CONC_CAN (NCOLS, NROWS, NLAYT, NSPCSD), &
+             CONC_2M  (NCOLS, NROWS,        NSPCSD), &
     KHETERO_CAN(NHETERO,NCOLS, NROWS, NLAYT), &
                                   zmid     (NLAYS)  , &
                                   zmom     (NLAYS)  , & ! Same as zfull !
@@ -187,14 +184,14 @@
    KHETERO_CAN(:,:,:,:) = 0.0D0
 
 ! Initialize FIRSTIME only!
-   CGRID_MOD (:,:,:,:) = CGRID (:,:,:,:) ! FIRSTIME
+   CONC_MOD (:,:,:,:) = CONC (:,:,:,:) ! FIRSTIME
 
-   CGRID_CAN(:,:,NLAYC+1:NLAYT,:) = CGRID(:,:,1:NLAYS,:) ! FIRSTIME
-   CGRID_CAN(:,:,3            ,:) = CGRID(:,:,1,      :)       ! FIRSTIME
-   CGRID_CAN(:,:,2            ,:) = CGRID(:,:,1,      :)       ! FIRSTIME
-   CGRID_CAN(:,:,1            ,:) = CGRID(:,:,1,      :)       ! FIRSTIME
+   CONC_CAN(:,:,NLAYC+1:NLAYT,:) = CONC(:,:,1:NLAYS,:) ! FIRSTIME
+   CONC_CAN(:,:,3            ,:) = CONC(:,:,1,      :)       ! FIRSTIME
+   CONC_CAN(:,:,2            ,:) = CONC(:,:,1,      :)       ! FIRSTIME
+   CONC_CAN(:,:,1            ,:) = CONC(:,:,1,      :)       ! FIRSTIME
 
-   CGRID_2M (:,:,              :) = CGRID(:,:,1,      :)       ! FIRSTIME
+   CONC_2M (:,:,              :) = CONC(:,:,1,      :)       ! FIRSTIME
 ! gas-phase tendencies
    o3_old_can (:,:,:) = 0.
    o3_new_can (:,:,:) = 0.
@@ -209,12 +206,13 @@
 
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-   subroutine get_can_levs(CGRID, JDATE, JTIME, MDATE, MTIME)
+   subroutine get_can_levs(CONC, JDATE, JTIME, MDATE, MTIME)
 
    USE GRID_CONF                               ! horizontal & vertical domain
 ! NB. TA alsos assigned in HRDATA
-   USE PHOT_MET_DATA, ONLY : ZFULL, ZM, TA     ! Met and Grid data
-   USE ASX_DATA_MOD, ONLY : MET_DATA,GRID_DATA ! Uses met data: Q2, TEMP2
+!   USE PHOT_MET_DATA, ONLY : ZFULL, ZM, TA     ! Met and Grid data
+   USE PHOT_MET_DATA        ! Met and Grid data
+   USE ASX_DATA_MOD, ONLY : MET_DATA, GRID_DATA ! Uses met data: Q2, TEMP2 grid data: area
    USE UTILIO_DEFN
 
    use can_mask
@@ -226,8 +224,8 @@
 
    IMPLICIT NONE
 
-! *** CGRID is concentration field (including gas and aerosol variables)
-   REAL, POINTER :: CGRID( :,:,:,: )              !  concentrations volume mixing ratio ppmv
+! *** CONC is concentration field (including gas and aerosol variables)
+   REAL, POINTER :: CONC( :,:,:,: )              !  concentrations volume mixing ratio ppmv
 
 ! Includes:
    INCLUDE SUBST_CONST     ! physical and mathematical constants
@@ -271,22 +269,67 @@
    kcan3(:,:,:) = -999
 
 ! Initialize times after FIRSTIME
-   CGRID_MOD (:,:,:,:) = CGRID (:,:,:,:)
+! Here initialize all canopy & non-canopy columns
+! Canopy colums over FRT_MASK get overwritten below
 
-   CGRID_CAN(:,:,NLAYC+1:NLAYT,:) = CGRID(:,:,1:NLAYS,:)
-   CGRID_CAN(:,:,3            ,:) = CGRID(:,:,1,      :)
-   CGRID_CAN(:,:,2            ,:) = CGRID(:,:,1,      :)
-   CGRID_CAN(:,:,1            ,:) = CGRID(:,:,1,      :)
+!... First, carry over original model values for the matching layers
+   TA_CAN   (:,:,NLAYC+1:NLAYT)   = TA  (:,:,1:NLAYS)          ! K
 
-   CGRID_2M (:,:,              :) = CGRID(:,:,1,      :)
+!... Initialize the canopy layers with 1hy layer values
+   TA_CAN(:,:,3) = TA( :,:,1)
+   TA_CAN(:,:,2) = TA( :,:,1)
+   TA_CAN(:,:,1) = TA( :,:,1)
+
+!... First, carry over original model values for the matching layers
+   QV_CAN   (:,:,NLAYC+1:NLAYT)   = Met_Data%QV(:,:,1:NLAYS)   !
+
+!... Initialize the canopy layers with 1hy layer values
+   QV_CAN(:,:,3) = Met_Data%QV( :,:,1)
+   QV_CAN(:,:,2) = Met_Data%QV( :,:,1)
+   QV_CAN(:,:,1) = Met_Data%QV( :,:,1)
+
+!... First, carry over original model values for the matching layers
+   PRES_CAN (:,:,NLAYC+1:NLAYT)   = Met_Data%PRES(:,:,1:NLAYS) ! Pa
+
+!... Initialize the canopy layers with 1hy layer values
+   PRES_CAN(:,:,3) = Met_Data%PRES( :,:,1)
+   PRES_CAN(:,:,2) = Met_Data%PRES( :,:,1)
+   PRES_CAN(:,:,1) = Met_Data%PRES( :,:,1)
+
+!... First, carry over original model values for the matching layers
+   DENS_CAN (:,:,NLAYC+1:NLAYT)   = Met_Data%DENS(:,:,1:NLAYS) ! kg m-3
+
+!... Initialize the canopy layers with 1hy layer values
+   DENS_CAN(:,:,3) = Met_Data%DENS( :,:,1)
+   DENS_CAN(:,:,2) = Met_Data%DENS( :,:,1)
+   DENS_CAN(:,:,1) = Met_Data%DENS( :,:,1)
+
+! Initialize times after FIRSTIME
+   CONC_MOD (:,:,:,:) = CONC (:,:,:,:)
+
+!... First, carry over original model values for the matching layers
+   CONC_CAN(:,:,NLAYC+1:NLAYT,:) = CONC(:,:,1:NLAYS,:)
+
+!... Initialize the canopy layers with 1hy layer values
+   CONC_CAN(:,:,3            ,:) = CONC(:,:,1,      :)
+   CONC_CAN(:,:,2            ,:) = CONC(:,:,1,      :)
+   CONC_CAN(:,:,1            ,:) = CONC(:,:,1,      :)
+
+   CONC_2M (:,:,              :) = CONC(:,:,1,      :)
 
 ! zero gas-phase tendencies
-   o3_old_can (:,:,:) = CGRID_CAN(:,:,:,4) ! O3 = 4
-   o3_new_can (:,:,:) = CGRID_CAN(:,:,:,4) ! O3 = 4
+   o3_old_can (:,:,:) = CONC_CAN(:,:,:,4) ! O3 = 4
+   o3_new_can (:,:,:) = CONC_CAN(:,:,:,4) ! O3 = 4
    o3_tend_can(:,:,:) = 0.
-   no2_old_can (:,:,:) = CGRID_CAN(:,:,:,1) ! NO2 = 1
-   no2_new_can (:,:,:) = CGRID_CAN(:,:,:,1) ! NO2 = 1
+   no2_old_can (:,:,:) = CONC_CAN(:,:,:,1) ! NO2 = 1
+   no2_new_can (:,:,:) = CONC_CAN(:,:,:,1) ! NO2 = 1
    no2_tend_can(:,:,:) = 0.
+
+
+   CALL GET_PHOT_MET( JDATE, JTIME, MDATE, MTIME )
+! ===
+! Out: ZFULL, ZM, TA
+! ===
 
    DO ROW = 1, NROWS  !J-index
    DO COL = 1, NCOLS  !I-index
@@ -295,6 +338,8 @@
 
    ! Continuous forest canopy
    IF (FRT_mask(COL,ROW) > 0.) THEN
+
+      write(logdev,*) 'get_can_levs: ZFULL ZM TA = ', ZFULL(COL,ROW,1) , ZM(COL,ROW,1), TA(COL,ROW,1), COL, ROW
 
       hcan = Met_Data%FCH( COL,ROW )
 !!! Extract the canopy height (FCH)

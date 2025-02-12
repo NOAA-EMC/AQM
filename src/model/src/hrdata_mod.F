@@ -38,6 +38,10 @@ C
 C   18 Jul 14 B.Hutzell: revised to use real(8) variables for solution
 C*************************************************************************
 
+!IVAI
+      use can_mask             !FRT_mask
+!IVAI
+
 c..EBI solver fixed parameters
       INTEGER, PARAMETER    ::  NEBITER       = 1000     ! No. of iterations for EBI
       INTEGER, PARAMETER    ::  MAX_CELLS_EBI = 1        ! max # cells in local conc arrays

@@ -24,7 +24,7 @@ module can_trans_mod
    contains
 
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
- subroutine init_can_trans( CGRID, JDATE, JTIME, MDATE, MTIME)
+ subroutine init_can_trans( CONC, JDATE, JTIME)
 
 !  Input/Output variables, original horizontal coordinate
 !
@@ -54,11 +54,9 @@ module can_trans_mod
 
 !...Arguments:
 
-! *** CGRID is concentration field (including gas and aerosol variables)
-   REAL, POINTER :: CGRID( :,:,:,: )              !  concentrations volume mixing ratio ppmv
+! *** CONC is concentration field (including gas and aerosol variables)
+   REAL, POINTER :: CONC( :,:,:,: )              !  concentrations volume mixing ratio ppmv
 
-   INTEGER, INTENT( IN ) :: MDATE         ! "centered" Julian date (YYYYDDD)
-   INTEGER, INTENT( IN ) :: MTIME         ! "centered" time (HHMMSS)
    INTEGER, INTENT( IN ) :: JDATE         ! current Julian date (YYYYDDD)
    INTEGER, INTENT( IN ) :: JTIME         ! current time (HHMMSS)
 
@@ -100,7 +98,7 @@ module can_trans_mod
 
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
- subroutine canopy_transfer(CGRID, JDATE, JTIME, MDATE, MTIME, FLAG)
+ subroutine canopy_transfer(CONC, JDATE, JTIME, FLAG)
 
 ! Arguments:
 ! Input variables
@@ -115,10 +113,10 @@ module can_trans_mod
 !                                       1 -> canopy_to_resolved
 !
 !  Input/Output variables, original horizontal coordinate
-!  CGRID_CAN(:,:, NLAYT, NSPCSD)     :  Chemical tracers concentrations ppmv combined canopy and resolved model layers
-!  CGRID_MOD(:,:, NLAYS, NSPCSD)     :  Chemical tracers concentrations ppmv on model levels (copy of CGRID)
-!  CGRID    (:,:, NLAYS, NSPCSD)     :  Chemical tracers concentrations ppmv on model levels
-!  CGRID_2M (:,:,        NSPCSD)
+!  CONC_CAN(:,:, NLAYT, NSPCSD)     :  Chemical tracers concentrations ppmv combined canopy and resolved model layers
+!  CONC_MOD(:,:, NLAYS, NSPCSD)     :  Chemical tracers concentrations ppmv on model levels (copy of CONC)
+!  CONC    (:,:, NLAYS, NSPCSD)     :  Chemical tracers concentrations ppmv on model levels
+!  CONC_2M (:,:,        NSPCSD)
 !
 !  Local variables:
 !  massair_can(:,:, NLAYT)    :  mass of air in canopy layers (kg)
@@ -138,8 +136,11 @@ module can_trans_mod
    USE PHOT_MET_DATA, ONLY : ZFULL, ZM          ! Met and Grid data
    USE ASX_DATA_MOD, ONLY : MET_DATA, GRID_DATA ! Uses met data: Q2, TEMP2
    USE RXNS_DATA   ! , ONLY : NUMB_MECH_SPC, CGRID_INDEX ! SPECIES_MOLWT
-! NB. TA also assigned in PHOT_MET_DATA
+
+! hrinit: for ebi solver
    USE HRDATA             ! FORWARD_CONV, REVERSE_CONV
+! rbinit: for Rosenbrook solver
+!  USE RBDATA
    USE UTILIO_DEFN
 
    use can_mask
@@ -154,8 +155,8 @@ module can_trans_mod
 !
 ! 3D arrays dimensions:
 !  KMOD      (:,:,NLAYS)
-!  CGRID_MOD (:,:,NLAYS, NSPCSD)  ppmv volume mixing ratio
-!  CGRID_2M  (:,:,       NSPCSD)
+!  CONC_MOD (:,:,NLAYS, NSPCSD)  ppmv volume mixing ratio
+!  CONC_2M  (:,:,       NSPCSD)
 !  kcan3     (:,:,NLAYC)                    :  Vertical index location of canopy ungathered model layer in combined
 !                                          canopy + resolved scale column
 !  DXDY     (:,:)
@@ -168,17 +169,15 @@ module can_trans_mod
 !  DENS_CAN  "
 !
 !  KHETERO_CAN(NHETERO,:,:)          => updated in HRDRIVER
-!  CGRID_CAN          (:,:,NLAYT)    => updated in HRDRIVER
+!  CONC_CAN          (:,:,NLAYT)    => updated in HRDRIVER
 
    IMPLICIT NONE
 
 !...Arguments:
 
-! *** CGRID is concentration field (including gas and aerosol variables)
-   REAL, POINTER :: CGRID( :,:,:,: )              !  concentrations volume mixing ratio ppmv
+! *** CONC is concentration field (including gas and aerosol variables)
+   REAL, POINTER :: CONC( :,:,:,: )              !  concentrations volume mixing ratio ppmv
 
-   INTEGER, INTENT( IN ) :: MDATE         ! "centered" Julian date (YYYYDDD)
-   INTEGER, INTENT( IN ) :: MTIME         ! "centered" time (HHMMSS)
    INTEGER, INTENT( IN ) :: JDATE         ! current Julian date (YYYYDDD)
    INTEGER, INTENT( IN ) :: JTIME         ! current time (HHMMSS)
    INTEGER, INTENT( IN ) :: FLAG
@@ -354,7 +353,7 @@ module can_trans_mod
    !  loop over canopy columns
    IF (FRT_mask(COL,ROW) > 0.) THEN
 
-! CGRID_MOD/CGRID_CAN:
+! CONC_MOD/CONC_CAN:
 !   Assigned/Initilized in can_levs_defn FIRSTIME
 !   Updated in hrdriver after gas-phase tendencies are applied
 
@@ -370,19 +369,21 @@ module can_trans_mod
             ! conc3(1)     is top model layer
             ! conc3(NLAYS) is 1st (bottom) model layer
             ! Paul's chem_tr is our conc3 = vmr_resolved
-            ! conc3(II) = CGRID(COL,ROW, k, S) ! ppm
-! Oct9:     ! conc3(II) = CGRID_MOD(COL,ROW, k, S) ! ppm
+            ! conc3(II) = CONC(COL,ROW, k, S) ! ppm
+! Oct9:     ! conc3(II) = CONC_MOD(COL,ROW, k, S) ! ppm
             ! Paul's chem_tr is our vmr_resolved =conc3
-            vmr_resolved(II) = CGRID_MOD(COL,ROW, k, S) ! ppm
+            vmr_resolved(II) = CONC_MOD(COL,ROW, k, S) ! ppm
+! Feb10: use CONC instead of CONC_MOD
+!           vmr_resolved(II) = CONC(COL,ROW, k, S) ! ppm
          end do
 
 ! Flip combined layer arrays into a new array for use here
          do k = 1, NLAYT        ! from top to bottom
             II = NLAYT + 1 - k  ! from bottom to top of resolved model layers
-            ! Paul's trppm is our vmr_canopy (cgrid_can)
+            ! Paul's trppm is our vmr_canopy (CONC_can)
             ! (NLAYS) is top model layer
             ! (1)     is 1hy model layer
-            vmr_canopy(II) = CGRID_CAN(COL,ROW, k, S) ! ppm
+            vmr_canopy(II) = CONC_CAN(COL,ROW, k, S) ! ppm
          end do
 
 ! (ii): Canopy shaded layers
@@ -395,10 +396,10 @@ module can_trans_mod
 !--------------
 !hrinit.F: ...set scale factor for [ppm] -> [kg/kg]
 !
-! CGRID to CHEM  Species conversion factor
+! CONC to CHEM  Species conversion factor
 !         FORWARD_CONV( N ) = 1.0E-3 * MWAIR / SPECIES_MOLWT( N )  ! ug kg-1 to ppm
 !
-! CHEM  to CGRID Species conversion factor
+! CHEM to CONC Species conversion factor
 !         REVERSE_CONV( N ) = 1.0E+3 / MWAIR * SPECIES_MOLWT( N )  ! ppm    to ug kg-1
 !--------------
 
@@ -424,7 +425,7 @@ module can_trans_mod
          end do
 
 ! Temporary diagnostic output
-!        CGRID_MOD(COL,ROW, NLAYS  , S) = mmr_canopy(NLAYS  ) ! 1st model  layer  "COSZENS"  ~85 ug kg-1
+!        CONC_MOD(COL,ROW, NLAYS  , S) = mmr_canopy(NLAYS  ) ! 1st model  layer  "COSZENS"  ~85 ug kg-1
 
 ! (2) Array "mass_canopy" now holds the mass of the tracer in each of the combined levels.
 ! This mass must be added back to the resolved levels:
@@ -440,7 +441,7 @@ module can_trans_mod
          end do
 
 ! Temporary diagnostic output
-!           CGRID_MOD(COL,ROW, NLAYS, S) = mass_resolved(NLAYS)   ! 'COSZENS'  E+11
+!           CONC_MOD(COL,ROW, NLAYS, S) = mass_resolved(NLAYS)   ! 'COSZENS'  E+11
 ! Print
          IF(.FALSE.) THEN
          IF ( KOUNT < 3 )  THEN
@@ -472,7 +473,7 @@ module can_trans_mod
             mmr_resolved(k) = mass_resolved(k) / massair(COL,ROW, k)  ! ug kg-1
 
 ! (3a) Convert back m.m.r. [ug kg-1] to volume mix. ratios [ppm]
-            ! NB. This is CGRID_MOD to be used in gas-phase hrdriver call on canopy columns
+            ! NB. This is CONC_MOD to be used in gas-phase hrdriver call on canopy columns
             ! Paul's chem_tr is our conc3 = vmr_resolved
             vmr_resolved(k)            = FORWARD_CONV(isp) *  mmr_resolved(k)    ! ppm
 
@@ -518,14 +519,14 @@ module can_trans_mod
 ! Flip back resolved layers arrays for gas-phase integration (hrdriver)
          do k = 1, NLAYS        ! from top to bottom
             II = NLAYS + 1 - k  ! from bottom to top of resolved model layers
-            ! Paul's trppm is our cgrid_can (vmr_canopy)
+            ! Paul's trppm is our CONC_can (vmr_canopy)
             ! (NLAYS) is top model layer
             ! (1)     is 1hy model layer
-            CGRID_MOD(COL,ROW, II, S) = vmr_resolved(k) ! ppm
+            CONC_MOD(COL,ROW, II, S) = vmr_resolved(k) ! ppm
          end do
 
 ! 2M Diagnostics
-         CGRID_2M (COL,ROW,     S) = vmr_resolved(NLAYS+1)! ppm
+         CONC_2M (COL,ROW,     S) = vmr_resolved(NLAYS+1)! ppm
 
       end do ! number of species loop isp = 1, NUMB_MECH_SPC
 
@@ -543,16 +544,16 @@ module can_trans_mod
 ! ========================================================================
    else ! if (flag == 0) then (can_transfer == "resolved_to_canopy") then
 !
-! In: CGRID_MOD
+! In: CONC_MOD
 !
-! Out: CGRID_CAN (vmr_canopy)
+! Out: CONC_CAN (vmr_canopy)
 ! NB. ! Paul's trppm (mach_gas_canopy) is our vmr_canopy
 ! ========================================================================
 !
 
 ! Assigned in hrdriver after gas-phase tendencies are pplied
 !   Temporarily set array to zero (for testing)
-!   CGRID_CAN(:,:,:,:) = 0.0
+!   CONC_CAN(:,:,:,:) = 0.0
 
    DO ROW = 1, NROWS  !J-index
    DO COL = 1, NCOLS  !I-index
@@ -567,16 +568,18 @@ module can_trans_mod
 
          S = CGRID_INDEX( ISP )
 
+!        write(logdev,*) 'canopy_transfer: CGRID_INDEX = ', ISP, S, CONC_MOD(COL,ROW, :, S), COL, ROW
+
 ! Flip resolved layer arrays into a new array for use here
 ! (i): Model resolved layers
       do k = 1, NLAYS        ! from bottom to top
          II = NLAYS + 1 - k  ! from top to bottom of resolved model layers NLAYS+1 ???
-         ! Paul's chem_tr is our conc3 = vmr_resolved (cgrid_mod)
+         ! Paul's chem_tr is our conc3 = vmr_resolved (CONC_mod)
          ! conc3(1)     is top model layer
          ! conc3(NLAYS) is 1st (bottom) model layer
-         ! conc3(II) = CGRID    (COL,ROW, k, S) ! ppm
-         conc3(II) = CGRID_MOD(COL,ROW, k, S) ! ppm
-         vmr_resolved(II) = CGRID_MOD(COL,ROW, k, S) ! ppm
+         ! conc3(II) = CONC     (COL,ROW, k, S) ! ppm
+         conc3(II) = CONC_MOD(COL,ROW, k, S) ! ppm
+         vmr_resolved(II) = CONC_MOD(COL,ROW, k, S) ! ppm
       end do
 
 !  (1) We start off by converting these volume mixing ratio ppm to mass in ug:
@@ -598,8 +601,8 @@ module can_trans_mod
       end do
 
 ! Temporary diagnostic output
-!        CGRID_CAN(COL,ROW, 2, S) = mass_resolved(NLAYS-1) ! ug 2hy model layer
-!        CGRID_CAN(COL,ROW, 1, S) = mass_resolved(NLAYS)   ! ug 1hy model layer
+!        CONC_CAN(COL,ROW, 2, S) = mass_resolved(NLAYS-1) ! ug 2hy model layer
+!        CONC_CAN(COL,ROW, 1, S) = mass_resolved(NLAYS)   ! ug 1hy model layer
 !
 !  (2) Use the array fractions defined earlier to divide the resolved layer masses into the canopy layers,
 !  and convert back to mixing ratios.  Note that the frctr2c fractions are vertical extent of the
@@ -618,9 +621,9 @@ module can_trans_mod
             end do
 
 ! Temporary diagnostic output
-!       CGRID_CAN(COL,ROW, 4, S) = mass_canopy(NLAYS  ) ! ug 1hy model  layer
-!       CGRID_CAN(COL,ROW, 3, S) = mass_canopy(NLAYS+1) ! ug 3rd canopy layer
-!       CGRID_CAN(COL,ROW, 1, S) = mass_canopy(NLAYT)   ! ug 1st canopy layer
+!       CONC_CAN(COL,ROW, 4, S) = mass_canopy(NLAYS  ) ! ug 1hy model  layer
+!       CONC_CAN(COL,ROW, 3, S) = mass_canopy(NLAYS+1) ! ug 3rd canopy layer
+!       CONC_CAN(COL,ROW, 1, S) = mass_canopy(NLAYT)   ! ug 1st canopy layer
 
 !
 !  Check:  total mass in the column should be the same
@@ -635,8 +638,8 @@ module can_trans_mod
             end do
 
 ! Temporary diagnostic output
-!        CGRID_CAN(COL,ROW, 3, S) = mmr_canopy(NLAYS  ) ! ug kg -1 1hy model  layer ~85  ug kg-1
-!        CGRID_CAN(COL,ROW, 1, S) = mmr_canopy(NLAYT)   ! ug 1st canopy layer
+!        CONC_CAN(COL,ROW, 3, S) = mmr_canopy(NLAYS  ) ! ug kg -1 1hy model  layer ~85  ug kg-1
+!        CONC_CAN(COL,ROW, 1, S) = mmr_canopy(NLAYT)   ! ug 1st canopy layer
 
 ! Print
          IF(.FALSE.) THEN
@@ -659,7 +662,7 @@ module can_trans_mod
 !  a canopy exists:
             do kk = 1, NLAYS
                k = kmod(COL, ROW, kk)
-               ! Paul's chem_tr is our conc3 = vmr_resolved (cgrid_mod) <================
+               ! Paul's chem_tr is our conc3 = vmr_resolved (CONC_mod) <================
 !              conc3(kk)         = FORWARD_CONV(isp) * mmr_canopy(k)  ! ppm
                vmr_resolved (kk) = FORWARD_CONV(isp) * mmr_canopy(k)  ! ppm
             end do
@@ -670,7 +673,7 @@ module can_trans_mod
                ! kmod(NLAYS) is 65 top canopy layer (modified after mono adj.)
                k = kmod(COL, ROW, kk)
 
-               ! Paul's trppm is our vmr_canopy (cgrid_can)
+               ! Paul's trppm is our vmr_canopy (CONC_can)
 !              vmr_canopy(k) = conc3(kk)         !ppm
                vmr_canopy(k) = vmr_resolved(kk)  !ppm
             end do
@@ -684,7 +687,7 @@ module can_trans_mod
 
 ! (ii): Canopy shaded layers (for hrdriver) (trppm from mach_gas_canopy)
             do kc = 1, NLAYC
-               ! Paul's trppm is our vmr_canopy (cgrid_can)
+               ! Paul's trppm is our vmr_canopy (CONC_can)
                ! kcan3(1) = 65
                ! kcan3(2) = 66
                ! kcan3(3) = 67
@@ -693,8 +696,8 @@ module can_trans_mod
             end do
 
 ! Temporary diagnostic output
-!       CGRID_CAN(COL,ROW, 3, S) = vmr_canopy(NLAYS)     ! ~50-51 ppm
-!       CGRID_CAN(COL,ROW, 1, S) = vmr_canopy(NLAYT)
+!       CONC_CAN(COL,ROW, 3, S) = vmr_canopy(NLAYS)     ! ~50-51 ppm
+!       CONC_CAN(COL,ROW, 1, S) = vmr_canopy(NLAYT)
 
 ! Prepare array for gas-phase chemical integration. (Paul's mach_gas_canopy)
 !
@@ -704,15 +707,15 @@ module can_trans_mod
             ! (NLAYT) is top model layer
             ! (4)     is 1hy model layer
             ! (1-3)   are canopy layers
-            ! Paul's trppm is our vmr_canopy (cgrid_can)
-            CGRID_CAN(COL,ROW, II, S) = vmr_canopy(k)! ppm
+            ! Paul's trppm is our vmr_canopy (CONC_can)
+            CONC_CAN(COL,ROW, II, S) = vmr_canopy(k)! ppm
          end do
 
       end do !species index loop isp
 
 ! Print
-!     print*, 'RESOLVED_TO_CANOPY: 1HY 1-2-3CY = ', CGRID_MOD(COL,ROW,1, 4), & ! O3 = 4
-!       CGRID_CAN(COL,ROW,1, 4), CGRID_CAN(COL,ROW,2, 4), CGRID_CAN(COL,ROW,3, 4)
+!     print*, 'RESOLVED_TO_CANOPY: 1HY 1-2-3CY = ', CONC_MOD(COL,ROW,1, 4), & ! O3 = 4
+!       CONC_CAN(COL,ROW,1, 4), CONC_CAN(COL,ROW,2, 4), CONC_CAN(COL,ROW,3, 4)
 
 ! Print up to KOUNT number of canopy columns
       KOUNT = KOUNT + 1

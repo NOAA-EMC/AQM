@@ -69,10 +69,12 @@ C**********************************************************************
       USE RXNS_DATA
       USE AEROSOL_CHEMISTRY
       USE RXNS_FUNCTION
+!IVAI
+      USE GRID_CONF, Only: NLAYC, NLAYT     ! horizontal & vertical domain specifications
+!IVAI
       USE HRDATA
       USE PA_DEFN, Only: LIRR   ! Process Anaylsis control and data variable
       USE DEGRADE_SETUP_TOX, ONLY : N_REACT, RXTANT_MAP
-!IVAI
       USE UTILIO_DEFN
 
       USE PHOT_MOD, ONLY : LO3O1D
@@ -83,7 +85,6 @@ C**********************************************************************
 !     call init_can_mask
 !     call get_can_mask
 ! Out: 
-!      NLAYC and NLAYT  (init_can_mask)
 !      FRT_MASK         (get_can_mask)
 ! =====================
 
@@ -99,8 +100,8 @@ C**********************************************************************
 !      QV_CAN
 !      PRES_CAN
 !      DENS_CAN
-!      CGRID_MOD        <= CGRID      ! ALL CANOPY & NON-CANOPY COLUMNS !
-!      CGRID_CAN(1,2,3) <= CGRID(1)   ! ALL CANOPY & NON-CANOPY COLUMNS !
+!      CONC_MOD        <= CGRID      ! ALL CANOPY & NON-CANOPY COLUMNS !
+!      CONC_CAN(1,2,3) <= CGRID(1)   ! ALL CANOPY & NON-CANOPY COLUMNS !
 ! =====================
 
       use can_trans_mod
@@ -108,11 +109,11 @@ C**********************************************************************
 ! =====================
 !     call canopy_transfer 
 !  In: 
-!   CGRID    (:,:, NLAYS, NSPCSD) :  Chemical tracers conc. ppmv on model levels
-!   CGRID_MOD(:,:, NLAYS, NSPCSD) :  Chemical tracers conc. ppmv on model levels
+!   CGRID   (:,:, NLAYS, NSPCSD) :  Chemical tracers conc. ppmv on model levels
+!   CONC_MOD(:,:, NLAYS, NSPCSD) :  Chemical tracers conc. ppmv on model levels
 !
 !  Output:
-!   CGRID_CAN(:,:, NLAYT, NSPCSD) :  Chemical tracers conc. ppmv on combined canopy+resolved layers
+!   CONC_CAN(:,:, NLAYT, NSPCSD) :  Chemical tracers conc. ppmv on combined canopy+resolved layers
 !                                    ! CANOPY COLUMNS ONLY !
 ! ================================
 !IVAI
@@ -398,16 +399,19 @@ C.. Get fractional surf-zone coverage from the OCEAN file.
      &             o3_new( NCOLS, NROWS, NLAYS ), no2_new( NCOLS, NROWS, NLAYS ),
      &             o3_tend(NCOLS, NROWS, NLAYS ), no2_tend(NCOLS, NROWS, NLAYS ))
 
+!IVAI
+
+
 !> ccccccccccccccccccccc canopy shade option!ccccccccccccccccccccc
          CANOPY_SHADE = ENVYN( 'CTM_CANOPY_SHADE',
      &                   'Flag for in-line canopy shading',
      &                   .FALSE., IOSX )
 
-!         IF ( CANOPY_SHADE ) THEN
-!            XMSG = 'Using in-line canopy shading option'
-!            CALL M3MSG2( XMSG )
-!         END IF
-! IVAI
+         IF ( CANOPY_SHADE ) THEN
+            XMSG = 'Using in-line canopy shading option'
+            CALL M3MSG2( XMSG )
+         END IF
+!IVAI
 
          LFIRST = .FALSE.
 
@@ -517,13 +521,16 @@ C.. Get pressure in Pascals
          CALL M3EXIT ( PNAME, JDATE, JTIME, MSG, XSTAT1 )
       END IF
 
-! IVAI: use o3_old array for canopy values
+! IVAI: 
 ! Species before gas-phase tendencies added (NB. Species indices defined in "hrdata_mod", for O3 = 4)
-!     o3_old (:,:,:) = CGRID(:,:,:,4) ! O3 = 4
+      o3_old (:,:,:) = CGRID(:,:,:,4) ! O3 = 4
 
-! ??? NOT SURE if should assign o3_old_can here, calculated in phot at prev timestep ????
-! Species before gas-phase tendencies added (NB. All canopy & non-canopy grid-cells)
-!      o3_old_can (:,:,:) = CGRID_CAN(:,:,:,4) ! O3 = 4
+!IVAI
+      IF (CANOPY_SHADE ) THEN
+
+        WRITE( LOGDEV, *) 'HRDRIVER: NLAYC NLAYT = ', NLAYC, NLAYT
+
+      END IF
 ! IVAI
 
 C.. Get photolysis rates in 1/min
@@ -557,9 +564,9 @@ C.. Get Heterogeneous rates and Update Aerosol Distribution Properties
 
 !0             DO L = 1, 3 !NLAYT
  
-!1   &         CGRID_MOD(C,R,1, 4), ! O3 = 4
+!1   &         CONC_MOD(C,R,1, 4), ! O3 = 4
 !1   &         RJ_CAN   (C,R,1, LO3O1D), 
-!1   &         CGRID_CAN(C,R,1, 4), CGRID_CAN(C,R,3, 4)  ! O3 = 4
+!1   &         CONC_CAN(C,R,1, 4), CONC_CAN(C,R,3, 4)  ! O3 = 4
 !
 !1   &         TA_CAN(C,R, 1), DENS_CAN(C,R, 1), QV_CAN(C,R, 1)
      &         KHETERO_CAN(1:NHETERO,C,R,1 )  ! NHETERO = 11  in total
@@ -583,19 +590,66 @@ C.. Get Heterogeneous rates and Update Aerosol Distribution Properties
 !     aux2d_02(:,:) = real(    KHETERO(NHETERO,:,:,1 ),4) ! NHETERO=11 reaction
 !     aux2d_03(:,:) = real(KHETERO_CAN(NHETERO,:,:,1 ),4) ! NHETERO=11 reaction 
 
-! This is cgrid_can from canopy_transfer after r2c (flag = 0)
-!     aux2d_02(:,:) = CGRID_CAN(:,:,1,4) ! 1st canopy layer O3 = 4
+! This is CONC_can from canopy_transfer after r2c (flag = 0)
+!     aux2d_02(:,:) = CONC_CAN(:,:,1,4) ! 1st canopy layer O3 = 4
+
+!!!!!!!!!!!!!!!!!
+! !!! TESTING !!! Overwrite met3d & cgrid calculated in get_can_levs (phot)
+!!!!!!!!!!!!!!!!!
+! NB. Comment out to use values from canopy_transfer "resolved_to_canopy"
 
 !... First, carry over original model values for the matching layers
-      KHETERO_CAN(:,:,:,NLAYC+1:NLAYT)   = KHETERO(:,:,:,1:NLAYS) ! real(8)
+!     TA_CAN   (:,:,NLAYC+1:NLAYT)   = TA  (:,:,1:NLAYS)
+!     QV_CAN   (:,:,NLAYC+1:NLAYT)   = QV  (:,:,1:NLAYS)
+!     PRES_CAN (:,:,NLAYC+1:NLAYT)   = PRES(:,:,1:NLAYS)
+!     DENS_CAN (:,:,NLAYC+1:NLAYT)   = DENS(:,:,1:NLAYS)
+
+! Overwrite CONC_can calculated in canopy_transfer "resolved_to_canopy"
+! NB. Comment out to use values from canopy_transfer "resolved_to_canopy"
+!     CONC_CAN(:,:,NLAYC+1:NLAYT,:) = CGRID(:,:,1:NLAYS,:)   !Nov13
 
 !... Initialize the canopy layers with 1hy layer values
+!     TA_CAN(:,:,3) = TA( :,:,1) ! using values from get_can_levs when commented out
+!     TA_CAN(:,:,2) = TA( :,:,1)
+!     TA_CAN(:,:,1) = TA( :,:,1)
+
+!     QV_CAN(:,:,3) = QV( :,:,1)
+!     QV_CAN(:,:,2) = QV( :,:,1)
+!     QV_CAN(:,:,1) = QV( :,:,1)
+
+!     PRES_CAN(:,:,3) = PRES( :,:,1)
+!     PRES_CAN(:,:,2) = PRES( :,:,1)
+!     PRES_CAN(:,:,1) = PRES( :,:,1)
+
+!     DENS_CAN(:,:,3) = DENS( :,:,1)
+!     DENS_CAN(:,:,2) = DENS( :,:,1)
+!     DENS_CAN(:,:,1) = DENS( :,:,1)
+
+! dims KHETERO_CAN(NHETERO,NCOLS, NROWS, NLAYT)
+      KHETERO_CAN(:,:,:,NLAYC+1:NLAYT)   = KHETERO(:,:,:,1:NLAYS) ! real(8)
+
       KHETERO_CAN(:,:,:,3) = KHETERO(:,:,:,1)  ! real(8)
       KHETERO_CAN(:,:,:,2) = KHETERO(:,:,:,1)  ! real(8)
       KHETERO_CAN(:,:,:,1) = KHETERO(:,:,:,1)  ! real(8)
 
+! Overwrite CONC_can calculated in canopy_transfer "resolved_to_canopy"
+! NB. Comment out to use values from canopy_transfer "resolved_to_canopy"
+!     CONC_CAN(:,:,3,:) = CGRID(:,:,1,:) !Nov13
+!     CONC_CAN(:,:,2,:) = CGRID(:,:,1,:) !Nov13
+!     CONC_CAN(:,:,1,:) = CGRID(:,:,1,:) !Nov13 ! using values from canopy_transfer when commented out
+
+!!!!!!!!!!!!!!!!!!!!!
+! !!! END TESTING !!! overwrite met3d & cgrid calculated in get_can_levs
+!!!!!!!!!!!!!!!!!!!!!
+
 ! Species before gas-phase tendencies added (NB. All canopy & non-canopy grid-cells)
-      o3_old_can (:,:,1:NLAYT) = CGRID_CAN(:,:,1:NLAYT,4) ! O3 = 4
+      o3_old_can (:,:,1:NLAYT) = CONC_CAN(:,:,1:NLAYT,4) ! O3 = 4
+
+! Temporary output
+!     aux2d_03(:,:) = PRES_CAN(:,:,1)
+!     aux2d_02(:,:) = DENS_CAN(:,:,1)
+!     aux2d_02(:,:) = TA_CAN  (:,:,1)
+!     aux2d_03(:,:) = CONC_CAN(:,:,1,4) ! 1st canopy layer O3 = 4
 
       End If  !CANOPY_SHADE
 
@@ -697,13 +751,13 @@ c..Update concentration array
          END DO
       END DO
 
-!IVAI: re-use o3_old, o3_new, o3_tend for canopy values
+!IVAI: 
 ! Species after gas-phase: all canopy & non-canopy grid cells
-!     o3_new  (:,:,:) = CGRID(:,:,:,4)
+      o3_new  (:,:,:) = CGRID(:,:,:,4)
 
 ! Gas-phase tendency  ppmv sec-1
-!     o3_tend (:,:,:) = ( o3_new(:,:,:) -  o3_old(:,:,:)) / 
-!    &                  REAL (CHEMSTEP, 4) ! ppm  sec-1
+      o3_tend (:,:,:) = ( o3_new(:,:,:) -  o3_old(:,:,:)) / 
+     &                  REAL (CHEMSTEP, 4) ! ppm  sec-1
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Species after gas-phase: Here only non-canopy grid cells are updated (NB. Canopy grid cells are overwriten further down)
@@ -712,6 +766,8 @@ c..Update concentration array
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Call on combined canopy plus resolved model layer
+! Temporarily run on NLAYS
+!     DO L = 1, NLAYS
       DO L = 1, NLAYT
          DO R = 1, MY_NROWS
             DO C = 1, MY_NCOLS
@@ -724,7 +780,7 @@ c..Update concentration array
 ! NB. CHEMSTEP = 3 min TSTEP = 300 (1hr)
 !              if( L.EQ.1 .OR. L.EQ.2 .OR. L.EQ.3 ) print*, 
 !    &           'HRDRIVER: CANLEV3 =', L, 
-!    &            RJ_CAN( C,R,L ,LO3O1D ), CGRID_CAN( C,R,L, 4 ) ! O3 = 4
+!    &            RJ_CAN( C,R,L ,LO3O1D ), CONC_CAN( C,R,L, 4 ) ! O3 = 4
 !    &            KHETERO_CAN(NHETERO,C,R,L ) ! REAL( 8 )
 !    &            TA_CAN(C,R,L), DENS_CAN(C,R,L), QV_CAN(C,R,L),
 !IVAI
@@ -734,9 +790,9 @@ c..Load ICs
                   S = CGRID_INDEX( SPC )
                   IF( CONVERT_CONC( SPC ) )THEN
                       YC( SPC ) = REAL( MAX( CONCMIN,
-     &                            INV_DENS*FORWARD_CONV( SPC )*CGRID_CAN( C,R,L,S )), 8 )
+     &                            INV_DENS*FORWARD_CONV( SPC )*CONC_CAN( C,R,L,S )), 8 )
                   ELSE
-                      YC( SPC ) = REAL( MAX( CGRID_CAN( C,R,L,S ), CONCMIN), 8 )
+                      YC( SPC ) = REAL( MAX( CONC_CAN( C,R,L,S ), CONCMIN), 8 )
                   END IF
                END DO
 
@@ -744,7 +800,7 @@ c..Load ICs
 
                   YCCELL = 0.0D0
                   DO S = 1, MODEL_SPECIES
-                     YCCELL( S ) = REAL( CGRID_CAN(C,R,L,S), 8)
+                     YCCELL( S ) = REAL( CONC_CAN(C,R,L,S), 8)
                   END DO
                   CALL INIT_DEGRADE(YCCELL,TA_CAN(C,R,L),DENS_CAN(C,R,L),RJIN(NCELL,:),
      &                              JDATE, JTIME, LOGDEV)
@@ -789,10 +845,10 @@ c..Update concentration array
                DO SPC = 1, NUMB_MECH_SPC
                   S = CGRID_INDEX( SPC )
                   IF( CONVERT_CONC( SPC ) )THEN
-                      CGRID_CAN( C,R,L,S ) = REAL( REVERSE_CONV( SPC ) * DENS_CAN( C,R,L )
+                      CONC_CAN( C,R,L,S ) = REAL( REVERSE_CONV( SPC ) * DENS_CAN( C,R,L )
      &                                 * MAX( YC( SPC ), DCONMIN), 4)
                   ELSE
-                      CGRID_CAN( C,R,L,S ) = REAL( MAX( YC( SPC ), DCONMIN), 4)
+                      CONC_CAN( C,R,L,S ) = REAL( MAX( YC( SPC ), DCONMIN), 4)
                   END IF
                END DO
 
@@ -804,7 +860,7 @@ c..Update concentration array
                      DO S = 1, NUMB_MECH_SPC
                         IF(  CGRID_INDEX( S ) .EQ. ISP )CYCLE UPDATE_DEGRADED_CAN
                      END DO
-                     CGRID_CAN(C,R,L,ISP) = REAL( YCCELL(ISP), 4)
+                     CONC_CAN(C,R,L,ISP) = REAL( YCCELL(ISP), 4)
                   END DO UPDATE_DEGRADED_CAN
                END IF
 
@@ -819,7 +875,12 @@ c..Update concentration array
       END DO       !DO L = 1, NLAYT
 
 ! Species after gas-phase (NB. only canopy-grid cells are updated)
-      o3_new_can (:,:,1:NLAYT) = CGRID_CAN(:,:,1:NLAYT,4) ! O3 = 4
+      o3_new_can (:,:,1:NLAYT) = CONC_CAN(:,:,1:NLAYT,4) ! O3 = 4
+!Nov8:o3_new     (:,:,1:NLAYS) = CONC_CAN(:,:,1:NLAYS,4) ! O3 = 4
+
+! Temporary output
+!     aux2d_02(:,:) = o3_new_can  (:,:,1)
+!     aux2d_02(:,:) = CONC_CAN(:,:,1,4) ! O3 = 4 => o3_new_can
 
       o3_tend_can (:,:,:) = ( o3_new_can(:,:,:) -  o3_old_can(:,:,:)) / 
      &                       REAL (CHEMSTEP, 4) ! ppmv sec-1
@@ -827,8 +888,8 @@ c..Update concentration array
 ! Temporary output
 
       aux2d_03(:,:) = o3_tend_can (:,:,3)          ! coszens
-      aux2d_02(:,:) = o3_tend_can (:,:,2)          ! jno2
-      aux2d_01(:,:) = o3_tend_can (:,:,1)          ! jo3o1d
+      aux2d_02(:,:) = o3_tend_can (:,:,1)          ! jno2
+!     aux2d_01(:,:) = o3_tend_can (:,:,1)          ! jo3o1d
 
 !     aux2d_03(:,:) = o3_tend     (:,:,3)          ! coszens
 !     aux2d_02(:,:) = o3_tend     (:,:,2)          ! jno2
@@ -838,18 +899,18 @@ c..Update concentration array
 ! Gather tracer concentration from canopy layers into model resolved layers (flag = 1)
 !===============================================================================
 
-      CALL canopy_transfer(CGRID, JDATE, JTIME, MIDDATE, MIDTIME, 1 )
+      CALL canopy_transfer(CGRID, JDATE, JTIME, 1 )
 
 ! Input:
-!   CGRID_CAN after gas-phase
+!   CONC_CAN after gas-phase
 !
 ! Output:
-!   CGRID_MOD after gas-phase
+!   CONC_MOD after gas-phase
 
 ! Temporary output
-!     aux2d_01(:,:) =  CGRID_MOD(:,:,NLAYS,4) ! top model layer O3 = 4
-!     aux2d_01(:,:) =  CGRID_MOD(:,:,2,4) ! 2hy model layer O3 = 4
-!     aux2d_01(:,:) =  CGRID_MOD(:,:,1,4) ! 1hy model layer O3 = 4
+!     aux2d_01(:,:) =  CONC_MOD(:,:,NLAYS,4) ! top model layer O3 = 4
+!     aux2d_01(:,:) =  CONC_MOD(:,:,2,4) ! 2hy model layer O3 = 4
+!     aux2d_01(:,:) =  CONC_MOD(:,:,1,4) ! 1hy model layer O3 = 4
  
 ! Update CGRID for advection, deposition etc.
       DO L = 1, NLAYS 
@@ -867,8 +928,8 @@ c..Update concentration array
                S = CGRID_INDEX( SPC )
                print*, 'HRDRIVER: AFTER C2R SPC= ', S, 
 ! N_GAS_CHEM_SPC = 127 (NO2 = 1 O3 = 4)
-!    &         CGRID_CAN(C,R,1, S), CGRID_CAN(C,R,2, S), CGRID_CAN(C,R,3, S)  ! O3 = 4
-     &         CGRID    (C,R,1, S), CGRID_MOD(C,R,1, S)
+!    &         CONC_CAN(C,R,1, S), CONC_CAN(C,R,2, S), CONC_CAN(C,R,3, S)  ! O3 = 4
+     &         CGRID    (C,R,1, S), CONC_MOD(C,R,1, S)
             END DO 
 
             END IF ! KOUNT L=1
@@ -881,11 +942,8 @@ c..Update concentration array
             DO SPC = 1, NUMB_MECH_SPC
                S = CGRID_INDEX( SPC )
 
-! Test with 1hy only from C2R (comment out L = 1, NLAYS loop)
-!              CGRID(C,R,1,S) = CGRID_MOD(C,R,1,S) !1hy model layer
 ! All levels
-               CGRID(C,R,L,S) = CGRID_MOD(C,R,L,S)
-! NOV13: !!! TESTING DO NOT UPDATE CGRID !!!
+               CGRID(C,R,L,S) = CONC_MOD(C,R,L,S)
             END DO
 
             END IF !FRT_MASK
@@ -901,7 +959,7 @@ c..Update concentration array
 !  Update Aerosol Surface Area
       CALL HETCHEM_UPDATE_AERO( CGRID )
 !IVAI: to do ...
-!     CALL HETCHEM_UPDATE_AERO( CGRID_CAN )
+!     CALL HETCHEM_UPDATE_AERO( CONC_CAN )
 
 #ifdef hrstats
       AVGEBI = SUMEBI / REAL( NCOLS * NROWS * NLAYS )

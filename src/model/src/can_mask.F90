@@ -7,12 +7,6 @@
    integer(kind=4), allocatable, save, public :: ni_can_col(:), ni_nocan_col(:), &
                                            nj_can_row(:), nj_nocan_row(:)
 
-! Vertical arrays
-   integer(kind=4) :: NLAYT
-   integer(kind=4), parameter :: NLAYC = 3 ! # of canopy layers for shading effects
-
-   public :: NLAYT  ! # of resolved model layers plus canopy layers
-
    real, allocatable, save, public :: FRT_mask(:,:)     ! Continuos Forest Canopy mask
 
    public :: init_can_mask, get_can_mask
@@ -22,18 +16,16 @@
    CONTAINS
 
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-   subroutine init_can_mask(MDATE, MTIME, JDATE, JTIME)
+   subroutine init_can_mask(JDATE, JTIME)
 
 
-   USE GRID_CONF, ONLY: NROWS, NCOLS, NLAYS, MY_NROWS, MY_NCOLS  ! horizontal & vertical domain specifications
+   USE GRID_CONF, ONLY: NROWS, NCOLS, NLAYS, NLAYC, NLAYT, MY_NROWS, MY_NCOLS  ! horizontal & vertical domain specifications
    USE UTILIO_DEFN
 
    IMPLICIT NONE
 
 !...Arguments:
 
-   INTEGER, INTENT( IN ) :: MDATE         ! "centered" Julian date (YYYYDDD)
-   INTEGER, INTENT( IN ) :: MTIME         ! "centered" time (HHMMSS)
    INTEGER, INTENT( IN ) :: JDATE         ! current Julian date (YYYYDDD)
    INTEGER, INTENT( IN ) :: JTIME         ! current time (HHMMSS)
 
@@ -46,7 +38,7 @@
 
    LOGDEV   = INIT3()
 
-   WRITE( LOGDEV, * ) , 'init_can_mask: NCOLS, NROWS = ', NCOLS, NROWS, MY_NROWS, MY_NCOLS
+!  WRITE( LOGDEV, * ) , 'init_can_mask: NCOLS, NROWS = ', NCOLS, NROWS, MY_NROWS, MY_NCOLS
 
 !...Allocate and initialize new canopy arrays
 
@@ -68,16 +60,15 @@
 
    FRT_mask(:,:)=0.0
 
-   NLAYT = NLAYS + NLAYC  ! # of resolved model layers plus canopy layers
-   WRITE( LOGDEV, * ) 'init_can_mask: NLAYC, NLAYT, NLAYS ', NLAYC, NLAYT, NLAYS
+!  WRITE( LOGDEV, * ) 'init_can_mask: NLAYC, NLAYT, NLAYS ', NLAYC, NLAYT, NLAYS
 
    end subroutine init_can_mask
 
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-   subroutine get_can_mask (MDATE, MTIME, JDATE, JTIME)
+   subroutine get_can_mask (JDATE, JTIME)
 
-   USE GRID_CONF, ONLY: NROWS, NCOLS, NLAYS, MY_NROWS, MY_NCOLS  ! horizontal & vertical domain specifications
+   USE GRID_CONF, ONLY: NROWS, NCOLS, NLAYS, NLAYC, NLAYT, MY_NROWS, MY_NCOLS  ! horizontal & vertical domain specifications
    USE  PHOT_MET_DATA        ! Met and Grid data
 !Used for canopy shade calculation
    USE ASX_DATA_MOD, ONLY : MET_DATA        !use met data
@@ -87,8 +78,6 @@
 
 !...Arguments:
 
-   INTEGER, INTENT( IN ) :: MDATE         ! "centered" Julian date (YYYYDDD)
-   INTEGER, INTENT( IN ) :: MTIME         ! "centered" time (HHMMSS)
    INTEGER, INTENT( IN ) :: JDATE         ! current Julian date (YYYYDDD)
    INTEGER, INTENT( IN ) :: JTIME         ! current time (HHMMSS)
 
@@ -140,7 +129,7 @@
       nj_nocan = nj_nocan + nj_nocan_row(ROW)
    END DO
 
-   WRITE( LOGDEV, 5002 ) nj_can, nj_nocan
+!  WRITE( LOGDEV, 5002 ) nj_can, nj_nocan
 
 
    DO COL = 1, NCOLS  !I-index
@@ -174,7 +163,7 @@
       ni_nocan = ni_nocan + ni_nocan_col(COL)
    END DO
 
-   WRITE( LOGDEV, 5001 ) ni_can, ni_nocan
+!  WRITE( LOGDEV, 5001 ) ni_can, ni_nocan
 
 !   WRITE( LOGDEV, 5003 ) COL, ROW,
 !     FRT_mask(COL,ROW),      &

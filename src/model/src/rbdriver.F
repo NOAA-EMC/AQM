@@ -383,12 +383,6 @@ C...Initialize and report data
 ! BLKLEN(1)=50  BLKLEN( NBLKS )=34 (last block)
          WRITE( LOGDEV, 92020 ) NOXYZ, BLKSIZE, NBLKS, BLKLEN( 1 ), BLKLEN( NBLKS )
 
-! IVAI
-! NOXYZ= 17152  NBLKS_CAN= 344  (BLKSIZE=50)
-! BLKLEN_CAN(1)=50   BLKLEN_CAN( NBLKS_CAN )= 2 (last block)
-         WRITE( LOGDEV, 92020 ) NOXYZ_CAN, BLKSIZE, NBLKS_CAN, BLKLEN_CAN( 1 ), BLKLEN_CAN( NBLKS_CAN )
-! IVAI
-
          WRITE( LOGDEV, 92040 ) GLBL_RTOL, GLBL_ATOL
 
 C.. Get fractional seawater coverage from the OCEAN file.
@@ -1058,14 +1052,10 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
       ERRMX2_CAN = 0.0D0
 
-! Temporary loop over NBLKS instead of NBLKS_CAN
       DO 555 BLK = 1, NBLKS
-!     DO 555 BLK = 1, NBLKS_CAN
          BLKID = BLK
          NUMCELLS = BLKLEN( BLK )
          OFFSET = BLKCNO( BLK )
-!        NUMCELLS = BLKLEN_CAN( BLK )
-!        OFFSET = BLKCNO_CAN( BLK )
 
 !IVAI
 !        WRITE( LOGDEV, *) 'RBDRIVER 555: OFFSET = ', BLKID, NUMCELLS, OFFSET

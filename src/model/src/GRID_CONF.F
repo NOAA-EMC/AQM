@@ -43,6 +43,10 @@ C.......................................................................
       INTEGER, PARAMETER :: BLKSIZE = 50
       INTEGER, SAVE :: MXCELLS
       INTEGER, SAVE :: MXBLKS
+!IVAI
+      INTEGER, PARAMETER :: NLAYC = 3 ! # of canopy layers for shading effects
+      INTEGER, SAVE :: NLAYT
+!IVAI
 
       CONTAINS
 
@@ -85,6 +89,11 @@ C define vertical layer structure
 
             MXCELLS = NCOLS * NROWS * NLAYS
             MXBLKS  = 1 + ( MXCELLS - 1 ) / BLKSIZE
+
+!IVAI
+            NLAYT = NLAYS + NLAYC
+            WRITE( LOGDEV, *) 'GRID_INIT: CANOPY LAYERS = ', NLAYC, NLAYT
+!IVAI
 
             ELSE
             MSG = 'Domain configuration already defined'

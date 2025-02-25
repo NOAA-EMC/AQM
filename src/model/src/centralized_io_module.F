@@ -1670,7 +1670,7 @@
              if (NLDNSTRIKE) then
                  CALL NEXTIME ( loc_jdate(f_ltng), loc_jtime(f_ltng), file_tstep(f_ltng) )
              end if
-             CALL NEXTIME ( loc_jdate(f_bcon), loc_jtime(f_bcon), file_tstep(f_bcon) )
+!             CALL NEXTIME ( loc_jdate(f_bcon), loc_jtime(f_bcon), file_tstep(f_bcon) )
 #endif
 
              do i = 1, N_FILE_GR

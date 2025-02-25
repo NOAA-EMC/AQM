@@ -682,18 +682,20 @@ logical function interpx( fname, vname, pname, &
     if (aqm_rc_check(localrc, msg="Failure to retrieve grid coordinates", &
       file=__FILE__, line=__LINE__)) return
 
-    if (vname(1:7) == 'LUFRAC_') then
-      lu_index = 0
-      read(vname(8:9), *, iostat=localrc) lu_index
-      if (aqm_rc_test(localrc /= 0, msg="Failure to identify LU_INDEX", &
-        file=__FILE__, line=__LINE__)) return
-      k = 0
-      do r = row0, row1
-        do c = col0, col1
-          k = k + 1
-          if (int(stateIn % stype(c,r)) == lu_index) buffer(k) = 1.0
+    if (len(vname) > 7 ) then
+      if (vname(1:7) == 'LUFRAC_') then
+        lu_index = 0
+        read(vname(8:9), *, iostat=localrc) lu_index
+        if (aqm_rc_test(localrc /= 0, msg="Failure to identify LU_INDEX", &
+          file=__FILE__, line=__LINE__)) return
+        k = 0
+        do r = row0, row1
+          do c = col0, col1
+            k = k + 1
+            if (int(stateIn % stype(c,r)) == lu_index) buffer(k) = 1.0
+          end do
         end do
-      end do
+      end if
     else
       select case (trim(vname))
         case ('HT')
@@ -1147,18 +1149,20 @@ LOGICAL FUNCTION  XTRACT3 ( FNAME, VNAME,                           &
 !      end do
 !    end if
 
-    if (vname(1:7) == 'LUFRAC_') then
-      lu_index = 0
-      read(vname(8:9), *, iostat=localrc) lu_index
-      if (aqm_rc_test(localrc /= 0, msg="Failure to identify LU_INDEX", &
-        file=__FILE__, line=__LINE__)) return
-      k = 0
-      do r = row0, row1
-        do c = col0, col1
-          k = k + 1
-          if (int(stateIn % stype(c,r)) == lu_index) buffer(k) = 1.0
+    if (len(vname) > 7) then
+      if (vname(1:7) == 'LUFRAC_') then
+        lu_index = 0
+        read(vname(8:9), *, iostat=localrc) lu_index
+        if (aqm_rc_test(localrc /= 0, msg="Failure to identify LU_INDEX", &
+          file=__FILE__, line=__LINE__)) return
+        k = 0
+        do r = row0, row1
+          do c = col0, col1
+            k = k + 1
+            if (int(stateIn % stype(c,r)) == lu_index) buffer(k) = 1.0
+          end do
         end do
-      end do
+      end if
     else
       select case (trim(vname))
         case ('HT')

@@ -6,6 +6,7 @@ module cmaq_mod
   use aqm_emis_mod
   use aqm_prod_mod
   use aqm_tools_mod, only : aqm_units_conv
+  USE UTIL_FAMILY_MODULE
 
   use PAGRD_DEFN
   USE PA_DEFN, Only: LIPR, LIRR
@@ -132,6 +133,7 @@ contains
     CGRID => PCGRID( 1:MY_NCOLS,1:MY_NROWS,:,: )   ! required for PinG
 
     !Initiliaze IO Arrays and Open Files (CMAQ)
+    call read_families
     call desid_read_namelist()
     call desid_init_regions()
     !Initialize ELMO Arrays and Maps

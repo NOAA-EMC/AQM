@@ -837,7 +837,7 @@ C-----------------------------------------------------------------------
 
          If ( .not. PXSOIL_AVAIL ) Then
             Forall( C = 1:NCOLS, R = 1:NROWS, Grid_Data%SLTYP(C,R) .Le. N_SOIL_TYPE .and. 
-&                    Grid_Data%LWMASK(C,R) .eq. 1 )
+&                   Grid_Data%LWMASK(C,R) .eq. 1 ) 
                Grid_Data%WFC ( C,R ) = WFC ( Grid_Data%SLTYP( C,R ) )
             End Forall
          End If

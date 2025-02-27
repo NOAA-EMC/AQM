@@ -239,7 +239,7 @@ list(APPEND aqm_CCTM_files
 	${UTIL}/UTILIO_DEFN.F
         #${UTIL}/RUNTIME_VARS.F
         ${UTIL}/util_family_module.F
-        ${UTIL}/CMAQ_Control_Misc.nml
+	#${UTIL}/CMAQ_Control_Misc.nml
         ${DRIV}/ELMO_PROC.F
         ${DRIV}/ELMO_DATA.F
 	${VDIFF}/aero_sedv.F

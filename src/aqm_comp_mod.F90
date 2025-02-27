@@ -622,6 +622,12 @@ contains
               line=__LINE__, &
               file=__FILE__)) &
               return  ! bail
+          case ("vegetation_type")
+            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % vtype, rc=rc)
+            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+              line=__LINE__, &
+              file=__FILE__)) &
+              return  ! bail
 !canopy variables 
 !          case ("forest_canopy_height")
 !            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % stemp, rc=rc)

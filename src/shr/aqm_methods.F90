@@ -692,7 +692,7 @@ logical function interpx( fname, vname, pname, &
         do r = row0, row1
           do c = col0, col1
             k = k + 1
-            if (int(stateIn % stype(c,r)) == lu_index) buffer(k) = 1.0
+            if (int(stateIn % vtype(c,r)) == lu_index) buffer(k) = 1.0
           end do
         end do
       end if
@@ -725,6 +725,14 @@ logical function interpx( fname, vname, pname, &
           end do
         case ('MSFX2')
           buffer(1:lbuf) = 1.
+        case ('DLUSE')
+          k = 0
+          do r = row0, row1
+            do c = col0, col1
+              k = k + 1
+              buffer(k) = stateIn % vtype(c,r) ! Assign vtype to DLUSE
+            end do
+          end do
         case ('PURB')
         case default
           return
@@ -1160,6 +1168,7 @@ LOGICAL FUNCTION  XTRACT3 ( FNAME, VNAME,                           &
           do c = col0, col1
             k = k + 1
             if (int(stateIn % stype(c,r)) == lu_index) buffer(k) = 1.0
+            if ( (int(stateIn % stype(c,r)) == 0) .and. (lu_index == 17)) buffer(k) = 1.0
           end do
         end do
       end if

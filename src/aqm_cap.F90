@@ -13,7 +13,7 @@ module AQM
   implicit none
 
   ! -- import fields
-  integer, parameter :: importFieldCount = 36
+  integer, parameter :: importFieldCount = 37
 !  integer, parameter :: importFieldCount = 45  !with canopy
   character(len=*), dimension(importFieldCount), parameter :: &
     importFieldNames = (/ &
@@ -52,16 +52,8 @@ module AQM
       "soil_type                                ", &
       "surface_cell_area                        ", &
       "surface_snow_area_fraction               ", &
-      "temperature_of_soil_layer                "  &
-!      "forest_canopy_height                     ", &
-!      "forest_fraction                          ", &
-!      "clumping_index                           ", &      
-!      "population_density                       ", &
-!      "leaf_area_index_eccc                     ", &
-!      "cum_lai_frac1_eccc                       ", &
-!      "cum_lai_frac2_eccc                       ", &
-!      "cum_lai_frac3_eccc                       ", &
-!      "cum_lai_frac4_eccc                       ", &
+      "temperature_of_soil_layer                ", &
+      "vegetation_type                          " &
     /)
   ! -- export fields
   integer, parameter :: exportFieldCount = 2

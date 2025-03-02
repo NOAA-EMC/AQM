@@ -14,7 +14,6 @@ module AQM
 
   ! -- import fields
   integer, parameter :: importFieldCount = 36
-!  integer, parameter :: importFieldCount = 45  !with canopy
   character(len=*), dimension(importFieldCount), parameter :: &
     importFieldNames = (/ &
       "canopy_moisture_storage                  ", &
@@ -53,30 +52,21 @@ module AQM
       "surface_cell_area                        ", &
       "surface_snow_area_fraction               ", &
       "temperature_of_soil_layer                "  &
-!      "forest_canopy_height                     ", &
-!      "forest_fraction                          ", &
-!      "clumping_index                           ", &
-!      "population_density                       ", &
-!      "leaf_area_index_eccc                     ", &
-!      "cum_lai_frac1_eccc                       ", &
-!      "cum_lai_frac2_eccc                       ", &
-!      "cum_lai_frac3_eccc                       ", &
-!      "cum_lai_frac4_eccc                       ", &
     /)
   ! -- export fields
-  integer, parameter :: exportFieldCount = 2+3+5  !IVAI: add 3 photolysis inst_tracer_diag_* and five canopy variables
+  integer, parameter :: exportFieldCount = 2 + 5 + 3   !IVAI: add 5 canopy data fields add 3 photdiag arrays
   character(len=*), dimension(exportFieldCount), parameter :: &
     exportFieldNames = (/ &
       "inst_tracer_mass_frac                ", &
       "inst_tracer_diag_aod                 ", &
+      "inst_tracer_diag_coszens             ", & !IVAI: photdiag
+      "inst_tracer_diag_jo3o1d              ", & !IVAI: photdiag
+      "inst_tracer_diag_jno2                ", & !IVAI: photdiag
       "inst_tracer_diag_claie               ", & !IVAI: canopy via aqm_emis_read
       "inst_tracer_diag_cfch                ", & !IVAI: canopy via aqm_emis_read
       "inst_tracer_diag_cfrt                ", & !IVAI: canopy via aqm_emis_read
       "inst_tracer_diag_cclu                ", & !IVAI: canopy via aqm_emis_read
-      "inst_tracer_diag_cpopu               ", & !IVAI: canopy via aqm_emis_read
-      "inst_tracer_diag_coszens             ", & !IVAI: photdiag
-      "inst_tracer_diag_jo3o1d              ", & !IVAI: photdiag
-      "inst_tracer_diag_jno2                "  & !IVAI: photdiag
+      "inst_tracer_diag_cpopu               "  & !IVAI: canopy via aqm_emis_read
     /)
 
   private

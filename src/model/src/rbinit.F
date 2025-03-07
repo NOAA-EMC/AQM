@@ -36,17 +36,17 @@ C
 C  Key Subroutines/Functions CALLED: None
 C
 C  Revision History: Prototype created by Jerry Gipson, August, 2004
-C                    31 Jan 05 J.Young: dyn alloc - establish both horizontal
+C    31 Jan 05 J.Young: dyn alloc - establish both horizontal
 C                    & vertical domain specifications in one module (GRID_CONF)
 C                    Get BLKSIZE from module GRID_CONF
-C                    29 Jul 05 WTH: allocate variables used by degrade routines.
-C                    28 Jun 10 J.Young: convert for Namelist redesign
-C                    29 Mar 11 S.Roselle: Replaced I/O API include files
-C                               with UTILIO_DEFN
-C                   15 Jul 14 B.Hutzell: 1) replaced mechanism include files with 
+C    29 Jul 05 WTH: allocate variables used by degrade routines.
+C    28 Jun 10 J.Young: convert for Namelist redesign
+C    29 Mar 11 S.Roselle: Replaced I/O API include files with UTILIO_DEFN
+C    15 Jul 14 B.Hutzell: 1) replaced mechanism include files with 
 C                   RXNS_DATA module, 2) inserted call to function MAP_CHEMISTRY_SPECIES 
 C                   RXNS_FUNCTION module, and 3) inserted do loop that calculates species
 C                   unit conversion factors based on species type
+C    01 Dec 24 I.Ivanova: Add sub-canopy shading parameters and arrays
 C                      
 C***********************************************************************
       USE RXNS_DATA

@@ -33,6 +33,7 @@ C  PRECONDITIONS: For the CB6R3 family of mechanisms
 C
 C  KEY SUBROUTINES/FUNCTIONS CALLED:  HRINIT, PHOT, HRCALCKS, HRSOLVER
 C                                     FIND_DEGRADED, INIT_DEGRADE, FINAL_DEGRADE
+C                                     CANOPY_TRANSFER
 C
 C  REVISION HISTORY: Created by EBI solver program, Mar 10, 2017
 C                       Based on the algorithm in "Test of Two Numerical
@@ -60,6 +61,14 @@ C                        how degrade routines are used, if present
 C   02 Dec 14 B.Hutzell: 1) added terrestrial data to conduct surface
 C                        dependent reactions and 2) modified the call CALC_RCONST
 C                        routine
+C   01 May 24 I.Ivanova:
+C         - Split the EBI solver on 3 sub-layer canopy layers to account for the
+C           the canopy shading effect on photolysis attenuation.
+C           based on Makar, P. A. et al. (2017) "The effects of forest canopy shading
+C           and turbulence on boundary layer ozone." Nat. Commun. 8, 15243
+C           doi: 10.1038/ncomms15243 (2017).
+C   25 Aug 24 I.Ivanova
+C         - Add ozone diagnostics and auxilliary diagnostic output
 C**********************************************************************
 
       USE HGRD_DEFN             ! horizontal domain specifications

@@ -36,6 +36,9 @@ C
 C  REVISION HISTORY: Created by EBI solver program, Mar 10, 2017
 C
 C   18 Jul 14 B.Hutzell: revised to use real(8) variables for solution
+C   01 May 24 I.Ivanova: 
+C         - add 2m meteorological fields for initializing the sub-canopy
+C         layers. Add ozone diagnostics and auxiliary diagnostic output.
 C*************************************************************************
 
 !IVAI

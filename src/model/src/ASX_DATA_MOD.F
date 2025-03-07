@@ -30,6 +30,8 @@ C                         modified PROPNN and H2O2
 C                         Increased ar for ozone from 8 to 12.
 C                         Change meso from 0.1 to 0 for some org. nitrates
 C                         Changes based on Nguyen et al. 2015 PNAS and SOAS
+C     01 Mar 24 I.Ivanova: Added grid cell area AREA for use in the canopy
+C                         mass transfer routines
 C
 C---------Notes
 C  * Updates based on literature review 7/96 JEP

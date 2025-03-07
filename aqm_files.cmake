@@ -165,7 +165,7 @@ list(APPEND aqm_CCTM_files
 	${GAS}/hrrates.F
 	${GAS}/hrsolver.F
 	${GAS}/init_degrade.F
-	${GRID}/GRID_CONF.F
+	#${GRID}/GRID_CONF.F
 	${GRID}/HGRD_DEFN.F
 	${GRID}/VGRD_DEFN.F
 	${GRID}/PAGRD_DEFN.F
@@ -248,7 +248,11 @@ list(APPEND aqm_CCTM_files
         ${localCCTM}/can_trans_mod.F90
         ${localCCTM}/hrdata_mod.F
         ${localCCTM}/hrdriver.F
-        ${localCCTM}/rbdata_mod.F
-        ${localCCTM}/rbdriver.F
+# Comment out PA_routines in Rosenbrock routines (won't compile)
+        #${localCCTM}/rbdata_mod.F
+        #${localCCTM}/rbdriver.F
+        #${localCCTM}/rbinit.F
+        #${localCCTM}/rbsolver.F
+        ${localCCTM}/GRID_CONF.F
 #IVAI
 )

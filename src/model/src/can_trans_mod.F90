@@ -1,9 +1,48 @@
+!------------------------------------------------------------------------!
+!  The Community Multiscale Air Quality (CMAQ) system software is in     !
+!  continuous development by various groups and is based on information  !
+!  from these groups: Federal Government employees, contractors working  !
+!  within a United States Government contract, and non-Federal sources   !
+!  including research institutions.  These groups give the Government    !
+!  permission to use, prepare derivative works of, and distribute copies !
+!  of their work in the CMAQ system to the public and to permit others   !
+!  to do so.  The United States Environmental Protection Agency          !
+!  therefore grants similar permission to use the CMAQ system software,  !
+!  but users are requested to provide copies of derivative works or      !
+!  products designed to operate in the CMAQ system to the United States  !
+!  Government without restrictions as to use by others.  Software        !
+!  that is used with the CMAQ system but distributed under the GNU       !
+!  General Public License or the GNU Lesser General Public License is    !
+!  subject to their copyright restrictions.                              !
+!------------------------------------------------------------------------!
+
+! RCS file, release, date & time of last delta, author, state, [and locker]
+! $Header$
+
+! what(1) key, module and SID; SCCS file; date and time of last delta:
+! %W% %P% %G% %U%
+
 module can_trans_mod
 
-!  Contains:
-!     Subroutine init_can_trans
-!     Subroutine canopy_transfer
-!       Contains: canopy_mass_check
+!**********************************************************************
+!  Function: Transfers resolved scale model layers mass to canopy layers
+!     and vice versa, while conserving mass, and allocates arrays.
+!
+!  Preconditions: GRID_CONF defines the vertical canopy layer structure
+!     CAN_MASK defines the canopy grid cells and CAN_LEVS_DEFN initializes
+!     input meteorological and geophysical fields.
+!     For the CB6R3 family of gas-phase chemical mechanisms performed by
+!     either the Euler Backward Iterative (EBI) solver or the vectorized
+!     Rosenbrock (ROS3) solver.
+!     Activated with config namelist parameter do_aqm_canopy= .true.
+!
+!  Key Subroutines/Functions Called: None
+!
+!  Revision History: Created by I. Ivanova March 2024.
+!     Based on Makar, P. A. et al. "The effects of forest canopy shading
+!     and turbulence on boundary layer ozone." Nat. Commun. 8, 15243
+!     doi: 10.1038/ncomms15243 (2017).
+!**********************************************************************
 
    implicit none
 

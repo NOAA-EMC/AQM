@@ -32,6 +32,8 @@ C HGRD_DEFN and VGRD_DEFN. In addition, set up the computational blocking
 C parameters.
 C VGRD_DEFN replaces COORD.EXT and VGRD.EXT
 C Revision History: Jeff Young 31 Jen 05: created
+C
+C  15 Dec 24 I.Ivanova: Define sub-canopy vertical layer structure
 C.......................................................................
 
       USE HGRD_DEFN             ! horizontal domain specifications

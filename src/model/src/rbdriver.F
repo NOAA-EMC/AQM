@@ -41,6 +41,7 @@ C                                    RBSOLVER
 C                                    FIND_DEGRADED
 C                                    INIT_DEGRADE
 C                                    FINAL_DEGRADE
+C                                    CANOPY_TRANSFER
 C
 C  Revision History: Prototype created by Jerry Gipson, August, 2004
 C                    Based on the solver described by Sandu et al
@@ -52,27 +53,33 @@ C                    concepts originally developed by M. Jacobson
 C                    for SMVGEAR (Atm. Env., Vol 28, No 2, 1994).
 C                    Adapted from Subroutine CHEM in CMAQ SMVGEAR
 C
-C                    31 Jan 05 J.Young: dyn alloc - establish both horizontal
+C   31 Jan 05 J.Young: dyn alloc - establish both horizontal
 C                    & vertical domain specifications in one module (GRID_CONF)
-C                    29 Jul 05     WTH: Added IF blocks that call degrade 
-C                                       routines if MECHNAME contains 'TX' 
-C                                       substring.
-C                    28 Jun 10 J.Young: convert for Namelist redesign
-C                    29 Mar 11 S.Roselle: Replaced I/O API include files
-C                               with UTILIO_DEFN
-C                    31 Aug 11 B.Hutzell revised method that determines calling
-C                              degrade routine
-C                    29 Sep 11 D.Wong: incorporated twoway model implementation
-C                    18 Jan 13 B.Hutzell: 1) added using heteorogeneous rate constants
+C   29 Jul 05     WTH: Added IF blocks that call degrade 
+C                    routines if MECHNAME contains 'TX' substring.
+C   28 Jun 10 J.Young: convert for Namelist redesign
+C   29 Mar 11 S.Roselle: Replaced I/O API include files with UTILIO_DEFN
+C   31 Aug 11 B.Hutzell revised method that determines calling degrade routine
+C   29 Sep 11 D.Wong: incorporated twoway model implementation
+C   18 Jan 13 B.Hutzell: 1) added using heteorogeneous rate constants
 C                    by using function in AEROSOL_CHEMISTRY module,
-C                    15 Jul 14 B.Hutzell: 1) replaced mechanism include files with 
+C   15 Jul 14 B.Hutzell: 1) replaced mechanism include files with 
 C                    RXNS_DATA module, 2) replaced call to CALCLK with CALC_RCONST in 
 C                    RXNS_FUNCTION module, 3) enabled reactions between all species 
 C                    types by using unit conversion factors and 4) revised usage for 
 C                    INIT_DEGRADE and FINAL_DEGRADE routines
-C                    02 Dec 14 B.Hutzell 1) added terrestrial data to conduct surface
+C   02 Dec 14 B.Hutzell 1) added terrestrial data to conduct surface
 C                    dependent reactions and 2) modified the call CALC_RCONST routine
-C                    16 Sep 16 J.Young: update for inline procan (IRR)
+C   16 Sep 16 J.Young: update for inline procan (IRR)
+C   01 Dec 24 I.Ivanova:
+C         - Split the RB solver on 3 sub-layer canopy layers to account for the
+C           the canopy shading effect on photolysis attenuation.
+C           based on Makar, P. A. et al. (2017) "The effects of forest canopy shading
+C           and turbulence on boundary layer ozone." Nat. Commun. 8, 15243
+C           doi: 10.1038/ncomms15243 (2017).
+C         - add 2m meteorological fields for initializing the sub-canopy layers
+C   15 Dec 24 I.Ivanova
+C         - Add ozone diagnostics and auxilliary diagnostic output
 C**********************************************************************
 
       USE RXNS_DATA

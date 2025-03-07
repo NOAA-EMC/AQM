@@ -46,7 +46,9 @@
 !     OPPHOT, LOAD_CSQY_DATA, LOAD_OPTICS_DATA, INITIALIZE_ALBEDO, 
 !     GET_PHOT_MET, UPDATE_SUN, GET_ALBEDO, GET_DROPLET_OPTICS, 
 !     GET_ICE_OPTICS, GET_AGGREGATE_OPTICS, CLEAR_HYDROMETEOR_OPTICS, 
-!     GET_AERO_DATA, O3TOTCOL, and NEW_OPTICS
+!     GET_AERO_DATA, O3TOTCOL, NEW_OPTICS
+!     init_can_mask,init_can_levs, init_can_trans,
+!     get_can_mask, get_can_levs, and canopy_transfer
 !
 ! Revision History.
 !     Started 10/08/2004 with existing PHOT and JPROC coded by
@@ -114,10 +116,24 @@
 !                          6) moved the O3TOTCOL routine from the PHOT_MOD to simplify
 !                             the NEW_OPTICS routine
 !                          7) Several miscellaneous changes attempting to improve efficiency
-!     June 10 15 J.Young: Modified diagnostic output timestamp to fix for other than one
+!     10 Jun 15 J.Young: Modified diagnostic output timestamp to fix for other than one
 !                         hour time steps.
-!     Aug 12, 15 D. Wong: Replaced MYPE with IO_PE_INCLUSIVE for parallel I/O implementation
-
+!     12 Aug 15 D.Wong:  Replaced MYPE with IO_PE_INCLUSIVE for parallel I/O implementation
+!     01 Mar 23 P.Campbell 
+!         - Introduced integrated canopy shading effect on photolysis attenuation 
+!           as descrived in Wang, C-T et al. (2025, ACP) "Quantifying Forest Canopy 
+!           Shading and Turbulence Effects on Boundary Layer Ozone over the United States" 
+!           and based on approximated version of Makar, P. A. et al. (2017, Nat. Commun.)
+!         - Applied canopy attenuation of photolysis rates based on novel vegetative canopy data
+!           (forest canopy height FCH, forest fraction, leaf area index LAI, clumping index, and
+!           population density) and 5-layer cumulative LAI fractions
+!     01 Mar 24 I.Ivanova 
+!         - Update the integrated canopy shading effect with explicit 3 sub-layer canopy 
+!           based on Makar, P. A. et al. (2017) "The effects of forest canopy shading 
+!           and turbulence on boundary layer ozone." Nat. Commun. 8, 15243 
+!           doi: 10.1038/ncomms15243 (2017).
+!     25 Aug 24 I.Ivanova
+!         - Introduce various ozone diagnostics and auxilliary diagnostics
 !----------------------------------------------------------------------
 
 C...modules

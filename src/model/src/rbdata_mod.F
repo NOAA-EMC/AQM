@@ -35,14 +35,14 @@ C
 C  Key Subroutines/Functions Called: None
 C
 C  REVISIOn History: Prototype created by Jerry Gipson, August, 2004
-C                    31 Jan 05 J.Young: dyn alloc - establish both horizontal
+C   31 Jan 05 J.Young: dyn alloc - establish both horizontal
 C                    & vertical domain specifications in one module (GRID_CONF)
 C                    Get BLKSIZE from module GRID_CONF
-C                    29 Jul 05 WTH: added variable used by degrade routines.
-C                    10 Aug 11 J.Young: Replaced I/O API include files
-C                                       with UTILIO_DEFN
-C                   15 Jul 14 B.Hutzell: 1) added variable to variable to converted
+C   29 Jul 05 WTH: added variable used by degrade routines.
+C   10 Aug 11 J.Young: Replaced I/O API include files with UTILIO_DEFN
+C   15 Jul 14 B.Hutzell: 1) added variable to variable to converted
 C                   species concentration unit based on species type
+C   01 Dec 24 I.Ivanova: Add sub-canopy shading parameters and arrays
 C*************************************************************************
 
       USE GRID_CONF             ! horizontal & vertical domain specifications

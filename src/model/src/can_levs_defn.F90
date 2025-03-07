@@ -1,4 +1,56 @@
+!------------------------------------------------------------------------!
+!  The Community Multiscale Air Quality (CMAQ) system software is in     !
+!  continuous development by various groups and is based on information  !
+!  from these groups: Federal Government employees, contractors working  !
+!  within a United States Government contract, and non-Federal sources   !
+!  including research institutions.  These groups give the Government    !
+!  permission to use, prepare derivative works of, and distribute copies !
+!  of their work in the CMAQ system to the public and to permit others   !
+!  to do so.  The United States Environmental Protection Agency          !
+!  therefore grants similar permission to use the CMAQ system software,  !
+!  but users are requested to provide copies of derivative works or      !
+!  products designed to operate in the CMAQ system to the United States  !
+!  Government without restrictions as to use by others.  Software        !
+!  that is used with the CMAQ system but distributed under the GNU       !
+!  General Public License or the GNU Lesser General Public License is    !
+!  subject to their copyright restrictions.                              !
+!------------------------------------------------------------------------!
+
+! RCS file, release, date & time of last delta, author, state, [and locker]
+! $Header$
+
+! what(1) key, module and SID; SCCS file; date and time of last delta:
+! %W% %P% %G% %U%
+
    module can_levs_defn
+
+!**********************************************************************
+!
+!  Function: Initializes fields and species concentrations for the explicit
+!     3 sub-layer canopy shading effect, and allocates arrays.
+!     Uses canopy height (fch), and fractions of canopy height to
+!     gather meteorological and geophysical data into vertical
+!     columns containing combined canopy + no-canopy columns
+!     (these have the original, "resolved scale" model layers NLAYS interleaved
+!     with NLAYC canopy layers). For the canopy layers, various algorithms are used
+!     to fill in the missing meteorological data.
+!
+!     On the first timestep, the subroutine also initializes the
+!     concentrations of the canopy layers using the value of the
+!     lowest resolved scale model layer.
+!
+!  Preconditions: GRID_CONF defines the vertical canopy layer structure
+!     For the CB6R3 family of gas-phase chemical mechanisms performed by
+!     either the Euler Backward Iterative (EBI) solver or the vectorized Rosenbrock (ROS3) solver
+!     Activated with config namelist parameter do_aqm_canopy= .true.
+!
+!  Key Subroutines/Functions Called: GET_PHOT_MET
+!
+!  Revision History: Created by I. Ivanova March 2024.
+!     Based on Makar, P. A. et al. "The effects of forest canopy shading
+!     and turbulence on boundary layer ozone." Nat. Commun. 8, 15243
+!     doi: 10.1038/ncomms15243 (2017).
+!**********************************************************************
 
    implicit none
 

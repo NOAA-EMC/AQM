@@ -156,8 +156,6 @@ list(APPEND aqm_CCTM_files
 	${GAS}/DEGRADE_SETUP_TOX.F
 	${GAS}/final_degrade.F
 	${GAS}/find_degraded.F
-	${GAS}/hrdata_mod.F
-	${GAS}/hrdriver.F
 	${GAS}/hrg1.F
 	${GAS}/hrg2.F
 	${GAS}/hrg3.F
@@ -167,7 +165,7 @@ list(APPEND aqm_CCTM_files
 	${GAS}/hrrates.F
 	${GAS}/hrsolver.F
 	${GAS}/init_degrade.F
-	${GRID}/GRID_CONF.F
+	#${GRID}/GRID_CONF.F
 	${GRID}/HGRD_DEFN.F
 	${GRID}/VGRD_DEFN.F
 	${GRID}/PAGRD_DEFN.F
@@ -244,4 +242,17 @@ list(APPEND aqm_CCTM_files
 	${localCCTM}/AERO_PHOTDATA.F
 	${localCCTM}/phot.F
 	${localCCTM}/centralized_io_util_module.F
+#IVAI:
+        ${localCCTM}/can_levs_defn.F90
+        ${localCCTM}/can_mask.F90
+        ${localCCTM}/can_trans_mod.F90
+        ${localCCTM}/hrdata_mod.F
+        ${localCCTM}/hrdriver.F
+# Comment out PA_routines in Rosenbrock routines (won't compile)
+        #${localCCTM}/rbdata_mod.F
+        #${localCCTM}/rbdriver.F
+        #${localCCTM}/rbinit.F
+        #${localCCTM}/rbsolver.F
+        ${localCCTM}/GRID_CONF.F
+#IVAI
 )

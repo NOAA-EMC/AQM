@@ -147,14 +147,20 @@ LOGICAL FUNCTION DESC3( FNAME )
     (/ '(M/M)**2        '                      /)
 
   ELSE IF ( TRIM( FNAME ) .EQ. TRIM( GRID_CRO_2D ) ) THEN
-    NVARS3D = 7
+    NVARS3D = 7 + 1 !IVAI: add grid cell area
     VNAME3D( 1:NVARS3D ) = &
     (/ 'LAT             ', 'LON             ',            &
+!IVAI
+       'AREA            ', &
+!IVAI
        'MSFX2           ', 'HT              ',            &
        'LWMASK          ', 'PURB            ',            &
        'DLUSE           '                      /)
     UNITS3D( 1:NVARS3D ) = &
     (/ 'DEGREES         ', 'DEGREES         ',            &
+!IVAI
+       '(M)**2          ', &
+!IVAI
        '(M/M)**2        ', 'M               ',            &
        '-               ', 'PERCENT         ',            &
        'CATEGORY        '                      /)
@@ -680,6 +686,10 @@ logical function interpx( fname, vname, pname, &
       select case (trim(vname))
         case ('HT')
           p2d => stateIn % ht
+!IVAI
+        case ('AREA')
+          p2d => stateIn % area
+!IVAI
         case ('LAT')
           p2d => lat
         case ('LON')
@@ -837,11 +847,11 @@ logical function interpx( fname, vname, pname, &
     end select
 
 !IVAI
-    print*, 'AQM_METHODS: FNAME= ', FNAME, VNAME   !IVAI : MET_CRO_2D
+    !print*, 'AQM_METHODS: FNAME= ', FNAME, VNAME   !IVAI : MET_CRO_2D
 
     IF ( TRIM( VNAME ) .EQ. TRIM('LAIE') ) THEN
 
-      print*, 'AQM_METHODS: VNAME= ', VNAME             !IVAI: LAIE
+!      print*, 'AQM_METHODS: FNAME VNAME= ', FNAME, VNAME             !IVAI: LAIE
 !      print*, 'AQM_METHODS: LAIE = ', buffer(1:lbuf)
 
       nullify(stateOut)
@@ -862,7 +872,7 @@ logical function interpx( fname, vname, pname, &
     END IF
     IF ( TRIM( VNAME ) .EQ. TRIM('FCH') ) THEN
 
-      print*, 'AQM_METHODS: VNAME= ', VNAME             !IVAI: FCH
+!      print*, 'AQM_METHODS: VNAME= ', VNAME             !IVAI: FCH
 !      print*, 'AQM_METHODS: FCH = ', buffer(1:lbuf)
 
       nullify(stateOut)
@@ -882,7 +892,7 @@ logical function interpx( fname, vname, pname, &
     END IF
     IF ( TRIM( VNAME ) .EQ. TRIM('FRT') ) THEN
 
-      print*, 'AQM_METHODS: VNAME= ', VNAME             !IVAI: FRT
+!      print*, 'AQM_METHODS: VNAME= ', VNAME             !IVAI: FRT
 !      print*, 'AQM_METHODS: FRT = ', buffer(1:lbuf)
 
       nullify(stateOut)
@@ -902,7 +912,7 @@ logical function interpx( fname, vname, pname, &
     END IF
     IF ( TRIM( VNAME ) .EQ. TRIM('CLU') ) THEN
 
-      print*, 'AQM_METHODS: VNAME= ', VNAME             !IVAI: CLU
+!      print*, 'AQM_METHODS: VNAME= ', VNAME             !IVAI: CLU
 !      print*, 'AQM_METHODS: CLU = ', buffer(1:lbuf)
 
       nullify(stateOut)
@@ -922,7 +932,7 @@ logical function interpx( fname, vname, pname, &
     END IF
     IF ( TRIM( VNAME ) .EQ. TRIM('POPU') ) THEN
 
-      print*, 'AQM_METHODS: VNAME= ', VNAME             !IVAI: POPU
+!      print*, 'AQM_METHODS: VNAME= ', VNAME             !IVAI: POPU
 !      print*, 'AQM_METHODS: POPU= ', buffer(1:lbuf)
 
       nullify(stateOut)
@@ -1344,7 +1354,7 @@ LOGICAL FUNCTION WRITE3_REAL2D( FNAME, VNAME, JDATE, JTIME, BUFFER )
 
     IF ( TRIM( VNAME ) .EQ. TRIM( ALLVAR3 ) ) THEN
 
-!      print*, 'AQM_METHODS: VNAME= ', VNAME         !IVAI: ADO
+!      print*, 'AQM_METHODS: VNAME= ', VNAME         !IVAI: AOD
 
       nullify(stateOut)
       call aqm_model_get(stateOut=stateOut, rc=localrc)
@@ -1369,11 +1379,11 @@ LOGICAL FUNCTION WRITE3_REAL2D( FNAME, VNAME, JDATE, JTIME, BUFFER )
 
     WRITE3_REAL2D = .FALSE.
 
-    print*, 'AQM_METHODS: FNAME= ', FNAME, VNAME   !IVAI: JO3O1D JNO2 ... (list of 15 vars)
+    !print*, 'AQM_METHODS: FNAME= ', FNAME, VNAME   !IVAI: JO3O1D JNO2 ... (list of 15 vars)
 
     IF ( TRIM( VNAME ) .EQ. TRIM('COSZENS') ) THEN
 
-!      print*, 'AQM_METHODS: VNAME= ', VNAME             !IVAI: COSZENS
+!      print*, 'AQM_METHODS: VNAME= ', FNAME, VNAME             !IVAI: COSZENS
 
       nullify(stateOut)
       call aqm_model_get(stateOut=stateOut, rc=localrc)

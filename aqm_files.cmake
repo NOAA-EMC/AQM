@@ -255,9 +255,6 @@ list(APPEND aqm_CCTM_files
 	${VDIFF}/vdiffproc.F
         #${CIO}/centralized_io_module.F
 	${localCCTM}/o3totcol.f
-	#${localCCTM}/AERO_EMIS.F
-        #${localCCTM}/PTMAP.F
-	#${localCCTM}/PT3D_DATA_MOD.F
 	#rbdriver.F has a typo in CMAQ.Put it back to {GAS} if they solve it in the future
 	${localCCTM}/rbdriver.F
 	${localCCTM}/PT3D_DEFN.F

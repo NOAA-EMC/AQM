@@ -126,10 +126,10 @@ contains
     ! -- import advected species mixing ratios
     if (config % init_conc .and. first_step) then
       call cmaq_conc_init(jdate, jtime, tstep, rc=localrc)
-       if (aqm_rc_check(localrc, msg="Failed to initialize concentrations", &
-         file=__FILE__, line=__LINE__, rc=rc)) return
-       first_step = .false.
-       if (config % verbose) call cmaq_conc_log(trim(config % name) // ": init")
+      if (aqm_rc_check(localrc, msg="Failed to initialize concentrations", &
+        file=__FILE__, line=__LINE__, rc=rc)) return
+      first_step = .false.
+      if (config % verbose) call cmaq_conc_log(trim(config % name) // ": init")
     else
       call cmaq_import(stateIn % tr, stateIn % prl, stateIn % phii, stateIn % temp, config % species % p_aqm_beg)
       if (config % verbose) call cmaq_conc_log(trim(config % name) // ": import")

@@ -14,7 +14,6 @@ module AQM
 
   ! -- import fields
   integer, parameter :: importFieldCount = 37
-!  integer, parameter :: importFieldCount = 45  !with canopy
   character(len=*), dimension(importFieldCount), parameter :: &
     importFieldNames = (/ &
       "canopy_moisture_storage                  ", &

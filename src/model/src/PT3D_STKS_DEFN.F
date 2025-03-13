@@ -1,20 +1,12 @@
       MODULE PT3D_STKS_DEFN
 
       USE GRID_CONF           ! horizontal & vertical domain specifications      
-      USE PTMAP
+      !USE PT3D_DATA_MOD
       USE AQM_EMIS_MOD, ONLY : AQM_EMIS_DESC, AQM_EMIS_GET,
      &                         AQM_EMIS_READ, AQM_INTERNAL_EMIS_TYPE
 
       IMPLICIT NONE
 
-      INTEGER :: N_GSPC_STKS_EMIS
-      INTEGER :: N_SPC_PT3DEM
-      INTEGER :: N_SPC_STKS_PTPM
-
-      INTEGER, ALLOCATABLE :: SPC_PTEM_STKS_FAC( : )
-      INTEGER, ALLOCATABLE :: SPC_PTEM_STKS_MAP( : )
-      INTEGER, ALLOCATABLE :: PTEM_STKS_MAP( : )
-      INTEGER, ALLOCATABLE :: PTPM_STKS_MAP( : )
 
       REAL :: CNVTP         ! intermediate combined conv.  factor
 
@@ -23,19 +15,19 @@ C Emission type
 
       PRIVATE
 
-      PUBLIC :: N_SPC_STKS_PTPM, PTPM_STKS_MAP
-      PUBLIC :: GET_PT3D_STKS_EMIS, PT3D_STKS_INIT
+      PUBLIC :: GET_PT3D_STKS_EMIS  !, PT3D_STKS_INIT
 
       CONTAINS
 
-         SUBROUTINE GET_PT3D_STKS_EMIS( JDATE, JTIME )
+         SUBROUTINE GET_PT3D_STKS_EMIS( JDATE, JTIME, EMVAR_PT, ISRM,
+     &                                  VDEMIS_PT, PTLAYS )
 
          USE CGRID_SPCS          ! CGRID mechanism species
          USE UTILIO_DEFN
          USE AQM_RC_MOD
-         USE AERO_DATA, ONLY : PMEM_MAP_NAME
          USE ASX_DATA_MOD, ONLY: MET_DATA, GRID_DATA, CONVPA
-         USE PT3D_DATA_MOD
+         USE DESID_VARS, ONLY :  DESID_N_ISTR
+         USE RUNTIME_VARS, only: LOGDEV
 
          IMPLICIT NONE
 
@@ -46,19 +38,23 @@ C Includes:
 C Arguments:
          INTEGER, INTENT( IN ) :: JDATE      ! Julian date (YYYYDDD)
          INTEGER, INTENT( IN ) :: JTIME      ! time (HHMMSS)
+         CHARACTER(16), INTENT( IN ) :: EMVAR_PT( : )
+         INTEGER, INTENT( IN ) :: ISRM
+         INTEGER, INTENT( OUT) :: PTLAYS
+         REAL, INTENT(INOUT)  :: VDEMIS_PT( :,:,:,: )
 
 C External Functions:
-         INTEGER, EXTERNAL :: SETUP_LOGDEV
+C         INTEGER, EXTERNAL :: SETUP_LOGDEV
 
 C Local Variables:
-         INTEGER           :: LOGDEV
+C         INTEGER           :: LOGDEV
          INTEGER           :: C, R, L, M, N, S, V, K, I ! loop induction variables
          INTEGER           :: LBOT       ! layer containing plume bottom
          INTEGER           :: LTOP       ! layer containing plume top
          INTEGER           :: LPBL       ! first L: ZF(L) above mixing layer - ONLY for REPORT
          INTEGER           :: LSTK       ! first L: ZF(L) > STKHT
          INTEGER           :: IJ, IS
-         INTEGER           :: NSRC, NP
+         INTEGER           :: NSRC, NP, NSPC
          INTEGER           :: IOS, LOCALRC
          INTEGER, POINTER  :: IP( : )
          INTEGER, POINTER  :: JP( : )
@@ -92,6 +88,7 @@ C Parameters:
          REAL, PARAMETER :: USTARMIN = 0.1   ! Min valid value for USTAR
          CHARACTER(  8 ) :: CINT     ! integer to character buffer for Cwarning messages
          CHARACTER( 16 ) :: PNAME = 'GET_PT3D_EMIS'
+         CHARACTER( 16 ) :: VNAME    ! variable name buffer
          CHARACTER( 120 ) :: XMSG = ' '
          CHARACTER(  10 ), PARAMETER :: BLANK10 = '          '
 
@@ -165,6 +162,7 @@ C-----------------------------------------------------------------------
 
 C-----------------------------------------------------------------------
 
+         NULLIFY(EM)
          EM => AQM_EMIS_GET( ETYPE )
          IF ( .NOT.ASSOCIATED( EM ) ) RETURN
 
@@ -172,14 +170,16 @@ C-----------------------------------------------------------------------
 
          IF ( FIRSTIME ) THEN
 
-             LOGDEV = SETUP_LOGDEV()
+C             LOGDEV = SETUP_LOGDEV()
 
 C set number of emissions layers depending on whether plumerise is on
 
             CALL AQM_EMIS_DESC( ETYPE, NLAYS=EMLYRS )
-
+           
             FIRSTIME = .FALSE.
          END IF
+          
+         PTLAYS = EMLYRS
 
 C Allocate Buffer space for Reading Emissions
          NSRC = SIZE( EM % IJMAP )
@@ -229,7 +229,7 @@ C Loop through sources and compute plume rise
 C Set surface pressure (convert to mb from Pa)
                PSFC = CNVPA2MB * Met_Data % PRSFC( C,R )
 
-               PRESF( 0:EMLYRS ) = CNVPA2MB * Met_Data % PRESF( C,R,: )
+               PRESF( 0:EMLYRS ) = CNVPA2MB * Met_Data % PRESF( C,R,1:EMLYRS+1 )
 
 C Compute vertical gradient quantities
                ZF0 = Met_Data % ZF( C,R,1 )
@@ -400,13 +400,14 @@ C If layer fractions are negative, put in the first layer
 
          DEALLOCATE ( TFRAC )
 
-         ! -- (1) non-PM emissions
-
-         DO S = 1, N_GSPC_STKS_EMIS
-            M = PTEM_STKS_MAP( S )
+         ! use DESID_N_ISTR instead of PTMAP
+         NSPC = SIZE( EM % TABLE, DIM=1 )
+         DO S = 1, DESID_N_ISTR
+            VNAME = EMVAR_PT( S )
+            IF ( VNAME .EQ. '' ) CYCLE
+            M = INDEX1( VNAME, NSPC, EM % TABLE( :, 1 ) )
             IF ( M .LT. 1 ) CYCLE
-            N = PTEM_MAP( S )
-
+C            N = PTEM_MAP( S )
             BUFFER = 0.0
             CALL AQM_EMIS_READ( ETYPE, EM % TABLE( M, 1 ), BUFFER, RC=LOCALRC)
             IF ( AQM_RC_CHECK( LOCALRC,
@@ -414,46 +415,26 @@ C If layer fractions are negative, put in the first layer
      &         TRIM( EM % TABLE( M, 1 ) ) // " from " //
      &         TRIM( ETYPE ) // " emissions",
      &         FILE=__FILE__, LINE=__LINE__ ) ) RETURN
-            IF ( EM % TABLE( M, 1 ) .EQ. 'POC' ) THEN
-               CALL AQM_EMIS_READ( ETYPE, 'PNCOM', BUFFER, RC=LOCALRC)
-               IF ( AQM_RC_CHECK( LOCALRC,
-     &            MSG="Failure while reading PNCOM emissions from" //
-     &            TRIM( ETYPE ) // " emissions",
-     &         FILE=__FILE__, LINE=__LINE__ ) ) RETURN
-            END IF
+C            IF ( EM % TABLE( M, 1 ) .EQ. 'POC' ) THEN
+C               CALL AQM_EMIS_READ( ETYPE, 'PNCOM', BUFFER, RC=LOCALRC)
+C               IF ( AQM_RC_CHECK( LOCALRC,
+C     &            MSG="Failure while reading PNCOM emissions from" //
+C     &            TRIM( ETYPE ) // " emissions",
+C     &         FILE=__FILE__, LINE=__LINE__ ) ) RETURN
+C            END IF
 
             ! -- add emissions
-            DO L = 1, EMLYRS
+            DO L = 1, PTLAYS
                DO IS = 1, NSRC
                   IJ = EM % IJMAP( IS )
                   C  = EM % IP( IJ )
                   R  = EM % JP( IJ )
-                  VDEMIS_PT( C,R,L,N ) = VDEMIS_PT( C,R,L,N )
+                  VDEMIS_PT( S,L,C,R ) = VDEMIS_PT( S,L,C,R )
      &                                 + VFRAC( IS, L ) * BUFFER( IJ )
                END DO
             END DO
          END DO
 
-         ! -- (2) PM emissions
-
-         DO S = 1, N_SPC_STKS_PTPM
-            N = PTPM_STKS_MAP( S )
-            V = PTPM_MAP( N )
-            BUFFER = 0.0
-            CALL AQM_EMIS_READ( ETYPE, PMEM_MAP_NAME( V ), BUFFER, RC=LOCALRC )
-            IF ( AQM_RC_CHECK( LOCALRC, MSG="Failure while reading " //
-     &         TRIM( PMEM_MAP_NAME( V ) ) // " from " // TRIM( ETYPE ) // " emissions",
-     &         FILE=__FILE__, LINE=__LINE__)) RETURN
-            DO L = 1, EMLYRS
-               DO IS = 1, NSRC
-                  IJ = EM % IJMAP( IS )
-                  C  = EM % IP( IJ )
-                  R  = EM % JP( IJ )
-                  PMEMIS_PT( C,R,L,N ) = PMEMIS_PT( C,R,L,N )
-     &                                 + VFRAC( IS, L ) * BUFFER( IJ )
-               END DO
-            END DO
-         END DO
 
          ! -- free up memory
 
@@ -469,33 +450,5 @@ C------------------  FORMAT  STATEMENTS   ------------------------------
 
          END SUBROUTINE GET_PT3D_STKS_EMIS
 
-
-         FUNCTION PT3D_STKS_INIT( ) RESULT ( SUCCESS )
-
-         USE AQM_RC_MOD, ONLY: AQM_RC_TEST
-
-         TYPE( AQM_INTERNAL_EMIS_TYPE ), POINTER :: EM
-
-         LOGICAL :: SUCCESS
-
-         SUCCESS = .TRUE.
-
-         EM => AQM_EMIS_GET( ETYPE )
-         IF ( .NOT.ASSOCIATED( EM ) ) RETURN
-
-         IF (EM % COUNT == 0) RETURN
-
-         SUCCESS = PTMAP_TYPE_INIT( EM, 
-     &                              N_GSPC_STKS_EMIS,  N_SPC_STKS_PTPM,
-     &                              PTEM_STKS_MAP,     PTPM_STKS_MAP,
-     &                              SPC_PTEM_STKS_FAC, SPC_PTEM_STKS_MAP,
-     &                              "STKS" )
-
-         IF ( AQM_RC_TEST( .NOT. SUCCESS, 
-     &           MSG="Failure initializing mapping for" //
-     &           TRIM( ETYPE ) // " emissions",
-     &           FILE=__FILE__, LINE=__LINE__ ) ) RETURN
-
-         END FUNCTION PT3D_STKS_INIT
 
       END MODULE PT3D_STKS_DEFN

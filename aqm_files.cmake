@@ -36,6 +36,7 @@ list(APPEND aqm_aqmio_files
 list(APPEND aqm_ioapi_files
     src/io/ioapi/FDESC3.EXT
     src/io/ioapi/PARMS3.EXT
+    src/io/ioapi/IODECL3.EXT
     src/io/ioapi/crlf.F
     src/io/ioapi/currec.f
     src/io/ioapi/currstep.f
@@ -59,55 +60,56 @@ list(APPEND aqm_ioapi_files
     src/io/ioapi/upcase.f
     src/io/ioapi/wkday.F
     src/io/ioapi/yr2day.F
+    src/io/ioapi/daymon.F
     src/io/ioapi/m3exit.F90
     src/io/ioapi/m3mesg.F90
     src/io/ioapi/m3msg2.F90
     src/io/ioapi/m3warn.F90
+    src/io/ioapi/m3err.F
     src/io/ioapi/m3utilio.F90
 )
 
 set(CCTM_ROOT "src/model/CMAQ/CCTM/src")
 set(AERO "${CCTM_ROOT}/aero/aero6")
-set(BIOG "${CCTM_ROOT}/biog/beis3")
+set(BIOG "${CCTM_ROOT}/biog/beis4")
+set(MEGAN "${CCTM_ROOT}/biog/megan3")
 set(CLOUD "${CCTM_ROOT}/cloud/acm_ae6")
 set(DEPV "${CCTM_ROOT}/depv/m3dry")
 set(EMIS "${CCTM_ROOT}/emis/emis")
-set(GAS "${CCTM_ROOT}/gas/ebi_cb6r3_ae6_aq")
+set(GAS "${CCTM_ROOT}/gas/ros3")
 set(GRID "${CCTM_ROOT}/grid/cartesian")
 set(ICL "${CCTM_ROOT}/ICL/fixed")
-set(INIT "${CCTM_ROOT}/init/yamo")
-set(MECHS "${CCTM_ROOT}/MECHS/cb6r3_ae6_aq")
+set(INIT "${CCTM_ROOT}/init")
+set(MECHS "${CCTM_ROOT}/MECHS/cb6r5_ae7_aq")
 set(PA "${CCTM_ROOT}/procan/pa")
 set(PHOT "${CCTM_ROOT}/phot/inline")
 set(PLRISE "${CCTM_ROOT}/plrise/smoke")
 set(SPCS "${CCTM_ROOT}/spcs/cgrid_spcs_nml")
+set(STM "${CCTM_ROOT}/stm")
 set(STENEX "${CCTM_ROOT}/STENEX/noop")
 set(UTIL "${CCTM_ROOT}/util/util")
-set(VDIFF "${CCTM_ROOT}/vdiff/acm2")
+set(VDIFF "${CCTM_ROOT}/vdiff/acm2_m3dry")
+set(DRIV "${CCTM_ROOT}/driver")
+set(CIO "${CCTM_ROOT}/cio")
 set(localCCTM "src/model/src")
 list(APPEND aqm_CCTM_files
 	${AERO}/AERO_DATA.F
 	${AERO}/aero_driver.F
-	${AERO}/AERO_EMIS.F
+        ${AERO}/aero_nml_modes.F
 	${AERO}/AEROMET_DATA.F
+        ${AERO}/AERO_EMIS.F
 	${AERO}/AEROSOL_CHEMISTRY.F
 	${AERO}/aero_subs.F
-	${AERO}/aero_depv.F
-	${AERO}/AOD_DEFN.F
 	${AERO}/coags.f
 	${AERO}/getpar.f
 	${AERO}/isocom.f
 	${AERO}/isofwd.f
 	${AERO}/isorev.f
 	${AERO}/isrpia.inc
-	${AERO}/opvis.F
-	${AERO}/opavis.F
-	${AERO}/oppmdiag.F
-	${AERO}/opapmdiag.F
+        ${AERO}/AERO_BUDGET.F
 	${AERO}/PRECURSOR_DATA.F
-	${AERO}/PMDIAG_DATA.F
 	${AERO}/SOA_DEFN.F
-	${BIOG}/beis3.F
+	${BIOG}/beis.F
 	${BIOG}/checkmem.f
 	${BIOG}/czangle.F
 	${BIOG}/getparb.f
@@ -115,6 +117,13 @@ list(APPEND aqm_CCTM_files
 	${BIOG}/parsline.f
 	${BIOG}/tmpbeis.F
 	${BIOG}/wrdaymsg.f
+        ${MEGAN}/MEGAN_DEFN.F
+        ${MEGAN}/megan_gspro.F
+        ${MEGAN}/megan_hrno_mod.F
+        ${MEGAN}/megan_fx_mod.f90
+        ${MEGAN}/BDSNP_MOD.F
+        ${MEGAN}/MAP_CV2CB6_AE7.EXT
+        ${MEGAN}/SPC_CB6_AE7.EXT
 	${CLOUD}/hlconst.F
 	${CLOUD}/cldproc_acm.F
 	${CLOUD}/getalpha.F
@@ -131,42 +140,43 @@ list(APPEND aqm_CCTM_files
 	${DEPV}/gas_depv_map.F
 	${DEPV}/HGSIM.F
 	${DEPV}/LSM_MOD.F
-	${DEPV}/MOSAIC_MOD.F
+        ${DEPV}/depv_data_module.F
 	${DEPV}/opdepv_diag.F
-	${DEPV}/opdepv_mos.F
-	${DEPV}/opdepv_fst.F
 	${DEPV}/m3dry.F
 	${EMIS}/BEIS_DEFN.F
 	${EMIS}/BIOG_EMIS.F
 	${EMIS}/cropcal.F
-	${EMIS}/EMIS_DEFN.F
+        ${EMIS}/crop_data_module.F
 	${EMIS}/LTNG_DEFN.F
 	${EMIS}/LUS_DEFN.F
 	${EMIS}/MGEMIS.F
-	${EMIS}/opemis.F
 	${EMIS}/PTBILIN.F
 	${EMIS}/SSEMIS.F
 	${EMIS}/STK_EMIS.F
 	${EMIS}/STK_PRMS.F
-	${EMIS}/tfabove.F
-	${EMIS}/tfbelow.F
 	${EMIS}/UDTYPES.F
-	${GAS}/degrade_data.F
-	${GAS}/degrade.F
-	${GAS}/DEGRADE_SETUP_TOX.F
-	${GAS}/final_degrade.F
-	${GAS}/find_degraded.F
-	${GAS}/hrdata_mod.F
-	${GAS}/hrdriver.F
-	${GAS}/hrg1.F
-	${GAS}/hrg2.F
-	${GAS}/hrg3.F
-	${GAS}/hrg4.F
-	${GAS}/hrinit.F
-	${GAS}/hrprodloss.F
-	${GAS}/hrrates.F
-	${GAS}/hrsolver.F
-	${GAS}/init_degrade.F
+        ${EMIS}/biog_emis_param_module.F
+        ${EMIS}/CMAQ_Control_DESID.nml
+        ${EMIS}/desid_param_module.F
+        ${EMIS}/desid_util.F
+        ${EMIS}/desid_vars.F
+        ${EMIS}/desid_module.F
+        ${EMIS}/lus_data_module.F
+        ${EMIS}/stack_group_data_module.F
+      #  ${EMIS}/PT3D_DEFN.F
+        ${EMIS}/PTMET.F
+	${GAS}/../../reactive_tracers/DEGRADE_PARAMETERS.F
+	${GAS}/../../reactive_tracers/DEGRADE_ROUTINES.F
+	${GAS}/rbdata_mod.F
+	#${GAS}/rbdriver.F
+	${GAS}/rbdecomp.F
+	${GAS}/rbfeval.F
+	${GAS}/rbinit.F
+	${GAS}/rbjacob.F
+	${GAS}/rbsolve.F
+	${GAS}/rbsolver.F
+	${GAS}/rbsparse.F
+	${GAS}/../../reactive_tracers/DEGRADE_SETUP_TOX.F
 	${GRID}/GRID_CONF.F
 	${GRID}/HGRD_DEFN.F
 	${GRID}/VGRD_DEFN.F
@@ -181,19 +191,23 @@ list(APPEND aqm_CCTM_files
 	${MECHS}/RXNS_DATA_MODULE.F90
 	${MECHS}/RXNS_FUNC_MODULE.F90
 	${PA}/PA_DEFN.F
+        ${PA}/budget_defn.F
+        ${PA}/../../hadv/ppm/xy_budget.F
 	${PA}/pa_update.F
+        ${PA}/PA_IRR_module.F
+        ${PA}/PA_IRR_CTL.F
 	${PHOT}/CLOUD_OPTICS.F
 	${PHOT}/complex_number_module.F90
 	${PHOT}/CSQY_DATA.F
-	${PHOT}/OMI_1979_to_2015.dat
+	${PHOT}/OMI_1979_to_2019.dat
 	${PHOT}/opphot.F
-	${PHOT}/phot.F
 	${PHOT}/PHOT_MET_DATA.F
 	${PHOT}/PHOT_MOD.F
 	${PHOT}/PHOTOLYSIS_ALBEDO.F
 	${PHOT}/PHOT_OPTICS.dat
 	${PHOT}/SEAS_STRAT_O3_MIN.F
 	${PHOT}/twoway_rrtmg_aero_optics.F90
+        ${PHOT}/concld_prop_acm.F
 	${PLRISE}/delta_zs.f
 	${PLRISE}/fire_plmris.F
 	${PLRISE}/openlayout.F
@@ -201,9 +215,11 @@ list(APPEND aqm_CCTM_files
 	${PLRISE}/plmris.F
 	${PLRISE}/plsprd.f
 	${PLRISE}/preplm.f
-	${PLRISE}/ungridb2.f
 	${PLRISE}/write3_distr.f
 	${SPCS}/CGRID_SPCS.F
+        ${SPCS}/CGRID_SPCS_TYPES.F
+        ${STM}/STM_VARS.F
+        ${STM}/STM_MODULE.F
 	${STENEX}/noop_comm_module.f
 	${STENEX}/noop_data_copy_module.f
 	${STENEX}/noop_gather_module.f
@@ -215,32 +231,42 @@ list(APPEND aqm_CCTM_files
 	${STENEX}/noop_slice_module.f
 	${STENEX}/noop_term_module.f
 	${STENEX}/noop_util_module.f
-	${UTIL}/bmatvec.F
 	${UTIL}/findex.f
-	${UTIL}/get_envlist.f
+        ${UTIL}/log_header.F
+	#${UTIL}/get_env_mod.f90
 	${UTIL}/setup_logdev.F
 	${UTIL}/subhdomain.F
 	${UTIL}/UTILIO_DEFN.F
+        #${UTIL}/RUNTIME_VARS.F
+        ${UTIL}/util_family_module.F
+	#${UTIL}/CMAQ_Control_Misc.nml
+        ${DRIV}/ELMO_PROC.F
+        ${DRIV}/ELMO_DATA.F
 	${VDIFF}/aero_sedv.F
+        ${VDIFF}/aero_depv.F
 	${VDIFF}/conv_cgrid.F
 	${VDIFF}/matrix1.F
 	${VDIFF}/opddep.F
-	${VDIFF}/opddep_fst.F
-	${VDIFF}/opddep_mos.F
-	${VDIFF}/rddepv.F
 	${VDIFF}/SEDIMENTATION.F
 	${VDIFF}/tri.F
+        ${VDIFF}/VDIFF_DATA.F
 	${VDIFF}/VDIFF_DIAG.F
 	${VDIFF}/VDIFF_MAP.F
 	${VDIFF}/vdiffproc.F
+        #${CIO}/centralized_io_module.F
 	${localCCTM}/o3totcol.f
-	${localCCTM}/vdiffacmx.F
-	${localCCTM}/PTMAP.F
-	${localCCTM}/PT3D_DATA_MOD.F
+	#rbdriver.F has a typo in CMAQ.Put it back to {GAS} if they solve it in the future
+	${localCCTM}/rbdriver.F
 	${localCCTM}/PT3D_DEFN.F
 	${localCCTM}/PT3D_FIRE_DEFN.F
 	${localCCTM}/PT3D_STKS_DEFN.F
+        ${localCCTM}/vdiffacmx.F
 	${localCCTM}/ASX_DATA_MOD.F
 	${localCCTM}/DUST_EMIS.F
 	${localCCTM}/AERO_PHOTDATA.F
+	${localCCTM}/phot.F
+        ${localCCTM}/RUNTIME_VARS.F
+        ${localCCTM}/get_env_mod.f90
+        ${localCCTM}/centralized_io_module.F 
+	${localCCTM}/centralized_io_util_module.F
 )

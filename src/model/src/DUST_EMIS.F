@@ -17,10 +17,6 @@
 !  subject to their copyright restrictions.                              !
 !------------------------------------------------------------------------!
 
-
-C RCS file, release, date & time of last delta, author, state, [and locker]
-C $Header: /project/work/rep/arc/CCTM/src/emis/emis/DUST_EMIS.F,v 1.6 2011/10/21 16:10:45 yoj Exp $
-
 C:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
       module dust_emis
      
@@ -29,12 +25,6 @@ C Description:
 C * Extracts selected landuse categories from BELD01 and BELD03 and merges
 C * the selections into a dust-related landuse array (ULAND).
 
-C   Optionally, reads 3 gridded crop calendar file and calculates an
-C   erodible agriculture land fraction. (cropcal)
-
-C * Applies a predetermined removal fraction in and below canopy to
-C * ULAND and determines a transport factor (TFB) for this regime.
-C * = applies to tfbelow
 
 C Function: 3d point source emissions interface to the chemistry-transport model
 
@@ -67,18 +57,23 @@ C                       the vertical-to-horizontal flux based on Lu and Shao [JG
 C                       Updated the dust diag output file accordingly.
 C  8 Jan 16 J.Young: Changes for computational efficiency
 C  2 Feb 16 J.Young: move dust aero speciation table to AERO_DATA
+C  01 Feb 19 D.Wong: Implemented centralized I/O approach, removed all MY_N clauses
+C  9 Jul 19 Gilliam: Removed a lot of old commented out legacy tables. 
+C                    Removed the direct read of FPAR MODIS file as this data comes 
+C                    directly from WRF LSM models that have access to MODIS veg data now.
+C                    Number of soil types fixed to 16 to match WRF and tables updated.
+C  3 Mar 22 Gilliam and Willison: Removed fugitive dust capture from canopies
+C                   (tfa and tfb terms). Added soil texture information from PX when available.
+C                   Removed deprecated option concerning erodable agland. Removed BELD as an option
+C                   for input.
 C-----------------------------------------------------------------------
       use lus_defn
       use aero_data
+      use desid_vars
 
       implicit none 
 
-C windblown dust emissions rates
-      real, allocatable, save :: dustoutm( :,:,:,: )  ! mass emission rates [g/m**3/s]
-      real, allocatable, save :: dustoutn( :,:,: )    ! number emission rates [1/m**3/s]
-      real, allocatable, save :: dustouts( :,:,: )    ! surface-area emisrates [m2/m**3/s]
-
-      public ndust_spc, dustoutm, dustoutn, dustouts, dust_spc,
+      public ndust_spc, dust_spc,
      &       dust_emis_init, get_dust_emis
       private
 
@@ -111,20 +106,17 @@ C of Binkowski & Roselle (2003)
       real, save :: factsrfj ! = pi * factm2j
       real, save :: factsrfk ! = pi * factm2k
 
-      real, save :: dustmode_dens( n_mode ) ! average modal density [kg/m**3]
       real       :: sumsplit, sumfrac
       integer    :: n, idx
 
-C Number of soil types: For both WRF and MM5-PX met models, there are 16 types;
-C the first 12 soil types are used and the rest lumped into Other.
-      integer, parameter :: nsltyp = 13
+C Number of soil types: For WRF there are 16 types;
+      integer, parameter :: nsltyp = 16
 
 C Variables for FENGSHA dust scheme
       real, save :: dust_alpha    ! tuning parameter for FENGSHA dust emission flux
 
 C Variables for the windblown dust diagnostic file:
-      logical, save      :: dustem_diag      ! flag for dustemis diagnostic file
-      integer, parameter :: fndust_diag = 19 ! number of fixed diagnostic output vars
+      integer, parameter :: fndust_diag = 17 ! number of fixed diagnostic output vars
       integer, save      :: ndust_diag       ! number of diagnostic output vars
       real, allocatable, save :: diagv( : )  ! diagnostic output variables
       real, allocatable, save :: dustbf( :,:,: ) ! diagnostic accumulate buffer
@@ -152,42 +144,33 @@ C Variables for the windblown dust diagnostic file:
       type( diag_type ), parameter :: fdiagnm( fndust_diag ) = (/
 C                      var              units                 desc
 C                 ----------------    --------    -------------------------------------------
-     & diag_type( 'Cropland_Emis   ', 'g/m**3/s', 'emissions for cropland landuse type        '),
-     & diag_type( 'Desertland_Emis ', 'g/m**3/s', 'total emis for desert types and cropland   '),
-     & diag_type( 'Cropland_Frac   ', 'percent ', 'cropland erodible landuse fraction (%)     '),
-     & diag_type( 'Desertland_Frac ', 'percent ', 'total desert fraction (%)                  '),
-     & diag_type( 'Cropland_Ustar  ', 'm/s     ', 'u* for cropland                            '),
-     & diag_type( 'Cropland_kvh    ', '1/m     ', 'cropland vert to horiz flux ratio          '),
-     & diag_type( 'Cropland_Rough  ', '        ', 'cropland surface roughness factor          '),
-     & diag_type( 'Soil_Moist_Fac  ', '        ', 'soil moisture factor for threshold u*      '),
-     & diag_type( 'Soil_Erode_Pot  ', '        ', 'soil -> dust erodiblity potential          '),
-     & diag_type( 'Mx_Adsrb_H2O_Frc', '        ', 'max adsorbed water fraction                '),
-     & diag_type( 'Vegetation_Frac ', '        ', 'vegetation land coverage                   '),
-     & diag_type( 'Urban_Cover     ', 'percent ', 'urban land coverage                        '),
-     & diag_type( 'Forest_Cover    ', 'percent ', 'forest land coverage                       '),
-     & diag_type( 'Trfac_Above_Can ', '        ', 'transport factor above canopy              '),
-     & diag_type( 'Trfac_Inside_Can', '        ', 'transport factor in and below canopy       '),
-     & diag_type( 'ANUMJ           ', '#/s     ', 'accumulation mode number                   '),
-     & diag_type( 'ANUMK           ', '#/s     ', 'coarse mode number                         '),
-     & diag_type( 'ASRFJ           ', 'm**2/s  ', 'accumulation mode surface area             '),
-     & diag_type( 'ASRFK           ', 'm**2/s  ', 'coarse mode surface area                   ')/)
+     & diag_type( 'Cropland_Emis   ', 'g m-3 s-1', 'emissions for cropland landuse type        '),
+     & diag_type( 'Desertland_Emis ', 'g m-3 s-1', 'total emis for desert types and cropland   '),
+     & diag_type( 'Cropland_Frac   ', 'percent  ', 'cropland erodible landuse fraction (%)     '),
+     & diag_type( 'Desertland_Frac ', 'percent  ', 'total desert fraction (%)                  '),
+     & diag_type( 'Cropland_Ustar  ', 'm s-1    ', 'u* for cropland                            '),
+     & diag_type( 'Cropland_kvh    ', 'm-1      ', 'cropland vert to horiz flux ratio          '),
+     & diag_type( 'Cropland_Rough  ', '         ', 'cropland surface roughness factor          '),
+     & diag_type( 'Soil_Moist_Fac  ', '         ', 'soil moisture factor for threshold u*      '),
+     & diag_type( 'Soil_Erode_Pot  ', '1        ', 'soil -> dust erodiblity potential          '),
+     & diag_type( 'Mx_Adsrb_H2O_Frc', '1        ', 'max adsorbed water fraction                '),
+     & diag_type( 'Vegetation_Frac ', '1        ', 'vegetation land coverage                   '),
+     & diag_type( 'Urban_Cover     ', 'percent  ', 'urban land coverage                        '),
+     & diag_type( 'Forest_Cover    ', 'percent  ', 'forest land coverage                       '),
+     & diag_type( 'ANUMJ           ', 's-1', 'accumulation mode number                   '),
+     & diag_type( 'ANUMK           ', 's-1', 'coarse mode number                         '),
+     & diag_type( 'ASRFJ           ', 'm2 s-1   ', 'accumulation mode surface area             '),
+     & diag_type( 'ASRFK           ', 'm2 s-1   ', 'coarse mode surface area                   ')/)
   
 C Module shared variables:
-      real, allocatable, save :: agland( :,: )   ! agriculture land fraction
       real, allocatable, save :: wmax  ( :,: )   ! max adsorb water percent
       real, allocatable, save :: kvh   ( :,:,: ) ! ratio of vertical flux / horizontal (k factor)
       real, allocatable, save :: sd_ep ( :,: )   ! soil->dust erodiblity potential
-      real, allocatable, save :: tfb   ( :,: )   ! transport fraction in and below canopy
-      real, allocatable, save :: fpar  ( :,: )   ! modis fpar
-
-      integer, save :: sdate, stime  ! scenario start date & time
 
       real :: eropot( 3 ) =     ! erodible potential of soil components
      &        (/ 0.08,   ! clay
      &           1.00,   ! silt
      &           0.12 /) ! sand
-
-      integer, save :: logdev
 
       CONTAINS
 
@@ -202,6 +185,8 @@ C   implementation
          use aero_data        ! aerosol species definitions
          use asx_data_mod     ! meteorology data
          use utilio_defn
+         use lus_data_module
+         use centralized_io_module
 
 C Arguments:
          integer, intent( in ) :: jdate   ! current model date, coded YYYYDDD
@@ -212,53 +197,68 @@ C Arguments:
 C Includes:
          include SUBST_FILES_ID  ! file name parameters
 
-C External Functions:
-         integer, external :: setup_logdev
-
 C Local variables:
-         character( 16 ) :: ctm_dustem_diag   = 'CTM_DUSTEM_DIAG' ! env var for
-                                                              ! diagnostic file
-         character( 16 ) :: ctm_erode_agland  = 'CTM_ERODE_AGLAND' ! env var to
-                                                        ! use erodible cropland
          character( 16 ) :: pname = 'DUST_EMIS_INIT'
          character( 16 ) :: vname
          character( 80 ) :: vardesc
-         character( 120 ) :: xmsg = ' '
-         character( 16 ) :: modis_fpar_1 = 'MODIS_FPAR'
-                            ! Fraction of Absorbed Photosynthetically Active Radiation
+         character( 250 ) :: xmsg = ' '
 
-         logical :: erode_agland = .true. ! default
          integer status
-         integer c, r, i, j, k, l, n
-         integer idiag
+         integer c, r, i, j, k, l, n, im
+         integer idiag, idust, spc
          integer n_mass_emissions
 
-         integer  gxoff, gyoff                 ! global origin offset from file
-         integer, save :: strtcol, endcol, strtrow, endrow
-         integer  jdatemod
+         character( 16 ) :: sn
 
          type( diag_type ), allocatable :: diagnm_swap( : )
 
-         interface
-            subroutine cropcal ( jdate, jtime, agland )
-            integer, intent( in )  :: jdate, jtime
-            real,    intent( out ) :: agland( :,: )
-            end subroutine cropcal
-            subroutine tfbelow ( jdate, jtime, tfb )
-            integer, intent( in )  :: jdate, jtime
-            real,    intent( out ) :: tfb( :,: )
-            end subroutine tfbelow
-         end interface
 
 C-----------------------------------------------------------------------
 
-         logdev = setup_logdev()
          success = .true.
 
+         CALL LOG_MESSAGE( LOGDEV, 'Initialize Wind-Blown Dust Emissions' )
 
-         allocate ( dustoutm( ndust_spc,n_mode,ncols,nrows ),
-     &              dustoutn( n_mode,ncols,nrows ),
-     &              dustouts( n_mode,ncols,nrows ), stat = status )
+C...Populate Master Emissions Map Vector So That Diagnostics 
+C   can be printed in EMIS_MAP
+         DESID_EMVAR( IDUSTSRM )%len = ndust_spc*2
+         Allocate( DESID_EMVAR( IDUSTSRM )%arry( ndust_spc*2 ) )
+         Allocate( DESID_EMVAR( IDUSTSRM )%units( ndust_spc*2 ) )
+         Allocate( DESID_EMVAR( IDUSTSRM )%mw   ( ndust_spc*2 ) )
+         Allocate( DESID_EMVAR( IDUSTSRM )%used ( ndust_spc*2 ) )
+         Allocate( DESID_EMVAR( IDUSTSRM )%conv ( ndust_spc*2 ) )
+         Allocate( DESID_EMVAR( IDUSTSRM )%basis( ndust_spc*2 ) )
+         Allocate( DESID_EMVAR( IDUSTSRM )%larea( ndust_spc*2 ) )
+         Allocate( DESID_EMVAR( IDUSTSRM )%lareaadj( ndust_spc*2 ) )
+         DESID_EMVAR( IDUSTSRM )%arry( : ) = 'NOT_AVAILABLE'
+         do i = 1,ndust_spc
+            IF ( dust_spc( i )%spcfac(1) .NE. 0.0 ) 
+     &         DESID_EMVAR( IDUSTSRM )%arry( i )  = 
+     &                    'PMFINE_' // dust_spc(i)%name
+            IF ( dust_spc( i )%spcfac(2) .NE. 0.0 ) 
+     &         DESID_EMVAR( IDUSTSRM )%arry( i+ndust_spc )  = 
+     &                    'PMCOARSE_' // dust_spc(i)%name
+            DESID_EMVAR( IDUSTSRM )%mw( i )  = dust_spc(i)%mw
+            DESID_EMVAR( IDUSTSRM )%mw( i+ndust_spc )  = dust_spc(i)%mw
+         end do
+         DESID_EMVAR( IDUSTSRM )%units( : ) = 'G/S'
+         DESID_EMVAR( IDUSTSRM )%used ( : ) = .FALSE.
+         DESID_EMVAR( IDUSTSRM )%conv ( : ) = 1.0
+         DESID_EMVAR( IDUSTSRM )%basis( : ) = 'MASS'
+         DESID_EMVAR( IDUSTSRM )%larea( : ) = .FALSE.
+         DESID_EMVAR( IDUSTSRM )%lareaadj( : ) = .FALSE.
+ 
+C...Count the number of mass emissions species
+        n_mass_emissions = 0
+        do i = 1, ndust_spc
+           do j = 1, 2
+              if( dust_spc( i )%spcfac( j )  .gt. 0. ) 
+     &               n_mass_emissions = n_mass_emissions + 1  
+           end do
+        end do                     
+        allocate ( dustoutm( ndust_spc*2,ncols,nrows ),
+     &              dustoutn( 2,ncols,nrows ),
+     &              dustouts( 2,ncols,nrows ), stat = status )
          if ( status .ne. 0 ) then
             xmsg = '*** Failure allocating DUSTOUTM, DUSTOUTN, or DUSTOUTS'
             call m3warn ( pname, jdate, jtime, xmsg )
@@ -274,98 +274,42 @@ C Allocate emissions array
          end if
 
          if ( fengsha ) then
-
+ 
 C Disable diagnostic output if FENGSHA is used
-         dustem_diag = .false.
-
+          dustem_diag = .false.
+ 
 C Allocate private arrays
-         allocate( tfb( ncols,nrows ), stat = status )
-
-         if ( status .ne. 0 ) then
-            xmsg = '*** Failure allocating WMAX or TFB'
-            call m3warn( pname, jdate, jtime, xmsg )
-            success = .false.; return
-         end if
-
+          !allocate( tfb( ncols,nrows ), stat = status )  !tfa and tfb
+          !were removed in most recent note.
+ 
+          if ( status .ne. 0 ) then
+             xmsg = '*** Failure allocating WMAX or TFB'
+             call m3warn( pname, jdate, jtime, xmsg )
+             success = .false.; return
+          end if 
 C Initialize land use/cover variables
-         if ( .not. lus_init( jdate, jtime ) ) then
-            xmsg = 'Failure initializing land use module'
-            call m3exit( pname, jdate, jtime, xmsg, xstat2 )
-         end if
-
-         else
+          if ( .not. lus_init( jdate, jtime ) ) then
+             xmsg = 'Failure initializing land use module'
+             call m3exit( pname, jdate, jtime, xmsg, xstat2 )
+          end if
+ 
+          else
 
 C Allocate private arrays
-         allocate( agland( ncols,nrows ),
-     &             wmax  ( ncols,nrows ),
-     &             sd_ep ( ncols,nrows ),
-     &             fpar  ( ncols,nrows ),
-     &             tfb   ( ncols,nrows ), stat = status )
+         allocate( wmax  ( ncols,nrows ),
+     &             sd_ep ( ncols,nrows ), stat = status)
          if ( status .ne. 0 ) then
-            xmsg = '*** Failure allocating AGLAND, WMAX, FPAR, SD_EP, or TFB'
+            xmsg = '*** Failure allocating WMAX, or SD_EP'
             call m3warn( pname, jdate, jtime, xmsg )
             success = .false.; return
          end if
-         agland = 0.0   ! array assignment
          wmax   = 0.0   ! array assignment
          sd_ep  = 0.0   ! array assignment
-         fpar   = 0.0   ! array assignment
-
-C Open MODIS file to get vegetation fraction
-         if ( .not. open3( modis_fpar_1, fsread3, pname ) ) then
-            xmsg = 'Could not open ' // modis_fpar_1
-            call m3exit( pname, jdate, jtime, xmsg, xstat1 )
-         end if
-
-C Get the file description 
-         if ( .not. desc3( modis_fpar_1 ) ) then
-            xmsg = 'Could not get '
-     &      // trim( modis_fpar_1 )
-     &      // ' file description'
-            call m3exit( pname, jdate, jtime, xmsg, xstat1 )
-         end if
-
-C To be able to use either climatological (2001-2010 averaged) or
-C current fpar value. The year for the climatological fpar is 2005 in
-C the input file.
-         if ( sdate3d .eq. 2005001 ) then          ! climatological
-            jdatemod = 2005000 + mod( jdate,1000 )
-         else                                      ! current
-            jdatemod = jdate
-         end if
-
-C Get domain decomp info
-         call subhfile ( modis_fpar_1, gxoff, gyoff,
-     &                   strtcol, endcol, strtrow, endrow )
-
-C Read in FPAR from MODIS file
-         xmsg = 'Could not read FPAR from ' // trim( modis_fpar_1 )
-         if ( .not. xtract3( modis_fpar_1, 'MODIS_FPAR_T', 1,1,
-     &                       strtrow,endrow,strtcol,endcol,
-     &                       jdatemod, jtime, fpar( 1,1 ) ) )
-     &   call m3exit ( pname, jdate, jtime, xmsg, xstat1 )
 
 C Initialize land use/cover variables
          if ( .not. lus_init( jdate, jtime ) ) then
             xmsg = 'Failure initializing land use module'
             call m3exit( pname, jdate, jtime, xmsg, xstat2 )
-         end if
-
-C Get env var for diagnostic output
-         dustem_diag = .false.         ! default
-         vardesc = 'Flag for writing the windblown dust emission diagnostic file'
-         dustem_diag = envyn( ctm_dustem_diag, vardesc, dustem_diag, status )
-         if ( status .ne. 0 ) write( logdev,'( 5x, a )' ) vardesc
-         if ( status .eq. 1 ) then
-            xmsg = 'Environment variable improperly formatted'
-            call m3warn( pname, jdate, jtime, xmsg )
-            success = .false.; return
-         else if ( status .eq. -1 ) then
-            xmsg = 'Environment variable set, but empty ... Using default:'
-            write( logdev,'( 5x, a, i9 )' ) xmsg, jtime
-         else if ( status .eq. -2 ) then
-            xmsg = 'Environment variable not set ... Using default:'
-            write( logdev,'( 5x, a, i9 )' ) xmsg, jtime
          end if
 
          if ( dustem_diag ) then    ! Open the emissions diagnostic file
@@ -387,15 +331,7 @@ C Set up variable diagnostic names (from LUS_DEFN)
             vdiagnm_kvh   = diag_type( ' ', ' ', ' ' )  ! array assignment
             vdiagnm_rough = diag_type( ' ', ' ', ' ' )  ! array assignment
 
-C...Count the number of mass emissions species
-            n_mass_emissions = 0
-            do i = 1, ndust_spc
-               do j = 1, n_mode
-                  if( len_trim( dust_spc( i )%name( j ) ) .lt. 1 )cycle
-                  n_mass_emissions = n_mass_emissions + 1  
-               end do
-            end do
-            
+C...Set Up Diagnostic Species Variables
             ndust_diag = fndust_diag + 5 * n_dlcat + n_mass_emissions 
 
             do i = 1, n_dlcat
@@ -480,35 +416,30 @@ C Build the complete diagnostic name array                     n for MODIS NOAH
             end do
 
 C...append diagnostic variables with mass emissions species
-            do j = 2, n_mode
+            do j = 1, 2
                do i = 1, ndust_spc
-                  n = len_trim( dust_spc( i )%name( j ) )
-                  if( n .lt. 1  )cycle ! assumes cmaq species names atleast one character long
-                  n = 0
-                  do k = 1, idiag   ! determine if dust emissions is already added to diagnostic output
-                     if( dust_spc( i )%name( j ) .Eq. diagnm( k )%var )Then
+                  if( dust_spc( i )%spcfac( j ) .eq. 0. ) cycle 
+                    n = 0
+                    do k = 1, idiag   ! determine if dust emissions is already added to diagnostic output
+                       if( trim( DESID_EMVAR( IDUSTSRM )%ARRY( (j-1)*ndust_spc+i )) 
+     &                     .Eq. diagnm( k )%var ) Then
                          n = k
                          exit
                      end if
                   end do
-                  if( n .gt. 0  )then ! skip already added 
-                      cycle
-                  else 
-                      idiag = idiag + 1
-                      diagnm( idiag )%var = dust_spc( i )%name( j )
-                  end if
+                  if( n .gt. 0  ) cycle ! skip already added 
+                  
+                  idiag = idiag + 1
+                  diagnm( idiag )%var = DESID_EMVAR( IDUSTSRM )%ARRY( (j-1)*ndust_spc+i ) 
                   diagnm( idiag )%units = 'g/m**3/s'
+
                   Select Case( j ) ! assumes only two aerosol modes dust emissions
-!                    Case( 1 )
-!                       diagnm( idiag )%desc = 'aitken mode' 
-                    Case( 2 )
-                       diagnm( idiag )%desc = 'accumulation mode' 
-                    Case( 3 )
-                       diagnm( idiag )%desc = 'coarse mode' 
-!                    Case Default 
-!                       diagnm( idiag )%des = 'Undefined mode ' 
-                    end Select
-                    diagnm( idiag )%desc = Trim( diagnm( idiag )%desc )
+                     Case( 1 )
+                        diagnm( idiag )%desc = 'fine mode' 
+                     Case( 2 )
+                        diagnm( idiag )%desc = 'coarse mode' 
+                  end Select
+                  diagnm( idiag )%desc = Trim( diagnm( idiag )%desc )
      &                                   // ' emissions for '  
      &                                   // Trim( dust_spc( i )%description )
                end do
@@ -519,9 +450,10 @@ C...append diagnostic variables with mass emissions species
             if ( status .ne. 0 ) then
                xmsg = '*** Failure allocating DIAGNM_SWAP'
                call m3warn( pname, jdate, jtime, xmsg )
+               
                success = .false.; return
             end if
-            diagnm_swap = diagnm
+            diagnm_swap = diagnm 
 
             deallocate( diagnm )
 
@@ -535,47 +467,12 @@ C...append diagnostic variables with mass emissions species
             diagnm( 1:ndust_diag ) = diagnm_swap( 1:ndust_diag )
             deallocate( diagnm_swap )
 
-            sdate = envint( 'CTM_STDATE', 'Scenario Start (YYYYJJJ)', 0, status )
-            stime = envint( 'CTM_STTIME', 'Scenario Start (HHMMSS)', 0, status )
-
             if ( io_pe_inclusive )
-     &         call opdust_emis ( sdate, stime, tstep, ndust_diag, diagnm )
+     &         call opdust_emis ( stdate, sttime, tstep, ndust_diag, diagnm )
 
          end if   ! dustem_diag
-
-C Get env var for erodible agriculture land fraction
-         erode_agland = .false.         ! default
-         vardesc = 'Flag for calculating erodible agriculture land fraction'
-         erode_agland = envyn( ctm_erode_agland, vardesc, erode_agland, status )
-         if ( status .ne. 0 ) write( logdev,'( 5x, a )' ) vardesc
-         if ( status .eq. 1 ) then
-            xmsg = 'Environment variable improperly formatted'
-            call m3warn( pname, jdate, jtime, xmsg )
-            success = .false.; return
-         else if ( status .eq. -1 ) then
-            xmsg = 'Environment variable set, but empty ... Using default:'
-            write( logdev,'( 5x, a, i9 )' ) xmsg, jtime
-         else if ( status .eq. -2 ) then
-            xmsg = 'Environment variable not set ... Using default:'
-            write( logdev,'( 5x, a, i9 )' ) xmsg, jtime
-         end if
-
-         if ( erode_agland ) then
-            call cropcal ( sdate, stime, agland )
-            do r = 1, my_nrows
-            do c = 1, my_ncols
-               if ( agland( c,r ) .lt. 0.0 .or. agland( c,r ) .gt. 100.0 ) then
-                  xmsg = '*** ERROR in AGLAND'
-                  call m3exit( pname, jdate, jtime, xmsg, xstat1 )
-               end if
-            end do
-            end do
-         end if
-
-         end if    ! dust scheme
-
-C Get transport factor within canopy and 4 land use type percents
-         call tfbelow ( jdate, jtime, tfb )
+         
+         end if !dust scheme
 
          l2sgj = log( sigj ) * log( sigj )
          l2sgk = log( sigk ) * log( sigk )
@@ -590,29 +487,12 @@ C of Binkowski & Roselle (2003)
          factsrfj = pi * factm2j
          factsrfk = pi * factm2k
 
-C Calculate modal average dust particle densities (accum and coarse modes) [ kg/m**3 ]
-C The following works because the dust_spc`s are a fixed split of the total emitted
-C mass.
-         dustmode_dens( 1 ) = 0.0
-         do n = 2, n_mode
-            sumsplit = 0.0; sumfrac = 0.0
-            do i = 1, ndust_spc
-               idx = findAero( dust_spc( i )%name( n ), .true. )
-               if( aerospc( idx )%tracer )cycle
-               if( dust_spc( i )%spcfac( n ) .lt. 1.0e-30 )cycle
-               sumsplit = sumsplit + dust_spc( i )%spcfac( n ) ! should = 1.0
-               sumfrac = sumfrac + dust_spc( i )%spcfac( n ) / aerospc( idx )%density
-            end do
-            dustmode_dens( n ) = sumsplit / sumfrac
-         end do
-
 #ifdef verbose_wbdust
          write( logdev,* ) ' '
          write( logdev,* ) '    l2sgj,l2sgk:         ', l2sgj, l2sgk
          write( logdev,* ) '    factnumj,factnumk:   ', factnumj, factnumk
          write( logdev,* ) '    factm2j,factm2k:     ', factm2j, factm2k
          write( logdev,* ) '    factsrfj,factsrfk:   ', factsrfj, factsrfk
-         write( logdev,* ) '    modal avg dens(j/k): ', dustmode_dens( 2 ), dustmode_dens( 3 )
          write( logdev,* ) ' '
 #endif
 
@@ -707,23 +587,29 @@ C Open windblown dust emissions diagnostic file
          end subroutine opdust_emis
 
 C=======================================================================
-         subroutine get_dust_emis( jdate, jtime, tstep, rjacm, cellhgt )
+         subroutine get_dust_emis( jdate, jtime, tstep, rjacm, cellhgt,
+     &                             l_desid_diag)
 
          use grid_conf        ! horizontal & vertical domain specifications
          use asx_data_mod     ! meteorology data
          use aero_data
          use utilio_defn
+         use lus_data_module
+         use centralized_io_module
+         use RUNTIME_VARS, only: WRF_V4P
 
 C       8/18/11 D.Wong: incorporated twoway model implementation and change
 C                       RC -> RCA and RN -> RNA and made it backward compatible
 C       8/12/15 D.Wong: added code to handle parallel I/O implementation
 
 C Arguments:
-         integer, intent( in ) :: jdate      ! current model date, coded YYYYDDD
-         integer, intent( in ) :: jtime      ! current model time, coded HHMMSS
-         integer, intent( in ) :: tstep( 3 ) ! output time step, sync step, 2way step
+         integer, intent( in ) :: jdate        ! current model date, coded YYYYDDD
+         integer, intent( in ) :: jtime        ! current model time, coded HHMMSS
+         integer, intent( in ) :: tstep( 3 )   ! output time step, sync step, 2way step
          real,    intent( in ) :: rjacm( ncols,nrows ) ! reciprocal Jacobian [1/m]
-         real,    intent( in ) :: cellhgt    ! grid-cell height [sigma]
+         real,    intent( in ) :: cellhgt      ! grid-cell height [sigma]
+         logical, intent( in ) :: l_desid_diag ! flag determining whether or not DESID 
+                                               !   is in diagnostic mode
 
 C Includes:
          include SUBST_FILES_ID  ! file name parameters
@@ -738,7 +624,6 @@ C Parameters:
                                            !  4  Clay
 
          real, parameter :: f6dpi = 6.0 / pi
-         real, parameter :: gpkg = 1.0e03     ! g/kg
 
          real, parameter :: mv    = 0.16
          real, parameter :: sigv  = 1.45
@@ -752,12 +637,13 @@ C Parameters:
          real, parameter :: betab_mb = betab * mb  ! = 45.0
 
          character( 24 ) :: ctm_wbdust_fengsha_alpha = 'CTM_WBDUST_FENGSHA_ALPHA' ! env var to
-                                               ! retrieve FENGSHA scaling factor
+                                                ! retrieve FENGSHA scaling factor
+
          character( 16 ) :: pname = 'GET_DUST_EMIS'
          character( 16 ) :: vname
          character( 96 ) :: xmsg
          integer status
-         integer c, r, j, m, n, v
+         integer c, r, j, m, n, v, isd
 
          integer, save   :: wstep = 0      ! local write counter
          integer         :: mdate, mtime   ! diagnostic file write date&time
@@ -765,7 +651,6 @@ C Parameters:
                        ! automatic arrays
          real       :: fmoit  ( ncols,nrows )      ! factor of soil moisture on u*t
          real       :: soimt  ( ncols,nrows )      ! gravimetric soil moisture (Kg/Kg)
-         real       :: tfa    ( ncols,nrows )      ! transport fraction above canopy
          real       :: wrbuf  ( ncols,nrows )      ! diagnositc write buffer
          real       :: vegfrac( ncols,nrows )      ! vegetation fraction
          real       :: vegfree                     ! 1.0 - vegfrac for this col, row
@@ -776,7 +661,7 @@ C Parameters:
          real, allocatable, save :: elus  ( :,:,: ) ! erodible landuse percent (0~100)
          real, allocatable, save :: fruf  ( :,:,: ) ! surface roughness factor
 
-         real       :: edust( n_mode )  ! mass emis rate [g/s] per mode (only accum & coarse)
+         real       :: edust( 2 )       ! mass emis rate [g/s] per mode (only accum & coarse)
          real       :: sumdfr           ! sum var for desert fraction
          real       :: rlay1hgt         ! reciprocal of layer-1 height [1/m]
          real       :: m3j              ! 3rd moment accumulation (J) mode emis rates [m3/m3/s]
@@ -799,22 +684,6 @@ C Parameters:
 C---Height for veg elements
          real :: hv( 4 )
 
-C---Vegetation fraction for 4 land types  ! not used
-C from Federal Geographic Data Committee [1997]
-C Note: All other landuse types are mapped into these 4 types.
-!        real :: vegfra( 4 ) =
-!    &           (/ 0.11,     ! shrubland
-!    &              0.17,     ! shrubgrass
-!    &              0.01,     ! barrenland
-!    &              0.30 /)   ! cropland
-
-C---Height for solid elements
-!        real :: hb( 4 ) =
-!    &           (/ 0.01,     ! shrubland
-!    &              0.02,     ! shrubgrass
-!    &              0.005,    ! barrenland
-!    &              0.02 /)   ! cropland
-
 C---Roughness density for solid elements
 C from Darmenova et al. [JGR,2009] and Xi and Sokolik [JGR,2015]
         real :: lambdab( 4 ) =
@@ -830,48 +699,6 @@ C---Compound for computational efficiency
      &              2.0e-06,   ! barrenland
      &              3.0e-03 /) ! cropland
 
-C Soil moisture limit: 13 types and 3 variables, which are:
-C    1 - saturation moisture limit, (gravimetric units assumed, Kg/Kg)
-             !!!! This is probably volumetric-- NOAH
-C    2 - fill capacity, and   <- not used
-C    3 - wilting point        <- not used
-C Modified values compatiable with both MM5 & NAM.
-C Silt values are based on NAM documentation on soil types.
-C Other includes all types higher than 12. The values of Other, serving as
-C placeholders, are randomly chosen.  Values of Other, however, have no effect
-C on dust emissions as the threshold velocity of Other will be high.
-C        real :: soilml( nsltyp,3 ) = reshape (
-C    &           (/ 0.395,  0.135,  0.068,     ! Sand
-C    &              0.410,  0.150,  0.075,     ! Loamy Sand
-C    &              0.435,  0.195,  0.114,     ! Sandy Loam
-C    &              0.485,  0.255,  0.179,     ! Silt Loam
-C    &              0.476,  0.361,  0.084,     ! Silt
-C    &              0.451,  0.240,  0.155,     ! Loam
-C    &              0.420,  0.255,  0.175,     ! Sandy Clay Loam
-C    &              0.477,  0.322,  0.218,     ! Silty Clay Loam
-C    &              0.476,  0.325,  0.250,     ! Clay Loam
-C    &              0.426,  0.310,  0.219,     ! Sandy Clay
-C    &              0.482,  0.370,  0.283,     ! Silty Clay
-C    &              0.482,  0.367,  0.286,     ! Clay
-C    &              0.482,  0.367,  0.286 /),  ! Other
-C    &           (/ nsltyp,3 /), order = (/ 2,1 /) ) ! fill columns first
-
-C Since only soilml( nsltyp,1 ) is used, set the following:
-!        real :: soilml1( nsltyp ) =
-!    &           (/ 0.395,     ! Sand
-!    &              0.410,     ! Loamy Sand
-!    &              0.435,     ! Sandy Loam
-!    &              0.485,     ! Silt Loam
-!    &              0.476,     ! Silt
-!    &              0.451,     ! Loam
-!    &              0.420,     ! Sandy Clay Loam
-!    &              0.477,     ! Silty Clay Loam
-!    &              0.476,     ! Clay Loam
-!    &              0.426,     ! Sandy Clay
-!    &              0.482,     ! Silty Clay
-!    &              0.482,     ! Clay
-!    &              0.482 /)   ! Other
-
 C converted to gravimetric [kg/kg]
          real :: soilml1( nsltyp ) =
      &           (/ 0.242,     ! Sand
@@ -886,40 +713,10 @@ C converted to gravimetric [kg/kg]
      &              0.284,     ! Sandy Clay
      &              0.357,     ! Silty Clay
      &              0.344,     ! Clay
-     &              0.363 /)   ! Other
-
-!! FROM NCAR LSM Group 17 Apr 2007   "volumetric"
-!! ALSO in Spyrou, et al. [JGR,2010]
-!        real :: soilml1( nsltyp ) =
-!    &           (/ 0.339,     ! Sand
-!    &              0.421,     ! Loamy Sand
-!    &              0.434,     ! Sandy Loam
-!    &              0.476,     ! Silt Loam
-!    &              0.476,     ! Silt
-!    &              0.439,     ! Loam
-!    &              0.404,     ! Sandy Clay Loam
-!    &              0.464,     ! Silty Clay Loam
-!    &              0.465,     ! Clay Loam
-!    &              0.406,     ! Sandy Clay
-!    &              0.468,     ! Silty Clay
-!    &              0.468,     ! Clay
-!    &              0.482 /)   ! Other
-
-C convert to gravimetric [kg/kg]
-!        real :: soilml1( nsltyp ) =
-!    &           (/ 0.208,     ! Sand
-!    &              0.264,     ! Loamy Sand
-!    &              0.286,     ! Sandy Loam
-!    &              0.344,     ! Silt Loam
-!    &              0.350,     ! Silt
-!    &              0.299,     ! Loam
-!    &              0.266,     ! Sandy Clay Loam
-!    &              0.341,     ! Silty Clay Loam
-!    &              0.324,     ! Clay Loam
-!    &              0.271,     ! Sandy Clay
-!    &              0.347,     ! Silty Clay
-!    &              0.334,     ! Clay
-!    &              0.363 /)   ! Other
+     &              0.329,     ! Organic Material
+     &              0.000,     ! Water
+     &              0.170,     ! BedRock
+     &              0.280 /)   ! Other
 
 C---Soil texture: the amount of
 C   1: Coarse sand, 2: Fine-medium sand, 3: Silt, 4: Clay
@@ -937,8 +734,12 @@ C   in each soil type [Kg/Kg]. from Menut et al. [JGR,2013]
      &              0.00,   0.52,   0.06,   0.42,     ! Sandy Clay
      &              0.00,   0.06,   0.47,   0.47,     ! Silty Clay
      &              0.00,   0.22,   0.20,   0.58,     ! Clay
+     &              0.00,   0.00,   0.00,   0.00,     ! Organic Material
+     &              0.00,   0.00,   0.00,   0.00,     ! Water
+     &              0.00,   0.00,   0.00,   0.00,     ! BedRock
      &              0.00,   0.00,   0.00,   0.00 /),  ! Other
      &           (/ nsltyp,4 /), order = (/ 2,1 /) ) ! fill columns first
+
 
 C---Mean mass median particle diameter (m) for each soil texture type
 C   Chatenet et al. [Sedimentology,1996] and Menut et al. [JGR,2013]
@@ -947,12 +748,10 @@ C   Chatenet et al. [Sedimentology,1996] and Menut et al. [JGR,2013]
      &              210.0E-6,     ! Fine-medium sand
      &              125.0E-6,     ! Silt
      &                2.0E-6 /)   ! Clay
+C---Soil texture vars of the grid cell
+         real :: soiltxt_gcell( ndp )
+         real :: clay, csand, fmsand, sandf, siltf
 
-         interface
-            subroutine tfabove ( tfa )
-               real,    intent( out ) :: tfa( :,: )
-            end subroutine tfabove
-         end interface
 
 #ifdef verbose_wbdust
          integer dryhit
@@ -964,9 +763,9 @@ C-----------------------------------------------------------------------
          if ( firstime ) then
             firstime = .false.
             if ( fengsha ) then
-              dust_alpha = 0.05    ! default
+              dust_alpha = 0.05    ! default 
               dust_alpha = envreal( ctm_wbdust_fengsha_alpha,
-     &          'Emission global scaling factor for FENGSHA dust scheme',
+     &        'Emission global scaling factor for FENGSHA dust scheme',
      &          dust_alpha, status )
               if ( status .ne. 0 ) then
                  xmsg = '*** Failure retrieving FENGSHA scaling factor'
@@ -974,27 +773,24 @@ C-----------------------------------------------------------------------
               end if
               write(xmsg,'("Using FENGSHA alpha = ",g12.5)') dust_alpha
               call m3msg2 ( xmsg )
-            else
-              allocate ( ustr( ncols,nrows,n_dlcat+1 ),
-     &                    qam( ncols,nrows,n_dlcat+1 ),
-     &                   fruf( ncols,nrows,n_dlcat+1 ),
-     &                    kvh( ncols,nrows,n_dlcat+1 ),
-     &                   elus( ncols,nrows,n_dlcat+1 ), stat = status )
-              if ( status .ne. 0 ) then
-                 xmsg = '*** Failure allocating USTR, QAM, FRUF, KVH, or ELUS'
-                 call m3exit( pname, jdate, jtime, xmsg, xstat1 )
-              end if
-            end if
+            else !this is default case
+                allocate ( ustr( ncols,nrows,n_dlcat+1 ),
+     &                  qam( ncols,nrows,n_dlcat+1 ),
+     &                 fruf( ncols,nrows,n_dlcat+1 ),
+     &                  kvh( ncols,nrows,n_dlcat+1 ),
+     &                 elus( ncols,nrows,n_dlcat+1 ), stat = status )
+                if ( status .ne. 0 ) then
+                   xmsg = '*** Failure allocating USTR, QAM, FRUF, KVH, or ELUS'
+                   call m3exit( pname, jdate, jtime, xmsg, xstat1 )
+                end if
+            end if !end fengsha
          end if
-
-C---Calculate transport factor above the canopy
-         call tfabove ( tfa )
 
 C---Select dust scheme
          if ( fengsha ) then
 
-         do r = 1, my_nrows
-         do c = 1, my_ncols
+         do r = 1, nrows
+         do c = 1, ncols
 
             dust_em( c,r ) = 0.0
             soimt( c,r )   = 0.0
@@ -1012,22 +808,22 @@ C    Fecan et al. [1999,Annales Geophys.,17,144-157]
      &              * Met_Data%clayf( c,r )
 
 C Change soil moisture units from volumetric (m**3/m**3) to gravimetric (Kg/Kg)
-               soimt( c,r ) = Met_Data%soim1( c,r ) ! <- [m**3/m**3]
+               soimt( c,r ) = Met_Data%soim1( c,r ) ! <-[m**3/m**3]
      &                      * 1000.0 / ( 2650.0 * ( 0.511 + 0.126
-     &                                          * Met_Data%sandf( c,r ) ) )
+     &                                          * Met_Data%sandf(c,r ) ) )
 
 C---Soil moisture effect on U*t
-               if ( soimt( c,r ) .le. 0.01 * wm ) then   ! wm in [%]
+               if ( soimt( c,r ) .le. 0.01 * wm ) then   ! wm in[%]
                   fmoit( c,r ) = 1.0
                else
-                  fmoit( c,r ) = sqrt( 1.0 + 1.21 * ( 100.0 * soimt( c,r ) - wm ) ** 0.68 )
+                  fmoit( c,r ) = sqrt( 1.0 + 1.21 * ( 100.0 *soimt( c,r ) - wm ) ** 0.68 )
                end if
 
 C Calculate Vertical to Horizontal Mass Flux Ratio
 C -- This is based on MB95
                if ( Met_Data%clayf(c,r) < 0.2) then
                   v2h = 10. ** (13.4 * Met_Data%clayf( c,r ) - 6.0)
-               else
+               else        
                   v2h = 4.0e-4
                endif
 C Horizontal Flux
@@ -1037,20 +833,20 @@ C Horizontal Flux
      &                                     Met_Data%uthr( c,r ),
      &                                     1.0, ! ssm = 1
      &                                     Met_Data%dens1( c,r ) )
-
-               vflux = v2h * hflux         !  [g/m**2/s]
-
-               rlay1hgt = rjacm ( c,r ) / cellhgt
-
-               dust_em( c,r ) = dust_alpha * vflux * rlay1hgt * tfa(c,r) * tfb(c,r)
-
-           end if   ! if rain & land & snow & drag
-
-         end do   ! c
-         end do   ! r
-
-         else     ! default dust scheme
-
+ 
+                vflux = v2h * hflux         !  [g/m**2/s]
+ 
+                rlay1hgt = rjacm ( c,r ) / cellhgt
+ 
+                dust_em( c,r ) = dust_alpha * vflux * rlay1hgt! *tfa(c,r) * tfb(c,r)
+ 
+            end if   ! if rain & land & snow & drag
+ 
+          end do   ! c
+          end do   ! r
+ 
+          else     ! default dust scheme
+  
 C---Get Julian day number in year
          jday = float( mod( jdate,1000 ) )
 
@@ -1083,7 +879,7 @@ C   following the idea of Xi and Sokolik [JGR,2015]
 #endif
 
 C Initialize windblown dust diagnostics output buffer
-         if ( dustem_diag .and. wstep .eq. 0 ) then
+         if ( dustem_diag .and. wstep .eq. 0 .and. .not. l_desid_diag ) then
             dustbf = 0.0   ! array assignment
 #ifdef verbose_wbdust
             sdiagv = 0.0   ! array assignment
@@ -1095,11 +891,20 @@ C set erodible landuse map
             emap( m ) = dmap( m )  ! dmap maps to one of the 3 BELD3 desert types
          end do
          emap( n_dlcat+1 ) = 4
+C   Check PX soil texture data flag and log a message if or if not used in WB dust
+         if(PXSOIL_AVAIL) then
+            CALL LOG_MESSAGE( LOGDEV, '==================  Windblown Dust Message =====================' )
+            CALL LOG_MESSAGE( LOGDEV, '  WRFV4.1+ inputs have extra PX LSM soil texture and props used.' )
+            CALL LOG_MESSAGE( LOGDEV, ' Clay, coarse and fine-medium sand from PX LSM not lookup tables.' )
+         else
+            CALL LOG_MESSAGE( LOGDEV, '==================  Windblown Dust Message =====================' )
+            CALL LOG_MESSAGE( LOGDEV, '   Clay, coarse and fine-medium sand from internal lookup table.' )
+         end if
 
 C --------- ###### Start Main Loop ###### ---------
  
-         do r = 1, my_nrows
-         do c = 1, my_ncols
+         do r = 1, nrows
+         do c = 1, ncols
             dust_em( c,r ) = 0.0
             soimt( c,r )   = 0.0
             fmoit( c,r )   = 0.0   ! for diagnostic output visualization
@@ -1114,8 +919,36 @@ C --------- ###### Start Main Loop ###### ---------
  
             rlay1hgt = rjacm ( c,r ) / cellhgt
 
-C---Vegetation fraction based on the MODIS FPAR
-            vegfrac( c,r ) = max( min( fpar( c,r ), 0.95 ), 0.005 )
+
+C--- Set Clay, coarse and fine/medium sand fractions.
+C--- If value from WRF is missing (-9999.) use old table values
+C--  If value from WRF is from WRFV4.1 PX LSM csand_px, etc use those
+            j = Grid_Data%sltyp( c,r )
+
+            if (.not. WRF_V4P) then
+C    Adjust WRF soil definitions to match internal Menut et al. [JGR,2013] Table
+             if ( j .gt. 4 ) j = j + 1   
+             if ( j .gt. 13 ) j = 13   
+            end if
+
+            if(PXSOIL_AVAIL) then
+              clay   = Grid_Data%clay_px(c,r)
+              csand  = Grid_Data%csand_px(c,r)
+              fmsand = Grid_Data%fmsand_px(c,r)
+            else
+              csand  = soiltxt(j,1)
+              fmsand = soiltxt(j,2)
+              clay   = soiltxt(j,4)
+            end if
+
+            sandf = csand + fmsand
+            siltf = 1.0 - clay - sandf
+
+
+C---Vegetation fraction based on the WRF/MCIP VEG variable. In WRF that would be VEGF_PX
+C-- for the case of PX and VEGFRA in the case of other LSMs. In more recent WRFv4+ versions
+C-- high resolution MODIS veg data is availiable and can be used in PX with pxlsm_modis_veg = 1
+            vegfrac( c,r ) = max( min( Met_Data%veg(c,r), 0.95 ), 0.005)
             vegfree = 1.0 - vegfrac( c,r )
             lambdav = -0.35 * log( vegfree ) ! Shao et al. [Aus. J. Soil Res.,1996]
 
@@ -1132,23 +965,17 @@ C                           7. friction velocity > threshold
      &           ( Met_Data%snocov( c,r ) .lt. 0.001 ) ) then ! less than 0.1% snow coverage
 C---Dust possiblity 1,2,3
 
-               j = Grid_Data%sltyp( c,r )
-
-C kludge (fixed in wrf-px after 4 Mar 11)
-               if ( j .gt. 4 ) j = j + 1   ! PX combines "silt" with "silt loam"
-               if ( j .gt. 13 ) j = 13   ! = ?
 
 C Calculate maximum amount of the adsorbed water
 C    w` = 0.0014(%clay)**2 + 0.17(%clay) - w` in %
 C    Fecan et al. [1999,Annales Geophys.,17,144-157]
-               wmax( c,r ) = ( 14.0 * soiltxt( j,4 ) + 17.0 ) * soiltxt( j,4 )   ! [%]
+               wmax( c,r ) = ( 14.0 *  clay + 17.0 ) * clay   ! [%]
 
 !              write( logdev,'( 2x, a, i8.6, f12.5 )' ) 'max wmax:', jtime, maxval( wmax )
 
 C Change soil moisture units from volumetric (m**3/m**3) to gravimetric (Kg/Kg)
-               soimt( c,r ) = Met_Data%soim1( c,r ) ! <- [m**3/m**3]
-     &                      * 1000.0 / ( 2650.0 * ( 0.511 + 0.126
-     &                                          * ( soiltxt( j,1 ) + soiltxt( j,2 ) ) ) )
+               soimt( c,r ) = Met_Data%soim1( c,r ) 
+     &                      * 1000.0 / ( 2650.0 * ( 0.511 + 0.126 * sandf  ) )
 
                if ( soimt( c,r ) .le. soilml1( j ) ) then
 C---Dust possiblity 4
@@ -1166,9 +993,8 @@ C---Soil moisture effect on U*t
                   end if
 
 C---Erodibility potential of soil component
-                  sd_ep( c,r ) = soiltxt( j,4 ) * eropot( 1 )
-     &                         + soiltxt( j,3 ) * eropot( 2 )
-     &                         + ( soiltxt( j,1 ) + soiltxt( j,2 ) ) * eropot( 3 )
+                  sd_ep( c,r ) = clay * eropot( 1 )
+     &                         + siltf * eropot( 2 ) + sandf * eropot( 3)
 
 C---Lu and Shao [JGR,1999] and Kang et al. [JGR,2011]
 C   First, mapping soil types into 4 main soil types following Kang et al. [JGR,2011]
@@ -1218,7 +1044,6 @@ C   First, mapping soil types into 4 main soil types following Kang et al. [JGR,
                   do m = 1, n_dlcat     ! desert type landuse category
                      elus( c,r,m ) = ladut( c,r,m ) * vegfree   ! desert land [%]
                   end do
-                  elus( c,r,n_dlcat+1 ) = agland( c,r ) * vegfree ! crop land [%]
  
 C ------- Start Loop Over Erodible Landuse ----
  
@@ -1263,8 +1088,12 @@ C---Vert-to-Horiz dust flux ratio : Kang et al. [JGR, 2011] : Eq. (12)
 !                       kvh( c,r,m ) = ( calpha * 9.81 * pfrac * 1000.0 / 2.0 / pp )
 !    &                               * ( 0.24 + 2.09 * ustr( c,r,m ) * sqrt( 2650.0 / pp ) )
                         kvh( c,r,m ) = flxfac1 * ( 0.24 + flxfac2 * ustr( c,r,m ) )
+                        soiltxt_gcell(1) = csand
+                        soiltxt_gcell(2) = fmsand
+                        soiltxt_gcell(3) = siltf
+                        soiltxt_gcell(4) = clay
                         hflux = dust_hflux( ndp, dp,
-     &                                      soiltxt( j,: ),
+     &                                      soiltxt_gcell( : ),
      &                                      fmoit( c,r ),
      &                                      fruf( c,r,m ),
      &                                      ustr( c,r,m ),
@@ -1286,10 +1115,6 @@ C---Vert-to-Horiz dust flux ratio : Kang et al. [JGR, 2011] : Eq. (12)
  
 C ------- End Loop Over Erodible Landuse ----
  
-C Dust removal by surrounding vegetation <-???
-C Adjust dust emissions for transport factors
-
-                  dust_em( c,r ) = dust_em( c,r ) * tfa( c,r ) * tfb( c,r )
 
                end if   ! if soil moisture
             end if   ! if rain & land & snow
@@ -1304,46 +1129,52 @@ C --------- ###### End Main Loop ##### ---------
      &                                          out of total cells:',
      &                                          dryhit, (c-1)*(r-1)
 #endif
+         end if !dust scheme 
 
-         end if  ! dust scheme
-
-         do r = 1, my_nrows
-         do c = 1, my_ncols
+         do r = 1, nrows
+         do c = 1, ncols
 
 C J/K mass emis rate [g/s]  (edust( 1 ) not used)
-            edust( 2 ) = fracmj * dust_em( c,r )
-            edust( 3 ) = fracmk * dust_em( c,r )
+            edust( 1 ) = fracmj * dust_em( c,r )
+            edust( 2 ) = fracmk * dust_em( c,r )
 
-            do v = 1, ndust_spc
-               dustoutm( v,1,c,r ) = 0.0
-            end do
-
-            do n = 2, n_mode
+            do n = 1,2
                do v = 1, ndust_spc
-                  dustoutm( v,n,c,r ) = edust( n ) * dust_spc( v )%spcfac( n )
+                  dustoutm( (n-1)*ndust_spc+v,c,r ) = 
+     &                     edust( n ) * dust_spc( v )%spcfac( n )
                end do
             end do
 
 C J/K 3rd moment emis rate [m3/s] (needed for number and surface)
-            m3j = edust( 2 ) * f6dpi / ( gpkg * dustmode_dens( 2 ) )
-            m3k = edust( 3 ) * f6dpi / ( gpkg * dustmode_dens( 3 ) )
+            m3j = edust( 1 ) * f6dpi / ( gpkg * dust_dens( 1 ) ) + TINY(0.0)
+            m3k = edust( 2 ) * f6dpi / ( gpkg * dust_dens( 2 ) ) + TINY(0.0)
 
 C Mode-specific emission rates of particle number [1/s]
-            dustoutn( 1,c,r ) = 0.0
-            dustoutn( 2,c,r ) = m3j * factnumj
-            dustoutn( 3,c,r ) = m3k * factnumk
+            dustoutn( 1,c,r ) = m3j * factnumj
+            dustoutn( 2,c,r ) = m3k * factnumk
 
 C Mode-specific dry surface area emission rates [m**2/s].
 C 2nd moment multiplied by PI to obtain the surface area emissions rate.
-            dustouts( 1,c,r ) = 0.0
-            dustouts( 2,c,r ) = m3j * factsrfj
-            dustouts( 3,c,r ) = m3k * factsrfk
+            dustouts( 1,c,r ) = m3j * factsrfj
+            dustouts( 2,c,r ) = m3k * factsrfk
+
+! Propagate Number and Surface Area Scaling Factors back to Emissions
+! Module so that the dust emissions can be scaled appropriately            
+            ISD = INDEX1( 'FINE', DESID_STREAM_AERO( IDUSTSRM )%LEN, 
+     &                    DESID_STREAM_AERO( IDUSTSRM )%NAME )
+            DESID_STREAM_AERO( IDUSTSRM )%FACNUM( ISD,2 ) = FACTNUMJ
+            DESID_STREAM_AERO( IDUSTSRM )%FACSRF( ISD,2 ) = FACTSRFJ
+            
+            ISD = INDEX1( 'COARSE', DESID_STREAM_AERO( IDUSTSRM )%LEN, 
+     &                    DESID_STREAM_AERO( IDUSTSRM )%NAME )
+            DESID_STREAM_AERO( IDUSTSRM )%FACNUM( ISD,3 ) = FACTNUMK
+            DESID_STREAM_AERO( IDUSTSRM )%FACSRF( ISD,3 ) = FACTSRFK
 
 #ifdef verbose_wbdust
             if ( m3j .ne. 0.0 ) dusthit = dusthit + 1
 #endif
 
-            if ( dustem_diag ) then
+            if ( dustem_diag .and. .not. l_desid_diag ) then
                do m = 1, n_dlcat+1
                   diagv( m ) = qam( c,r,m )             ! g/m**3/s
                end do
@@ -1379,36 +1210,33 @@ C 2nd moment multiplied by PI to obtain the surface area emissions rate.
                diagv( n+4  ) = vegfrac( c,r )     ! 'Vegetation_Frac '
                diagv( n+5  ) = uland( c,r,3 )     ! 'Urban_Cover     '
                diagv( n+6  ) = uland( c,r,4 )     ! 'Forest_Cover    '
-               diagv( n+7  ) = tfa  ( c,r )       ! 'Trfac_Above_Can '
-               diagv( n+8 )  = tfb  ( c,r )       ! 'Trfac_Inside_Can'
 
-               n = n + 8
+               n = n + 6
 
 ! accum and coarse mode number density emissions
-               diagv( n+1 ) = dustoutn( 2,c,r )
-               diagv( n+2 ) = dustoutn( 3,c,r )
+               diagv( n+1 ) = dustoutn( 1,c,r )
+               diagv( n+2 ) = dustoutn( 2,c,r )
 ! accum and coarse mode surface area density emissions
-               diagv( n+3 ) = dustouts( 2,c,r )
-               diagv( n+4 ) = dustouts( 3,c,r )
+               diagv( n+3 ) = dustouts( 1,c,r )
+               diagv( n+4 ) = dustouts( 2,c,r )
               
                n = n + 4
                m = 0
                do v = 1, ndust_spc
-                  if ( trim( dust_spc( v )%name( 2 ) ) .ne. ' ' ) then  ! accum. mode mass emissions
+                  if ( dust_spc( v )%spcfac( 1 ) .gt. 0. ) then  ! accum. mode mass emissions
                      m = m + 1
-                     diagv( m+n ) = dustoutm( v,2,c,r )
+                     diagv( m+n ) = dustoutm( v,c,r )
                   end if
                end do
 
                do v = 1, ndust_spc
-                  if ( trim( dust_spc( v )%name( 3 ) ) .ne. ' ' ) then  ! coarse mode mass emissions
+                  if ( dust_spc( v )%spcfac( 2 ) .gt. 0. ) then  ! coarse mode mass emissions
                      m = m + 1
-                     diagv( m+n ) = dustoutm( v,3,c,r )
+                     diagv( m+n ) = dustoutm( v+ndust_spc,c,r )
                   end if
                end do
 
                n = n + m
-
 
 C Multiply by sync step because when write to output we divide by the output step
 C to get a timestep average.
@@ -1429,7 +1257,7 @@ C to get a timestep average.
      &                                       dusthit, (c-1)*(r-1)
 #endif
 
-         if ( dustem_diag ) then
+         if ( dustem_diag .and. .not. l_desid_diag ) then
 
 C If last call this hour, write out the windblown dust emissions dignostics.
 C Then reset the emissions array and local write counter.
@@ -1437,7 +1265,7 @@ C Then reset the emissions array and local write counter.
             wstep = wstep + time2sec( tstep( 2 ) )
 
             if ( wstep .ge. time2sec( tstep( 1 ) ) ) then
-               if ( .not. currstep( jdate, jtime, sdate, stime, tstep( 1 ),
+               if ( .not. currstep( jdate, jtime, stdate, sttime, tstep( 1 ),
      &                              mdate, mtime ) ) then
                   xmsg = 'Cannot get step date and time'
                   call m3exit( pname, jdate, jtime, xmsg, xstat3 )
@@ -1457,8 +1285,8 @@ C Then reset the emissions array and local write counter.
                sdiagv = 0.0   ! array assignment
 #endif
                do v = 1, ndust_diag
-                  do r = 1, my_nrows
-                     do c = 1, my_ncols
+                  do r = 1, nrows
+                     do c = 1, ncols
                         wrbuf( c,r ) = dustbf( v,c,r ) / float( wstep )
                      end do
                   end do
@@ -1491,7 +1319,7 @@ C=======================================================================
      &      result( hflux )
 
 C usage: hflux = dust_flux( ndp, dp,
-C                           soiltxt( j,: ),
+C                           soiltxt2( : ),
 C                           fmoit( c,r ),
 C                           fruf( c,r,m ),
 C                           ustr( c,r,m ),
@@ -1547,32 +1375,33 @@ C---Horiz. Flux from Owen (1964)
 
          end function dust_hflux
 
-         function dust_hflux_fengsha( ustar, fmoit, drag, uthr, ssm, dens )
+         function dust_hflux_fengsha( ustar, fmoit, drag, uthr,ssm, dens )
      &      result( hflux )
 
             implicit none
 
             include SUBST_CONST   ! for grav
 
-            real, intent( in ) :: ustar, fmoit, drag, uthr, ssm, dens
+            real, intent( in ) :: ustar, fmoit, drag, uthr, ssm,dens
             real hflux
             real rustar
             real u_sum
             real u_thresh
             real fac
-   
+
             real, parameter :: amen = 1.0 ! Marticorena and Bergametti [JGR,1997]
             real, parameter :: cfac = 1000.0 * amen / grav
 
             fac = cfac * dens
             hflux   = 0.0
-   
-            rustar = ustar * drag 
+
+            rustar = ustar * drag
             u_thresh = uthr * fmoit
             u_sum = rustar * u_thresh
 
-            hflux = max(0., rustar - u_thresh) * u_sum * u_sum * fac * ssm
-
+            hflux = max(0., rustar - u_thresh) * u_sum * u_sum *fac * ssm
+ 
          end function dust_hflux_fengsha
 
       end module dust_emis
+

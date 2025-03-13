@@ -1,6 +1,6 @@
       MODULE PT3D_DEFN
 
-      USE PT3D_DATA_MOD
+      !USE PT3D_DATA_MOD
       USE PT3D_FIRE_DEFN
       USE PT3D_STKS_DEFN
 
@@ -8,31 +8,34 @@
 
       PRIVATE
 
-      PUBLIC PT3DEMIS, NPTGRPS, VDEMIS_PT, VDEMIS_PT_FIRE, PMEMIS_PT,
-     &       PT3D_INIT, GET_PT3D_EMIS
+      PUBLIC PT3D_INIT, GET_PT3D_EMIS !, VDEMIS_PT
+
+      CHARACTER(  16 ), ALLOCATABLE, SAVE :: STKENAME( : )  
 
       CONTAINS
 
-         FUNCTION PT3D_INIT ( N_SPC_EMIS, EMLAYS, JDATE, JTIME, TSTEP )
+         FUNCTION PT3D_INIT ( JDATE, JTIME, TSTEP )
      &      RESULT ( SUCCESS )
 
          USE GRID_CONF                       ! horizontal & vertical domain specifications
-         USE PTMAP
-         USE STK_EMIS, ONLY : STKSPC         ! hourly point source emissions
+         USE STK_EMIS  
+         USE DESID_VARS  
          USE UTILIO_DEFN
+         USE PTBILIN, ONLY: NPTGRPS
+         USE RUNTIME_VARS
 
          IMPLICIT NONE
 
-         INTEGER, INTENT( IN ) :: N_SPC_EMIS ! total no. of model emissions species
-         INTEGER, INTENT( IN ) :: EMLAYS     ! number of emissions layers
+C         INTEGER, INTENT( IN ) :: N_SPC_EMIS ! total no. of model emissions species
+C         INTEGER, INTENT( IN ) :: EMLAYS     ! number of emissions layers
          INTEGER, INTENT( IN ) :: JDATE      ! Julian date (YYYYDDD)
          INTEGER, INTENT( IN ) :: JTIME      ! time (HHMMSS)
          INTEGER, INTENT( IN ) :: TSTEP      ! output time step
 
          ! -- local variables
          INTEGER :: IOS
-         INTEGER :: N, S, V
-         INTEGER, ALLOCATABLE :: MAP( : )
+         INTEGER :: N, ISRM, V
+C         INTEGER, ALLOCATABLE :: MAP( : )
          CHARACTER( 240 )     :: XMSG = ' '
          CHARACTER( 16 )      :: PNAME = 'PT3D_INIT       ' ! procedure name
 
@@ -44,78 +47,59 @@
 
          ! -- In-line 3D point source emissions?
 
-         PT3DEMIS = ENVYN( CTM_PT3DEMIS,
-     &                   'Flag for in-line 3d point source emissions',
-     &                   .FALSE., IOS )
 
-         IF ( PT3DEMIS ) THEN
+         IF ( NPTGRPS .GT. 0 ) THEN
             XMSG = 'Using in-line 3d point source emissions option'
             CALL M3MSG2( XMSG )
          ELSE
             RETURN
          END IF
 
-         ! -- merge PM maps from fire and point-source emissions
 
-         IF ( .NOT. PTMAP_INIT( ) ) THEN
-            XMSG = 'Could not merge point source mappings'
+C Initialize stack emissions data
+         ALLOCATE ( STKENAME( NPTGRPS ), STAT = IOS )   ! stk emis files array
+         CALL CHECKMEM( IOS, 'STKENAME', PNAME )
+         STKENAME = ' '   ! array
+
+         ! Retrive Point Source Filenames from Emissions Filename Vector
+         DO N = 1, NPTGRPS
+            ISRM = MAP_PTtoISRM( N )
+            STKENAME( N ) = DESID_STREAM_NAME( ISRM )
+         END DO
+
+         ! Initialize Point Source Emissions
+         IF ( .NOT. STK_EMIS_INIT( STKENAME, JDATE, JTIME ) ) THEN
+            XMSG = 'Could not initialize stack parameters'
             CALL M3WARN ( PNAME, JDATE, JTIME, XMSG )
             SUCCESS = .FALSE.; RETURN
          END IF
 
-         ! -- initialize emission types
-
-         IF ( .NOT. PT3D_FIRE_INIT ( N_SPC_EMIS, EMLAYS, JDATE, JTIME ) ) THEN
-            XMSG = 'Could not initialize fire emissions'
-            CALL M3WARN ( PNAME, JDATE, JTIME, XMSG )
-            SUCCESS = .FALSE.; RETURN
-         END IF
-
-         IF ( .NOT. PT3D_STKS_INIT ( ) ) THEN
-            XMSG = 'Could not initialize point-source emissions'
-            CALL M3WARN ( PNAME, JDATE, JTIME, XMSG )
-            SUCCESS = .FALSE.; RETURN
-         END IF
-
-         ! -- allocate emission arrays
-
-         ALLOCATE ( VDEMIS_PT( NCOLS, NROWS, EMLAYS, N_SPC_PTEM ), STAT = IOS )
-         CALL CHECKMEM( IOS, 'VDEMIS_PT', PNAME )
-         VDEMIS_PT = 0.0   ! array assignment
-
-         ALLOCATE ( VDEMIS_PT_FIRE( NCOLS, NROWS, EMLAYS, N_SPC_PTEM ), STAT = IOS )
-         CALL CHECKMEM( IOS, 'VDEMIS_PT_FIRE', PNAME )
-         VDEMIS_PT_FIRE = 0.0   ! array assignment
-
-         ALLOCATE ( PMEMIS_PT( NCOLS, NROWS, EMLAYS, N_SPC_PTPM ), STAT = IOS )
-         CALL CHECKMEM( IOS, 'PMEMIS_PT', PNAME )
-         PMEMIS_PT = 0.0   ! array
-
-         ! -- get number of different file groups (sectors)
-
-         NPTGRPS = 0
-
-         ! -- create point source internal array
-
-         ALLOCATE( STKSPC( NPTGRPS ), STAT = IOS )
-         CALL CHECKMEM( IOS, 'STKSPC', PNAME )
 
          END FUNCTION PT3D_INIT
 
 
-         SUBROUTINE GET_PT3D_EMIS ( JDATE, JTIME, TSTEP )
+         SUBROUTINE GET_PT3D_EMIS ( JDATE, JTIME, TSTEP,EMVAR_PT, ISRM,
+     &                              VDEMIS_PT, PTLAYS,L_DESID_DIAG)
 
          INTEGER, INTENT( IN ) :: JDATE, JTIME
          INTEGER, INTENT( IN ) :: TSTEP( 3 )
+         CHARACTER(16), INTENT( IN ) :: EMVAR_PT( : )
+         INTEGER, INTENT( IN ) :: ISRM
+         
+         INTEGER, INTENT( OUT) :: PTLAYS
+         REAL, INTENT(INOUT)  :: VDEMIS_PT( :,:,:,: )
 
-C        ... initialize emission arrays ...
+! Local variables:
+         LOGICAL       :: L_DESID_DIAG ! not really used
 
-         VDEMIS_PT      = 0.0   ! array assignment
-         VDEMIS_PT_FIRE = 0.0   ! array assignment
-         PMEMIS_PT      = 0.0   ! array assignment
 
-         CALL GET_PT3D_FIRE_EMIS ( JDATE, JTIME )
-         CALL GET_PT3D_STKS_EMIS ( JDATE, JTIME )
+         IF (ISRM == 2)  !For Fire 
+     &    CALL GET_PT3D_FIRE_EMIS ( JDATE, JTIME, EMVAR_PT, ISRM,
+     &                             VDEMIS_PT, PTLAYS  )
+         
+         IF (ISRM == 3) !For point-source
+     &    CALL GET_PT3D_STKS_EMIS ( JDATE, JTIME, EMVAR_PT, ISRM,
+     &                             VDEMIS_PT, PTLAYS  )
 
          END SUBROUTINE GET_PT3D_EMIS
 

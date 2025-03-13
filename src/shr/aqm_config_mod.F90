@@ -23,6 +23,9 @@ module aqm_config_mod
     character(len=AQM_MAXSTR) :: csqy_data     = ""
     character(len=AQM_MAXSTR) :: optics_data   = ""
     character(len=AQM_MAXSTR) :: omi           = ""
+    character(len=AQM_MAXSTR) :: desid_chem_ctrl = ""     
+    character(len=AQM_MAXSTR) :: desid_ctrl    = ""      
+    character(len=AQM_MAXSTR) :: misc_ctrl     = ""       
     character(len=AQM_MAXSTR) :: mp_map        = ""
     character(len=AQM_MAXSTR) :: ctm_stdout    = ""
     integer                   :: dy_map_beg    = 0
@@ -42,6 +45,7 @@ module aqm_config_mod
     logical                   :: run_aero      = .false.
     logical                   :: run_rescld    = .false.
     logical                   :: verbose       = .false.
+    logical                   :: canopy_yn     = .false.
     type(aqm_species_type), pointer :: species => null()
   end type aqm_config_type
 
@@ -139,6 +143,33 @@ contains
       rcToReturn=rc)) &
       return  ! bail out
 
+    ! -- DESID_CHEM_CTRL 
+    call ESMF_ConfigGetAttribute(cf, config % desid_chem_ctrl, &
+      label="desid_chem_ctrl:", rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+    ! -- DESID_CTRL 
+    call ESMF_ConfigGetAttribute(cf, config % desid_ctrl, &
+      label="desid_ctrl:", rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+    ! -- MISC_CTRL for ELMO
+    call ESMF_ConfigGetAttribute(cf, config % misc_ctrl, &
+      label="misc_ctrl:", rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
     ! -- read run settings
     call ESMF_ConfigGetAttribute(cf, config % run_aero, &
       label="run_aerosol:", default=.true., rc=localrc)
@@ -197,7 +228,16 @@ contains
       file=__FILE__,  &
       rcToReturn=rc)) &
       return  ! bail out
-    
+
+    ! Canopy Options
+    call ESMF_ConfigGetAttribute(cf, config % canopy_yn, &
+      label="canopy_yn:", default=.false., rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
     call ESMF_ConfigGetAttribute(cf, value, &
       label="ctm_stdout:", default="all", rc=localrc)
     if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -528,6 +568,27 @@ contains
       file=__FILE__,  &
       rcToReturn=rc)) &
       return  ! bail out
+    call ESMF_LogWrite(trim(name) // ": config: read: desid_chem_ctrl: " &
+      // config % desid_chem_ctrl, ESMF_LOGMSG_INFO, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out 
+    call ESMF_LogWrite(trim(name) // ": config: read: desid_ctrl: " &
+      // config % desid_ctrl, ESMF_LOGMSG_INFO, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out 
+    call ESMF_LogWrite(trim(name) // ": config: read: misc_ctrl: " &
+      // config % misc_ctrl, ESMF_LOGMSG_INFO, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out 
     if (config % ctm_aod) then
       call ESMF_LogWrite(trim(name) // ": config: read: ctm_aod: true", &
         ESMF_LOGMSG_INFO, rc=localrc)
@@ -555,6 +616,23 @@ contains
         return  ! bail out
     else
       call ESMF_LogWrite(trim(name) // ": config: read: ctm_wb_dust: false", &
+        ESMF_LOGMSG_INFO, rc=localrc)
+      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__,  &
+        file=__FILE__,  &
+        rcToReturn=rc)) &
+        return  ! bail out
+    end if
+    if (config % canopy_yn) then
+      call ESMF_LogWrite(trim(name) // ": config: read: canopy_yn: true", &
+        ESMF_LOGMSG_INFO, rc=localrc)
+      if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__,  &
+        file=__FILE__,  &
+        rcToReturn=rc)) &
+        return  ! bail out
+    else
+      call ESMF_LogWrite(trim(name) // ": config: read: canopy_yn: false", &
         ESMF_LOGMSG_INFO, rc=localrc)
       if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
         line=__LINE__,  &

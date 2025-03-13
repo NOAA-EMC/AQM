@@ -106,10 +106,8 @@ LOGICAL FUNCTION DESC3( FNAME )
   STIME3D = 0
   TSTEP3D = 0
 
-  IF ( (TRIM(FNAME) .EQ. TRIM(INIT_GASC_1)) .OR. &
-       (TRIM(FNAME) .EQ. TRIM(INIT_AERO_1)) .OR. &
-       (TRIM(FNAME) .EQ. TRIM(INIT_NONR_1)) .OR. &
-       (TRIM(FNAME) .EQ. TRIM(INIT_TRAC_1)) ) THEN
+  !!Replace INIT_GASC,AERO,NONR,TRAC to INIT_CONC_1 
+  IF ( (TRIM(FNAME) .EQ. TRIM(INIT_CONC_1)) ) THEN
 
     ! -- Input initial background values for the following species
     NVARS3D = 3
@@ -126,18 +124,30 @@ LOGICAL FUNCTION DESC3( FNAME )
 
     call aqm_emis_desc("biogenic", NLAYS3D, NVARS3D, VNAME3D, UNITS3D)
 
-  ELSE IF ( TRIM( FNAME ) .EQ. TRIM( EMIS_1 ) ) THEN
-
+! EMIS_1 is not used anymore. Change to other env variables.
+  ELSE IF ( TRIM( FNAME ) .EQ. 'GR_EMIS_001' ) THEN
     NLAYS3D = 0
-
-    call aqm_emis_desc("gbbepx",        NLAYS=EMLAYS)
-    NLAYS3D = MAX(EMLAYS, NLAYS3D)
-
-    call aqm_emis_desc("point-source",  NLAYS=EMLAYS)
-    NLAYS3D = MAX(EMLAYS, NLAYS3D)
-
     call aqm_emis_desc("anthropogenic", NLAYS=EMLAYS, NVARS=NVARS3D, VNAMES=VNAME3D, UNITS=UNITS3D)
     NLAYS3D = MAX(EMLAYS, NLAYS3D)
+    !This is to add the TSTEP3D for ratio calculation in interpolate_var function
+    call aqm_model_get(config=config, rc=localrc)
+    if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
+      file=__FILE__, line=__LINE__)) return
+
+    SDATE3D = config % ctm_stdate
+    STIME3D = config % ctm_sttime
+    TSTEP3D = config % ctm_tstep
+
+  ELSE IF ( TRIM( FNAME ) .EQ. 'STK_EMIS_001' ) THEN   !fire stream
+    NLAYS3D = 0
+    call aqm_emis_desc("gbbepx", NLAYS=EMLAYS,NVARS=NVARS3D, VNAMES=VNAME3D, UNITS=UNITS3D, NPOINTS=NROWS3D)
+    NLAYS3D = MAX(EMLAYS, NLAYS3D)
+
+  ELSE IF ( TRIM( FNAME ) .EQ. 'STK_EMIS_002' ) THEN   !STKS stream
+    NLAYS3D = 0
+    call aqm_emis_desc("point-source", NLAYS=EMLAYS,NVARS=NVARS3D, VNAMES=VNAME3D, UNITS=UNITS3D,NPOINTS=NROWS3D)
+    NLAYS3D = MAX(EMLAYS, NLAYS3D)
+
 
   ELSE IF ( TRIM( FNAME ) .EQ. TRIM( GRID_DOT_2D ) ) THEN
     NVARS3D = 1
@@ -162,7 +172,7 @@ LOGICAL FUNCTION DESC3( FNAME )
 
   ELSE IF ( TRIM( FNAME ) .EQ. TRIM( MET_CRO_2D ) ) THEN
 
-    NVARS3D = 35
+    NVARS3D = 44
     VNAME3D( 1:NVARS3D ) = &
     (/ 'PRSFC           ', 'USTAR           ',            &
        'WSTAR           ', 'PBL             ',            &
@@ -180,6 +190,11 @@ LOGICAL FUNCTION DESC3( FNAME )
        'SEAICE          ', 'SOIM1           ',            &
        'SOIM2           ', 'SOIT1           ',            &
        'SOIT2           ', 'LH              ',            &
+       'FCH             ', 'FRT             ',            &
+       'CLU             ', 'POPU            ',            &
+       'LAIE            ', 'C1R             ',            &
+       'C2R             ', 'C3R             ',            &
+       'C4R             ',                                &
        'CLAYF           ', 'SANDF           ',            &
        'DRAG            ', 'UTHR            ' /)
     UNITS3D( 1:NVARS3D ) = &
@@ -199,6 +214,11 @@ LOGICAL FUNCTION DESC3( FNAME )
        'FRACTION        ', 'M**3/M**3       ',            &
        'M**3/M**3       ', 'K               ',            &
        'K               ', 'WATTS/M**2      ',            &
+       'M               ', 'NO UNIT         ',            &
+       'NO UNIT         ', 'PEOPLE/KM**2    ',            &
+       'NO UNIT         ', 'NO UNIT         ',            &
+       'NO UNIT         ', 'NO UNIT         ',            &
+       'NO UNIT         ',                                &
        '1               ', '1               ',            &
        '1               ', 'M/S             ' /)
 
@@ -209,7 +229,7 @@ LOGICAL FUNCTION DESC3( FNAME )
     SDATE3D = config % ctm_stdate
     STIME3D = config % ctm_sttime
     TSTEP3D = config % ctm_tstep
-
+    
   ELSE IF ( TRIM( FNAME ) .EQ. TRIM( MET_CRO_3D ) ) THEN
 
     CALL aqm_model_domain_get(nl=NLAYS3D, rc=localrc)
@@ -369,6 +389,8 @@ logical function envyn(name, description, defaultval, status)
               aqm_emis_ispresent("point-source")
     case ('CTM_GRAV_SETL')
       envyn = .false.
+    case ('CTM_CANOPY_SHADE')
+      envyn = config % canopy_yn
     case ('CTM_WBDUST_FENGSHA')
       envyn = aqm_emis_ispresent("fengsha")
     case ('CTM_WB_DUST')
@@ -555,8 +577,11 @@ subroutine nameval(name, eqname)
   integer :: deCount, localrc
   type(aqm_config_type), pointer :: config
   type(aqm_internal_emis_type), pointer :: em
+  !INTEGER,         EXTERNAL :: SETUP_LOGDEV
+  !INTEGER, SAVE :: LOGDEV
 
   ! -- begin
+  !LOGDEV = SETUP_LOGDEV()
   eqname = ""
 
   nullify(config)
@@ -577,6 +602,12 @@ subroutine nameval(name, eqname)
       eqname = config % tr_matrix_nml
     case ('CSQY_DATA')
       eqname = config % csqy_data
+    case ('MISC_CTRL')
+      eqname = config % misc_ctrl
+    case ('DESID_CTRL')
+      eqname = config % desid_ctrl
+    case ('DESID_CHEM_CTRL')
+      eqname = config % desid_chem_ctrl
     case ('GSPRO')
       nullify(em)
       em => aqm_emis_get("biogenic")
@@ -651,18 +682,20 @@ logical function interpx( fname, vname, pname, &
     if (aqm_rc_check(localrc, msg="Failure to retrieve grid coordinates", &
       file=__FILE__, line=__LINE__)) return
 
-    if (vname(1:7) == 'LUFRAC_') then
-      lu_index = 0
-      read(vname(8:9), *, iostat=localrc) lu_index
-      if (aqm_rc_test(localrc /= 0, msg="Failure to identify LU_INDEX", &
-        file=__FILE__, line=__LINE__)) return
-      k = 0
-      do r = row0, row1
-        do c = col0, col1
-          k = k + 1
-          if (int(stateIn % stype(c,r)) == lu_index) buffer(k) = 1.0
+    if (len(vname) > 7 ) then
+      if (vname(1:7) == 'LUFRAC_') then
+        lu_index = 0
+        read(vname(8:9), *, iostat=localrc) lu_index
+        if (aqm_rc_test(localrc /= 0, msg="Failure to identify LU_INDEX", &
+          file=__FILE__, line=__LINE__)) return
+        k = 0
+        do r = row0, row1
+          do c = col0, col1
+            k = k + 1
+            if (int(stateIn % vtype(c,r)) == lu_index) buffer(k) = 1.0
+          end do
         end do
-      end do
+      end if
     else
       select case (trim(vname))
         case ('HT')
@@ -692,6 +725,14 @@ logical function interpx( fname, vname, pname, &
           end do
         case ('MSFX2')
           buffer(1:lbuf) = 1.
+        case ('DLUSE')
+          k = 0
+          do r = row0, row1
+            do c = col0, col1
+              k = k + 1
+              buffer(k) = stateIn % vtype(c,r) ! Assign vtype to DLUSE
+            end do
+          end do
         case ('PURB')
         case default
           return
@@ -804,11 +845,21 @@ logical function interpx( fname, vname, pname, &
          end do
         end do
       case ("CLAYF","DRAG","SANDF","UTHR")
-        ! -- read in fengsha variables
+        ! -- fengsha variables
         call aqm_emis_read("fengsha", vname, buffer, rc=localrc)
         if (aqm_rc_test((localrc /= 0), &
           msg="Failure to read fengsha input for " // vname, &
           file=__FILE__, line=__LINE__)) return
+      case ("FCH","FRT","CLU","POPU","LAIE","C1R","C2R","C3R","C4R")
+        ! -- canopy variables
+        if (config % canopy_yn) then
+          call aqm_emis_read("canopy", vname, buffer, rc=localrc)
+          if (aqm_rc_test((localrc /= 0), &
+            msg="Failure to read canopy input for " // vname, &
+            file=__FILE__, line=__LINE__)) return
+        else
+          buffer(1:lbuf) = 0.
+        end if
       case default
     !   return
     end select
@@ -835,13 +886,14 @@ logical function interpx( fname, vname, pname, &
         return
     end select
 
-  else if (trim(fname) == trim(EMIS_1)) then
-
+! EMIS_1 is not used anymore. Change to other env variables. 
+  else if ( trim(fname) .EQ. 'GR_EMIS_001') then
     ! -- read in emissions
     call aqm_emis_read("anthropogenic", vname, buffer, rc=localrc)
     if (aqm_rc_test((localrc /= 0), &
       msg="Failure to read emissions for " // vname, &
       file=__FILE__, line=__LINE__)) return
+
 
   else if (trim(fname) == trim(MET_CRO_3D)) then
 
@@ -1024,12 +1076,15 @@ LOGICAL FUNCTION  XTRACT3 ( FNAME, VNAME,                           &
                             LAY0, LAY1, ROW0, ROW1, COL0, COL1,     &
                             JDATE, JTIME, BUFFER )
 
-  use aqm_types_mod, only : AQM_KIND_R4
-  use aqm_model_mod, only : aqm_state_type, aqm_model_get
+  use aqm_types_mod, only : AQM_KIND_R4, AQM_KIND_R8, AQM_MAXSTR
+  use aqm_model_mod, only : aqm_config_type,aqm_state_type, &
+                            aqm_model_get, aqm_model_domain_get
   use aqm_rc_mod,    only : aqm_rc_check, aqm_rc_test
   use aqm_const_mod, only : con_mr2ppm_o3, thrs_p_strato
   use aqm_emis_mod,  only : aqm_emis_read
   use aqm_config_mod
+  use aqm_const_mod, only : eps1, grav, onebg, rdgas
+  USE M3UTILIO,      ONLY : M3MESG
 
   implicit none
 
@@ -1048,20 +1103,32 @@ LOGICAL FUNCTION  XTRACT3 ( FNAME, VNAME,                           &
 
   ! -- local variables
   integer :: localrc
-  integer :: c, r, l, k, lbuf, lu_index
+  integer :: c, r, l, k, n, nl, lbuf, lu_index
   type(aqm_config_type),  pointer :: config
   type(aqm_state_type),   pointer :: stateIn
 
+  !add from interpx
+  logical :: set_non_neg
+  character(len=16)         :: varname
+  character(len=AQM_MAXSTR) :: msgString
+  real(AQM_KIND_R8), dimension(:,:),   pointer     :: lat, lon
+  real(AQM_KIND_R8), dimension(:,:),   pointer     :: p2d
+  real(AQM_KIND_R8), dimension(:,:,:), pointer     :: p3d
+
   include SUBST_FILES_ID
+  logical, parameter :: debug = .true.
+
 
   ! -- begin
-
+  nullify(p2d)
+  nullify(p3d)
   nullify(config)
   nullify(stateIn)
+  set_non_neg = .false.
 
   lbuf = (LAY1-LAY0+1)*(ROW1-ROW0+1)*(COL1-COL0+1)
   BUFFER(1:lbuf) = 0.
-  XTRACT3 = .TRUE.
+  XTRACT3 = .FALSE.  
 
   IF (TRIM(FNAME) == TRIM(GRID_CRO_2D)) THEN
 
@@ -1069,22 +1136,362 @@ LOGICAL FUNCTION  XTRACT3 ( FNAME, VNAME,                           &
     if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
       file=__FILE__, line=__LINE__)) return
 
-    if (vname(1:7) == 'LUFRAC_') then
-      if (aqm_rc_test((LAY0.NE.1).OR.(LAY1.NE.1), &
-        msg=TRIM(VNAME)//" is 2D. LAY0 and LAY1 must be 1", &
-        file=__FILE__, line=__LINE__)) return
-      lu_index = 0
-      read(vname(8:), *, iostat=localrc) lu_index
-      if (aqm_rc_test(localrc /= 0, msg="Failure to identify LU_INDEX", &
-        file=__FILE__, line=__LINE__)) return
-      k = 0
-      do r = row0, row1
-        do c = col0, col1
-          k = k + 1
-          if (int(stateIn % stype(c,r)) == lu_index) buffer(k) = 1.0
+    call aqm_model_domain_get(lon=lon, lat=lat, rc=localrc)
+    if (aqm_rc_check(localrc, msg="Failure to retrieve grid coordinates", &
+      file=__FILE__, line=__LINE__)) return
+
+!    if (vname(1:7) == 'LUFRAC_') then
+!      if (aqm_rc_test((LAY0.NE.1).OR.(LAY1.NE.1), &
+!        msg=TRIM(VNAME)//" is 2D. LAY0 and LAY1 must be 1", &
+!        file=__FILE__, line=__LINE__)) return
+!      lu_index = 0
+!      read(vname(8:), *, iostat=localrc) lu_index
+!      if (aqm_rc_test(localrc /= 0, msg="Failure to identify LU_INDEX", &
+!        file=__FILE__, line=__LINE__)) return
+!      k = 0
+!      do r = row0, row1
+!        do c = col0, col1
+!          k = k + 1
+!          if (int(stateIn % stype(c,r)) == lu_index) buffer(k) = 1.0
+!        end do
+!      end do
+!    end if
+
+    if (len(vname) > 7) then
+      if (vname(1:7) == 'LUFRAC_') then
+        lu_index = 0
+        read(vname(8:9), *, iostat=localrc) lu_index
+        if (aqm_rc_test(localrc /= 0, msg="Failure to identify LU_INDEX", &
+          file=__FILE__, line=__LINE__)) return
+        k = 0
+        do r = row0, row1
+          do c = col0, col1
+            k = k + 1
+            if (int(stateIn % stype(c,r)) == lu_index) buffer(k) = 1.0
+            if ( (int(stateIn % stype(c,r)) == 0) .and. (lu_index == 17)) buffer(k) = 1.0
+          end do
         end do
-      end do
+      end if
+    else
+      select case (trim(vname))
+        case ('HT')
+          p2d => stateIn % ht
+        case ('LAT')
+          p2d => lat
+        case ('LON')
+          k = 0
+          do r = row0, row1
+            do c = col0, col1
+              k = k + 1
+              if (lon(c,r) > 180.) then
+                buffer(k) = lon(c,r) - 360.
+              else
+                buffer(k) = lon(c,r)
+              end if
+            end do
+          end do
+        case ('LWMASK')
+          k = 0
+          do r = row0, row1
+           do c = col0, col1
+             k = k + 1
+             buffer(k) = stateIn % slmsk(c,r)
+             if (nint(buffer(k)) == 2) buffer(k) = 0.  ! set sea ice points as water
+           end do
+          end do
+        case ('MSFX2')
+          buffer(1:lbuf) = 1.
+        case ('PURB')
+        case default
+          return
+      end select
     end if
+
+  ELSE IF (trim(fname) == trim(MET_CRO_2D)) THEN
+    
+    call aqm_model_get(stateIn=stateIn, rc=localrc)
+    if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
+      file=__FILE__, line=__LINE__)) return
+
+    call aqm_model_get(config=config, stateIn=stateIn, rc=localrc)
+    if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
+      file=__FILE__, line=__LINE__)) return
+
+    select case (trim(vname))
+      case ("HFX")
+        p2d => stateIn % hfx
+      case ("LAI")
+        p2d => stateIn % xlai
+      case ("LH")
+        p2d => stateIn % lh
+      case ("PRSFC")
+        p2d => stateIn % psfc
+      case ("PBL")
+        p2d => stateIn % hpbl
+      case ("Q2")
+        p2d => stateIn % q2m
+      case ("RADYNI")
+        p2d => stateIn % cmm
+      case ("RSTOMI")
+        k = 0
+        do r = row0, row1
+         do c = col0, col1
+           k = k + 1
+           if ( stateIn % rc(c,r) /= 0.0 ) buffer(k) = 1.0 / stateIn % rc(c,r)
+         end do
+        end do
+      case ("RA")
+        k = 0
+        do r = row0, row1
+         do c = col0, col1
+           k = k + 1
+           buffer(k) = sqrt(stateIn % uwind(c,r,1) * stateIn % uwind(c,r,1) +  &
+                            stateIn % vwind(c,r,1) * stateIn % vwind(c,r,1)) / &
+                       ( stateIn % ustar(c,r) * stateIn % ustar(c,r) )
+         end do
+        end do
+      case ("RS")
+        p2d => stateIn % rc
+      case ("RC")
+        k = 0
+        do r = row0, row1
+         do c = col0, col1
+           k = k + 1
+           buffer(k) = 100. * stateIn % rainc(c,r)
+         end do
+        end do
+      case ("RGRND")
+        p2d => stateIn % rgrnd
+      case ("RN")
+        k = 0
+        do r = row0, row1
+         do c = col0, col1
+           k = k + 1
+           buffer(k) = 100. * (stateIn % rain(c,r) - stateIn % rainc(c,r))
+         end do
+        end do
+        set_non_neg = .true.
+      case ("SEAICE")
+        p2d => stateIn % fice
+      case ("SLTYP")
+        p2d => stateIn % stype
+      case ("SNOCOV")
+        p2d => stateIn % sncov
+      case ("SOIM1")
+        p2d => stateIn % smois(:,:,1)
+      case ("SOIM2")
+        p2d => stateIn % smois(:,:,2)
+      case ("SOIT1")
+        p2d => stateIn % stemp(:,:,1)
+      case ("SOIT2")
+        p2d => stateIn % stemp(:,:,2)
+      case ("TEMPG")
+        p2d => stateIn % tsfc
+      case ("TEMP2")
+        p2d => stateIn % t2m
+      case ("USTAR")
+        p2d => stateIn % ustar
+      case ("VEG")
+        p2d => stateIn % vfrac
+      case ("WR")
+        p2d => stateIn % wr
+      case ("WSPD10")
+        k = 0
+        do r = row0, row1
+         do c = col0, col1
+           k = k + 1
+           buffer(k) = sqrt(stateIn % u10m(c,r) * stateIn % u10m(c,r) &
+                          + stateIn % v10m(c,r) * stateIn % v10m(c,r))
+         end do
+        end do
+      case ("ZRUF")
+        k = 0
+        do r = row0, row1
+         do c = col0, col1
+           k = k + 1
+           buffer(k) = 0.01 * stateIn % zorl(c,r)
+         end do
+        end do
+      case ("CLAYF","DRAG","SANDF","UTHR")
+        ! -- fengsha variables
+        call aqm_emis_read("fengsha", vname, buffer, rc=localrc)
+        if (aqm_rc_test((localrc /= 0), &
+          msg="Failure to read fengsha input for " // vname, &
+          file=__FILE__, line=__LINE__)) return
+      case ("FCH","FRT","CLU","POPU","LAIE","C1R","C2R","C3R","C4R")
+        ! -- canopy variables
+        if (config % canopy_yn) then
+          call aqm_emis_read("canopy", vname, buffer, rc=localrc)
+          if (aqm_rc_test((localrc /= 0), &
+            msg="Failure to read canopy input for " // vname, &
+            file=__FILE__, line=__LINE__)) return
+        else
+          buffer(1:lbuf) = 0.
+        end if
+      case default
+    !   return
+    end select
+
+  ELSE IF (trim(fname) == trim(OCEAN_1))  THEN
+    select case (trim(vname))
+      case ("OPEN")
+        call aqm_model_get(stateIn=stateIn, rc=localrc)
+        if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
+          file=__FILE__, line=__LINE__)) return
+        ! -- set to complement to land mask
+        k = 0
+        do r = row0, row1
+         do c = col0, col1
+           k = k + 1
+           buffer(k) = 1.0 - stateIn % slmsk(c,r)
+           if (nint(stateIn % slmsk(c,r)) == 2) buffer(k) = 1.0  ! set sea ice points as water
+         end do
+        end do
+      case ("SURF")
+        ! -- zero
+      case default
+        return
+    end select
+
+  ! EMIS_1 is not used anymore. Change to other env variables. 
+  ELSE IF ( trim(fname) .EQ. 'GR_EMIS_001') then
+    ! -- read in emissions
+    call aqm_emis_read("anthropogenic", vname, buffer, rc=localrc)
+    if (aqm_rc_test((localrc /= 0), &
+      msg="Failure to read emissions for " // vname, &
+      file=__FILE__, line=__LINE__)) return
+
+  ELSE IF (trim(fname) == trim(MET_CRO_3D)) THEN
+
+    call aqm_model_get(config=config, stateIn=stateIn, rc=localrc)
+    if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
+      file=__FILE__, line=__LINE__)) return
+
+    select case (trim(vname))
+      case ("JACOBF")
+        call aqm_model_domain_get(nl=nl, rc=localrc)
+        if (aqm_rc_check(localrc, msg="Failure to retrieve model coordinates", &
+          file=__FILE__, line=__LINE__)) return
+        k = 0
+        do l = lay0, lay1
+          n = min(l + 1, nl)
+          do r = row0, row1
+            do c = col0, col1
+              k = k + 1
+              buffer(k) = onebg * (stateIn % phil(c,r,n) - stateIn % phil(c,r,n-1))
+            end do
+          end do
+        end do
+      case ("JACOBM")
+        k = 0
+        do l = lay0, lay1
+          do r = row0, row1
+            do c = col0, col1
+              k = k + 1
+              buffer(k) = onebg * (stateIn % phii(c,r,l+1) - stateIn % phii(c,r,l))
+            end do
+          end do
+        end do
+      case ("DENS")
+        k = 0
+        do l = lay0, lay1
+          do r = row0, row1
+            do c = col0, col1
+              k = k + 1
+              buffer(k) = stateIn % prl(c,r,l) / ( rdgas * stateIn % temp(c,r,l) )
+            end do
+          end do
+        end do
+      case ("DENSA_J")
+        k = 0
+        do l = lay0, lay1
+          do r = row0, row1
+            do c = col0, col1
+              k = k + 1
+              ! -- rho
+              buffer(k) = stateIn % prl(c,r,l) / ( rdgas * stateIn % temp(c,r,l) )
+              ! -- Jacobian
+              buffer(k) = buffer(k) &
+                          * onebg * (stateIn % phii(c,r,l+1) - stateIn % phii(c,r,l))
+            end do
+          end do
+        end do
+      case ("PRES")
+        p3d => stateIn % prl
+      case ("PRESF")
+        p3d => stateIn % pri
+      case ("CFRAC_3D")
+        p3d => stateIn % cldfl
+      case ("PV")
+        buffer(1:lbuf) = 1.0
+      case ("QV")
+        p3d => stateIn % tr(:,:,:,config % species % p_atm_qv)
+        set_non_neg = .true.
+      case ("QC")
+        p3d => stateIn % tr(:,:,:,config % species % p_atm_qc)
+        set_non_neg = .true.
+      case ("QR")
+        if (config % species % p_atm_qr > 0) then
+          p3d => stateIn % tr(:,:,:,config % species % p_atm_qr)
+          set_non_neg = .true.
+        end if
+      case ("QI")
+        if (config % species % p_atm_qi > 0) then
+          p3d => stateIn % tr(:,:,:,config % species % p_atm_qi)
+          set_non_neg = .true.
+        end if
+      case ("QS")
+        if (config % species % p_atm_qs > 0) then
+          p3d => stateIn % tr(:,:,:,config % species % p_atm_qs)
+          set_non_neg = .true.
+        end if
+      case ("QG")
+        if (config % species % p_atm_qg > 0) then
+          p3d => stateIn % tr(:,:,:,config % species % p_atm_qg)
+          set_non_neg = .true.
+        end if
+      case ("UWINDA")
+        p3d => stateIn % uwind
+      case ("VWINDA")
+        p3d => stateIn % vwind
+      case ("ZF")
+        k = 0
+        do l = lay0, lay1
+          do r = row0, row1
+            do c = col0, col1
+              k = k + 1
+              buffer(k) = onebg * stateIn % phii(c,r,l+1)
+            end do
+          end do
+        end do
+        set_non_neg = .true.
+      case ("ZH")
+        k = 0
+        do l = lay0, lay1
+          do r = row0, row1
+            do c = col0, col1
+              k = k + 1
+              buffer(k) = onebg * stateIn % phil(c,r,l)
+            end do
+          end do
+        end do
+        set_non_neg = .true.
+      case ("TA")
+        p3d => stateIn % temp
+      case default
+        ! set to 0
+    end select
+
+  else if (trim(fname) == trim(MET_DOT_3D)) then
+
+    select case (trim(vname))
+      case ("UWINDC")
+        ! u-wind is on C grid, while imported wind component are on A grid
+        ! this needs to be fixed
+        ! set to 0 for now
+      case ("VWINDC")
+        ! set to 0 for now
+    end select
 
   ELSE IF (TRIM(FNAME) .EQ. 'MODIS_FPAR') THEN
 
@@ -1107,8 +1514,8 @@ LOGICAL FUNCTION  XTRACT3 ( FNAME, VNAME,                           &
       end do
 
     END IF
-
-  ELSE IF ( TRIM(FNAME) .EQ. TRIM(INIT_GASC_1) ) THEN
+  !!Replace INIT_GASC,AERO,NONR,TRAC to INIT_CONC_1
+  ELSE IF ( TRIM(FNAME) .EQ. TRIM(INIT_CONC_1) ) THEN
 
     ! -- initialize gas-phase species (ppmV)
     SELECT CASE (TRIM(VNAME))
@@ -1144,6 +1551,43 @@ LOGICAL FUNCTION  XTRACT3 ( FNAME, VNAME,                           &
       file=__FILE__, line=__LINE__)) return
 
   END IF
+
+  !!interpx
+  if (associated(p2d)) then
+    k = 0
+    do r = row0, row1
+      do c = col0, col1
+        k = k + 1
+        buffer(k) = p2d(c,r)
+      end do
+    end do
+  else if (associated(p3d)) then
+    k = 0
+    do l = lay0, lay1
+      do r = row0, row1
+        do c = col0, col1
+          k = k + 1
+          buffer(k) = p3d(c,r,l)
+        end do
+      end do
+    end do
+  end if
+
+  if (set_non_neg) buffer(1:lbuf) = max( 0., buffer(1:lbuf) )
+
+  XTRACT3 = .TRUE.
+
+  call aqm_model_get(config=config, rc=localrc)
+  if (aqm_rc_check(localrc, msg="Failure to retrieve model configuration", &
+    file=__FILE__, line=__LINE__)) return
+
+  if (config % verbose) then
+    varname = vname
+    write(msgString, '(a,": interpx: ",a16,": ",a16,": min/max = ",2g20.8)') &
+      trim(config % name), fname, varname, &
+      minval(buffer(1:lbuf)), maxval(buffer(1:lbuf))
+    call m3mesg(msgString)
+  end if
 
 END FUNCTION  XTRACT3
 
@@ -1205,25 +1649,30 @@ LOGICAL FUNCTION WRITE3_REAL2D( FNAME, VNAME, JDATE, JTIME, BUFFER )
   type(aqm_state_type), pointer :: stateOut
 
   WRITE3_REAL2D = .TRUE.
+!move to WRITE3_REAL4D below since we specify all model layers in CMAQ_Control_Misc.nml. 
+!  IF ( TRIM( FNAME ) .EQ. TRIM( CTM_ELMO_1 ) ) THEN
+!  IF ( TRIM( FNAME ) .EQ. TRIM( CTM_DEPV_DIAG ) ) THEN  !test depv
+!  IF ( TRIM( FNAME ) .EQ. TRIM( CTM_DRY_DEP_1 ) ) THEN  !test depv
+!  IF ( TRIM( FNAME ) .EQ. TRIM( CTM_DUST_EMIS_1 ) ) THEN  !test emis dust
+!    WRITE3_REAL2D = .FALSE.
 
-  IF ( TRIM( FNAME ) .EQ. TRIM( CTM_AOD_1 ) ) THEN
+!    IF ( TRIM( VNAME ) .EQ. TRIM( ALLVAR3 ) ) THEN
+!    IF ( TRIM( VNAME ) .EQ. 'VMASSJ' ) THEN
+!    IF ( TRIM( VNAME ) .EQ. 'ASOIL' ) THEN  !DDEP
+!     IF ( TRIM( VNAME ) .EQ. 'PMCOARSE_SOIL' ) THEN  !emission
 
-    WRITE3_REAL2D = .FALSE.
+!      nullify(stateOut)
+!      call aqm_model_get(stateOut=stateOut, rc=localrc)
+!      if (aqm_rc_check(localrc, msg="Failure to retrieve model output state", &
+!        file=__FILE__, line=__LINE__)) return
 
-    IF ( TRIM( VNAME ) .EQ. TRIM( ALLVAR3 ) ) THEN
+!      stateOut % aod = BUFFER
 
-      nullify(stateOut)
-      call aqm_model_get(stateOut=stateOut, rc=localrc)
-      if (aqm_rc_check(localrc, msg="Failure to retrieve model output state", &
-        file=__FILE__, line=__LINE__)) return
+!    END IF
 
-      stateOut % aod = BUFFER
+!    WRITE3_REAL2D = .TRUE.
 
-    END IF
-
-    WRITE3_REAL2D = .TRUE.
-
-  END IF
+!  END IF
 
 END FUNCTION WRITE3_REAL2D
 
@@ -1248,11 +1697,11 @@ LOGICAL FUNCTION WRITE3_REAL4D( FNAME, VNAME, JDATE, JTIME, BUFFER )
   type(aqm_state_type),  pointer :: stateOut
   type(aqm_config_type), pointer :: config
 
-  integer, parameter :: p_pm25at = 23
+  integer, parameter :: p_pm25at = 1   !(change from 23)
 
   WRITE3_REAL4D = .TRUE.
-
-  IF ( TRIM( FNAME ) .EQ. TRIM( CTM_PMDIAG_1 ) ) THEN
+!CTM_PMDIAG_1 seems to be removed. Use CTM_ELMO_1.
+  IF ( TRIM( FNAME ) .EQ. TRIM( CTM_ELMO_1 ) ) THEN
 
     WRITE3_REAL4D = .FALSE.
 
@@ -1268,6 +1717,8 @@ LOGICAL FUNCTION WRITE3_REAL4D( FNAME, VNAME, JDATE, JTIME, BUFFER )
         stateOut % tr(:,:,:,config % species % p_diag_beg + s) = &
           buffer(:,:,:,p_pm25at + s)
       end do
+      ! add AOD here; point to the 4th species in ELMO_INST 
+      stateOut % aod = BUFFER(:,:,1,4)
 
     END IF
 

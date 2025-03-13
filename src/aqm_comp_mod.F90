@@ -12,6 +12,10 @@ module aqm_comp_mod
   use aqm_prod_mod
   use aqm_internal_mod
   use cmaq_model_mod
+  USE CENTRALIZED_IO_MODULE !(CMAQ)
+  USE ELMO_PROC  !(CMAQ)
+  USE RUNTIME_VARS, ONLY: STDATE, STTIME !(CMAQ)
+
 
   implicit none
 
@@ -147,6 +151,7 @@ contains
     type(ESMF_Time)         :: currTime
     type(ESMF_TimeInterval) :: timeStep
     type(aqm_config_type), pointer :: config => null()
+    logical, save :: first_step = .true.   !(add new)
 
     ! -- begin
     rc = ESMF_SUCCESS
@@ -176,8 +181,11 @@ contains
       return  ! bail out
 
     ! -- set model internal timestep vector (HHMMSS)
-    tstep( 1 ) = config % ctm_tstep         ! TSTEP(1) = local output step
-    tstep( 2 ) = tstep( 1 )                 ! TSTEP(2) = sciproc sync. step (chem)
+    !tstep( 1 ) = config % ctm_tstep         ! TSTEP(1) = local output step
+    !tstep( 2 ) = tstep( 1 )                 ! TSTEP(2) = sciproc sync. step (chem)
+    !test different tstep(1) and tstep(2)
+    tstep( 1 ) = 1 * 10000                  ! TSTEP(1) = local output step 
+    tstep( 2 ) = config % ctm_tstep         ! TSTEP(2) = sciproc sync. step (chem)
     tstep( 3 ) = tstep( 2 )                 ! TSTEP(3) = twoway model time step
 
     call ESMF_TimeGet(currTime, yy=yy, mm=mm, dd=dd, h=h, m=m, s=s, &
@@ -197,6 +205,15 @@ contains
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
+
+    !Initiliaze IO Arrays and Open Files (CMAQ)
+    if (first_step) then
+      first_step = .false.
+      !update STDATE(default is 1995192) and STTIME here for restart
+      STDATE = jdate
+      STTIME = jtime
+      call centralized_io_init
+    endif
 
     ! -- advance CMAQ
     call cmaq_model_advance(jdate, jtime, tstep, rc=localrc)
@@ -605,6 +622,67 @@ contains
               line=__LINE__, &
               file=__FILE__)) &
               return  ! bail
+          case ("vegetation_type")
+            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % vtype, rc=rc)
+            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+              line=__LINE__, &
+              file=__FILE__)) &
+              return  ! bail
+!canopy variables 
+!          case ("forest_canopy_height")
+!            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % stemp, rc=rc)
+!            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+!              line=__LINE__, &
+!              file=__FILE__)) &
+!              return  ! bail
+!          case ("forest_fraction")
+!            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % stemp, rc=rc)
+!            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+!              line=__LINE__, &
+!              file=__FILE__)) &
+!              return  ! bail
+!          case ("clumping_index")
+!            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % stemp, rc=rc)
+!            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+!              line=__LINE__, &
+!              file=__FILE__)) &
+!              return  ! bail
+!          case ("population_density")
+!            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % stemp, rc=rc)
+!            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+!              line=__LINE__, &
+!              file=__FILE__)) &
+!              return  ! bail
+!          case ("leaf_area_index_eccc")
+!            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % stemp, rc=rc)
+!            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+!              line=__LINE__, &
+!              file=__FILE__)) &
+!              return  ! bail
+!          case ("cum_lai_frac1_eccc")
+!            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % stemp, rc=rc)
+!            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+!              line=__LINE__, &
+!              file=__FILE__)) &
+!              return  ! bail
+!          case ("cum_lai_frac2_eccc")
+!            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % stemp, rc=rc)
+!            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+!              line=__LINE__, &
+!              file=__FILE__)) &
+!              return  ! bail
+!          case ("cum_lai_frac3_eccc")
+!            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % stemp, rc=rc)
+!            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+!              line=__LINE__, &
+!              file=__FILE__)) &
+!              return  ! bail
+!          case ("cum_lai_frac4_eccc")
+!            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % stemp, rc=rc)
+!            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+!              line=__LINE__, &
+!              file=__FILE__)) &
+!              return  ! bail
           case default
             ! -- unused field
         end select

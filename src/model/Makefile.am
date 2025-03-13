@@ -168,7 +168,6 @@ libCCTM_a_SOURCES += \
 	$(PHOT)/CSQY_DATA.F \
 	$(PHOT)/OMI_1979_to_2015.dat \
 	$(PHOT)/opphot.F \
-	$(PHOT)/phot.F \
 	$(PHOT)/PHOT_MET_DATA.F \
 	$(PHOT)/PHOT_MOD.F \
 	$(PHOT)/PHOTOLYSIS_ALBEDO.F \
@@ -219,7 +218,6 @@ libCCTM_a_SOURCES += \
 	$(UTIL)/bmatvec.F \
 	$(UTIL)/findex.f \
 	$(UTIL)/get_envlist.f \
-	$(UTIL)/setup_logdev.F \
 	$(UTIL)/subhdomain.F \
 	$(UTIL)/UTILIO_DEFN.F
 
@@ -250,11 +248,11 @@ libCCTM_a_SOURCES += \
 	${localCCTM}/PT3D_DEFN.F \
 	${localCCTM}/PT3D_FIRE_DEFN.F \
 	${localCCTM}/PT3D_STKS_DEFN.F \
+	$(localCCTM)/phot.F \
 	${localCCTM}/ASX_DATA_MOD.F \
+	$(localCCTM)/centralized_io_util_module.F \
 	${localCCTM}/DUST_EMIS.F \
 	${localCCTM}/AERO_PHOTDATA.F
-
-
 libCCTM_a_CPPFLAGS  = -DSUBST_FILES_ID=\"FILES_CTM.EXT\"
 libCCTM_a_CPPFLAGS += -DSUBST_CONST=\"CONST.EXT\"
 libCCTM_a_CPPFLAGS += -DSUBST_EMISPRM=\"EMISPRM.EXT\"
@@ -432,6 +430,10 @@ $(libEMIS)BIOG_EMIS.$(OBJEXT) : \
 	$(libUTIL)UTILIO_DEFN.$(OBJEXT)
 $(libEMIS)cropcal.$(OBJEXT) : \
 	$(libGRID)HGRD_DEFN.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
+$(libEMIS)DUST_EMIS.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/filenames/FILES_CTM.EXT \
+	$(libAERO)AERO_DATA.$(OBJEXT) $(liblocalCCTM)ASX_DATA_MOD.$(OBJEXT) \
+	$(libGRID)GRID_CONF.$(OBJEXT) $(libGRID)HGRD_DEFN.$(OBJEXT) \
+	$(libEMIS)LUS_DEFN.$(OBJEXT) $(libUTIL)UTILIO_DEFN.$(OBJEXT)
 $(libEMIS)EMIS_DEFN.$(OBJEXT) : $(ICL)/const/CONST.EXT $(ICL)/filenames/FILES_CTM.EXT \
 	$(libAERO)AERO_DATA.$(OBJEXT) $(libAERO)AERO_EMIS.$(OBJEXT) \
 	$(liblocalCCTM)ASX_DATA_MOD.$(OBJEXT) $(libEMIS)BEIS_DEFN.$(OBJEXT) \

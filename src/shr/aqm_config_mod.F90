@@ -23,6 +23,9 @@ module aqm_config_mod
     character(len=AQM_MAXSTR) :: csqy_data     = ""
     character(len=AQM_MAXSTR) :: optics_data   = ""
     character(len=AQM_MAXSTR) :: omi           = ""
+    character(len=AQM_MAXSTR) :: desid_chem_ctrl = ""     
+    character(len=AQM_MAXSTR) :: desid_ctrl    = ""      
+    character(len=AQM_MAXSTR) :: misc_ctrl     = ""       
     character(len=AQM_MAXSTR) :: mp_map        = ""
     character(len=AQM_MAXSTR) :: ctm_stdout    = ""
     integer                   :: dy_map_beg    = 0
@@ -134,6 +137,33 @@ contains
     ! -- OMI
     call ESMF_ConfigGetAttribute(cf, config % omi, &
       label="omi_data:", rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+    ! -- DESID_CHEM_CTRL 
+    call ESMF_ConfigGetAttribute(cf, config % desid_chem_ctrl, &
+      label="desid_chem_ctrl:", rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+    ! -- DESID_CTRL 
+    call ESMF_ConfigGetAttribute(cf, config % desid_ctrl, &
+      label="desid_ctrl:", rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out
+
+    ! -- MISC_CTRL for ELMO
+    call ESMF_ConfigGetAttribute(cf, config % misc_ctrl, &
+      label="misc_ctrl:", rc=localrc)
     if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__,  &
       file=__FILE__,  &
@@ -548,6 +578,27 @@ contains
       file=__FILE__,  &
       rcToReturn=rc)) &
       return  ! bail out
+    call ESMF_LogWrite(trim(name) // ": config: read: desid_chem_ctrl: " &
+      // config % desid_chem_ctrl, ESMF_LOGMSG_INFO, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out 
+    call ESMF_LogWrite(trim(name) // ": config: read: desid_ctrl: " &
+      // config % desid_ctrl, ESMF_LOGMSG_INFO, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out 
+    call ESMF_LogWrite(trim(name) // ": config: read: misc_ctrl: " &
+      // config % misc_ctrl, ESMF_LOGMSG_INFO, rc=localrc)
+    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__,  &
+      file=__FILE__,  &
+      rcToReturn=rc)) &
+      return  ! bail out 
     if (config % ctm_aod) then
       call ESMF_LogWrite(trim(name) // ": config: read: ctm_aod: true", &
         ESMF_LOGMSG_INFO, rc=localrc)

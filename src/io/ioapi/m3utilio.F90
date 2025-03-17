@@ -46,6 +46,14 @@ module m3utilio
     END FUNCTION CURRSTEP
   END INTERFACE
 
+  INTERFACE
+    SUBROUTINE DAYMON( JDATE, MNTH, MDAY )
+      INTEGER, INTENT(IN   ) :: JDATE     !  Julian date, format YYYYDDD = 1000*Year + Day
+      INTEGER, INTENT(  OUT) :: MNTH    !  month (1...12)
+      INTEGER, INTENT(  OUT) :: MDAY    !  day-of-month (1...28,29,30,31)
+    END SUBROUTINE  DAYMON
+  END INTERFACE
+
   INTERFACE           !  get file-description for FNAME
     LOGICAL FUNCTION  DESC3( FNAME )
       CHARACTER*(*), INTENT(IN   ) :: FNAME   !  file name
@@ -58,13 +66,36 @@ module m3utilio
     END FUNCTION HHMMSS
   END INTERFACE
 
-  INTERFACE
-    INTEGER FUNCTION INDEX1( NAME, N, NLIST )
+!  INTERFACE
+!    INTEGER FUNCTION INDEX1( NAME, N, NLIST )
+!      CHARACTER*(*), INTENT(IN   ) :: NAME        !  Character string being searched for
+!      INTEGER      , INTENT(IN   ) :: N           !  Length of array to be searched
+!      CHARACTER*(*), INTENT(IN   ) :: NLIST(*)    !  array to be searched
+!    END FUNCTION INDEX1
+!  END INTERFACE
+
+  INTERFACE INDEXKEY
+
+   INTEGER FUNCTION INDEX1( NAME, N, NLIST )
       CHARACTER*(*), INTENT(IN   ) :: NAME        !  Character string being searched for
       INTEGER      , INTENT(IN   ) :: N           !  Length of array to be searched
       CHARACTER*(*), INTENT(IN   ) :: NLIST(*)    !  array to be searched
-    END FUNCTION INDEX1
-  END INTERFACE
+   END FUNCTION INDEX1
+
+   INTEGER FUNCTION INDEXINT1( IKEY, N, NLIST )
+      INTEGER, INTENT(IN   ) :: IKEY        !  integer being searched for
+      INTEGER, INTENT(IN   ) :: N           !  Length of array to be searched
+      INTEGER, INTENT(IN   ) :: NLIST(*)    !  array to be searched
+   END FUNCTION INDEXINT1
+
+   INTEGER FUNCTION INDEXL1( LKEY, N, NLIST )
+     INTEGER*8, INTENT(IN   ) :: LKEY        !  integer being searched for
+     INTEGER,   INTENT(IN   ) :: N           !  Length of array to be searched
+     INTEGER*8, INTENT(IN   ) :: NLIST(*)    !  array to be searched
+   END FUNCTION INDEXL1
+
+  END INTERFACE       !!  indexkey
+
 
   INTERFACE
     INTEGER FUNCTION JUNIT()
@@ -112,6 +143,15 @@ module m3utilio
     SUBROUTINE  M3MSG2( MESSAGE )
       CHARACTER*(*), INTENT(IN   ) :: MESSAGE
     END SUBROUTINE  M3MSG2
+  END INTERFACE
+
+  INTERFACE
+    SUBROUTINE M3EXIT( CALLER, JDATE, JTIME, MSGTXT, ISTAT )
+      CHARACTER*(*), INTENT(IN   ) :: CALLER          !  name of the caller
+      INTEGER      , INTENT(IN   ) :: JDATE, JTIME    !  model date&time for the error
+      CHARACTER*(*), INTENT(IN   ) :: MSGTXT          !  error message
+      INTEGER      , INTENT(IN   ) :: ISTAT           !  exit status for program
+    END SUBROUTINE M3EXIT
   END INTERFACE
 
   INTERFACE READ3
@@ -172,7 +212,12 @@ contains
     CHARACTER(LEN=*), INTENT(IN) :: FNAME
     INTEGER,          INTENT(IN) :: FSTATUS
     CHARACTER(LEN=*), INTENT(IN) :: PGNAME
+    include SUBST_FILES_ID    
+
     OPEN3 = .TRUE.
+    IF (trim(fname) == trim(LUFRAC_CRO)) THEN
+      OPEN3 = .FALSE.
+    END IF
   END FUNCTION  OPEN3
 
   LOGICAL FUNCTION CLOSE3( FNAME )

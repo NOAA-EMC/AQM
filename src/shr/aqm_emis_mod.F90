@@ -1512,18 +1512,20 @@ contains
 
   end function aqm_emis_ispresent
 
-
-  subroutine aqm_emis_desc( etype, nlays, nvars, vnames, units )
+  !Add number of points for fire and point source 
+  subroutine aqm_emis_desc( etype, nlays, nvars, vnames, units, npoints )
     character(len=*),            intent(in)  :: etype
     integer,           optional, intent(out) :: nlays
     integer,           optional, intent(out) :: nvars
     character(len=16), optional, intent(out) :: vnames(:)
     character(len=16), optional, intent(out) :: units(:)
+    integer,           optional, intent(out) :: npoints  
 
     ! -- local variables
     integer :: localrc
     integer :: item, nsrc
     type(aqm_internal_emis_type), pointer :: em
+    type(aqm_state_type), pointer :: stateIn  
 
     ! -- begin
     ! -- get emission data
@@ -1549,11 +1551,26 @@ contains
       if (present(nvars))  nvars = nsrc
       if (present(vnames)) vnames( 1:nsrc ) = em % table( 1:nsrc, 1 )
       if (present(units))  units ( 1:nsrc ) = em % table( 1:nsrc, 2 )
+      !add npoints here ;treat grid data as points
+      if (present(npoints)) then
+        if (etype == 'gbbepx') then
+           nullify(stateIn)
+           call aqm_model_get(stateIn=stateIn, rc=localrc)
+           if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
+               file=__FILE__, line=__LINE__)) return
+           npoints = size (stateIn % area)
+        else if (etype == 'point-source') then
+           npoints = size (em % ijmap)
+        else
+           npoints  = 0
+        end if
+      end if
     else
       if (present(nlays))  nlays  = 0
       if (present(nvars))  nvars  = 0
       if (present(vnames)) vnames = ""
       if (present(units))  units  = ""
+      if (present(npoints)) npoints  = 0  
     end if
 
   end subroutine aqm_emis_desc
@@ -1617,7 +1634,7 @@ contains
                 if (abs(fptr(i,j)) < emAccept) then
                   buffer(k) = buffer(k) &
                     + em % factors(item) * fptr(i,j) / stateIn % area(i,j) &
-                                                     / stateIn % area(i,j)
+                                                     / stateIn % area(i,j) 
                 end if
               end do
             end do
@@ -1720,7 +1737,7 @@ contains
               j = em % jp(n)
               buffer(n) = buffer(n) &
                 + em % factors(item) * em % rates(item) % values(n) / stateIn % area(i,j) &
-                                                                    / stateIn % area(i,j)
+                                                                    / stateIn % area(i,j)  
             end do
           case (0)
             ! -- emissions are totals over each grid cell
@@ -1736,7 +1753,7 @@ contains
             do m = 1, size(em % ijmap)
               n = em % ijmap(m)
               buffer(n) = buffer(n) &
-                + em % factors(item) * em % rates(item) % values(n)
+                + em % factors(item) * em % rates(item) % values(n) 
             end do
           case default
             ! -- this case should never occur

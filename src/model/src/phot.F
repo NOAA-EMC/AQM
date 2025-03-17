@@ -17,17 +17,9 @@
 !  subject to their copyright restrictions.                              !
 !------------------------------------------------------------------------!
 
-
-! RCS file, release, date & time of last delta, author, state, [and locker]
-! $Header: /project/yoj/arc/CCTM/src/phot/phot_inline/phot.F,v 1.7 2011/10/21 16:11:28 yoj Exp $
-
-! what(1) key, module and SID; SCCS file; date and time of last delta:
-! %W% %P% %G% %U%
-
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !IVAI
-!     SUBROUTINE PHOT ( MDATE, MTIME, JDATE, JTIME, DTSTEP, RJ )
-      SUBROUTINE PHOT ( MDATE, MTIME, JDATE, JTIME, DTSTEP, RJ, 
+      SUBROUTINE PHOT ( MDATE, MTIME, JDATE, JTIME, DTSTEP, 
      &                  o3old   , o3new,    o3tend,     !IVAI: 3D
      &                  aux2d_01, aux2d_02, aux2d_03 )  !IVAI: 2D
 !IVAI
@@ -42,11 +34,11 @@
 ! Preconditions: HGRD_INIT() called from PAR_INIT, which is called from
 !     DRIVER
 !
-! Subroutines/Functions called: INIT3, M3EXIT, SUBHFILE, CGRID_MAP,
+! Subroutines/Functions called: M3EXIT, SUBHFILE, CGRID_MAP,
 !     OPPHOT, LOAD_CSQY_DATA, LOAD_OPTICS_DATA, INITIALIZE_ALBEDO, 
 !     GET_PHOT_MET, UPDATE_SUN, GET_ALBEDO, GET_DROPLET_OPTICS, 
 !     GET_ICE_OPTICS, GET_AGGREGATE_OPTICS, CLEAR_HYDROMETEOR_OPTICS, 
-!     GET_AERO_DATA, O3TOTCOL, NEW_OPTICS
+!     GET_AERO_DATA, O3TOTCOL, NEW_OPTICS, GET_ENVLIST,
 !     init_can_mask,init_can_levs, init_can_trans,
 !     get_can_mask, get_can_levs, and canopy_transfer
 !
@@ -61,7 +53,7 @@
 !       - Error check for NPHOTS added (this version works only for SAPRC-99)
 !       - Added creation of new file CTM_RJ_1 to write out RJ values
 !         for O3 and NO2 (both clear sky and cloud effects), and
-!         ETOT_SFC, TAU_AERO, TAU_TOT and TAUO3_TOP values for 7 wavelengths
+!         ETOT_SFC, TAU_TOT and TAUO3_TOP values for 7 wavelengths
 !     June 2007, David Wong
 !       -- inline with CMAQ
 !       - declare RJ as assumed shape array to match with the caller routine
@@ -96,7 +88,7 @@
 !         reads this input file
 !       - added call to a routine called AERO_PHOTDATA that returns opacity data
 !         on the aerosol distribution
-!       - revised NEW_OPTICS' arguments based on  aerosol redesign in CMAQ
+!       - revised NEW_OPTICS' arguments based on aerosol redesign in CMAQ
 !         version 5.0
 !     March 29, 2011 S.Roselle
 !       - Replaced I/O API include files with UTILIO_DEFN
@@ -110,7 +102,7 @@
 !                          4) changed description and accounting of cloud effects
 !                             from 2D liquid water clouds to 3D resolved and subgrid 
 !                             clouds with multi-phases of water
-!                          5) inserted calculation of aerosol optical properites via
+!                          5) inserted calculation of aerosol optical properties via
 !                             fortran module to improve efficiency in radiative
 !                             transfer solution
 !                          6) moved the O3TOTCOL routine from the PHOT_MOD to simplify
@@ -119,6 +111,7 @@
 !     10 Jun 15 J.Young: Modified diagnostic output timestamp to fix for other than one
 !                         hour time steps.
 !     12 Aug 15 D.Wong:  Replaced MYPE with IO_PE_INCLUSIVE for parallel I/O implementation
+!     01 Feb 19 D.Wong: Implemented centralized I/O approach, removed all MY_N clauses
 !     01 Mar 23 P.Campbell 
 !         - Introduced integrated canopy shading effect on photolysis attenuation 
 !           as descrived in Wang, C-T et al. (2025, ACP) "Quantifying Forest Canopy 
@@ -138,9 +131,10 @@
 
 C...modules
 
+      USE RUNTIME_VARS, ONLY : START_DATE => STDATE, START_TIME => STTIME
       USE RXNS_DATA            ! chemistry varaibles and data
+      USE GRID_CONF            ! horizontal & vertical domain specifications
       USE CGRID_SPCS           ! CGRID species number and offsets
-      USE PCGRID_DEFN          ! get cgrid
       USE UTILIO_DEFN
       USE AERO_DATA            ! describes aerosol distribution
       USE PHOT_MOD             ! photolysis in-line module - inherits CSQY_DATA module
@@ -148,10 +142,8 @@ C...modules
       USE PHOTOLYSIS_ALBEDO    ! surface albedo data and routines
       USE PHOT_MET_DATA        ! Met and Grid data
       USE CLOUD_OPTICS         ! data and routines for optics of cloud hydrometeors
-!      USE STRATOS_O3_MINFRACS  ! annual minimum fraction of ozone column density above Pressure TOP
-!      USE SEAS_STRAT_O3_FRACS  ! monthly minimum fraction of ozone column density above Pressure TOP
       USE SEAS_STRAT_O3_MIN    ! monthly minimum fraction of ozone column density above Pressure TOP
-!Used for canopy shade calculation
+      !Used for canopy shade calculation
       USE ASX_DATA_MOD, ONLY : MET_DATA, GRID_DATA     !uses met data
 !IVAI
 ! NB. Moved NLAYC/NLAYT definitions to GRID_CONF (Jan 9 2025)
@@ -159,7 +151,8 @@ C...modules
       use can_levs_defn
       use can_trans_mod
 !IVAI
-      USE centralized_io_util_module, ONLY: IntegrateTrapezoid, interp_linear1_internal !basic utilities
+      USE centralized_io_util_module, ONLY: IntegrateTrapezoid,interp_linear1_internal
+      USE ELMO_DATA, ONLY : ELMO_AOD_550, ELMO_EXT_550
 
 #ifdef parallel
       USE SE_MODULES           ! stenex (using SE_UTIL_MODULE)
@@ -172,12 +165,10 @@ C...modules
 !...include files
 
       INCLUDE SUBST_FILES_ID   ! file name parameters
-!     INCLUDE SUBST_CONST      ! physical constants--moved to PHOT_MOD.
 
 !...arguments
 
-      INTEGER, INTENT( IN ) :: MDATE         ! "centered" Julian date (YYYYDDD)
-      INTEGER, INTENT( IN ) :: MTIME         ! "centered" time (HHMMSS)
+      REAL,    POINTER      :: CGRID( :,:,:,: )  ! Species concentrations
       INTEGER, INTENT( IN ) :: JDATE         ! current Julian date (YYYYDDD)
       INTEGER, INTENT( IN ) :: JTIME         ! current time (HHMMSS)
       INTEGER, INTENT( IN ) :: DTSTEP( : )   ! time step vector (HHMMSS)
@@ -186,12 +177,6 @@ C...modules
       REAL,    INTENT( IN    ) :: o3old(:,:,:), o3new(:,:,:), o3tend(:,:,:)
       REAL,    INTENT( INOUT ) :: aux2d_01(:,:), aux2d_02(:,:), aux2d_03(:,:)
 !IVAI
-
-!     REAL RJ( NCOLS,NROWS,NLAYS, NPHOTAB )
-      REAL,    INTENT( OUT ) :: RJ( :,:,:,: )  ! gridded J-values  (1/min units)
-
-!     REAL CGRID( NCOLS,NROWS,NLAYS, * )  ! Conc array
-      REAL, SAVE, POINTER :: CGRID( :,:,:,: ) ! species concentrations
 
 !...parameters
 
@@ -202,7 +187,6 @@ C...modules
       REAL, PARAMETER :: PRES_CONV = 1.0 / STDATMPA ! conversion factor Pa to atm
       REAL, PARAMETER :: ZTOA      = 50.0E3   ! height of top of atmosphere [ m ] (=50km)
                                               ! based a 2005 WRF model Documentation
-                                                 
       REAL, PARAMETER   :: EPSLON  = 1.0E-30  ! Small number
 
 !...external functions: none
@@ -210,7 +194,7 @@ C...modules
 !...local variables
 
       LOGICAL, SAVE :: FIRSTIME = .TRUE.  ! Flag for first call to PHOT
-      LOGICAL, SAVE :: PHOTDIAG           ! Flag for PHOTDIAG file
+!      LOGICAL, SAVE :: PHOTDIAG           ! Flag for PHOTDIAG file
 
       LOGICAL, SAVE :: CALL_INIT_ALBEDO = .TRUE.
       LOGICAL, SAVE :: CALL_GET_ALBEDO  = .TRUE.
@@ -220,14 +204,19 @@ C...modules
       CHARACTER(   3 ), ALLOCATABLE, SAVE :: WLTXT( : )
       CHARACTER(  16 )                    :: VARNM
       CHARACTER(  16 ), SAVE              :: PNAME = 'PHOT'
-      CHARACTER(  16 ), SAVE              :: CTM_PHOTDIAG = 'CTM_PHOTDIAG'
+      CHARACTER(  16 )                    :: V_LIST( 2 )
+      CHARACTER(  16 )                    :: REQUESTED_WAVE
+      CHARACTER(  16 ), ALLOCATABLE       :: WAVE_LIST( : )
+!      CHARACTER(  16 ), SAVE              :: CTM_PHOTDIAG = 'CTM_PHOTDIAG'
 
       CHARACTER(  80 ) :: VARDESC  ! environment variable description
       CHARACTER( 240 ) :: XMSG = ' '
 
-      INTEGER,    SAVE :: LOGDEV
-      INTEGER,    SAVE :: LGC_O3   ! pointer to O3 in CGRID
-      INTEGER,    SAVE :: LGC_NO2  ! pointer to NO2 in CGRID
+      INTEGER,    SAVE :: LGC_O3   = 0 ! pointer to O3 in CGRID
+      INTEGER,    SAVE :: LGC_NO2  = 0 ! pointer to NO2 in CGRID
+      INTEGER,    SAVE :: LGC_CO   = 0 ! pointer to CO in CGRID
+      INTEGER,    SAVE :: LGC_SO2  = 0 ! pointer to SO2 in CGRID
+      INTEGER,    SAVE :: LGC_HCHO = 0 ! pointer to formaldehyde  in CGRID
       INTEGER,    SAVE :: TSTEP    ! output timestep in sec
 
       INTEGER ESTAT                ! status from environment var check
@@ -239,22 +228,22 @@ C...modules
       INTEGER IWL
       INTEGER L
       INTEGER V, N, MODE
-      LOGICAL JTIME_CHK            ! To check for JTIME to write RJ values
-      INTEGER ODATE                ! output date
-      INTEGER OTIME                ! output time 
+
+      LOGICAL :: JTIME_CHK   ! To check for JTIME to write RJ values
+      INTEGER, SAVE :: ODATE ! output date
+      INTEGER, SAVE :: OTIME ! output time
+      INTEGER, SAVE :: OSTEP ! time since last write diagnostics
 
       INTEGER ALLOCSTAT
 
+      INTEGER ITMSTEP              ! one half synchronization timestep (sec)
+      INTEGER MIDDATE              ! Date at time step midpoint
+      INTEGER MIDTIME              ! Time at time step midpoint
+
       INTEGER, SAVE :: TDATE
-      INTEGER, SAVE :: GXOFF, GYOFF        ! global origin offset from file
       INTEGER, SAVE :: PECOL_OFFSET        ! Local Column Offset for processor
       INTEGER, SAVE :: PEROW_OFFSET        ! Local Column Offset for processor
       INTEGER, SAVE :: TSTEP_COUNT         ! counter between calls to write diagnostics
-
-! for INTERPX
-      INTEGER, SAVE :: STRTCOLGC2, ENDCOLGC2, STRTROWGC2, ENDROWGC2
-      INTEGER, SAVE :: STRTCOLMC2, ENDCOLMC2, STRTROWMC2, ENDROWMC2
-      INTEGER, SAVE :: STRTCOLMC3, ENDCOLMC3, STRTROWMC3, ENDROWMC3
 
       REAL CURRHR          ! current GMT hour
       REAL JULIAN_DAY      ! time of year [days]
@@ -283,7 +272,7 @@ C...modules
       REAL RES_SKY_TRANSD  ! direct transmission coefficient based on resolved sky
 
       REAL                    :: TOTAL_O3_COLUMN ! total ozone column density, DU
-      
+
       REAL,              SAVE :: JYEAR          = 0.0 ! year
       REAL,              SAVE :: JD_STRAT_O3MIN = 0.0 ! Julian day (YYYYDDD) of min fraction for stratos ozone
 
@@ -320,7 +309,7 @@ C...modules
 
       REAL, ALLOCATABLE, SAVE :: BLKRJ_RES( :, : ) ! photolysis rates
       REAL, ALLOCATABLE, SAVE :: BLKRJ_ACM( :, : ) ! photolysis rates
-      
+
       LOGICAL, ALLOCATABLE, SAVE :: CLOUDS( : )    ! Does layer have clouds?
       LOGICAL                    :: NEW_PROFILE    ! Has atmospheric temperature and density profile changed?
       LOGICAL                    :: DARK           ! Are this processor's cells in darkness?
@@ -352,27 +341,29 @@ C...modules
       REAL, ALLOCATABLE, SAVE  :: SSA_CAN         (:)
       REAL, ALLOCATABLE, SAVE  :: TAU_CLOUD_CAN(:, :)
 
-! Canopy RJ correction arrays
+! Canopy arrays
+      REAL, ALLOCATABLE, SAVE  :: RJ_CORR_TOP ( :, :)    ! canopyshading correction to J-values (hc)
+      REAL, ALLOCATABLE, SAVE  :: RJ_CORR_C1R ( :, :)    ! canopyshading correction to J-values (hc to 0.75*hc)
+      REAL, ALLOCATABLE, SAVE  :: RJ_CORR_C2R ( :, :)    ! canopyshading correction to J-values (hc to 0.50*hc)
+      REAL, ALLOCATABLE, SAVE  :: RJ_CORR_C3R ( :, :)    ! canopyshading correction to J-values (hc to 0.35*hc)
+      REAL, ALLOCATABLE, SAVE  :: RJ_CORR_C4R ( :, :)    ! canopyshading correction to J-values (hc to 0.20*hc)
+      REAL, ALLOCATABLE, SAVE  :: RJ_CORR_BOT ( :, :)    ! canopyshading correction to J-values (0.20*hc to bottom)
       REAL, ALLOCATABLE, SAVE  :: RJ_CORR     ( :, :)    ! total/integrated canopy shading correction to J-values
       REAL, ALLOCATABLE, SAVE  :: RJ_CORR6    ( :, :)    ! total/integrated canopy shading correction to J-values
-      REAL, ALLOCATABLE, SAVE  :: ZCANX    ( : )        ! canopy heights[m]
-      REAL, ALLOCATABLE, SAVE  :: RJ_CORRX ( : )        ! canopy height dependent photolysis attenuation factor
-      REAL, ALLOCATABLE, SAVE  :: RJ_CORRX6( : )        ! canopy height dependent photolysis attenuation factor
-      REAL                     :: XCAN     ( 2 )        ! canopy height interpolation bounds
-      REAL                     :: YCAN     ( 2 )        ! photolysisattenuation interpolation bounds
+      REAL, ALLOCATABLE, SAVE  :: ZCANX    ( : )         ! canopy heights[m]
+      REAL, ALLOCATABLE, SAVE  :: RJ_CORRX ( : )         ! canopy height dependent photolysis attenuation factor
+      REAL, ALLOCATABLE, SAVE  :: RJ_CORRX6( : )         ! canopy height dependent photolysis attenuation factor
+      REAL                     :: XCAN     ( 2 )         ! canopy height interpolation bounds
+      REAL                     :: YCAN     ( 2 )         ! photolysisattenuation interpolation bounds
+      REAL ZFL, ZCAN, XCANOUT                            ! local canopy variables
+      INTEGER, PARAMETER      :: MAXCAN = 1000           ! Declare local maximum canopy layers
+
+!IVAI
       REAL, ALLOCATABLE, SAVE  :: ZCANX6   ( : )        ! canopy heights[m]
 
-      ! hc
-      ! hc to 0.75*hc ?
-      ! hc to 0.50*hc ?
-      ! hc to 0.35*hc ?
-      ! hc to 0.20*hc ?
-      ! 0.20*hc to bottom
-      REAL :: RJ_CORR_TOP, RJ_CORR_C1R, RJ_CORR_C2R, RJ_CORR_C3R, RJ_CORR_C4R, RJ_CORR_BOT  ! local canopy variables
-      REAL :: ZFL, ZCAN, XCANOUT, BOTCAN, LAI_C1R, LAI_C2R, LAI_C3R, LAI_C4R, COEFF ! local canopy variables
+      REAL :: BOTCAN, LAI_C1R, LAI_C2R, LAI_C3R, LAI_C4R, COEFF ! local canopy variables
       REAL :: TOTAL_O3_COLUMN_CAN
       INTEGER                 :: COUNTCAN, KCAN, KK, II
-      INTEGER, PARAMETER      :: MAXCAN = 1000          ! Declare local maximum canopy layers
 !IVAI
       INTEGER                 :: KOUNT
       INTEGER                 :: S
@@ -388,11 +379,14 @@ C...modules
 
       REAL, ALLOCATABLE, SAVE :: TOTAL_OC( :,: )         ! total ozone column [DU]
       REAL, ALLOCATABLE, SAVE :: TROPO_OC( :,: )         ! tropospheric ozone column [DU]
+      REAL, ALLOCATABLE, SAVE :: NO2_COLUMN ( :,: )      ! tropospheric NO2 column []
+      REAL, ALLOCATABLE, SAVE :: CO_COLUMN  ( :,: )      ! tropospheric CO column  []
+      REAL, ALLOCATABLE, SAVE :: HCHO_COLUMN( :,: )      ! tropospheric HCHO column [DU]
+      REAL, ALLOCATABLE, SAVE :: SO2_COLUMN ( :,: )      ! tropospheric SO2 column [DU]
       REAL, ALLOCATABLE, SAVE :: TROPO_O3_EXCEED( :,: )   ! Factor used to adjust tropospheric ozone optical depth
       REAL, ALLOCATABLE, SAVE :: TRANSMIS_DIFFUSE( :,: ) ! diffuse transmission coefficient at surface
       REAL, ALLOCATABLE, SAVE :: TRANSMIS_DIRECT( :,: )  ! direct transmission coefficient at surface
       REAL, ALLOCATABLE, SAVE :: REFLECT_COEFF( :,: )    ! reflection coefficient at top of atmosphere
-      REAL, ALLOCATABLE, SAVE :: ETOT_SFC_WL ( :,:,: )   ! total downward irradiance at sfc [ Watts / m**2  ]
       REAL, ALLOCATABLE, SAVE :: TAU_AERO_WL ( :,:,: )   ! total aerosol optical depth
       REAL, ALLOCATABLE, SAVE :: TAU_CLOUD_WL( :,:,: )   ! total cloud optical depth
       REAL, ALLOCATABLE, SAVE :: CLR_TRANSMISSION( :,: ) ! diffuse transmission coefficient of clouds
@@ -407,19 +401,27 @@ C...modules
 
       REAL, ALLOCATABLE, SAVE :: AERO_SSA  ( :,:,:,: ) ! aerosol single scattering albedo
       REAL, ALLOCATABLE, SAVE :: AERO_ASYM ( :,:,:,: ) ! aerosol asymmetry factor
-      REAL, ALLOCATABLE, SAVE :: TAU       ( :,:,:,: ) ! optical depth
-      REAL, ALLOCATABLE, SAVE :: TAU_AERO  ( :,:,:,: ) ! aerosol optical depth
+      REAL, ALLOCATABLE, SAVE :: TOT_EXT   ( :,:,:,: ) ! total extinction for layer [1/Km]
+      REAL, ALLOCATABLE, SAVE :: GAS_EXT   ( :,:,:,: ) ! clear sky extinction for layer [1/Km]
+      REAL, ALLOCATABLE, SAVE :: AERO_EXT  ( :,:,:,: ) ! aerosol extinction for layer [1/Km]
       REAL, ALLOCATABLE, SAVE :: ACTINIC_FX( :,:,:,: ) ! net actinic flux [watts/m**2]
+      REAL, ALLOCATABLE, SAVE :: OUTPUT_BUFF ( :,:,: ) ! output buffer for DIAG2 and DIAG3 files
 
       INTEGER          IOSX            ! i/o and allocate memory status
 
       INTERFACE
-         SUBROUTINE O3TOTCOL ( LATITUDE, LONGITUDE, JDATE, OZONE )
+         SUBROUTINE O3TOTCOL ( LATITUDE, LONGITUDE, JDATE, JTIME, OZONE )
             INTEGER, INTENT( IN )    :: JDATE      ! Julian day of the year (yyyyddd)
+            INTEGER, INTENT( IN )    :: JTIME      ! time (hhmmss)
             REAL,    INTENT( IN )    :: LATITUDE   ! latitude of point on earth's surface
             REAL,    INTENT( IN )    :: LONGITUDE  ! longitude of point on earth's surface
             REAL,    INTENT( INOUT ) :: OZONE      ! total column ozone [DU]
          END SUBROUTINE O3TOTCOL
+         SUBROUTINE CONVCLD_PROP_ACM( JDATE, JTIME, TSTEP )
+            INTEGER, INTENT( IN )    :: JDATE
+            INTEGER, INTENT( IN )    :: JTIME
+            INTEGER, INTENT( IN )    :: TSTEP( 3 )
+         END SUBROUTINE CONVCLD_PROP_ACM
       END INTERFACE
 
 ! ----------------------------------------------------------------------
@@ -434,50 +436,39 @@ C In-line canopy shading option? (default = false)
 
          IF ( CANOPY_SHADE ) THEN
             XMSG = 'Using in-line canopy shading option'
-            CALL M3MSG2( XMSG )
+            CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          END IF
 
          FIRSTIME = .FALSE.
-         LOGDEV   = INIT3()
 
          TSTEP  = TIME2SEC( DTSTEP( 1 ) ) ! output timestep for phot diagnostic files
 
-         CGRID => PCGRID( 1:MY_NCOLS,1:MY_NROWS,:,: )
+!...Set flag to initialize calculating aerosol extinction at 550 nm via Angstrom Exponents
+         CALCULATE_EXT_550 = .TRUE. !PHOTDIAG
 
-!...Get photolysis rate diagnostic file flag
-
-         PHOTDIAG = .FALSE.         ! default
-         VARDESC= 'Flag for writing the photolysis rate diagnostic file'
-         PHOTDIAG = ENVYN( CTM_PHOTDIAG, VARDESC, PHOTDIAG, ESTAT )
-         IF ( ESTAT .NE. 0 ) WRITE( LOGDEV, '(5X, A)' ) VARDESC
-         IF ( ESTAT .EQ. 1 ) THEN
-            XMSG = 'Environment variable improperly formatted'
-            CALL M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT2 )
-         ELSE IF ( ESTAT .EQ. -1 ) THEN
-            XMSG =
-     &          'Environment variable set, but empty ... Using default:'
-            WRITE( LOGDEV, '(5X, A, I9)' ) XMSG, JTIME
-         ELSE IF ( ESTAT .EQ. -2 ) THEN
-            XMSG = 'Environment variable not set ... Using default:'
-            WRITE( LOGDEV, '(5X, A, I9)' ) XMSG, JTIME
-         END IF
-
-!...Get met file offsets
-
-         CALL SUBHFILE ( GRID_CRO_2D, GXOFF, GYOFF,
-     &                   STRTCOLGC2, ENDCOLGC2, STRTROWGC2, ENDROWGC2 )
-         CALL SUBHFILE ( MET_CRO_2D, GXOFF, GYOFF,
-     &                   STRTCOLMC2, ENDCOLMC2, STRTROWMC2, ENDROWMC2 )
-         CALL SUBHFILE ( MET_CRO_3D, GXOFF, GYOFF,
-     &                   STRTCOLMC3, ENDCOLMC3, STRTROWMC3, ENDROWMC3 )
- 
          PECOL_OFFSET = COLSD_PE( 1, MYPE+1 ) - 1
          PEROW_OFFSET = ROWSD_PE( 1, MYPE+1 ) - 1
 
-         CALL LOAD_CSQY_DATA( )
+         CALL INIT_PHOT_SHARED()
 
-         CALL LOAD_OPTICS_DATA( )         
- 
+!...Get photolysis rate diagnostic file flag
+
+!         PHOTDIAG = .FALSE.         ! default
+!         VARDESC= 'Flag for writing the photolysis rate diagnostic file'
+!         PHOTDIAG = ENVYN( CTM_PHOTDIAG, VARDESC, PHOTDIAG, ESTAT )
+!         IF ( ESTAT .NE. 0 ) WRITE( LOGDEV, '(5X, A)' ) VARDESC
+!         IF ( ESTAT .EQ. 1 ) THEN
+!            XMSG = 'Environment variable improperly formatted'
+!            CALL M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT2 )
+!         ELSE IF ( ESTAT .EQ. -1 ) THEN
+!            XMSG =
+!     &          'Environment variable set, but empty ... Using default:'
+!            WRITE( LOGDEV, '(5X, A, I9)' ) XMSG, JTIME
+!         ELSE IF ( ESTAT .EQ. -2 ) THEN
+!            XMSG = 'Environment variable not set ... Using default:'
+!            WRITE( LOGDEV, '(5X, A, I9)' ) XMSG, JTIME
+!         END IF
+
 !...Allocate array needed to calculation aerosol and cloud optical properties
 
          CALL INIT_AERO_DATA(  )
@@ -485,7 +476,7 @@ C In-line canopy shading option? (default = false)
          CALL INIT_CLOUD_OPTICS(  )
 
 !IVAI
-         IF ( CANOPY_SHADE ) THEN                      ! FIRSTIME
+        IF ( CANOPY_SHADE ) THEN                      ! FIRSTIME
             CALL init_can_mask( JDATE, JTIME )         ! FIRSTIME
 
             CALL init_can_levs( CGRID, JDATE, JTIME )  ! FIRSTIME
@@ -496,7 +487,7 @@ C In-line canopy shading option? (default = false)
 ! ===============
 
             CALL init_can_trans(CGRID, JDATE, JTIME )  ! FIRSTIME
-         END IF
+        END IF
 !IVAI
 
 !...Allocate and initialize new canopy arrays
@@ -508,6 +499,19 @@ C In-line canopy shading option? (default = false)
            ALLOCATE( RJ_CORRX6    ( MAXCAN6) )
            ALLOCATE( ZCANX6       ( MAXCAN6) )
 
+           ALLOCATE( 
+     &           RJ_CORR_TOP  ( NCOLS, NROWS ),
+     &           RJ_CORR_C1R  ( NCOLS, NROWS ),
+     &           RJ_CORR_C2R  ( NCOLS, NROWS ),
+     &           RJ_CORR_C3R  ( NCOLS, NROWS ),
+     &           RJ_CORR_C4R  ( NCOLS, NROWS ),
+     &           RJ_CORR_BOT  ( NCOLS, NROWS ),
+     &           RJ_CORR      ( NCOLS, NROWS ), STAT = ALLOCSTAT )
+           IF ( ALLOCSTAT .NE. 0 ) THEN
+              XMSG = 'Failure allocating canopy photolysis rate correction arrays'
+              CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+           END IF
+
            ALLOCATE( ZFT      (NLAYT))
            ALLOCATE( rj_corrf (NLAYT))
            ALLOCATE( rj_corrmid(NLAYT))
@@ -515,23 +519,6 @@ C In-line canopy shading option? (default = false)
            ALLOCATE(
      &              O3_PPM    (NLAYT),
      &             NO2_PPM    (NLAYT),
-     &           BLKTA_CAN    (NLAYT), 
-     &           BLKPRS_CAN   (NLAYT), 
-     &           BLKDENS_CAN  (NLAYT),
-     &           BLKZH_CAN    (NLAYT), 
-     &           BLKZF_CAN    (NLAYT+1),
-     &           BLKO3_CAN    (NLAYT), 
-     &           BLKNO2_CAN   (NLAYT),
-     &           CLOUDS_CAN   (NLAYT), 
-     &           CLDFRAC_CAN  (NLAYT),
-     &           BLKRJ_RES_CAN(NLAYT, NPHOTAB),  !out
-     &           BLKRJ_ACM_CAN(NLAYT, NPHOTAB),  !out
-     &           TAUC_AERO_CAN(NLAYT, NWL),      !out
-     &           TAU_TOT_CAN  (NLAYT, NWL),      !out
-     &           TAUO3_TOP_CAN       (NWL),      !inout
-     &           TAU_RAY_CAN         (NWL),      !inout
-     &           SSA_CAN             (NWL),      !out  
-     &           TAU_CLOUD_CAN(NLAYT, NWL),      !inout
      &           STAT = ALLOCSTAT )
            IF ( ALLOCSTAT .NE. 0 ) THEN
               XMSG = 'Failure allocating canopy new_optics arrays'
@@ -548,24 +535,32 @@ C In-line canopy shading option? (default = false)
               CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
            END IF
 
-           ZCANX    (:)=0.0
+           RJ_CORRX(:)=0.0
+           ZCANX   (:)=0.0
+           RJ_CORR_TOP(:,:)=0.0
+           RJ_CORR_C1R(:,:)=0.0
+           RJ_CORR_C2R(:,:)=0.0
+           RJ_CORR_C3R(:,:)=0.0
+           RJ_CORR_C4R(:,:)=0.0
+           RJ_CORR_BOT(:,:)=0.0
+           RJ_CORR    (:,:)=0.0
+
            ZCANX6   (:)=0.0
            ZFT      (:)=0.0
            rj_corrf (:)=0.0
            rj_corrmid(:)=0.0
-
-           TAUC_AERO_CAN(:, :)=0.0  !out
-           TAU_TOT_CAN  (:, :)=0.0  !out
-           TAU_CLOUD_CAN(:, :)=0.0  !out
 
            RJ_CORR  (:,:)=0.0
            RJ_CORR6 (:,:)=0.0
            RJ_CORRM (:,:,:)=0.0  !IVAI
         END IF
 
+! set cosine values for sun effectively below horizon
+         COS85 = COS( 85.0 * PI180 )
+
 !...Initialize Surface albedo method
 
-         IF ( .NOT. INITIALIZE_ALBEDO( JDATE, JTIME, LOGDEV ) ) THEN
+         IF ( .NOT. INITIALIZE_ALBEDO( JDATE, JTIME ) ) THEN
               XMSG = 'Failure initializing photolysis surface albedo algorithm'
               CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          END IF
@@ -579,6 +574,7 @@ C In-line canopy shading option? (default = false)
          ALLOCATE( GWC    ( NLAYS ) ) 
          ALLOCATE( BLKPRS ( NLAYS ) ) 
          ALLOCATE( BLKTA  ( NLAYS ) ) 
+         ALLOCATE( BLKDZ  ( NLAYS ) )
          ALLOCATE( BLKDENS( NLAYS ) ) 
          ALLOCATE( BLKZH  ( NLAYS ) ) 
          ALLOCATE( BLKO3  ( NLAYS ) ) 
@@ -598,19 +594,58 @@ C In-line canopy shading option? (default = false)
          ALLOCATE( TAUC_AERO( NLAYS,NWL ) )
          ALLOCATE( TAU_TOT  ( NLAYS,NWL ) )
 
+!IVAI
+!...Allocate and initialize new canopy arrays
+      IF ( CANOPY_SHADE ) THEN
+         ALLOCATE(
+     &           BLKTA_CAN    (NLAYT),
+     &           BLKPRS_CAN   (NLAYT),
+     &           BLKDENS_CAN  (NLAYT),
+     &           BLKZH_CAN    (NLAYT),
+     &           BLKZF_CAN    (NLAYT+1),
+     &           BLKO3_CAN    (NLAYT),
+     &           BLKNO2_CAN   (NLAYT),
+     &           CLOUDS_CAN   (NLAYT),
+     &           CLDFRAC_CAN  (NLAYT),
+     &           BLKRJ_RES_CAN(NLAYT, NPHOTAB),  !out
+     &           BLKRJ_ACM_CAN(NLAYT, NPHOTAB),  !out
+     &           TAUC_AERO_CAN(NLAYT, NWL),      !out
+     &           TAU_TOT_CAN  (NLAYT, NWL),      !out
+     &           TAUO3_TOP_CAN       (NWL),      !inout
+     &           TAU_RAY_CAN         (NWL),      !inout
+     &           SSA_CAN             (NWL),      !out
+     &           TAU_CLOUD_CAN( NLAYT,NWL),      !inout
+     &           STAT = ALLOCSTAT )
+         IF ( ALLOCSTAT .NE. 0 ) THEN
+              XMSG = 'Failure allocating canopy new_optics arrays'
+              CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+         END IF
+
+         TAUC_AERO_CAN(:, :)=0.0  !out
+         TAU_TOT_CAN  (:, :)=0.0  !out
+         TAU_CLOUD_CAN(:, :)=0.0  !out
+
+      END IF ! CANOPY_SHADE
+!IVAI
+
          ALLOCATE( TOTAL_OC ( NCOLS,NROWS ) )
+         ALLOCATE( TAU_AERO_550    ( NCOLS,NROWS ) )
+         TAU_AERO_550  = 0.0
 
          IF ( PHOTDIAG ) THEN
-            ALLOCATE( TROPO_OC ( NCOLS,NROWS ) )
-            ALLOCATE( TROPO_O3_EXCEED( NCOLS,NROWS ) )
-            ALLOCATE( N_EXCEED_TROPO3( NCOLS,NROWS ) )
+            ALLOCATE( TROPO_OC   ( NCOLS,NROWS ) )
+            ALLOCATE( CO_COLUMN  ( NCOLS,NROWS ) )
+            ALLOCATE( SO2_COLUMN ( NCOLS,NROWS ) )
+            ALLOCATE( NO2_COLUMN ( NCOLS,NROWS ) )
+            ALLOCATE( HCHO_COLUMN( NCOLS,NROWS ) )
+            ALLOCATE( TROPO_O3_EXCEED ( NCOLS,NROWS ) )
+            ALLOCATE( N_EXCEED_TROPO3 ( NCOLS,NROWS ) )
             ALLOCATE( TRANSMIS_DIFFUSE( NCOLS,NROWS ) )
             ALLOCATE( TRANSMIS_DIRECT ( NCOLS,NROWS ) )
             ALLOCATE( REFLECT_COEFF   ( NCOLS,NROWS ) )
             ALLOCATE( CLR_TRANSMISSION( NCOLS,NROWS ) )
             ALLOCATE( CLR_TRANS_DIRECT( NCOLS,NROWS ) )
             ALLOCATE( CLR_REFLECTION  ( NCOLS,NROWS ) )
-            ALLOCATE( ETOT_SFC_WL     ( NCOLS,NROWS,NWL ) )
             ALLOCATE( TAU_AERO_WL     ( NCOLS,NROWS,NWL ) )
             ALLOCATE( TAU_CLOUD_WL    ( NCOLS,NROWS,NWL ) )
 #ifdef phot_debug            
@@ -623,39 +658,11 @@ C In-line canopy shading option? (default = false)
             N_EXCEED_TROPO3 = 0.0
             TROPO_O3_EXCEED = 0.0
             TSTEP_COUNT     = 0
-
-            DIAG_WVL( 1 )    = 1
-            DIAG_WVL( N_DIAG_WVL ) = NWL
-
-            ALLOCATE ( AERO_ASYM( NCOLS,NROWS,NLAYS,N_DIAG_WVL ), STAT = ALLOCSTAT )
-            IF ( ALLOCSTAT .NE. 0 ) THEN
-               XMSG = 'Failure allocating 3D AERO_ASYM'
-               CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
-            END IF
-
-            ALLOCATE ( AERO_SSA( NCOLS,NROWS,NLAYS,N_DIAG_WVL ), STAT = ALLOCSTAT )
-            IF ( ALLOCSTAT .NE. 0 ) THEN
-               XMSG = 'Failure allocating 3D AERO_SSA'
-               CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
-            END IF
-
-            ALLOCATE ( TAU_AERO( NCOLS,NROWS,NLAYS,N_DIAG_WVL ), STAT = ALLOCSTAT )
-            IF ( ALLOCSTAT .NE. 0 ) THEN
-               XMSG = 'Failure allocating 3D TAU_AERO'
-               CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
-            END IF
-
-            ALLOCATE ( TAU( NCOLS,NROWS,NLAYS,N_DIAG_WVL ), STAT = ALLOCSTAT )
-            IF ( ALLOCSTAT .NE. 0 ) THEN
-               XMSG = 'Failure allocating 3D TAU'
-               CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
-            END IF
-
-            ALLOCATE ( ACTINIC_FX( NCOLS,NROWS,NLAYS,NWL ), STAT = ALLOCSTAT )
-            IF ( ALLOCSTAT .NE. 0 ) THEN
-               XMSG = 'Failure allocating ACTINIC_FX'
-               CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
-            END IF
+            TROPO_OC        = 0.0
+            CO_COLUMN       = 0.0
+            SO2_COLUMN      = 0.0
+            NO2_COLUMN      = 0.0
+            HCHO_COLUMN     = 0.0
 
 !...write wavelength data to a character array
 
@@ -665,17 +672,177 @@ C In-line canopy shading option? (default = false)
                WRITE( WLTXT( IWL ),'(I3.3)' ) INT( WAVELENGTH( IWL ) )
             END DO
 
-!...open the photolysis rate diagnostic files
+! get wanted number of layers for PHOTDIAG2 and PHOTDIAG3 files
+            IF ( NLAYS_DIAG .EQ. 0 ) NLAYS_DIAG = NLAYS
+            NLAYS_DIAG = MAX( 1, MIN( NLAYS_DIAG, NLAYS))
 
-            ODATE = JDATE; OTIME = JTIME
-#ifndef phot_extra_tstep
-            CALL NEXTIME ( ODATE, OTIME, DTSTEP( 1 ) )  ! output timestamp ending time
-#endif
+! get wanted wavelengths for PHOTDIAG2 and PHOTDIAG3 files
+            ALLOCATE( WAVE_LIST( NWL ) )
+            WAVE_LIST( : ) = ''
+            IF ( NWAVE .GT. NWL )
+     &          CALL LOG_MESSAGE( LOGDEV, 'Error: the number of ' //
+     &          'wavelengths the user has requested for diagnostic ' //
+     &          'photolysis output exceeds the number of internal model ' //
+     &          'wavelengths.' )
+            IF ( NWAVE .EQ. 0 ) THEN ! use all wavelenghts
+               N_DIAG_WVL = NWL
+               ALLOCATE ( DIAG_WVL( N_DIAG_WVL ) , STAT = ALLOCSTAT )
+               IF ( ALLOCSTAT .NE. 0 ) THEN
+                  XMSG = 'Failure allocating DIAG_WVL'
+                  CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+               END IF
+               DO IWL = 1, NWL
+                  DIAG_WVL( IWL )  = IWL
+               END DO
+               WRITE(LOGDEV,'(5X,A,I3)')'Environment Variable NWAVE_PHOTDIAG not found '
+     &      // 'setting PHOTDIAG2 and PHOTDIAG3 to output all wavelengths. Integer '
+     &      // 'truncated values are below.'
+               DO IWL = 1, N_DIAG_WVL
+                  SPC = DIAG_WVL( IWL )
+                  WRITE(LOGDEV,'(5X,I3,1X,A16)')IWL, WLTXT(SPC)
+               END DO
+            ELSE ! use the environment list
+                WAVE_LIST( 1:NWAVE ) = WAVE_ENV( 1:NWAVE )
+                N_DIAG_WVL = 0
+                 ! first remove identical values
+                DO V = 1, NWAVE-1
+                   DO L = (V+1), NWAVE
+                      IF( TRIM( WAVE_LIST( V ) ) .EQ. TRIM( WAVE_LIST( L ) ) )THEN
+                         WAVE_LIST( L ) = " "
+                      END IF
+                   END DO
+                END DO
+                 ! Now count number of unique values
+                DO V = 1, NWAVE
+                   IF( LEN_TRIM( WAVE_LIST( V ) ) .GT. 0 )N_DIAG_WVL = N_DIAG_WVL + 1
+                END DO
+                ALLOCATE ( DIAG_WVL( N_DIAG_WVL ) , STAT = ALLOCSTAT )
+                IF ( ALLOCSTAT .NE. 0 ) THEN
+                  XMSG = 'Failure allocating DIAG_WVL'
+                  CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+               END IF
+                ! Next find unique list value in wavelenght spectrum
+               IWL = 0
+               DO V = 1, NWAVE
+                   IF( LEN_TRIM( WAVE_LIST( V ) ) .LT. 1 )CYCLE
+                   IWL = IWL + 1
+                   DIAG_WVL( IWL )  = INDEXR ( TRIM( WAVE_LIST( V ) ), NWL, WLTXT )
+                   IF ( DIAG_WVL( IWL ) .LT. 1 ) THEN
+                      WRITE(LOGDEV,'(5X,A)')'PHOT: Cannot find requested wavelength, '
+     &                              // TRIM(  WAVE_LIST( IWL ) ) // ' for DIAG2 and DIAG3 files '
+     &                              // ' in spectrum '
+                   END IF
+               END DO
+               IF( MINVAL( DIAG_WVL ) .LT. 1 )THEN
+                  XMSG = 'FAILED TO find the above requested wavelenght spectrum '
+                  WRITE( LOGDEV,'(5X,A)')XMSG
+                  XMSG = 'Permitted integer truncated values of wavelenght spectrum '
+                  DO IWL = 1, NWL
+                     WRITE(LOGDEV,'(10X,I3,1X,A16)')IWL, WLTXT(IWL)
+                  END DO
+                  XMSG = 'ERROR using the environment variable, NWAVE_PHOTDIAG '
+                  CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+               ELSE
+                  WRITE(LOGDEV,'(5X,A,I3)')'Environment Variable NWAVE_PHOTDIAG found '
+     &      //    'setting PHOTDIAG2 and PHOTDIAG3 to output below wavelenghts'
+                  DO IWL = 1, N_DIAG_WVL
+                     SPC = DIAG_WVL( IWL )
+                     WRITE(LOGDEV,'(5X,I3,1X,A16)')IWL, WLTXT(SPC)
+                  END DO
+               END IF
+            END IF
+            WRITE(LOGDEV,'(/)')
+
+
+            ALLOCATE ( AERO_ASYM( NCOLS,NROWS,NLAYS_DIAG,N_DIAG_WVL ), STAT = ALLOCSTAT )
+            IF ( ALLOCSTAT .NE. 0 ) THEN
+               XMSG = 'Failure allocating 3D AERO_ASYM'
+               CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+            END IF
+
+            ALLOCATE ( AERO_SSA( NCOLS,NROWS,NLAYS_DIAG,N_DIAG_WVL ), STAT = ALLOCSTAT )
+            IF ( ALLOCSTAT .NE. 0 ) THEN
+               XMSG = 'Failure allocating 3D AERO_SSA'
+               CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+            END IF
+
+            ALLOCATE ( AERO_EXT( NCOLS,NROWS,NLAYS_DIAG,N_DIAG_WVL ), STAT = ALLOCSTAT )
+            IF ( ALLOCSTAT .NE. 0 ) THEN
+               XMSG = 'Failure allocating 3D AERO_EXT'
+               CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+            END IF
+
+            ALLOCATE ( TOT_EXT( NCOLS,NROWS,NLAYS_DIAG,N_DIAG_WVL ), STAT = ALLOCSTAT )
+            IF ( ALLOCSTAT .NE. 0 ) THEN
+               XMSG = 'Failure allocating 3D TOT_EXT'
+               CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+            END IF
+
+            ALLOCATE ( GAS_EXT( NCOLS,NROWS,NLAYS_DIAG,N_DIAG_WVL ), STAT = ALLOCSTAT )
+            IF ( ALLOCSTAT .NE. 0 ) THEN
+               XMSG = 'Failure allocating 3D GAS_EXT'
+               CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+            END IF
+
+            ALLOCATE ( ACTINIC_FX( NCOLS,NROWS,NLAYS_DIAG,N_DIAG_WVL ), STAT = ALLOCSTAT )
+            IF ( ALLOCSTAT .NE. 0 ) THEN
+               XMSG = 'Failure allocating ACTINIC_FX'
+               CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+            END IF
+
+            ALLOCATE ( OUTPUT_BUFF( NCOLS,NROWS,NLAYS_DIAG ), STAT = ALLOCSTAT )
+            IF ( ALLOCSTAT .NE. 0 ) THEN
+               XMSG = 'Failure allocating OUTPUT_BUFF'
+               CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+            END IF
+
+            VARNM = 'CO'
+            LGC_CO = INDEX1( VARNM, N_GC_SPC, GC_SPC )
+            IF ( LGC_CO .LE. 0 ) THEN
+               XMSG = 'Could not find ' // VARNM // 'in species table'
+               CALL M3WARN ( PNAME, JDATE, JTIME, XMSG )
+               WRITE(LOGDEV,95101)
+            END IF
+
+            VARNM = 'SO2'
+            LGC_SO2 = INDEX1( VARNM, N_GC_SPC, GC_SPC )
+            IF ( LGC_SO2 .LE. 0 ) THEN
+               XMSG = 'Could not find ' // VARNM // 'in species table'
+               CALL M3WARN ( PNAME, JDATE, JTIME, XMSG )
+               WRITE(LOGDEV,95101)
+            END IF
+
+            VARNM = 'HCHO'
+            LGC_HCHO = INDEX1( VARNM, N_GC_SPC, GC_SPC )
+            IF ( LGC_HCHO .LE. 0 ) THEN
+               VARNM = 'FORM'
+               LGC_HCHO = INDEX1( VARNM, N_GC_SPC, GC_SPC )
+               IF ( LGC_HCHO .LE. 0 ) THEN
+                  XMSG = 'Could not find HCHO or FORM, i.e., formaldehyde, in species table'
+                  CALL M3WARN ( PNAME, JDATE, JTIME, XMSG )
+                  WRITE(LOGDEV,95101)
+               END IF
+            END IF
+
+!...open the photolysis diagnostic files
+            ODATE = START_DATE; OTIME = START_TIME; OSTEP = 0
+#ifdef phot_write_start
             IF ( IO_PE_INCLUSIVE ) CALL OPPHOT ( ODATE, OTIME, DTSTEP( 1 ) )
-
-            CALL SUBST_BARRIER
+#else
+            CALL NEXTIME ( ODATE, OTIME, DTSTEP( 1 ) )  ! output timestamp ending time
+            IF ( IO_PE_INCLUSIVE ) CALL OPPHOT ( ODATE, OTIME, DTSTEP( 1 ) )
+! reset ODATE and OTIME for counting
+            ODATE = START_DATE; OTIME = START_TIME
+#endif
 
          END IF  ! photdiag
+         CALL SUBST_BARRIER
+
+         ALLOCATE ( AERO_EXT_550( NCOLS,NROWS,NLAYS ), STAT = ALLOCSTAT )
+         IF ( ALLOCSTAT .NE. 0 ) THEN
+             XMSG = 'Failure allocating 3D AERO_EXT_550'
+             CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+         END IF
 
 !...set pointers to species O3 and NO2 in CGRID
 
@@ -693,22 +860,14 @@ C In-line canopy shading option? (default = false)
             CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT3 )
          END IF
 
-#ifdef phot_extra_tstep
-      ELSE
-         IF ( PHOTDIAG ) THEN
-            ODATE = JDATE; OTIME = JTIME
-            CALL NEXTIME ( ODATE, OTIME, DTSTEP( 2 ) )  ! sync time step
-         END IF
-#endif
       END IF  ! FIRSTIME
 
-      IF ( JD_STRAT_O3MIN .NE. JDATE ) THEN
+      IF ( INT ( JD_STRAT_O3MIN ) .NE. JDATE ) THEN
 !...set minimum fraction of ozone column above PTOP
 
          CALL SEASONAL_STRAT_O3( JDATE, JTIME )
          MIN_STRATO3_FRAC = MONTH_STRAT_03_FRAC
          MAX_TROPOO3_FRAC = MAX( 1.0 - MONTH_STRAT_03_FRAC, 0.0 )
-         WRITE( LOGDEV,*)'PHOT: MIN_STRATO3_FRAC = ',MIN_STRATO3_FRAC 
          
          JD_STRAT_O3MIN = REAL( JDATE, 4)
       END IF
@@ -720,7 +879,13 @@ C In-line canopy shading option? (default = false)
       N_TROPO_O3_TOGGLE = 0
       TSTEP_COUNT       = TSTEP_COUNT + 1
 
-      CALL GET_PHOT_MET( JDATE, JTIME, MDATE, MTIME )
+      MIDDATE = JDATE
+      MIDTIME = JTIME
+      ITMSTEP = TIME2SEC( DTSTEP( 2 ) ) / 2
+      CALL NEXTIME( MIDDATE, MIDTIME, SEC2TIME( ITMSTEP ) )
+
+      CALL CONVCLD_PROP_ACM( JDATE, JTIME, DTSTEP )
+      CALL GET_PHOT_MET( JDATE, JTIME, MIDDATE, MIDTIME )
 
 !...Get cosine of solar parameters and set DARK
 
@@ -736,16 +901,22 @@ C In-line canopy shading option? (default = false)
 
 !...set surface albedos
 
-      CALL GET_ALBEDO( MDATE, MTIME, LOGDEV, COSINE_ZENITH, LAT, LON )
+      CALL GET_ALBEDO( MIDDATE, MIDTIME, COSINE_ZENITH, LAT, LON )
 
 !...SA  Write COSINE_ZENITH array at the end of each output tstep
 
-      IF ( PHOTDIAG ) THEN
-#ifndef phot_extra_tstep
-         ODATE = JDATE; OTIME = JTIME
-         CALL NEXTIME ( ODATE, OTIME, DTSTEP( 2 ) )  ! sync time step
+      JTIME_CHK         = .FALSE.
+      OSTEP  = OSTEP + TIME2SEC( DTSTEP( 2 ) )
+      JTIME_CHK = ( OSTEP .GE. TIME2SEC( DTSTEP( 1 ) ) )
+      IF ( JTIME_CHK ) THEN
+        OSTEP = 0
+        CALL NEXTIME( ODATE, OTIME, DTSTEP( 1 ) )
+      END IF
+#ifdef phot_write_start
+      JTIME_CHK = ( ODATE .EQ. STDATE .AND. OTIME .EQ. STTIME )
 #endif
-         JTIME_CHK = ( MOD( TIME2SEC( OTIME ), TSTEP ) .EQ. 0 ) 
+
+      IF ( PHOTDIAG ) THEN
 #ifdef parallel_io
          IF ( .NOT. IO_PE_INCLUSIVE ) THEN
             IF ( .NOT. OPEN3( CTM_RJ_1, FSREAD3, PNAME ) ) THEN
@@ -756,10 +927,12 @@ C In-line canopy shading option? (default = false)
                XMSG = 'Could not open ' // TRIM(CTM_RJ_2)
                CALL M3EXIT( PNAME, ODATE, OTIME, XMSG, XSTAT1 )
             END IF
+            IF ( .NOT. OPEN3( CTM_RJ_3, FSREAD3, PNAME ) ) THEN
+               XMSG = 'Could not open ' // TRIM(CTM_RJ_3)
+               CALL M3EXIT( PNAME, ODATE, OTIME, XMSG, XSTAT1 )
+            END IF
          END IF
 #endif
-      ELSE     
-         JTIME_CHK = .FALSE.
       END IF 
 
 !IVAI
@@ -781,7 +954,7 @@ C In-line canopy shading option? (default = false)
 ! NLAYS+3= bottom canopy layer at 0.2*CH
 ! =================
 
-        CALL get_can_levs(CGRID, JDATE, JTIME, MDATE, MTIME)
+        CALL get_can_levs(CGRID, JDATE, JTIME, MIDDATE, MIDTIME)
 
 ! ================
 ! Out: ZMID_CAN  (:,:,NLAYT)
@@ -893,6 +1066,7 @@ C In-line canopy shading option? (default = false)
       END IF ! CANOPY_SHADE
 !IVAI
 
+      CALCULATE_EXT_550 = .TRUE. !JTIME_CHK
       
 !...If sun below horizon at all cells, zero photolysis rates & exit
 !...  (assumes sun below horizon at *all* levels!)
@@ -900,22 +1074,23 @@ C In-line canopy shading option? (default = false)
       IF ( DARK ) THEN
 
          RJ = 0.0
-         RJ_CAN=0.0  !IVAI RJ_CAN   (:,:,:,:)
-
-!...write to the log file, CTM_RJ_1 file and return
-
-         WRITE( LOGDEV, 1003 ) MYPE, JDATE, JTIME
+         RJ_SUB = 0.0
+         RJ_RES = 0.0
+         ETOT_SFC_WL  = 0.0
+         AERO_EXT_550 = 0.0
+         TAU_AERO_550 = 0.0
+!IVAI
+         RJ_CAN = 0.0 
+         RJ_RES_CAN = 0.0
+         RJ_SUB_CAN = 0.0
+!IVAI
 
 !...Initialize ETOT_SFC, TAU_AERO, TAU_TOT, TAUO3_TOP to 0.0
 
 !...Write data to output diagnostic file
 
-         TOTAL_OC = 0.0
+         IF ( JTIME_CHK .AND. PHOTDIAG ) THEN
 
-         IF ( JTIME_CHK ) THEN
-
-            TROPO_OC     = 0.0
-            ETOT_SFC_WL  = 0.0
             TAUO3_TOP_WL = 0.0
             TAU_AERO_WL  = 0.0
             TAU_CLOUD_WL = 0.0
@@ -924,13 +1099,13 @@ C In-line canopy shading option? (default = false)
             ASY_CLOUD_WL = 0.0
 #endif                   
             TAU_TOT_WL   = 0.0
-            TAU          = 0.0
-            TAU_AERO     = 0.0
+            TOT_EXT      = 0.0
+            GAS_EXT      = 0.0
+            AERO_EXT     = 0.0
             AERO_SSA     = 0.0
             AERO_ASYM    = 0.0
             ACTINIC_FX   = 0.0
 
-!           TROPO_O3_EXCEED   = 0.0
             TRANSMIS_DIFFUSE  = 0.0
             TRANSMIS_DIRECT   = 0.0
             REFLECT_COEFF     = 0.0
@@ -938,28 +1113,60 @@ C In-line canopy shading option? (default = false)
             CLR_TRANS_DIRECT  = 0.0
             CLR_REFLECTION    = 0.0 
 
-         END IF  ! if JTIME_CHK
+            DO ROW = 1, NROWS
+               DO COL = 1, NCOLS
+                  BLKDENS( 1 ) = DENS ( COL,ROW,1 ) * DENS_CONV ! [molecules / cm**3]
+                  BLKDZ  ( 1 ) = ZFULL( COL,ROW,1 )
+                  DO L = 2, NLAYS
+                     BLKDENS( L ) = DENS( COL,ROW,L ) * DENS_CONV ! [molecules / cm**3]
+                     BLKDZ  ( L ) = ZFULL( COL,ROW,L ) - ZFULL( COL,ROW,L-1 )
+                  END DO
+                  MSCALE = 1.0E-19 ! 100.0*10E-15*PPM_MCM3, so units are petamolecules/cm2
+                  CALL COLUMN_GAS( IGAS=LGC_CO,   UNIT_FACTOR=MSCALE, COLUMN_DENSITY=CO_COLUMN   )
+                  CALL COLUMN_GAS( IGAS=LGC_SO2,  UNIT_FACTOR=MSCALE, COLUMN_DENSITY=SO2_COLUMN  )
+                  CALL COLUMN_GAS( IGAS=LGC_NO2,  UNIT_FACTOR=MSCALE, COLUMN_DENSITY=NO2_COLUMN  )
+                  CALL COLUMN_GAS( IGAS=LGC_HCHO, UNIT_FACTOR=MSCALE, COLUMN_DENSITY=HCHO_COLUMN )
+                  MSCALE = 1.0E-4 * CONC_TO_DU ! so units are Dobsons
+                  CALL COLUMN_GAS( IGAS=LGC_O3, UNIT_FACTOR=MSCALE, COLUMN_DENSITY=TROPO_OC )
+!...get total ozone column based on OMI observations
+                  CALL O3TOTCOL ( LAT( COL,ROW ), LON( COL,ROW ), MIDDATE, MIDTIME, TOTAL_OC( COL,ROW ) )
+               END DO
+            END DO
+         ELSE
+           DO ROW = 1, NROWS
+              DO COL = 1, NCOLS
+!...get total ozone column based on OMI observations
+                  CALL O3TOTCOL ( LAT( COL,ROW ), LON( COL,ROW ), MIDDATE,MIDTIME, TOTAL_OC( COL,ROW ) )
+              END DO
+           END DO
+         END IF  ! if JTIME_CHK and PHOTDIAG
 
       ELSE  ! all cells not dark
 
 !...MAIN loop over all rows and columns
-         LOOP_ROWS: DO ROW = 1, MY_NROWS
-            LOOP_COLS: DO COL = 1, MY_NCOLS
+         LOOP_ROWS: DO ROW = 1, NROWS
+            LOOP_COLS: DO COL = 1, NCOLS
          
                PHOT_COL = COL + PECOL_OFFSET
                PHOT_ROW = ROW + PEROW_OFFSET
 
                COSZEN = COSINE_ZENITH( COL,ROW ) ! local cosine of solar zenith angle
 
+               TAU_AERO_550( COL,ROW ) = 0.0
+               AERO_EXT_550( COL,ROW,: ) = 0.0
                IF ( COSZEN .LE. 0.0 ) THEN
 !...the cell is dark: set variables to zero and cycle
                   RJ    ( COL,ROW, :,: ) = 0.0
-                  RJ_CAN( COL,ROW, :,: ) = 0.0  !IVAI
+                  RJ_RES( COL,ROW, :,: ) = 0.0
+                  RJ_SUB( COL,ROW, :,: ) = 0.0
+                  ETOT_SFC_WL ( COL,ROW, : ) = 0.0
+!IVAI
+                  RJ_CAN    ( COL,ROW, :,: ) = 0.0  !IVAI
+                  RJ_RES_CAN( COL,ROW, :,: ) = 0.0  !IVAI
+                  RJ_SUB_CAN( COL,ROW, :,: ) = 0.0  !IVAI
+!IVAI
    
-                  IF ( JTIME_CHK ) THEN
-                     TOTAL_OC( COL,ROW )        = 0.0                            
-                     TROPO_OC( COL,ROW )        = 0.0                            
-                     ETOT_SFC_WL ( COL,ROW, : ) = 0.0
+                  IF ( JTIME_CHK .AND. PHOTDIAG ) THEN
                      TAUO3_TOP_WL( COL,ROW, : ) = 0.0
                      TAU_AERO_WL ( COL,ROW, : ) = 0.0
                      TAU_CLOUD_WL( COL,ROW, : ) = 0.0
@@ -968,8 +1175,9 @@ C In-line canopy shading option? (default = false)
                      ASY_CLOUD_WL( COL,ROW, : ) = 0.0
 #endif                   
                      TAU_TOT_WL( COL,ROW, : )   = 0.0
-                     TAU       ( COL,ROW, :,: ) = 0.0
-                     TAU_AERO  ( COL,ROW, :,: ) = 0.0
+                     TOT_EXT   ( COL,ROW, :,: ) = 0.0
+                     GAS_EXT   ( COL,ROW, :,: ) = 0.0
+                     AERO_EXT  ( COL,ROW, :,: ) = 0.0
                      AERO_SSA  ( COL,ROW, :,: ) = 0.0
                      AERO_ASYM ( COL,ROW, :,: ) = 0.0
                      ACTINIC_FX( COL,ROW, :,: ) = 0.0
@@ -981,6 +1189,22 @@ C In-line canopy shading option? (default = false)
                      CLR_TRANSMISSION( COL,ROW ) = 0.0
                      CLR_TRANS_DIRECT( COL,ROW ) = 0.0
                      CLR_REFLECTION  ( COL,ROW ) = 0.0 
+
+                     BLKDENS( 1 ) = DENS ( COL,ROW,1 ) * DENS_CONV ! [molecules / cm**3]
+                     BLKDZ  ( 1 ) = ZFULL( COL,ROW,1 )
+                     DO L = 2, NLAYS
+                        BLKDENS( L ) = DENS( COL,ROW,L ) * DENS_CONV ! [molecules / cm**3]
+                        BLKDZ  ( L ) = ZFULL( COL,ROW,L ) - ZFULL( COL,ROW,L-1 )
+                     END DO
+                     MSCALE = 1.0E-19 ! 100.0*10E-15*PPM_MCM3, so units are petamolecules/cm2
+                     CALL COLUMN_GAS( IGAS=LGC_CO,   UNIT_FACTOR=MSCALE, COLUMN_DENSITY=CO_COLUMN   )
+                     CALL COLUMN_GAS( IGAS=LGC_SO2,  UNIT_FACTOR=MSCALE, COLUMN_DENSITY=SO2_COLUMN  )
+                     CALL COLUMN_GAS( IGAS=LGC_NO2,  UNIT_FACTOR=MSCALE, COLUMN_DENSITY=NO2_COLUMN  )
+                     CALL COLUMN_GAS( IGAS=LGC_HCHO, UNIT_FACTOR=MSCALE, COLUMN_DENSITY=HCHO_COLUMN )
+                     MSCALE = 1.0E-4 * CONC_TO_DU ! so units are Dobsons
+                     CALL COLUMN_GAS( IGAS=LGC_O3, UNIT_FACTOR=MSCALE, COLUMN_DENSITY=TROPO_OC )
+!...get total ozone column based on OMI observations
+                     CALL O3TOTCOL ( LAT( COL,ROW ), LON( COL,ROW ), MIDDATE, MIDTIME, TOTAL_OC( COL,ROW ) )
                   END IF
 
                   CYCLE LOOP_COLS
@@ -1003,13 +1227,8 @@ C In-line canopy shading option? (default = false)
                ZSFC   = HT( COL,ROW ) ! surface height [m]
                SINZEN = SQRT( 1.0 - COSZEN * COSZEN ) ! sine of zenith angle
 
-!...local latitude and longitude
-
-!               LATCR = LAT( COL,ROW )
-!               LONCR = LON( COL,ROW )
-
 !...get total ozone column based on OMI observations
-               CALL O3TOTCOL ( LAT( COL,ROW ), LON( COL,ROW ), JDATE, TOTAL_O3_COLUMN )
+               CALL O3TOTCOL ( LAT( COL,ROW ), LON( COL,ROW ), MIDDATE, MIDTIME, TOTAL_O3_COLUMN )
 
 !IVAI:
                TOTAL_O3_COLUMN_CAN = TOTAL_O3_COLUMN
@@ -1028,9 +1247,6 @@ C In-line canopy shading option? (default = false)
                DO L = 1, NLAYS
 !...Fetch the grid cell ambient data at each layer.
 
-! IVAI:
-! Uncomment to use t2m temperature
-!                 BLKTA  ( L )   = Met_Data%TEMP2(COL,ROW)   ! 2-m  temperature [K]
                   BLKTA  ( L )   = TA   ( COL,ROW,L )             ! temperature [K]
                   BLKPRS ( L )   = PRES ( COL,ROW,L ) / STDATMPA  ! [atmospheres]
                   BLKDENS( L )   = DENS ( COL,ROW,L ) * DENS_CONV ! [molecules / cm**3]
@@ -1111,7 +1327,7 @@ C In-line canopy shading option? (default = false)
 
 !              BLKO3_CAN ( L ) = CGRID( COL,ROW,1,LGC_O3  ) * MSCALE_CAN
 !              BLKNO2_CAN( L ) = CGRID( COL,ROW,1,LGC_NO2 ) * MSCALE_CAN
-! Uncomment to use values from canopy_transfer "resolved_to_canopy" BAD !! ???
+! Uncomment to use values from canopy_transfer "resolved_to_canopy" 
                BLKO3_CAN ( L ) = CONC_CAN( COL,ROW,L,LGC_O3  ) * MSCALE_CAN  ! from canopy_transfer
                BLKNO2_CAN( L ) = CONC_CAN( COL,ROW,L,LGC_NO2 ) * MSCALE_CAN  ! from canopy_transfer
             END DO
@@ -1173,7 +1389,7 @@ C In-line canopy shading option? (default = false)
                END IF
 
 !IVAI:
-         IF ( CANOPY_SHADE .AND. FRT_MASK(COL,ROW) > 0.) THEN
+            IF ( CANOPY_SHADE .AND. FRT_MASK(COL,ROW) > 0.) THEN
 ! Above canopy layers
                DO L = 1, NLAYS
                   CLOUDS_CAN (NLAYC+L) = CLOUDS (L)
@@ -1185,27 +1401,22 @@ C In-line canopy shading option? (default = false)
                   CLOUDS_CAN (L) = CLOUDS (1)
                   CLDFRAC_CAN(L) = CLDFRAC(1)
                END DO
-         END IF ! CANOPY_SHADE
+            END IF ! CANOPY_SHADE
 !IVAI
             
 !..calculate needed aerosol properties in column
 
 !              IF ( CORE_SHELL ) THEN
-                  CALL GET_AERO_DATA ( COL,ROW, NLAYS, CGRID )
+                  CALL GET_AERO_DATA ( COL,ROW, NLAYS, DENS, CGRID )
 !              ELSE
 !                 CALL AERO_OPTICS_INTERNAL( COL,ROW, NLAYS, CGRID )
 !              END IF
 
 ! set surface albedo
 
-               FORALL ( IWL = 1:NWL )
+               DO IWL = 1, NWL
                   ALB( IWL ) = SURFACE_ALBEDO( IWL, COL,ROW )
-               END FORALL
-!set min/max fractions of ozone column in stratosphere and troposphere
-!              MIN_STRATO3_FRAC = MIN_STRAT_03_FRAC( COL, ROW )
-!              MAX_TROPOO3_FRAC = MAX( 1.0 - MIN_STRAT_03_FRAC( COL, ROW ), 0.0 )
-!                MIN_STRATO3_FRAC = MONTH_STRAT_03_FRAC( COL, ROW )
-!                MAX_TROPOO3_FRAC = MAX( 1.0 - MONTH_STRAT_03_FRAC( COL, ROW ), 0.0 )
+               END DO
 !...calculate resolved-sky photolysis rates at all layers:
 
                NEW_PROFILE    = .TRUE. 
@@ -1246,25 +1457,35 @@ C In-line canopy shading option? (default = false)
 !IVAI
 
 !...load diagnostic file arrays
+
+               ! Aerosol extinction and optical depth are saved every
+               ! time step
+               FORALL ( L = 1:NLAYS )
+                  AERO_EXT_550( COL,ROW,L ) = 1000.0 * AERO_EXTI_550( L )
+               END FORALL
+               DO LEV = 1, NLAYS
+                  TAU_AERO_550 ( COL,ROW ) = TAU_AERO_550 ( COL,ROW )
+     &                                     + AERO_EXTI_550( LEV ) * BLKDZ( LEV )
+               END DO
+
                IF ( PHOTDIAG .AND. .NOT. STRATO3_MINS_MET ) THEN
                     N_EXCEED_TROPO3( COL,ROW ) =  N_EXCEED_TROPO3( COL,ROW ) + 1.0
                     TROPO_O3_EXCEED( COL,ROW ) = TROPO_O3_COLUMN/(MAX_TROPOO3_FRAC*TOTAL_O3_COLUMN) - 1.0
-!     &                                         + 1.0 / TROPO_O3_TOGGLE - 1.0
      &                                         + TROPO_O3_EXCEED( COL,ROW )
-!               ELSE IF(  PHOTDIAG ) THEN
-!                     TROPO_O3_EXCEED( COL,ROW ) = 0.0
                END IF 
 
-               IF ( JTIME_CHK  ) THEN
+               FORALL ( IWL = 1:NWL )
+                  ETOT_SFC_WL ( COL,ROW,IWL ) = IRRADIANCE( 1,IWL )
+               END FORALL
+
+               IF ( JTIME_CHK .AND. PHOTDIAG  ) THEN
                   TOTAL_OC( COL,ROW )         = REAL( TOTAL_O3_COLUMN )
-                  TROPO_OC( COL,ROW )         = REAL( TROPO_O3_COLUMN )
                   TRANSMIS_DIFFUSE( COL,ROW ) = TRANSMISSION
                   TRANSMIS_DIRECT( COL,ROW )  = TRANS_DIRECT
                   REFLECT_COEFF( COL,ROW )    = REFLECTION
 
 
-                  FORALL( IWL = 1:NWL )
-                     ETOT_SFC_WL ( COL,ROW,IWL ) = IRRADIANCE( 1,IWL )
+                  DO IWL = 1, NWL 
                      TAUO3_TOP_WL( COL,ROW,IWL ) = TAUO3_TOP( IWL )
                      TAU_AERO_WL ( COL,ROW,IWL ) = TAUC_AERO( 1,IWL )
                      TAU_TOT_WL  ( COL,ROW,IWL ) = TAU_TOT  ( 1,IWL )
@@ -1273,32 +1494,52 @@ C In-line canopy shading option? (default = false)
                      SSA_CLOUD_WL( COL,ROW,IWL ) = AVE_SSA_CLD  ( IWL )
                      ASY_CLOUD_WL( COL,ROW,IWL ) = AVE_ASYMM_CLD( IWL )
 #endif                      
-                  END FORALL
-                  FORALL ( LEV = 1:NLAYS, IWL = 1:NWL  )
-                     ACTINIC_FX( COL,ROW,LEV,IWL ) = ACTINIC_FLUX( LEV,IWL )
-                  END FORALL
-                  
+                  END DO
+
+
                   DO L = 1, N_DIAG_WVL
                      IWL = DIAG_WVL( L )
-                     FORALL ( LEV = 1:NLAYS )
-                        TAU     ( COL,ROW,LEV,L ) = TAU_TOT  ( LEV,IWL )
-                        TAU_AERO( COL,ROW,LEV,L ) = TAUC_AERO( LEV,IWL )
+                     FORALL ( LEV = 1:NLAYS_DIAG )
+                        ACTINIC_FX( COL,ROW,LEV,L )  = ACTINIC_FLUX( LEV,IWL )
+                        TOT_EXT ( COL,ROW,LEV,L )    = 1000.0 * EXTINCTION( LEV,IWL )
+                        GAS_EXT ( COL,ROW,LEV,L )    = 1000.0 * GAS_EXTINCTION( LEV,IWL )
+                        AERO_EXT( COL,ROW,LEV,L )    = 1000.0 * AERO_EXTI_COEF( LEV,IWL )
                      END FORALL
-                     FORALL ( LEV = 1:NLAYS, AERO_EXTI_COEF( LEV,IWL ) .GT. EPSLON )
+                     FORALL ( LEV = 1:NLAYS_DIAG, AERO_EXTI_COEF( LEV,IWL ) .GT. EPSLON )
                         AERO_SSA ( COL,ROW,LEV,L ) = AERO_SCAT_COEF( LEV,IWL )
      &                                             / AERO_EXTI_COEF( LEV,IWL )
                         AERO_ASYM( COL,ROW,LEV,L ) = AERO_ASYM_FAC( LEV,IWL )
                      END FORALL
-                     FORALL ( LEV = 1:NLAYS, AERO_EXTI_COEF( LEV,IWL ) .LE. EPSLON )
+                     FORALL ( LEV = 1:NLAYS_DIAG, AERO_EXTI_COEF( LEV,IWL ) .LE. EPSLON )
                         AERO_SSA ( COL,ROW,LEV,L ) = 1.0
                         AERO_ASYM( COL,ROW,LEV,L ) = 0.0
                      END FORALL
                   END DO
+
+                  IF ( COSZEN .LE. COS85 ) THEN
+                     ! calculate because NEW_OPTICS sets BLKDZ and TROPO_O3_COLUMN to zero
+                     BLKDZ( 1 ) = BLKZF( 2 )
+                     DO L = 2, NLAYS
+                        BLKDZ( L ) = BLKZF( L+1 ) - BLKZF( L )
+                     END DO
+                     MSCALE = 1.0E-4 * CONC_TO_DU ! so units are Dobsons
+                     CALL COLUMN_GAS( IGAS=LGC_O3, UNIT_FACTOR=MSCALE, COLUMN_DENSITY=TROPO_OC )
+                  ELSE
+                     TROPO_OC( COL,ROW ) = TROPO_O3_COLUMN
+                  END IF
+                  MSCALE = 1.0E-19 ! 100.0*10E-15*PPM_MCM3, so units are petamolecules/cm2
+                  CALL COLUMN_GAS( IGAS=LGC_CO,   UNIT_FACTOR=MSCALE, COLUMN_DENSITY=CO_COLUMN   )
+                  CALL COLUMN_GAS( IGAS=LGC_SO2,  UNIT_FACTOR=MSCALE, COLUMN_DENSITY=SO2_COLUMN  )
+                  CALL COLUMN_GAS( IGAS=LGC_NO2,  UNIT_FACTOR=MSCALE, COLUMN_DENSITY=NO2_COLUMN  )
+                  CALL COLUMN_GAS( IGAS=LGC_HCHO, UNIT_FACTOR=MSCALE, COLUMN_DENSITY=HCHO_COLUMN )
                END IF
 
 !Set Photolysis rates to resolved sky values
                FORALL ( L = 1:NLAYS, IPHOT = 1:NPHOTAB )
                   RJ( COL,ROW, L,IPHOT ) = 60.0 * BLKRJ_RES( L,IPHOT ) 
+               END FORALL  ! Loop on layers and NPHOTAB
+               FORALL ( L = 1:NLAYS, IPHOT = 1:NPHOTAB )
+                  RJ_RES( COL,ROW, L,IPHOT ) = 60.0 * BLKRJ_RES( L,IPHOT )
                END FORALL  ! Loop on layers and NPHOTAB
 
 !IVAI
@@ -1312,6 +1553,9 @@ C In-line canopy shading option? (default = false)
 !Set Photolysis rates to pre-determined above and below canopy values
                FORALL ( L = 1:NLAYT, IPHOT = 1:NPHOTAB )
                   RJ_CAN( COL,ROW, L,IPHOT ) = 60.0 * BLKRJ_RES_CAN( L,IPHOT )
+               END FORALL
+               FORALL ( L = 1:NLAYT, IPHOT = 1:NPHOTAB )
+                  RJ_RES_CAN( COL,ROW, L,IPHOT ) = 60.0 * BLKRJ_RES_CAN( L,IPHOT )
                END FORALL
 
 ! Print all layers only at KOUNT number of canopy columns 
@@ -1360,19 +1604,6 @@ C In-line canopy shading option? (default = false)
 !           aux2d_02( COL,ROW ) = RJ_CAN( COL,ROW, 2, LO3O1D)
 !           aux2d_01( COL,ROW ) = RJ_CAN( COL,ROW, 1, LO3O1D)
 
-! !!! START OVERWRITE CANOPY COLUMNS!!!
-! NB. If applying overwrite below, the canopy layers will only differ in RJ_CORRM factor
-! !!! Overwrite canopy layers with 1hy modle layer !!!
-!Set Photolysis rates to resolved sky values above canopy
-!Nov2:         FORALL ( L = 1:NLAYS, IPHOT = 1:NPHOTAB )
-!Nov2:            RJ_CAN( COL,ROW, NLAYC+L,IPHOT ) = 60.0 * BLKRJ_RES( L,IPHOT )
-!Nov2:         END FORALL
-!Set Photolysis rates below canopy to 1hy (bottom) model layer
-!Nov2:         FORALL ( L = 1:NLAYC, IPHOT = 1:NPHOTAB )
-!Nov2:            RJ_CAN( COL,ROW, L,IPHOT ) = 60.0 * BLKRJ_RES( 1,IPHOT )
-!Nov2:         END FORALL
-! !!! END OVERWRITE CANOPY COLUMNS !!!
-
             ELSE  ! Non-Canopy columns
 !
 ! Non-canopy columns
@@ -1382,13 +1613,18 @@ C In-line canopy shading option? (default = false)
                FORALL ( L = 1:NLAYS, IPHOT = 1:NPHOTAB )
                   RJ_CAN( COL,ROW, NLAYC+L,IPHOT ) = 60.0 * BLKRJ_RES( L,IPHOT )
                END FORALL
+               FORALL ( L = 1:NLAYS, IPHOT = 1:NPHOTAB )
+                  RJ_RES_CAN( COL,ROW, NLAYC+L,IPHOT ) = 60.0 * BLKRJ_RES( L,IPHOT )
+               END FORALL
 
 ! Sub-canopy layers:
 !Set Photolysis rates below canopy to 1hy (bottom) model layer
                FORALL ( L = 1:NLAYC, IPHOT = 1:NPHOTAB )
                   RJ_CAN( COL,ROW, L,IPHOT ) = 60.0 * BLKRJ_RES( 1,IPHOT )
                END FORALL
-
+               FORALL ( L = 1:NLAYC, IPHOT = 1:NPHOTAB )
+                  RJ_RES_CAN( COL,ROW, L,IPHOT ) = 60.0 * BLKRJ_RES( 1,IPHOT )
+               END FORALL
             END IF  ! CANOPY_SHADE & FRT_MASK
 !IVAI
 
@@ -1423,23 +1659,21 @@ C In-line canopy shading option? (default = false)
                         END IF
                         CLOUD_LAYERING( L ) = .FALSE.
                      END DO
-!                    write(logdev,*)'ACM cloud present fraction, cloud lwc(lev),iwc(lev),rwc(1),gwc(1) = ',
-!     &              ACM_CLOUDS( COL,ROW ),lwc(lev),iwc(lev),rwc(1),gwc(1)
 
 !IVAI
 !           IF ( CANOPY_SHADE .AND. FRT_MASK(COL,ROW) > 0.) THEN
 ! Canopy & Non-Canopy columns 
 ! Above canopy layers
-               DO L = 1, NLAYS
-                  CLOUDS_CAN (NLAYC+L) = CLOUDS (L)
-                  CLDFRAC_CAN(NLAYC+L) = CLDFRAC(L)
-               END DO
+                     DO L = 1, NLAYS
+                        CLOUDS_CAN (NLAYC+L) = CLOUDS (L)
+                        CLDFRAC_CAN(NLAYC+L) = CLDFRAC(L)
+                     END DO
 
 ! Set sub-canopy layer values to 1st model layer
-               DO L = 1, NLAYC
-                  CLOUDS_CAN (L) = CLOUDS (1) 
-                  CLDFRAC_CAN(L) = CLDFRAC(1)
-               END DO
+                     DO L = 1, NLAYC
+                        CLOUDS_CAN (L) = CLOUDS (1) 
+                        CLDFRAC_CAN(L) = CLDFRAC(1)
+                     END DO
 !           END IF
 !IVAI
                  
@@ -1451,18 +1685,18 @@ C In-line canopy shading option? (default = false)
 !...calculate the acm-cloud photolysis rates for all layers:
                      NEW_PROFILE = .FALSE.   
                      CALL NEW_OPTICS ( JDATE, JTIME, NLAYS,
-     &                                 BLKTA, BLKPRS, BLKDENS, BLKZH, BLKZF,
-     &                                 BLKO3, BLKNO2,
-     &                                 ZSFC, COSZEN, SINZEN, RSQD,
-     &                                 NEW_PROFILE, CLOUDS, CLDFRAC,
-     &                                 BLKRJ_ACM, TAUC_AERO, TAU_TOT, TAUO3_TOP,
-     &                                 TAU_RAY, SSA, TAU_CLOUD, TOTAL_O3_COLUMN )
+     &                           BLKTA, BLKPRS, BLKDENS, BLKZH, BLKZF,
+     &                           BLKO3, BLKNO2,
+     &                           ZSFC, COSZEN, SINZEN, RSQD,
+     &                           NEW_PROFILE, CLOUDS, CLDFRAC,
+     &                           BLKRJ_ACM, TAUC_AERO, TAU_TOT, TAUO3_TOP,
+     &                           TAU_RAY, SSA, TAU_CLOUD, TOTAL_O3_COLUMN )
 
 !IVAI: 
 !...Call new_optics for the cloudy fraction of the grid cell
 !...calculate the acm-cloud photolysis rates for combined (canopy plus
 !resolved) model layers NLAYT
-            IF ( CANOPY_SHADE .AND. FRT_MASK(COL,ROW) > 0.) THEN
+                  IF ( CANOPY_SHADE .AND. FRT_MASK(COL,ROW) > 0.) THEN
 
                      NEW_PROFILE = .FALSE.
                      CALL NEW_OPTICS ( JDATE, JTIME, NLAYT,  !in: NLAYT scalar
@@ -1478,7 +1712,7 @@ C In-line canopy shading option? (default = false)
      &                  TAU_RAY_CAN, SSA_CAN,                !out:        (NWL)
      &                  TAU_CLOUD_CAN,                       !out: (NLAYS, NWL)
      &                  TOTAL_O3_COLUMN_CAN )                !inout:     scalar
-            END IF
+                  END IF
 !IVAI
 
 !...load diagnostic file arrays
@@ -1486,8 +1720,12 @@ C In-line canopy shading option? (default = false)
 !...  note that both TAUC_AERO and TAUO3_TOP are the same for clear and
 !...  cloudy regions
                      MSCALE = MAX( 1.0 - ACM_CLOUDS( COL,ROW ), 0.0 )
+                     DO IWL = 1, NWL
+                       ETOT_SFC_WL ( COL,ROW,IWL ) = MSCALE * ETOT_SFC_WL( COL,ROW,IWL )
+     &                                             + ACM_CLOUDS( COL,ROW ) * IRRADIANCE( 1,IWL )
+                     END DO
 
-                     IF ( JTIME_CHK ) THEN
+                     IF ( JTIME_CHK .AND. PHOTDIAG ) THEN
 
                         TRANSMIS_DIRECT( COL,ROW )  = MSCALE * TRANSMIS_DIRECT( COL,ROW )
      &                                              + ACM_CLOUDS( COL,ROW ) * TRANS_DIRECT
@@ -1495,9 +1733,7 @@ C In-line canopy shading option? (default = false)
      &                                              + ACM_CLOUDS( COL,ROW ) * TRANSMISSION
                         REFLECT_COEFF( COL,ROW )    = MSCALE * REFLECT_COEFF( COL,ROW )
      &                                              + ACM_CLOUDS( COL,ROW ) * REFLECTION
-                        FORALL ( IWL = 1:NWL )
-                           ETOT_SFC_WL ( COL,ROW,IWL ) = MSCALE * ETOT_SFC_WL( COL,ROW,IWL )
-     &                                                 + ACM_CLOUDS( COL,ROW ) * IRRADIANCE( 1,IWL )
+                        DO IWL = 1, NWL
                            TAU_TOT_WL  ( COL,ROW,IWL ) = MSCALE * TAU_TOT_WL( COL,ROW,IWL )
      &                                                 + ACM_CLOUDS( COL,ROW ) * TAU_TOT( 1,IWL )
                            TAU_CLOUD_WL( COL,ROW,IWL ) = MSCALE * TAU_CLOUD_WL( COL,ROW,IWL )
@@ -1508,24 +1744,23 @@ C In-line canopy shading option? (default = false)
                            ASY_CLOUD_WL( COL,ROW,IWL ) = MSCALE * ASY_CLOUD_WL( COL,ROW,IWL )
      &                                                 + ACM_CLOUDS( COL,ROW ) * AVE_ASYMM_CLD( IWL )
 #endif
-                        END FORALL   ! iwl
-                        FORALL ( LEV = 1:NLAYS, IWL = 1:NWL )
-                           ACTINIC_FX( COL,ROW,LEV,IWL ) = MSCALE * ACTINIC_FX( COL,ROW,LEV,IWL )
-     &                                                   + ACM_CLOUDS( COL,ROW ) * ACTINIC_FLUX( LEV,IWL )
-                        END FORALL ! lev and iwl
+                        END DO   ! iwl
 
-                        DO L = 1, N_DIAG_WVL
-                           IWL = DIAG_WVL( L )
-                           FORALL ( LEV = 1:NLAYS)
-                              TAU( COL,ROW,LEV,L ) = MSCALE * TAU( COL,ROW,LEV,L )
-     &                                             + ACM_CLOUDS( COL,ROW ) * TAU_TOT( LEV,IWL )
-                           END FORALL
+                        DO LEV = 1, NLAYS_DIAG
+                           DO L = 1, N_DIAG_WVL
+                              IWL = DIAG_WVL( L )
+                              TOT_EXT( COL,ROW,LEV,L )    = MSCALE * TOT_EXT( COL,ROW,LEV,L )
+     &                                                    + ACM_CLOUDS( COL,ROW ) * EXTINCTION( LEV,IWL )
+                              ACTINIC_FX( COL,ROW,LEV,L ) = MSCALE * ACTINIC_FX( COL,ROW,LEV,L )
+     &                                                    + ACM_CLOUDS( COL,ROW ) * ACTINIC_FLUX( LEV,IWL )
+                           END DO
                         END DO
                      END IF  ! photdiag
 !Photolysis rates become a weighted average of the values from resolved and ACM skies
                      FORALL ( L = 1:NLAYS, IPHOT = 1:NPHOTAB )
-                         RJ( COL,ROW, L, IPHOT ) = 60.0 * ACM_CLOUDS( COL,ROW ) * BLKRJ_ACM( L,IPHOT )
-     &                                           + MSCALE * RJ( COL,ROW,L,IPHOT )
+                        RJ_SUB( COL,ROW, L, IPHOT ) = 60.0 * BLKRJ_ACM( L,IPHOT )
+                        RJ( COL,ROW, L, IPHOT )     = ACM_CLOUDS( COL,ROW ) *  RJ_SUB( COL,ROW, L, IPHOT )
+     &                                              + MSCALE * RJ( COL,ROW,L,IPHOT )
                      END FORALL  ! Loop on layers and PHOT
 
 !IVAI
@@ -1534,32 +1769,35 @@ C In-line canopy shading option? (default = false)
 
 ! Canopy & Non-Canopy Columns:
 !Photolysis rates become a weighted average of the values from resolved and ACM skies
-            IF (CANOPY_SHADE .AND. FRT_MASK(COL,ROW) > 0. ) THEN
+                  IF (CANOPY_SHADE .AND. FRT_MASK(COL,ROW) > 0. ) THEN
 ! Canopy columns
-               FORALL ( L = 1:NLAYT, IPHOT = 1:NPHOTAB )
-                 RJ_CAN( COL,ROW, L, IPHOT ) = 60.0 * ACM_CLOUDS( COL,ROW ) * BLKRJ_ACM_CAN( L,IPHOT )
-     &                                        + MSCALE * RJ_CAN( COL,ROW,L,IPHOT )
-               END FORALL  ! Loop on layers and PHOT
+                     FORALL ( L = 1:NLAYT, IPHOT = 1:NPHOTAB )
+                        RJ_SUB_CAN( COL,ROW, L, IPHOT ) = 60.0 * BLKRJ_ACM_CAN( L,IPHOT )
+                        RJ_CAN( COL,ROW, L, IPHOT ) = ACM_CLOUDS( COL,ROW ) * RJ_SUB_CAN( COL,ROW, L, IPHOT )
+     &                                              + MSCALE * RJ_CAN( COL,ROW,L,IPHOT )
+                     END FORALL  ! Loop on layers and PHOT
 
-            ELSE ! Non-Canopy columns   
+                  ELSE ! Non-Canopy columns   
 
 ! Non-Canopy Columns
 ! Above canopy layers
-               FORALL ( L = 1:NLAYS, IPHOT = 1:NPHOTAB )
-                 RJ_CAN( COL,ROW, NLAYC + L, IPHOT ) = 60.0 * ACM_CLOUDS( COL,ROW ) * BLKRJ_ACM( L,IPHOT )
-     &                         + MSCALE * RJ_CAN( COL,ROW, NLAYC + L,IPHOT )
-               END FORALL  ! Loop on layers and PHOT
+                     FORALL ( L = 1:NLAYS, IPHOT = 1:NPHOTAB )
+                        RJ_SUB( COL,ROW, L, IPHOT ) = 60.0 * BLKRJ_ACM( L,IPHOT )
+                        RJ_CAN( COL,ROW, NLAYC + L, IPHOT ) = ACM_CLOUDS( COL,ROW ) * RJ_SUB( COL,ROW, L, IPHOT )
+     &                                                      + MSCALE * RJ_CAN( COL,ROW, NLAYC + L,IPHOT )
+                     END FORALL  ! Loop on layers and PHOT
 
 ! Sub-canopy layers
-               FORALL ( L = 1:NLAYC, IPHOT = 1:NPHOTAB )
-                 RJ_CAN( COL,ROW, L, IPHOT ) = 60.0 * ACM_CLOUDS( COL,ROW ) * BLKRJ_ACM( 1,IPHOT )
-     &                                        + MSCALE * RJ_CAN( COL,ROW,L,IPHOT )
-               END FORALL  ! Loop on layers and PHOT
+                     FORALL ( L = 1:NLAYC, IPHOT = 1:NPHOTAB )
+                       RJ_SUB( COL,ROW, 1, IPHOT ) = 60.0 * BLKRJ_ACM( 1,IPHOT )
+                       RJ_CAN( COL,ROW, L, IPHOT ) = ACM_CLOUDS( COL,ROW ) * RJ_SUB( COL,ROW, 1, IPHOT )
+     &                                             + MSCALE * RJ_CAN( COL,ROW,L,IPHOT )
+                     END FORALL  ! Loop on layers and PHOT
 
-            END IF
+                  END IF ! CANOPY_SHADE/FRT_MASK
 
                   END IF ! ACM_CLOUDS > 0
-               END IF ! USE_ACM_CLOUD
+               END IF ! not USE_ACM_CLOUD and  ACM_CLOUDS > 0
 
 ! Print after ACM_CLOUDS correction
 !        KOUNT = 0
@@ -1603,8 +1841,8 @@ C In-line canopy shading option? (default = false)
 !Makar, P., Staebler, R., Akingunola, A. et al. The effects of forest canopy shading and turbulence on boundary layer ozone.
 !Nat Commun 8, 15243 (2017). https://doi.org/10.1038/ncomms15243
 
-         KOUNT = 0
-         IF ( CANOPY_SHADE .AND. FRT_MASK(COL,ROW) > 0. ) THEN ! compute canopy shade reduction factor (RJ_CORR)
+              KOUNT = 0
+              IF ( CANOPY_SHADE .AND. FRT_MASK(COL,ROW) > 0. ) THEN ! compute canopy shade reduction factor (RJ_CORR)
 
 !Fraction of cumulative LAI above each canopy layer interface counting down (C1R, C2R, C3R, C4R data from ECCC)
 
@@ -1626,12 +1864,12 @@ C In-line canopy shading option? (default = false)
               RJ_CORRX6(5) = MAX(1.0E-10, EXP(- LAI_C4R * COEFF ))
               RJ_CORRX6(6) = MAX(1.0E-10, EXP(- COEFF ))
 
-              RJ_CORR_TOP = 1. ! top of canopy
-              RJ_CORR_C1R = MAX(1.0E-10, EXP(- LAI_C1R * COEFF )) 
-              RJ_CORR_C2R = MAX(1.0E-10, EXP(- LAI_C2R * COEFF ))
-              RJ_CORR_C3R = MAX(1.0E-10, EXP(- LAI_C3R * COEFF ))
-              RJ_CORR_C4R = MAX(1.0E-10, EXP(- LAI_C4R * COEFF ))
-              RJ_CORR_BOT = MAX(1.0E-10, EXP(- COEFF ))
+              RJ_CORR_TOP( COL,ROW ) = 1. ! top of canopy
+              RJ_CORR_C1R( COL,ROW ) = MAX(1.0E-10, EXP(- LAI_C1R * COEFF )) 
+              RJ_CORR_C2R( COL,ROW ) = MAX(1.0E-10, EXP(- LAI_C2R * COEFF ))
+              RJ_CORR_C3R( COL,ROW ) = MAX(1.0E-10, EXP(- LAI_C3R * COEFF ))
+              RJ_CORR_C4R( COL,ROW ) = MAX(1.0E-10, EXP(- LAI_C4R * COEFF ))
+              RJ_CORR_BOT( COL,ROW ) = MAX(1.0E-10, EXP(- COEFF ))
 
               ZCANX6(1) = Met_Data%FCH( COL,ROW )
               ZCANX6(2) = ZCANX6(1) *0.75
@@ -1640,21 +1878,21 @@ C In-line canopy shading option? (default = false)
               ZCANX6(5) = ZCANX6(1) *0.20
               ZCANX6(6) = 0.0
 
-            RJ_CORRX (:) = 0.0
-            DO LEV = 1, NLAYS !loop through model layers
+              RJ_CORRX (:) = 0.0
+              DO LEV = 1, NLAYS !loop through model layers
 
-               IF (LEV .EQ. 1) THEN !first model layer
+                 IF (LEV .EQ. 1) THEN !first model layer
                     KCAN = 1
-               ELSE               !check subsequent model layers
+                 ELSE               !check subsequent model layers
                     IF (  Met_Data%FCH( COL,ROW ) .GT. Met_Data%ZF( COL,ROW,LEV-1 )
      &               .AND. Met_Data%FCH( COL,ROW ) .LE. Met_Data%ZF( COL,ROW,LEV ) ) THEN
                         KCAN = 1
                     ELSE
                         KCAN = 0
                     END IF
-               END IF
+                 END IF
 
-               IF (KCAN .EQ. 1) THEN !canopy could be inside model layer
+                 IF (KCAN .EQ. 1) THEN !canopy could be inside model layer
 
 !Interpolate to get attenuation profile below canopy inside respective model layer 
                     ZFL = Met_Data%ZF( COL,ROW,LEV )
@@ -1678,7 +1916,7 @@ C In-line canopy shading option? (default = false)
                            XCAN(2) = Met_Data%FCH( COL,ROW )
                            YCAN(2) = 1.0
                            XCAN(1) = Met_Data%FCH( COL,ROW )*0.75
-                           YCAN(1) = RJ_CORR_C1R
+                           YCAN(1) = RJ_CORR_C1R( COL,ROW )
                            XCANOUT = ZCAN
                            ZCANX(COUNTCAN) = ZCAN
                            RJ_CORRX (COUNTCAN) = interp_linear1_internal(XCAN,YCAN,XCANOUT)
@@ -1686,9 +1924,9 @@ C In-line canopy shading option? (default = false)
      &                                       ZCAN .GT. Met_Data%FCH( COL,ROW )*0.50 ) THEN
                            COUNTCAN = COUNTCAN + 1
                            XCAN(2) = Met_Data%FCH( COL,ROW )*0.75
-                           YCAN(2) = RJ_CORR_C1R
+                           YCAN(2) = RJ_CORR_C1R( COL,ROW )
                            XCAN(1) = Met_Data%FCH( COL,ROW )*0.50
-                           YCAN(1) = RJ_CORR_C2R
+                           YCAN(1) = RJ_CORR_C2R( COL,ROW )
                            XCANOUT = ZCAN
                            ZCANX(COUNTCAN) = ZCAN
                            RJ_CORRX (COUNTCAN) = interp_linear1_internal(XCAN,YCAN,XCANOUT)
@@ -1696,9 +1934,9 @@ C In-line canopy shading option? (default = false)
      &                            ZCAN .GT. Met_Data%FCH( COL,ROW )*0.35 ) THEN
                            COUNTCAN = COUNTCAN + 1
                            XCAN(2) = Met_Data%FCH( COL,ROW )*0.50
-                           YCAN(2) = RJ_CORR_C2R
+                           YCAN(2) = RJ_CORR_C2R( COL,ROW )
                            XCAN(1) = Met_Data%FCH( COL,ROW )*0.35
-                           YCAN(1) = RJ_CORR_C3R
+                           YCAN(1) = RJ_CORR_C3R( COL,ROW )
                            XCANOUT = ZCAN
                            ZCANX(COUNTCAN) = ZCAN
                            RJ_CORRX (COUNTCAN) = interp_linear1_internal(XCAN,YCAN,XCANOUT)
@@ -1706,18 +1944,18 @@ C In-line canopy shading option? (default = false)
      &                            ZCAN .GT. Met_Data%FCH( COL,ROW )*0.20 ) THEN
                            COUNTCAN = COUNTCAN + 1
                            XCAN(2) = Met_Data%FCH( COL,ROW )*0.35
-                           YCAN(2) = RJ_CORR_C3R
+                           YCAN(2) = RJ_CORR_C3R( COL,ROW )
                            XCAN(1) = Met_Data%FCH( COL,ROW )*0.20
-                           YCAN(1) = RJ_CORR_C4R
+                           YCAN(1) = RJ_CORR_C4R( COL,ROW )
                            XCANOUT = ZCAN
                            ZCANX(COUNTCAN) = ZCAN
                            RJ_CORRX (COUNTCAN) = interp_linear1_internal(XCAN,YCAN,XCANOUT)
                         ELSE IF ( ZCAN .LE. Met_Data%FCH( COL,ROW )*0.20 ) THEN
                            COUNTCAN = COUNTCAN + 1
                            XCAN(2) = Met_Data%FCH( COL,ROW )*0.20
-                           YCAN(2) = RJ_CORR_C4R
+                           YCAN(2) = RJ_CORR_C4R( COL,ROW )
                            XCAN(1) = 0.5
-                           YCAN(1) = RJ_CORR_BOT
+                           YCAN(1) = RJ_CORR_BOT( COL,ROW )
                            XCANOUT = ZCAN
                            ZCANX(COUNTCAN) = ZCAN
                            RJ_CORRX (COUNTCAN) = interp_linear1_internal(XCAN,YCAN,XCANOUT)
@@ -1736,55 +1974,54 @@ C In-line canopy shading option? (default = false)
 
 !Apply attenuation value within canopy and take average above and within canopy values
 
-               END IF  !IF (KCAN .EQ. 1) canopy height could be inside model layer
+                 END IF  !IF (KCAN .EQ. 1) canopy height could be inside model layer
 
-            END DO  !end loop on model layers
+              END DO  !end loop on model layers
 
 !IVAI
 ! Work out correction factors for layers above and below canopy (resolved model layers plus canopy layers)
-            DO L = 1, NLAYT       ! from top to bottom of combined (canopy plus resolved model) layers
+              DO L = 1, NLAYT       ! from top to bottom of combined (canopy plus resolved model) layers
 
-               ZFT(L) = ZMOM_CAN(COL,ROW, L)
+                 ZFT(L) = ZMOM_CAN(COL,ROW, L)
 
 ! Correction factor for all model layers (above and below canopy)
-               if (ZFT(L) >= ZCANX6(1)) then
-                 rj_corrf(L) = 1.0 ! no attenuation; model layer is above canopy height
-               else
-                 ! loop through 5 cumulative LAI fraction layers
-                 DO KK = 1, MAXCAN6 - 1 !from top FCH to bottom of canopy
+                 if (ZFT(L) >= ZCANX6(1)) then
+                   rj_corrf(L) = 1.0 ! no attenuation; model layer is above canopy height
+                 else
+                   ! loop through 5 cumulative LAI fraction layers
+                   DO KK = 1, MAXCAN6 - 1 !from top FCH to bottom of canopy
 ! ZCANX6(1) = Met_Data%FCH( COL,ROW )
 ! ZCANX6(2) = ZCANX6(1) *0.75
 ! ZCANX6(3) = ZCANX6(1) *0.50
 ! ZCANX6(4) = ZCANX6(1) *0.35
 ! ZCANX6(5) = ZCANX6(1) *0.20
 ! ZCANX6(6) = 0.0
-                 if (ZFT(L) < ZCANX6(KK) .and. ZFT(L) >= ZCANX6(KK+1))
+                   if (ZFT(L) < ZCANX6(KK) .and. ZFT(L) >= ZCANX6(KK+1))
      &              rj_corrf(L) = RJ_CORRX6(KK+1)
      &                         + (RJ_CORRX6(KK) - RJ_CORRX6(KK+1))
      &                         / (   ZCANX6(KK) -    ZCANX6(KK+1)) 
      &                         * (       ZFT(L) -    ZCANX6(KK+1))
-                 ENDDO
+                   ENDDO
 
-               end if
+                 end if
 
-            END DO ! L = 1, NLAYT
-            rj_corrf(NLAYT + 1) = RJ_CORRX6(6)
+              END DO ! L = 1, NLAYT
+              rj_corrf(NLAYT + 1) = RJ_CORRX6(6)
 
 ! Mid-level correction:  average of full level corrections
-            DO L = 1, NLAYT       ! from top to bottom of combined layers
-               rj_corrmid(L) = (rj_corrf(L) + rj_corrf(L+1)) * 0.5
-!Testing:      rj_corrmid(L) = rj_corrf(L)
-            END DO
+              DO L = 1, NLAYT       ! from top to bottom of combined layers
+                rj_corrmid(L) = (rj_corrf(L) + rj_corrf(L+1)) * 0.5
+              END DO
 
-            DO L = 1, NLAYT       ! from top to bottom of combined layers
-               II = NLAYT + 1 - L ! from bottom to top of combined layers
-               RJ_CORRM(COL,ROW, II) = rj_corrmid(L)
-            END DO
+              DO L = 1, NLAYT       ! from top to bottom of combined layers
+                II = NLAYT + 1 - L ! from bottom to top of combined layers
+                RJ_CORRM(COL,ROW, II) = rj_corrmid(L)
+              END DO
 
 !  Scale the model rate constants downward due to shading:
-            FORALL ( L = 1:NLAYT, IPHOT = 1:NPHOTAB )
-               RJ_CAN( COL,ROW, L, IPHOT ) = RJ_CAN( COL,ROW, L, IPHOT )*RJ_CORRM( COL,ROW, L )
-            END FORALL  ! Loop on layers and IPHOT
+              FORALL ( L = 1:NLAYT, IPHOT = 1:NPHOTAB )
+                RJ_CAN( COL,ROW, L, IPHOT ) = RJ_CAN( COL,ROW, L, IPHOT )*RJ_CORRM( COL,ROW, L )
+              END FORALL  ! Loop on layers and IPHOT
 
 !IVAI
 ! Print after RJ_CORR correction
@@ -1812,9 +2049,9 @@ C In-line canopy shading option? (default = false)
 
 ! End Print
 !IVAI
-         END IF  !CANOPY_SHADE/FRT_MASK
+              END IF  !CANOPY_SHADE/FRT_MASK
 
-               IF ( JTIME_CHK ) THEN ! compute clear sky reflection and transmission coefficients
+               IF ( JTIME_CHK .AND. PHOTDIAG ) THEN ! compute clear sky reflection and transmission coefficients
                   IF ( ANY( CLOUDS ) ) THEN
                      IF ( CFRAC_2D( COL,ROW ) .GT. 0.0 ) THEN ! resolved and subgrid clouds exist
                         CLOUDS         = .FALSE.
@@ -1845,12 +2082,11 @@ C In-line canopy shading option? (default = false)
             END DO LOOP_COLS
          END DO LOOP_ROWS
 
-      END IF !all cells not dark
+      END IF
 
-!IVAI
-5010  FORMAT( 'PHOT: NI_CAN1 =', I9, ' NI_NOCAN1 =', I9, ' MY_NCOLS =', I9)
-5011  FORMAT( 'PHOT: NI_CANT =', I9, ' NI_NOCANT =', I9, ' MY_NROWS =', I9)
-!IVAI
+      ! Store PM Diagnostic AOD and extinction
+      ELMO_AOD_550 = TAU_AERO_550
+      ELMO_EXT_550 = AERO_EXT_550
 
 !...report on whether stratospheric ozone column satisfies climatological minimums
       IF( N_TROPO_O3_TOGGLE .GT. 0 )THEN
@@ -1864,6 +2100,7 @@ C In-line canopy shading option? (default = false)
 !...write diagnostic data to output file at the end of every output tstep
 
       IF ( JTIME_CHK ) THEN
+        IF ( PHOTDIAG ) THEN
 
          VARNM = 'COSZENS'
          IF ( .NOT. WRITE3( CTM_RJ_1, VARNM, ODATE, OTIME,
@@ -1927,27 +2164,32 @@ C In-line canopy shading option? (default = false)
             CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          END IF
 
+         VARNM = 'CO_COLUMN'
+         IF ( .NOT. WRITE3( CTM_RJ_1, VARNM, ODATE, OTIME, CO_COLUMN ) ) THEN
+            XMSG = 'Error writing variable ' // VARNM
+            CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+         END IF
+         VARNM = 'SO2_COLUMN'
+         IF ( .NOT. WRITE3( CTM_RJ_1, VARNM, ODATE, OTIME, SO2_COLUMN ) ) THEN
+            XMSG = 'Error writing variable ' // VARNM
+            CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+         END IF
+         VARNM = 'NO2_COLUMN'
+         IF ( .NOT. WRITE3( CTM_RJ_1, VARNM, ODATE, OTIME, NO2_COLUMN ) ) THEN
+            XMSG = 'Error writing variable ' // VARNM
+            CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+         END IF
+         VARNM = 'HCHO_COLUMN'
+         IF ( .NOT. WRITE3( CTM_RJ_1, VARNM, ODATE, OTIME, HCHO_COLUMN ) ) THEN
+            XMSG = 'Error writing variable ' // VARNM
+            CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+         END IF
+
          VARNM = 'TROPO_O3_COLUMN'
          IF ( .NOT. WRITE3( CTM_RJ_1, VARNM, ODATE, OTIME, TROPO_OC ) ) THEN
             XMSG = 'Error writing variable ' // VARNM
             CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          END IF
-
-         IMONTH = IMONTH + 1
-         IF( IMONTH .GT. 12 )THEN
-             IMONTH = 1
-             TDATE = 2011001
-         END IF
-         TDATE = TDATE + DAYS( IMONTH )
-!         CALL SEASONAL_STRAT_O3(TDATE, JTIME )
-
-
-!         VARNM = 'MIN_FRAC_STRATO3'
-!         IF ( .NOT. WRITE3( CTM_RJ_1, VARNM, ODATE, OTIME, MONTH_STRAT_03_FRAC ) ) THEN
-!            XMSG = 'Error writing variable ' // VARNM
-!            CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
-!         END IF
-
 
          VARNM = 'TRANS_DIFFUSE'
          IF ( .NOT. WRITE3( CTM_RJ_1, VARNM, ODATE, OTIME, TRANSMIS_DIFFUSE ) ) THEN
@@ -2140,7 +2382,7 @@ C In-line canopy shading option? (default = false)
                CALL M3EXIT ( PNAME, ODATE, OTIME, XMSG, XSTAT1 )
             END IF
 
-            VARNM = 'TAU_AERO_W' // WLTXT( IWL )
+            VARNM = 'AOD_W' // WLTXT( IWL )
             IF ( .NOT. WRITE3( CTM_RJ_1, VARNM, ODATE,
      &                         OTIME, TAU_AERO_WL( :,:,IWL ) ) ) THEN
                XMSG = 'Error writing variable ' // VARNM
@@ -2193,70 +2435,117 @@ C In-line canopy shading option? (default = false)
 
          END DO  ! iwl
 
+         VARNM = 'AOD_W550_ANGST'
+         IF ( .NOT. WRITE3( CTM_RJ_1, VARNM, ODATE, OTIME, TAU_AERO_550 ) ) THEN
+            XMSG = 'Error writing variable ' // VARNM
+            CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+         END IF
+
          WRITE( LOGDEV, '( /5X, 3( A, :, 1X ), I8, ":", I6.6 )' )
-     &          'RJ Values written to', CTM_RJ_1,
+     &          'Photolysis Surface Summary written to', CTM_RJ_1,
      &          'for date and time', ODATE, OTIME
 
          DO IPHOT = 1, NPHOTAB
+            OUTPUT_BUFF( 1:NCOLS,1:NROWS,1:NLAYS_DIAG ) = RJ( 1:NCOLS,1:NROWS,1:NLAYS_DIAG,IPHOT )
             IF ( .NOT. WRITE3( CTM_RJ_2, PHOTAB( IPHOT ), ODATE,
-     &                         OTIME, RJ( :,:,:,IPHOT ) ) ) THEN
+     &                         OTIME, OUTPUT_BUFF  ) ) THEN
                XMSG = 'Could not write ' // CTM_RJ_2 // ' file'
                CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
             END IF
          END DO
 
+         WRITE( LOGDEV, '( /5X, 3( A, :, 1X ), I8, ":", I6.6 )' )
+     &          'Photolysis Rates written to', CTM_RJ_2,
+     &          'for date and time', ODATE, OTIME
+
          VARNM = 'CFRAC_3D'
-         IF ( .NOT. WRITE3( CTM_RJ_2, VARNM, ODATE, OTIME, CFRAC_3D ) ) THEN
-              XMSG = 'Could not write ' // TRIM( VARNM ) // ' to ' // CTM_RJ_2 // ' file'
+         OUTPUT_BUFF( 1:NCOLS,1:NROWS,1:NLAYS_DIAG ) = CFRAC_3D( 1:NCOLS,1:NROWS,1:NLAYS_DIAG )
+         IF ( .NOT. WRITE3( CTM_RJ_3, VARNM, ODATE, OTIME, OUTPUT_BUFF ) ) THEN
+              XMSG = 'Could not write ' // TRIM( VARNM ) // ' to ' // CTM_RJ_3 // ' file'
               CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          END IF
-         
-         DO IWL = 1, NWL
-            VARNM = 'ACTINIC_FX_W' // WLTXT( IWL )
-            IF ( .NOT. WRITE3( CTM_RJ_2, VARNM, ODATE, OTIME, ACTINIC_FX( :,:,:,IWL ) ) ) THEN
-               XMSG = 'Error writing variable ' // VARNM
-               CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
-            END IF
-         END DO
 
          DO L = 1, N_DIAG_WVL
             IWL = DIAG_WVL( L )
 
+            VARNM = 'ACTINIC_FX_W' // WLTXT( IWL )
+            IF ( .NOT. WRITE3( CTM_RJ_3, VARNM, ODATE, OTIME, ACTINIC_FX( :,:,:,L ) ) ) THEN
+               XMSG = 'Error writing variable ' // VARNM
+               CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+            END IF
+
             VARNM = 'AERO_SSA_W' // WLTXT( IWL )
-            IF ( .NOT. WRITE3( CTM_RJ_2, VARNM, ODATE, OTIME, AERO_SSA( :,:,:,L ) ) ) THEN
+            IF ( .NOT. WRITE3( CTM_RJ_3, VARNM, ODATE, OTIME, AERO_SSA( :,:,:,L ) ) ) THEN
                XMSG = 'Error writing variable ' // VARNM
                CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
             END IF
 
             VARNM = 'AERO_ASYM_W' // WLTXT( IWL )
-            IF ( .NOT. WRITE3( CTM_RJ_2, VARNM, ODATE, OTIME, AERO_ASYM( :,:,:,L ) ) ) THEN
+            IF ( .NOT. WRITE3( CTM_RJ_3, VARNM, ODATE, OTIME, AERO_ASYM( :,:,:,L ) ) ) THEN
                XMSG = 'Error writing variable ' // VARNM
                CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
             END IF
 
-            VARNM = 'TAU_AERO_W' // WLTXT( IWL )
-            IF ( .NOT. WRITE3( CTM_RJ_2, VARNM, ODATE, OTIME, TAU_AERO( :,:,:,L ) ) ) THEN
+            VARNM = 'EXT_AERO_W' // WLTXT( IWL )
+            IF ( .NOT. WRITE3( CTM_RJ_3, VARNM, ODATE, OTIME, AERO_EXT( :,:,:,L ) ) ) THEN
                XMSG = 'Error writing variable ' // VARNM
                CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
             END IF
 
-            VARNM = 'TAU_W' // WLTXT( IWL )
-            IF ( .NOT. WRITE3( CTM_RJ_2, VARNM, ODATE, OTIME, TAU( :,:,:,L ) ) ) THEN
+            VARNM = 'EXT_W' // WLTXT( IWL )
+            IF ( .NOT. WRITE3( CTM_RJ_3, VARNM, ODATE, OTIME, TOT_EXT( :,:,:,L ) ) ) THEN
+               XMSG = 'Error writing variable ' // VARNM
+               CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+            END IF
+
+            VARNM = 'GAS_EXT_W' // WLTXT( IWL )
+            IF ( .NOT. WRITE3( CTM_RJ_3, VARNM, ODATE, OTIME, GAS_EXT( :,:,:,L ) ) ) THEN
                XMSG = 'Error writing variable ' // VARNM
                CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
             END IF
          END DO
 
+         VARNM = 'EXT_AERO_W550'
+         IF ( .NOT. WRITE3( CTM_RJ_3, VARNM, ODATE, OTIME, AERO_EXT_550( :,:,: ) ) ) THEN
+             XMSG = 'Error writing variable ' // VARNM
+             CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+         END IF
+
          WRITE( LOGDEV, '( /5X, 3( A, :, 1X ), I8, ":", I6.6 )' )
-     &          'RJ and Optical Data written to', CTM_RJ_2,
+     &          'Radiative and Optical Data written to', CTM_RJ_3,
      &          'for date and time', ODATE, OTIME
 
+        END IF   ! PHOTDIAG
       END IF   ! if JTIME_CHK 
+      TAU_AERO_550 = 0.0
 
 1003  FORMAT( 8X, 'Processor ',I4.4,' is in darkness at ', I8.7, ':', I6.6,
      &        1X, 'GMT - no photolysis')
 9500  FORMAT(3(/ A), I7, 1X, I6.6, 1X, / "Total Number: ", I9, ";Mean Value: ", F9.6,
      &       "; Max Value: ",F9.6 /)
 
-      RETURN
+95101 FORMAT('Diagnostic Output will have zero values for the column density.',
+     &     / 'The lack of information does not affect model predictions.' )
+
+      CONTAINS
+          SUBROUTINE COLUMN_GAS( IGAS, UNIT_FACTOR, COLUMN_DENSITY )
+! Purpose: calculates column density in unit based on the value of UNIT_FACTOR
+             IMPLICIT NONE
+! argument:
+               INTEGER, INTENT( IN  ) :: IGAS                  ! species index in CGRID
+               REAL,    INTENT( OUT ) :: COLUMN_DENSITY( :,: ) ! units determined by inputs
+               REAL,    INTENT( IN  ) :: UNIT_FACTOR           ! converts from 10E6*molecules*cm-2
+! local parameter:
+!               REAL, PARAMETER :: UNIT_FACTOR = 1.0E-6 * CONC_TO_DU ! unit conversion factor
+
+               IF( IGAS .LE. 0 )RETURN ! assumes column_density set to zero at allocation
+
+               COLUMN_DENSITY( COL,ROW ) = 0.0
+               DO LEV = 1, NLAYS
+                  COLUMN_DENSITY( COL,ROW ) = ( UNIT_FACTOR * BLKDENS( LEV ) )
+     &                                      * CGRID( COL,ROW,LEV,IGAS  ) * BLKDZ ( LEV )
+     &                                      + COLUMN_DENSITY( COL,ROW )
+               END DO
+
+          END SUBROUTINE COLUMN_GAS
       END SUBROUTINE PHOT

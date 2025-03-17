@@ -7,6 +7,7 @@ module aqm_state_mod
   type aqm_state_type
 
     real(AQM_KIND_R8), dimension(:,:),     pointer :: area     => null()
+    real(AQM_KIND_R8), dimension(:,:),     pointer :: vtype     => null()
     real(AQM_KIND_R8), dimension(:,:),     pointer :: cmm      => null()
     real(AQM_KIND_R8), dimension(:,:),     pointer :: fice     => null()
     real(AQM_KIND_R8), dimension(:,:),     pointer :: hfx      => null()

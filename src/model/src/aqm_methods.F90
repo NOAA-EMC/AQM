@@ -106,7 +106,7 @@ LOGICAL FUNCTION DESC3( FNAME )
   STIME3D = 0
   TSTEP3D = 0
 
-  !!Replace INIT_GASC,AERO,NONR,TRAC to INIT_CONC_1 
+  !!Replace INIT_GASC,AERO,NONR,TRAC to INIT_CONC_1
   IF ( (TRIM(FNAME) .EQ. TRIM(INIT_CONC_1)) ) THEN
 
     ! -- Input initial background values for the following species
@@ -147,7 +147,6 @@ LOGICAL FUNCTION DESC3( FNAME )
     NLAYS3D = 0
     call aqm_emis_desc("point-source", NLAYS=EMLAYS,NVARS=NVARS3D, VNAMES=VNAME3D, UNITS=UNITS3D,NPOINTS=NROWS3D)
     NLAYS3D = MAX(EMLAYS, NLAYS3D)
-
 
   ELSE IF ( TRIM( FNAME ) .EQ. TRIM( GRID_DOT_2D ) ) THEN
     NVARS3D = 1
@@ -235,7 +234,7 @@ LOGICAL FUNCTION DESC3( FNAME )
     SDATE3D = config % ctm_stdate
     STIME3D = config % ctm_sttime
     TSTEP3D = config % ctm_tstep
-    
+
   ELSE IF ( TRIM( FNAME ) .EQ. TRIM( MET_CRO_3D ) ) THEN
 
     CALL aqm_model_domain_get(nl=NLAYS3D, rc=localrc)
@@ -1004,7 +1003,7 @@ logical function interpx( fname, vname, pname, &
         return
     end select
 
-! EMIS_1 is not used anymore. Change to other env variables. 
+! EMIS_1 is not used anymore. Change to other env variables.
   else if ( trim(fname) .EQ. 'GR_EMIS_001') then
     ! -- read in emissions
     call aqm_emis_read("anthropogenic", vname, buffer, rc=localrc)
@@ -1236,8 +1235,8 @@ LOGICAL FUNCTION  XTRACT3 ( FNAME, VNAME,                           &
   include SUBST_FILES_ID
   logical, parameter :: debug = .true.
 
-
   ! -- begin
+
   nullify(p2d)
   nullify(p3d)
   nullify(config)
@@ -1246,7 +1245,7 @@ LOGICAL FUNCTION  XTRACT3 ( FNAME, VNAME,                           &
 
   lbuf = (LAY1-LAY0+1)*(ROW1-ROW0+1)*(COL1-COL0+1)
   BUFFER(1:lbuf) = 0.
-  XTRACT3 = .FALSE.  
+  XTRACT3 = .FALSE.
 
   IF (TRIM(FNAME) == TRIM(GRID_CRO_2D)) THEN
 
@@ -1257,7 +1256,6 @@ LOGICAL FUNCTION  XTRACT3 ( FNAME, VNAME,                           &
     call aqm_model_domain_get(lon=lon, lat=lat, rc=localrc)
     if (aqm_rc_check(localrc, msg="Failure to retrieve grid coordinates", &
       file=__FILE__, line=__LINE__)) return
-
 !    if (vname(1:7) == 'LUFRAC_') then
 !      if (aqm_rc_test((LAY0.NE.1).OR.(LAY1.NE.1), &
 !        msg=TRIM(VNAME)//" is 2D. LAY0 and LAY1 must be 1", &
@@ -1326,7 +1324,7 @@ LOGICAL FUNCTION  XTRACT3 ( FNAME, VNAME,                           &
     end if
 
   ELSE IF (trim(fname) == trim(MET_CRO_2D)) THEN
-    
+
     call aqm_model_get(stateIn=stateIn, rc=localrc)
     if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
       file=__FILE__, line=__LINE__)) return
@@ -1471,7 +1469,7 @@ LOGICAL FUNCTION  XTRACT3 ( FNAME, VNAME,                           &
         return
     end select
 
-  ! EMIS_1 is not used anymore. Change to other env variables. 
+  ! EMIS_1 is not used anymore. Change to other env variables.
   ELSE IF ( trim(fname) .EQ. 'GR_EMIS_001') then
     ! -- read in emissions
     call aqm_emis_read("anthropogenic", vname, buffer, rc=localrc)
@@ -1767,7 +1765,7 @@ LOGICAL FUNCTION WRITE3_REAL2D( FNAME, VNAME, JDATE, JTIME, BUFFER )
   type(aqm_state_type), pointer :: stateOut
 
   WRITE3_REAL2D = .TRUE.
-!move to WRITE3_REAL4D below since we specify all model layers in CMAQ_Control_Misc.nml. 
+!move to WRITE3_REAL4D below since we specify all model layers in CMAQ_Control_Misc.nml.
 !  IF ( TRIM( FNAME ) .EQ. TRIM( CTM_ELMO_1 ) ) THEN
 !  IF ( TRIM( FNAME ) .EQ. TRIM( CTM_DEPV_DIAG ) ) THEN  !test depv
 !  IF ( TRIM( FNAME ) .EQ. TRIM( CTM_DRY_DEP_1 ) ) THEN  !test depv
@@ -1784,100 +1782,13 @@ LOGICAL FUNCTION WRITE3_REAL2D( FNAME, VNAME, JDATE, JTIME, BUFFER )
 !      if (aqm_rc_check(localrc, msg="Failure to retrieve model output state", &
 !        file=__FILE__, line=__LINE__)) return
 
-<<<<<<< HEAD
-!    print*, 'AQM_METHODS: FNAME, VNAME= ', FNAME, VNAME !IVAI: CTM_AOD_1 ALL
-
-    IF ( TRIM( VNAME ) .EQ. TRIM( ALLVAR3 ) ) THEN
-
-!      print*, 'AQM_METHODS: VNAME= ', VNAME         !IVAI: AOD
-
-      nullify(stateOut)
-      call aqm_model_get(stateOut=stateOut, rc=localrc)
-      if (aqm_rc_check(localrc, msg="Failure to retrieve model output state", &
-        file=__FILE__, line=__LINE__)) return
-=======
 !      stateOut % aod = BUFFER
 
 !    END IF
->>>>>>> upstream/develop
 
 !    WRITE3_REAL2D = .TRUE.
 
-<<<<<<< HEAD
-!      print*, 'AQM_METHODS: AOD  pointer = ', aod   !IVAI
-!      print*, 'AQM_METHODS: AOD = ', stateOut % aod !IVAI
-
-    END IF
-
-    WRITE3_REAL2D = .TRUE.
-
-  END IF
-=======
 !  END IF
->>>>>>> upstream/develop
-
-!IVAI
-  WRITE3_REAL2D = .TRUE.
-
-  IF ( TRIM( FNAME ) .EQ. TRIM( CTM_RJ_1 ) ) THEN
-
-    WRITE3_REAL2D = .FALSE.
-
-    !print*, 'AQM_METHODS: FNAME= ', FNAME, VNAME   !IVAI: JO3O1D JNO2 ... (list of 15 vars)
-
-    IF ( TRIM( VNAME ) .EQ. TRIM('COSZENS') ) THEN
-
-!      print*, 'AQM_METHODS: VNAME= ', FNAME, VNAME             !IVAI: COSZENS
-
-      nullify(stateOut)
-      call aqm_model_get(stateOut=stateOut, rc=localrc)
-      if (aqm_rc_check(localrc, msg="Failure to retrieve model output state", &
-        file=__FILE__, line=__LINE__)) return
-
-      stateOut % coszens = BUFFER
-
-!      print*, 'AQM_METHODS: COSZENS pointer = ', coszens
-!      print*, 'AQM_METHODS: COSZENS = ',  BUFFER
-
-    END IF
-
-    IF ( TRIM( VNAME ) .EQ. TRIM('JO3O1D') ) THEN
-
-!      print*, 'AQM_METHODS: VNAME= ', VNAME             !IVAI: JO3O1D
-
-      nullify(stateOut)
-      call aqm_model_get(stateOut=stateOut, rc=localrc)
-      if (aqm_rc_check(localrc, msg="Failure to retrieve model output state", &
-        file=__FILE__, line=__LINE__)) return
-
-      stateOut % JO3O1D = BUFFER
-
-!      print*, 'AQM_METHODS: JO3O1D pointer = ', JO3O1D
-!      print*, 'AQM_METHODS: JO3O1D = ', BUFFER
-
-    END IF
-
-    IF ( TRIM( VNAME ) .EQ. TRIM('JNO2') ) THEN
-
-!      print*, 'AQM_METHODS: VNAME= ', VNAME             !IVAI: JNO2
-
-      nullify(stateOut)
-      call aqm_model_get(stateOut=stateOut, rc=localrc)
-      if (aqm_rc_check(localrc, msg="Failure to retrieve model output state", &
-        file=__FILE__, line=__LINE__)) return
-
-      stateOut % JNO2 = BUFFER
-
-!      print*, 'AQM_METHODS: JNO2 pointer = ', JNO2
-!      print*, 'AQM_METHODS: JNO2 = ', BUFFER
-
-    END IF
-
-    WRITE3_REAL2D = .TRUE.
-
-  END IF ! CTM_RJ_1
-
-!IVAI
 
 END FUNCTION WRITE3_REAL2D
 
@@ -1922,7 +1833,7 @@ LOGICAL FUNCTION WRITE3_REAL4D( FNAME, VNAME, JDATE, JTIME, BUFFER )
         stateOut % tr(:,:,:,config % species % p_diag_beg + s) = &
           buffer(:,:,:,p_pm25at + s)
       end do
-      ! add AOD here; point to the 4th species in ELMO_INST 
+      ! add AOD here; point to the 4th species in ELMO_INST
       stateOut % aod = BUFFER(:,:,1,4)
 
     END IF

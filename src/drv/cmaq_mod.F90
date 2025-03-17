@@ -6,6 +6,7 @@ module cmaq_mod
   use aqm_emis_mod
   use aqm_prod_mod
   use aqm_tools_mod, only : aqm_units_conv
+  USE UTIL_FAMILY_MODULE
 
   use PAGRD_DEFN
   USE PA_DEFN, Only: LIPR, LIRR
@@ -14,16 +15,19 @@ module cmaq_mod
   use cgrid_spcs
 
   use AERO_DATA,   only : aerolist, n_aerolist,  &
-                          aerospc_mw, n_emis_pm, &
-                          map_pmemis, pmem_map,  &
-                          pmem_map_name, pmem_units
+                          aerospc_mw 
 
   use M3UTILIO,    only : M3MESG
   use UTILIO_DEFN, only : INDEX1, INIT3, MXVARS3
+  use DESID_VARS  !(CMAQ)
+  USE CENTRALIZED_IO_MODULE !(CMAQ)
+  USE ELMO_PROC,   ONLY : ELMO_DRIVER, WRITE_ELMO, MAP_ELMO  !(CMAQ)
 
   implicit none
 
   integer :: cmaq_logdev
+  integer, save :: my_ncols 
+  integer, save :: my_nrows
 
   ! -- pointer to CMAQ concentration array
   real, pointer :: CGRID(:,:,:,:) => null()
@@ -65,6 +69,7 @@ contains
     ! -- read from namelist CGRID gas chem, aerosol, non-reactive, 
     ! -- and tracer species definitions
     ! -- This is done only on DE 0 and shared with other DEs on this PET
+    
     nspecies = 0
     if (aqm_rc_test(.not.cgrid_spcs_init(), &
       msg="Error in CGRID_SPCS:CGRID_SPCS_INIT", &
@@ -75,7 +80,10 @@ contains
       file=__FILE__, line=__LINE__, rc=rc)) return
 
     nspecies = n_gc_trns + n_ae_trns + n_nr_trns
-
+  
+    !add log
+    write(-1,* ) ' GC/AE/NR Species Number: ', n_gc_trns,'/',n_ae_trns,'/',n_nr_trns
+  
   end subroutine cmaq_species_read
 
   subroutine cmaq_init(rc)
@@ -98,6 +106,10 @@ contains
       msg="Failure defining horizontal domain", &
       file=__FILE__, line=__LINE__, rc=rc)) return
 
+    !define 'my_ncols' here
+    my_ncols = NCOLS
+    my_nrows = NROWS
+
     ! -- set I/O flag
     IO_PE_INCLUSIVE = ( MYPE .EQ. 0 )
 
@@ -107,7 +119,8 @@ contains
     ! -- Set up horizontal domain and calculate processor-to-subdomain maps for
     ! -- process analysis, if required
     IF ( LIPR .OR. LIRR ) THEN
-      IF (aqm_rc_test( .NOT. PAGRD_INIT( NPROCS, MYPE ), &
+!      IF (aqm_rc_test( .NOT. PAGRD_INIT( NPROCS, MYPE ), & 
+      IF (aqm_rc_test( .NOT. PAGRD_INIT( MYPE ), &   
         msg="Failure defining PA domain configuration",  &
         FILE=__FILE__, LINE=__LINE__, rc=rc)) RETURN
     END IF
@@ -118,6 +131,13 @@ contains
       file=__FILE__, line=__LINE__, rc=rc)) return
 
     CGRID => PCGRID( 1:MY_NCOLS,1:MY_NROWS,:,: )   ! required for PinG
+
+    !Initiliaze IO Arrays and Open Files (CMAQ)
+    call read_families
+    call desid_read_namelist()
+    call desid_init_regions()
+    !Initialize ELMO Arrays and Maps
+    call map_elmo
 
   end subroutine cmaq_init
 
@@ -136,6 +156,12 @@ contains
         INTEGER                   :: JDATE, JTIME
         INTEGER                   :: TSTEP( 3 )
       END SUBROUTINE VDIFF
+      !add PHOT
+      SUBROUTINE PHOT ( CGRID, JDATE, JTIME, TSTEP )
+            REAL, POINTER             :: CGRID( :,:,:,: )
+            INTEGER, INTENT( IN )     :: JDATE, JTIME
+            INTEGER, INTENT( IN )     :: TSTEP( : )
+         END SUBROUTINE PHOT
       SUBROUTINE CLDPROC ( CGRID, JDATE, JTIME, TSTEP )
         REAL, POINTER             :: CGRID( :,:,:,: )
         INTEGER                   :: JDATE, JTIME
@@ -160,6 +186,8 @@ contains
     CALL VDIFF ( CGRID, JDATE, JTIME, TSTEP )
     
     if (run_rescld) then
+      !add PHOT before CLDPROC
+      CALL PHOT ( CGRID, JDATE, JTIME, TSTEP )
       CALL CLDPROC ( CGRID, JDATE, JTIME, TSTEP )
     end if
 
@@ -168,6 +196,11 @@ contains
     if (run_aero) then
       CALL AERO ( CGRID, JDATE, JTIME, TSTEP )
     end if
+
+    !add ELMO here
+    !ALways let INIT_TIME=.TRUE. here to output each small time step
+    CALL ELMO_DRIVER( CGRID, JDATE, JTIME, TSTEP, INIT_TIME=.TRUE.) 
+    CALL WRITE_ELMO( JDATE, JTIME, TSTEP, INIT_TIME=.TRUE.)
 
   end subroutine cmaq_advance
 
@@ -438,6 +471,9 @@ contains
     integer :: localrc, stat
     integer :: item
     integer :: ltable, n, spc
+    integer :: IRULE 
+    integer, save :: N_RULE 
+    Character( 16 ) :: pmem_units !units for PM emissions for all species
     integer, allocatable :: umap(:)
     real(AQM_KIND_R4)    :: ucnv
     type(aqm_internal_emis_type), pointer :: em
@@ -476,30 +512,44 @@ contains
           ! -- add internal units to emissions reference table
           ltable = size(em % table, dim=1)
 
-          ! -- define mapping of CMAQ aerosol and related emission species
-          call map_pmemis()
 
           ! -- set destination units for PM emissions for all species
           pmem_units = "G/S"
 
           ! -- set internal units for all species
-          ! -- (a) gas species
-          do n = 1, n_gc_emis
-            spc = index1( gc_emis( n ), ltable, em % table(:,1) )
-            if (spc > 0) em % table(spc,2) = "MOL/S"
+          ! --- use DESID_EMVAR_TABLE from DESID_VARS.F
+          ! Find Total Number of Rules
+         N_RULE = 0
+         DO IRULE = 1,SIZE( DESID_RULES_NML )
+            IF( DESID_RULES_NML( IRULE )%SPEC .EQ. '' ) EXIT
+            N_RULE = IRULE
+         END DO
+          do n = 1, DESID_N_EMVAR_TABLE
+             spc = index1(DESID_EMVAR_TABLE( n )%NAME, ltable, em % table(:,1) )
+             if (spc > 0) then
+               do IRULE = 1,N_RULE
+                 CALL UPCASE( DESID_RULES_NML( IRULE )%EMVAR )
+                 if (DESID_EMVAR_TABLE( n )%NAME .EQ. DESID_RULES_NML( IRULE)%EMVAR ) then
+                   if (DESID_RULES_NML( IRULE )%BASIS .EQ. 'UNIT') then
+                     CALL UPCASE( DESID_RULES_NML( IRULE )%PHASE )
+                       if (DESID_RULES_NML( IRULE )%PHASE .EQ. 'GAS') then
+                          em % table(spc,2) = "MOL/S" 
+                       else
+                          em % table(spc,2) = pmem_units
+                       endif
+                   else if (DESID_RULES_NML( IRULE )%BASIS .EQ. 'MASS') then
+                           em % table(spc,2) = pmem_units
+                   else !BASIS can be set 'MOLE', but not in the default namelist
+                           em % table(spc,2) = "MOL/S"
+                   end if 
+                 endif
+               end do
+
+             endif
           end do
-          ! -- (b) non reactive
-          do n = 1, n_nr_emis
-            spc = index1( nr_emis( n ), ltable, em % table(:,1) )
-            if (spc > 0) em % table(spc,2) = "MOL/S"
-          end do
+
           spc = index1( "NH3_FERT", ltable, em % table(:,1) )
-          if (spc > 0) em % table(spc,2) = "MOL/S"
-          ! -- (c) aerosols
-          do n = 1, n_emis_pm
-            spc = index1( pmem_map_name( n ), ltable, em % table(:,1) )
-            if (spc > 0) em % table(spc,2) = pmem_units
-          end do
+          if (spc > 0) em % table(spc,2) = "MOL/S" 
 
           ! -- perform unit conversion for input species, if needed
           ! -- (a) map input species to internal species
@@ -520,12 +570,13 @@ contains
           end do
 
           ! -- (b) perform unit conversion for input species
-          ! ---    1. gas species
-          do n = 1, size(em % species)
+          ! --- use DESID_EMVAR_TABLE from DESID_VARS.F;
+           do n = 1, size(em % species)
             if (umap(n) > 0) then
-              spc = index1( em % species(n), n_gc_emis, gc_emis )
+              spc = index1(em % species(n), DESID_N_EMVAR_TABLE, DESID_EMVAR_TABLE( : )%NAME )
               if (spc > 0) then
-                ucnv = aqm_units_conv( em % units(n), em % table(umap(n),2), gc_molwt(gc_emis_map(spc)), em % dens_flag(n) )
+                ucnv = aqm_units_conv( em % units(n), em % table(umap(n),2), DESID_EMVAR_TABLE( spc )%MW, em % dens_flag(n) )
+                 
                 if (aqm_rc_test(ucnv == 0._AQM_KIND_R4, &
                   msg=trim(em % species(n))//": invalid input units ("//trim(em % units(n))//")", &
                   file=__FILE__, line=__LINE__, rc=rc)) return
@@ -534,38 +585,7 @@ contains
               end if
             end if
           end do
-          ! ---    2. non reactive
-          do n = 1, size(em % species)
-            if (umap(n) > 0) then
-              if ( trim(em % species(n)) == "NH3_FERT" ) then
-                spc = index1( "NH3", n_nr_emis, nr_emis )
-              else
-                spc = index1( em % species(n), n_nr_emis, nr_emis )
-              end if
-              if (spc > 0) then
-                ucnv = aqm_units_conv( em % units(n), em % table(umap(n),2), nr_molwt(nr_emis_map(spc)), em % dens_flag(n) )
-                if (aqm_rc_test(ucnv == 0._AQM_KIND_R4, &
-                  msg=trim(em % species(n))//": invalid input units ("//trim(em % units(n))//")", &
-                  file=__FILE__, line=__LINE__, rc=rc)) return
-                em % factors(n) = ucnv * em % factors(n)
-                umap(n) = 0
-              end if
-            end if
-          end do
-          ! ---    3. aerosols
-          do n = 1, size(em % species)
-            if (umap(n) > 0) then
-              spc = index1( em % species(n), n_emis_pm, pmem_map_name )
-              if (spc > 0) then
-                ucnv = aqm_units_conv( em % units(n), em % table(umap(n),2), aerospc_mw(pmem_map(spc)), em % dens_flag(n) )
-                if (aqm_rc_test(ucnv == 0._AQM_KIND_R4, &
-                  msg=trim(em % species(n))//": invalid input units ("//trim(em % units(n))//")", &
-                  file=__FILE__, line=__LINE__, rc=rc)) return
-                em % factors(n) = ucnv * em % factors(n)
-                umap(n) = 0
-              end if
-            end if
-          end do
+
 
           ! -- (c) free up memory
           deallocate(umap, stat=stat)
@@ -824,20 +844,20 @@ contains
     integer :: i, ibeg, iend, imod, mode, spc
     integer :: c, r, l
 
-    ! -- local parameters
+    ! -- local parameters (updated species for CB6r5_aero7)
     character(len=*), parameter :: pm25_species(*) = &
-      (/ "ASO4I  ", "ANO3I  ", "ANH4I  ", "ANAI   ", "ACLI   ", "AECI   ", "AOTHRI ",            & ! I-mode (Atken)
-         "ALVPO1I", "ASVPO1I", "ASVPO2I", "ALVOO1I", "ALVOO2I", "ASVOO1I", "ASVOO2I",            &
+      (/ "ASO4I  ", "ANO3I  ", "ANH4I  ", "ANAI   ", "ACLI   ", "AECI   ", "AOTHRI ", "APOCI  ", & ! I-mode (Atken)
+         "ALVPO1I", "ASVPO1I", "ASVPO2I", "ALVOO1I", "ALVOO2I", "ASVOO1I", "ASVOO2I", "APNCOMI", &
          "ASO4J  ", "ANO3J  ", "ANH4J  ", "ANAJ   ", "ACLJ   ", "AECJ   ", "AOTHRJ ",            & ! J-mode (accum)
          "ALVPO1J", "ASVPO1J", "ASVPO2J", "ASVPO3J", "AIVPO1J",                                  &
-         "AXYL1J ", "AXYL2J ", "AXYL3J ", "ATOL1J ", "ATOL2J ", "ATOL3J ", "ABNZ1J ", "ABNZ2J ", &
-         "ABNZ3J ", "AISO1J ", "AISO2J ", "AISO3J ", "ATRP1J ", "ATRP2J ", "ASQTJ  ", "AALK1J ", &
-         "AALK2J ", "APAH1J ", "APAH2J ", "APAH3J ", "AORGCJ ", "AOLGBJ ", "AOLGAJ ",            &
+         "AMTNO3J", "AMTHYDJ", "APOCJ  ", "APNCOMJ", "AAVB1J ", "AAVB2J ", "AAVB3J ", "AAVB4J ", &
+         "AMT1J  ", "AISO1J ", "AISO2J ", "AISO3J ", "AMT2J  ", "AMT3J  ", "ASQTJ  ", "AMT4J  ", &
+         "AMT5J  ", "AMT6J  ", "AORGCJ ", "AOLGBJ ", "AOLGAJ ",                                  &
          "ALVOO1J", "ALVOO2J", "ASVOO1J", "ASVOO2J", "ASVOO3J", "APCSOJ ",                       &
          "AFEJ   ", "ASIJ   ", "ATIJ   ", "ACAJ   ", "AMGJ   ", "AMNJ   ", "AALJ   ", "AKJ    ", &
          "ASOIL  ", "ACORS  ", "ASEACAT", "ACLK   ", "ASO4K  ", "ANO3K  ", "ANH4K  " /)            ! K-mode (coarse)
 
-    integer, parameter :: nspc(3) = (/ 14, 49, 7 /)
+    integer, parameter :: nspc(3) = (/ 16, 47, 7 /)  
 
     ! -- begin
     pm25 = 0.

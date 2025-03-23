@@ -46,6 +46,7 @@ C    15 Jul 14 B.Hutzell: 1) replaced mechanism include files with
 C                   RXNS_DATA module, 2) inserted call to function MAP_CHEMISTRY_SPECIES 
 C                   RXNS_FUNCTION module, and 3) inserted do loop that calculates species
 C                   unit conversion factors based on species type
+C    21 Mar 22 G . Sarwar: changed BLKLAND to BLKSEAWATER
 C    01 Dec 24 I.Ivanova: Add sub-canopy shading parameters and arrays
 C                      
 C***********************************************************************
@@ -65,8 +66,6 @@ C.....Arguments: NONE
 
 C.....Parameters:
       CHARACTER( 16 ), PARAMETER   :: PNAME = 'RBINIT'    ! Procedure name
-      REAL, PARAMETER              :: DEF_ATOL = 1.0E-07  ! Default ATOL
-      REAL, PARAMETER              :: DEF_RTOL = 1.0E-03  ! Default RTOL
 
 C.....External Functions:
 
@@ -214,13 +213,13 @@ c..cell & solver data
      &          BLKCH2O( BLKSIZE ),
      &          BLKDENS( BLKSIZE ),
      &          BLKSVOL( BLKSIZE ), 
+     &          BLKSEAWATER( BLKSIZE ),
 !IVAI
-     &          BLKCANOPY( BLKSIZE ),    !IVAI
+     &          BLKCANOPY( BLKSIZE ), STAT = STATUS )
 !IVAI
-     &          BLKLAND( BLKSIZE ), STAT = STATUS )
       IF ( STATUS .NE. 0 ) THEN
          XMSG = 'ERROR allocating BLKTEMP, BLKPRES, BLKCH2O, BLKDENS, '
-     &       // 'BLKCANOPY, BLKSVOL, BLKLAND '
+     &       // 'BLKSVOL, BLKSEAWATER, BLKCANOPY'
          CALL M3EXIT( PNAME, 0, 0, XMSG, XSTAT2 )
       END IF
 
@@ -242,30 +241,17 @@ c..cell & solver data
          CALL M3EXIT( PNAME, 0, 0, XMSG, XSTAT2 )
       END IF
 
+#ifdef sens
+      ALLOCATE( YAVE( BLKSIZE,NUMB_MECH_SPC ), STAT = STATUS )
+      IF ( STATUS .NE. 0 ) THEN
+         XMSG = 'ERROR allocating YAVE'
+         CALL M3EXIT( PNAME, 0, 0, XMSG, XSTAT2 )
+      END IF
+#endif
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c  Set convergence tolerances for each species; currently uses
 c  one set of tolerances for all species
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-      VARDESC = 'Relative tolerance for Rosenbrock Solver'
-      DEFTOL = DEF_RTOL
-      GLBL_RTOL = ENVREAL( 'RB_RTOL', VARDESC, DEFTOL, STATUS )
-      IF ( STATUS .EQ. 1 ) THEN
-         XMSG = 'Environment variable RB_RTOL improperly formatted'
-         CALL M3EXIT( PNAME, 0, 0, XMSG, XSTAT2 )
-      ELSE IF ( STATUS .LT. 0 ) THEN
-         GLBL_RTOL = DEF_RTOL
-      END IF
-
-      VARDESC = 'Absolute tolerance for Rosenbrock Solver'
-      DEFTOL = DEF_ATOL
-      GLBL_ATOL = ENVREAL( 'RB_ATOL', VARDESC, DEFTOL, STATUS )
-      IF ( STATUS .EQ. 1 ) THEN
-         XMSG = 'Environment variable RB_ATOL improperly formatted'
-         CALL M3EXIT( PNAME, 0, 0, XMSG, XSTAT2 )
-      ELSE IF ( STATUS .LT. 0 ) THEN
-         GLBL_ATOL = DEF_ATOL
-      END IF
-
       IF( .NOT. MAP_CHEMISTRY_SPECIES() )THEN
          XMSG = 'Detected above error(s) when mapping Chemistry species from CGRID species'
          CALL M3EXIT( PNAME, 0, 0, XMSG, XSTAT2 )
@@ -274,8 +260,8 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       DO N = 1, NUMB_MECH_SPC
          ATOL( N ) = REAL( GLBL_ATOL, 8 )
          RTOL( N ) = REAL( GLBL_RTOL, 8 )
-         FORWARD_CONV( N ) = 1.0D-3 * MWAIR / SPECIES_MOLWT( N )
-         REVERSE_CONV( N ) = 1.0D+3 / MWAIR * SPECIES_MOLWT( N )
+         FORWARD_CONV( N ) = 1.0E-3 * MWAIR / REAL( SPECIES_MOLWT( N ) )
+         REVERSE_CONV( N ) = REAL( 1.0 / FORWARD_CONV( N ), 8 )
       END DO
       
 
@@ -285,10 +271,8 @@ c  sequential order
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       NCOUNT = 0
       DO LEV = 1, NLAYS
-         DO COL = 1, MY_NCOLS
-            DO ROW = 1, MY_NROWS
-!        DO ROW = 1, MY_NROWS
-!           DO COL = 1, MY_NCOLS
+         DO COL = 1, NCOLS
+            DO ROW = 1, NROWS
                NCOUNT = NCOUNT + 1
                CCOL( NCOUNT ) = COL
                CROW( NCOUNT ) = ROW

@@ -42,6 +42,7 @@ C   29 Jul 05 WTH: added variable used by degrade routines.
 C   10 Aug 11 J.Young: Replaced I/O API include files with UTILIO_DEFN
 C   15 Jul 14 B.Hutzell: 1) added variable to variable to converted
 C                   species concentration unit based on species type
+C   21 Mar 22 G . Sarwar: changed BLKLAND to BLKSEAWATER
 C   01 Dec 24 I.Ivanova: Add sub-canopy shading parameters and arrays
 C*************************************************************************
 
@@ -78,21 +79,17 @@ c..Mechanism specific variables
       LOGICAL :: LORDERING            ! Flag for reordering
       LOGICAL :: LSUNLIGHT            ! Flag for sun
 
-c..Global tolerances
-      REAL :: GLBL_ATOL                ! Global absolute tolerances
-      REAL :: GLBL_RTOL                ! Global relative tolerances
-
 c...Allocatable arrays
       REAL( 8 ), ALLOCATABLE :: RKI( :,: )         ! Rate constants 
       REAL( 8 ), ALLOCATABLE :: ATOL( : )          ! Species absolute tolerances 
       REAL( 8 ), ALLOCATABLE :: RTOL( : )          ! Species relative tolerances 
-
-! IVAI: Save unit conversion factors for use in canopy_transfer
-      REAL( 8 ), ALLOCATABLE, SAVE :: FORWARD_CONV( : )  ! CGRID to CHEM Species conversion factor 
-      REAL( 8 ), ALLOCATABLE, SAVE :: REVERSE_CONV( : )  ! CHEM to CGRID Species conversion factor
-! IVAI
+      REAL,      ALLOCATABLE :: FORWARD_CONV( : )  ! CGRID to CHEM Species conversion factor 
+      REAL( 8 ), ALLOCATABLE :: REVERSE_CONV( : )  ! CHEM to CGRID Species conversion factor
       REAL( 8 ), ALLOCATABLE :: Y( :,: )           ! Species concentrations
       REAL( 8 ), ALLOCATABLE :: Y_DEGRADE( :,: )   ! Concentration for degradation
+#ifdef sens
+      REAL( 8 ), ALLOCATABLE :: YAVE( :,: )        ! Species concentrations
+#endif
 
 c..Block variables
       INTEGER :: BLKID                           ! Block ID
@@ -186,19 +183,15 @@ C Domain decomposition info from CONC file
       REAL( 8 ), ALLOCATABLE :: BLKPRES( : )      ! Cell press, Pa
       REAL( 8 ), ALLOCATABLE :: BLKCH2O( : )      ! Cell water conc, ppm
       REAL( 8 ), ALLOCATABLE :: BLKDENS( : )      ! Cell air density, kg/m^3
-      REAL( 8 ), ALLOCATABLE :: BLKSVOL( : )      ! Cell air specific volume, m^3/kg
+      REAL,      ALLOCATABLE :: BLKSVOL( : )      ! Cell air specific volume, m^3/kg
 
       INTEGER :: NJPHOT                           ! Number of J-values set in PHOT
       REAL( 8 ),  ALLOCATABLE :: RJBLK( :,: )     ! J-values for each cell in block
 
       LOGICAL :: CALL_DEG = .FALSE.               ! SWITCH for calling DEGRADE routine
       
-      LOGICAL,  ALLOCATABLE :: BLKLAND( : )       ! Is the surface totally land?
+      REAL( 8 ), ALLOCATABLE :: BLKSEAWATER( : )      ! fractional area of OPEN+SURF
 
-! IVAI
-      LOGICAL,  ALLOCATABLE :: BLKCANOPY( : )     ! Is the surface canopy ?
-! IVAI
-      
       LOGICAL :: PRINT_CELL
       INTEGER :: ROS3_LOG
 

@@ -17,25 +17,18 @@
 !  subject to their copyright restrictions.                              !
 !------------------------------------------------------------------------!
 
-C RCS file, release, date & time of last delta, author, state, [and locker]
-C $Header$
-
-C what(1) key, module and SID; SCCS file; date and time of last delta:
-C %W% %P% %G% %U%
-
        SUBROUTINE CHEM( CGRID, JDATE, JTIME, TSTEP )
-
 C**********************************************************************
 C
 C  FUNCTION: Driver subroutine for Euler Backward Iterative solver
 C
-C  PRECONDITIONS: For the CB6R3 family of mechanisms
+C  PRECONDITIONS: For the CB6R5_AE7_AQ mechanism
 C
-C  KEY SUBROUTINES/FUNCTIONS CALLED:  HRINIT, PHOT, HRCALCKS, HRSOLVER
-C                                     FIND_DEGRADED, INIT_DEGRADE, FINAL_DEGRADE
+C  KEY SUBROUTINES/FUNCTIONS CALLED:  HRINIT, HRCALCKS, HRSOLVER
+C                                     FIND_DEGRADED, INIT_DEGRADE, FINAL_DEGRADE,
 C                                     CANOPY_TRANSFER
 C
-C  REVISION HISTORY: Created by EBI solver program, Mar 10, 2017
+C  REVISION HISTORY: Created by EBI solver program, Jun  8, 2022
 C                       Based on the algorithm in "Test of Two Numerical
 C                       Schemes for Use in Atmospheric Transport-Chemistry
 C                       Models", O. Hertel, R. Berkowicz, J. Christensen,
@@ -61,6 +54,8 @@ C                        how degrade routines are used, if present
 C   02 Dec 14 B.Hutzell: 1) added terrestrial data to conduct surface
 C                        dependent reactions and 2) modified the call CALC_RCONST
 C                        routine
+C   01 Feb 19 D.Wong:    Implemented centralized I/O approach, removed all MY_N
+C                        clauses
 C   01 May 24 I.Ivanova:
 C         - Split the EBI solver on 3 sub-layer canopy layers to account for the
 C           the canopy shading effect on photolysis attenuation.
@@ -81,24 +76,25 @@ C**********************************************************************
 !IVAI
       USE GRID_CONF, Only: NLAYC, NLAYT     ! horizontal & vertical domain specifications
 !IVAI
+#ifdef isam
+      USE SA_IRR_DEFN
+      USE SA_DEFN
+#endif
       USE HRDATA
-      USE PA_DEFN, Only: LIRR   ! Process Anaylsis control and data variable
-      USE DEGRADE_SETUP_TOX, ONLY : N_REACT, RXTANT_MAP
-      USE UTILIO_DEFN
+      USE PHOT_MOD, Only: INIT_PHOT_SHARED, RJ,     ! photolysis rate, in-line module
+     &                    LO3O1D !IVAI
+      USE PA_DEFN, Only: LIRR                      ! Process Analysis control and data variable
+      USE PA_IRR_CLT
 
-      USE PHOT_MOD, ONLY : LO3O1D
-
+!IVAI
       use can_mask
-
 ! =====================
 !     call init_can_mask
 !     call get_can_mask
-! Out: 
+! Out:
 !      FRT_MASK         (get_can_mask)
 ! =====================
-
       use can_levs_defn
-
 ! =====================
 !     call get_can_levs
 ! In:  CGRID
@@ -112,12 +108,10 @@ C**********************************************************************
 !      CONC_MOD        <= CGRID      ! ALL CANOPY & NON-CANOPY COLUMNS !
 !      CONC_CAN(1,2,3) <= CGRID(1)   ! ALL CANOPY & NON-CANOPY COLUMNS !
 ! =====================
-
       use can_trans_mod
-
 ! =====================
-!     call canopy_transfer 
-!  In: 
+!     call canopy_transfer
+!  In:
 !   CGRID   (:,:, NLAYS, NSPCSD) :  Chemical tracers conc. ppmv on model levels
 !   CONC_MOD(:,:, NLAYS, NSPCSD) :  Chemical tracers conc. ppmv on model levels
 !
@@ -126,6 +120,20 @@ C**********************************************************************
 !                                    ! CANOPY COLUMNS ONLY !
 ! ================================
 !IVAI
+
+#ifndef isam
+      USE DEGRADE_ROUTINES, ONLY : N_REACT, RXTANT_MAP, DEG_LAY, DEG_COL, DEG_ROW,
+     &                              FIND_DEGRADED, INIT_DEGRADE, FINAL_DEGRADE
+#else
+      USE DEGRADE_ROUTINES, ONLY : N_REACT, RXTANT_MAP, SA_DEGRADE_EXTRACT,
+     &                              FIND_DEGRADED, INIT_DEGRADE, FINAL_DEGRADE,
+     &                              SA_DEGRADE_UPLOAD, DEG_LAY, DEG_COL, DEG_ROW
+#endif
+      USE CENTRALIZED_IO_MODULE, ONLY : INTERPOLATE_VAR, OCEAN, SZONE
+#ifdef sens
+      USE DDM3D_CHEM
+      Use DDM3D_DEFN, Only: DATENUM, STARTDATE, IPT, IDATE, HIGH, NP, NPMAX, CKTIME
+#endif
 
       IMPLICIT NONE
 
@@ -140,7 +148,7 @@ C..Arguments:
       INTEGER JDATE           ! Current date (YYYYDDD)
       INTEGER JTIME           ! Current time (HHMMSS)
       INTEGER TSTEP( 3 )      ! Time step vector (HHMMSS)
-! IVAI: 
+! IVAI:
 ! TSTEP(1) = local output step
 ! TSTEP(2) = sciproc sync. step (chem)
 ! TSTEP(3) = twoway model time step w.r.t. wrf time
@@ -163,9 +171,9 @@ C..External Functions:
 C..Saved Local Variables:
 
       CHARACTER( 16 ), SAVE :: PNAME = 'HRDRIVER'     ! Program name
+
 !IVAI
       CHARACTER( 120 ) :: XMSG
-      INTEGER          :: ALLOCSTAT
 !IVAI
 
       INTEGER, SAVE :: ISTFL            ! Unit no. of iteration stat output file
@@ -176,9 +184,6 @@ C..Saved Local Variables:
 C..Scratch Local Variables:
       CHARACTER( 132 ) :: MSG           ! Message text
       CHARACTER(  16 ) :: VNAME         ! Name of I/O API data variable
-!IVAI
-      CHARACTER(  30 ) :: MSG1 = ' Error interpolating variable '
-!IVAI
 
       INTEGER C, E, L, R, S   ! Loop indices
       INTEGER ISP             ! array index
@@ -204,62 +209,20 @@ C..Scratch Local Variables:
       REAL       SUMEBI       ! Sum of EBI iterations
 #endif
 
-      REAL( 8 )  CHEMSTEP     ! Chemistry integration interval (min)
-
-      INTEGER       :: GXOFF, GYOFF            ! global origin offset from file
-
-      INTEGER, SAVE :: PECOL_OFFSET        ! Local Column Offset for processor
-      INTEGER, SAVE :: PEROW_OFFSET        ! Local Column Offset for processor
-C for INTERPX
-      INTEGER, SAVE :: STRTCOLMC2, ENDCOLMC2, STRTROWMC2, ENDROWMC2
-      INTEGER, SAVE :: STRTCOLMC3, ENDCOLMC3, STRTROWMC3, ENDROWMC3
-
 !IVAI
-      INTEGER       :: KOUNT 
+      INTEGER       :: KOUNT
       INTEGER       :: IOSX            ! i/o and allocate memory status
 !IVAI
 
       INTERFACE
-!        SUBROUTINE PHOT ( MDATE, MTIME, JDATE, JTIME, DTSTEP, RJ )
-         SUBROUTINE PHOT ( MDATE, MTIME, JDATE, JTIME, DTSTEP, RJ, 
-     &                     o3_old, o3_new, o3_tend,              !IVAI: 3D
-     &                     aux2d_01, aux2d_02, aux2d_03 )        !IVAI: 2D
-          INTEGER, INTENT( IN )  :: MDATE       !"centered" Julian date (YYYYDDD)
-          INTEGER, INTENT( IN )  :: MTIME       !"centered" time (HHMMSS)
-          INTEGER, INTENT( IN )  :: JDATE       ! Current date (YYYYDDD)
-          INTEGER, INTENT( IN )  :: JTIME       ! Current time (HHMMSS)
-          INTEGER, INTENT( IN )  :: DTSTEP( : ) ! time step vector (HHMMSS)
-          REAL,    INTENT( OUT ) :: RJ(:,:,:,:) ! gridded J-values  (1/min units)
-          REAL,    INTENT( IN )  :: o3_old (:,:,:)    ! 3D
-          REAL,    INTENT( IN )  :: o3_new (:,:,:)
-          REAL,    INTENT( IN )  :: o3_tend(:,:,:)
-          REAL,    INTENT( INOUT )  :: aux2d_01(:,:)  ! 2D auxiliary output
-          REAL,    INTENT( INOUT )  :: aux2d_02(:,:)  ! 2D auxiliary output
-          REAL,    INTENT( INOUT )  :: aux2d_03(:,:)  ! 2D auxiliary output
-        END SUBROUTINE PHOT
         SUBROUTINE HRSOLVER( JDATE, JTIME, C, R, L )
            INTEGER, INTENT( IN ) :: JDATE    ! Current date (YYYYDDD)
            INTEGER, INTENT( IN ) :: JTIME    ! Current time (HHMMSS)
            INTEGER, INTENT( IN ) :: C, R, L  ! Cell col, row, lev
         END SUBROUTINE HRSOLVER
-         SUBROUTINE FIND_DEGRADED( JDATE, JTIME, LOGDEV, CALL_DEGRADE )
-           INTEGER, INTENT( IN )  :: JDATE        ! current model date , coded YYYYDDD
-           INTEGER, INTENT( IN )  :: JTIME        ! current model time , coded HHMMSS
-           INTEGER, INTENT( IN )  :: LOGDEV       ! unit number for the log file
-           LOGICAL, INTENT( OUT ) :: CALL_DEGRADE ! whether to call degradation routines
-         END SUBROUTINE FIND_DEGRADED
-         SUBROUTINE INIT_DEGRADE( CBLK, TCELL, DCELL, PHOTO_CELL, JDATE, JTIME, LOGDEV )
-           REAL( 8 ), INTENT( IN ) :: CBLK( : )       !  species concentration in cell
-           REAL,      INTENT( IN ) :: TCELL           !  cell temperature  [ k ]
-           REAL,      INTENT( IN ) :: DCELL           !  cell air density  [ kg/m^3 ]
-           REAL( 8 ), INTENT( IN ) :: PHOTO_CELL( : ) !  Photolysis table for cell [1/s]
-           INTEGER,   INTENT( IN ) :: JDATE  ! current model date , coded YYYYDDD
-           INTEGER,   INTENT( IN ) :: JTIME  ! current model time , coded HHMMSS
-           INTEGER,   INTENT( IN ) :: LOGDEV ! unit number for the log
-         END SUBROUTINE INIT_DEGRADE
-         SUBROUTINE FINAL_DEGRADE( CBLK )
-           REAL( 8 ), INTENT( INOUT ) :: CBLK( : )    !  species concentration in cell
-         END SUBROUTINE FINAL_DEGRADE
+        SUBROUTINE HETCHEM_UPDATE_AERO( CGRID )
+           REAL, POINTER :: CGRID( :,:,:,: )  !  species concentration in cell
+        END SUBROUTINE HETCHEM_UPDATE_AERO
       END INTERFACE
 
 C**********************************************************************
@@ -271,11 +234,9 @@ c  On first call, call routines to set-up for EBI solver
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       IF( LFIRST ) THEN
 
-         LOGDEV = INIT3( )
-
-         IF( MECHNAME .NE. 'CB6R3_AE6_AQ' ) THEN
+         IF( MECHNAME .NE. 'CB6R5_AE7_AQ' ) THEN
              MSG = 'This version of the EBI solver can only be used with'
-     &            // ' the CB6R3_AE6_AQ chemical mechanism'
+     &            // ' the CB6R5_AE7_AQ chemical mechanism'
              CALL M3EXIT( PNAME, 0, 0, MSG, XSTAT1 )
          END IF
 
@@ -298,15 +259,16 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
          END IF
 
          IF( LIRR ) THEN
-            MSG = 'IRR Analysis not allowed with EBI solver'
-            CALL M3EXIT( PNAME, JDATE, JTIME, MSG, XSTAT1 )
+            CALL_IRR = .TRUE.
+         ELSE
+            CALL_IRR = .FALSE.
          END IF
 
          MODEL_SPECIES = NSPCSD    ! WTH: find number of model species
 
 ! Determine whether DEGRADE rountines are needed.
 
-         CALL FIND_DEGRADED( JDATE, JTIME, LOGDEV, CALL_DEG )
+         CALL FIND_DEGRADED( JDATE, JTIME, CALL_DEG )
          IF( CALL_DEG )THEN
             WRITE(LOGDEV,*)'TX DEGRADE ROUTINES USED'
             WRITE(LOGDEV,*)'Mechanism contains degraded species'
@@ -350,55 +312,17 @@ C Define processor offsets
          PECOL_OFFSET = COLSD_PE( 1, MYPE+1 ) - 1
          PEROW_OFFSET = ROWSD_PE( 1, MYPE+1 ) - 1
 
-C.. Get fractional seawater coverage from the OCEAN file.
-
-         ALLOCATE( OPEN_ZONE( NCOLS, NROWS ), SURF_ZONE( NCOLS, NROWS ) )
-
-         CALL SUBHFILE ( OCEAN_1, GXOFF, GYOFF,
-     &                   STRTCOLMC3,ENDCOLMC3, STRTROWMC3,ENDROWMC3 )
-
-         VNAME = 'OPEN'
-         IF ( .NOT. INTERPX( OCEAN_1, VNAME, PNAME,
-     &                       STRTCOLMC3,ENDCOLMC3, STRTROWMC3,ENDROWMC3, 1,1,
-     &                       JDATE, JTIME, OPEN_ZONE ) ) THEN
-            MSG = 'Could not read OPEN from ' // OCEAN_1
-            CALL M3EXIT ( PNAME, JDATE, JTIME, MSG, XSTAT1 )
-         END IF
-
-C.. Get fractional surf-zone coverage from the OCEAN file.
-
-         VNAME = 'SURF'
-         IF ( .NOT. INTERPX( OCEAN_1, VNAME, PNAME,
-     &                       STRTCOLMC3,ENDCOLMC3, STRTROWMC3,ENDROWMC3, 1,1,
-     &                       JDATE, JTIME, SURF_ZONE ) ) THEN
-            MSG = 'Could not read SURF from ' // OCEAN_1
-            CALL M3EXIT ( PNAME, JDATE, JTIME, MSG, XSTAT1 )
-         END IF
-
-         ALLOCATE( LAND_ZONE( NCOLS, NROWS ) )
+         ALLOCATE( SEAWATER_ZONE( NCOLS, NROWS ) )
          DO R = 1, NROWS
             DO C = 1, NCOLS
-               IF( OPEN_ZONE( C,R ) + SURF_ZONE( C,R ) .GT. 0.0 )THEN
-                   LAND_ZONE( C,R ) = .FALSE.
-               ELSE
-                   LAND_ZONE( C,R ) = .TRUE.
-               END IF
+               SEAWATER_ZONE( C,R ) =  OCEAN( C,R ) + SZONE( C,R )
              END DO
          END DO
 
-         DEALLOCATE( OPEN_ZONE, SURF_ZONE )
-
-
-         CALL SUBHFILE ( MET_CRO_2D, GXOFF, GYOFF,
-     &                   STRTCOLMC2, ENDCOLMC2, STRTROWMC2, ENDROWMC2 )
-
-         CALL SUBHFILE ( MET_CRO_3D, GXOFF, GYOFF,
-     &                   STRTCOLMC3, ENDCOLMC3, STRTROWMC3, ENDROWMC3 )
-
          ALLOCATE( DENS( NCOLS, NROWS, NLAYS ), PRES( NCOLS, NROWS, NLAYS ),
      &             QV  ( NCOLS, NROWS, NLAYS ), TA  ( NCOLS, NROWS, NLAYS ),
-     &             RJ  ( NCOLS, NROWS, NLAYS, NPHOTAB ),
      &             SEAICE( NCOLS, NROWS ) ,
+!IVAI
 ! 2D
      &             Q2    ( NCOLS, NROWS ),       TEMP2   ( NCOLS, NROWS ),
      &           aux2d_01( NCOLS, NROWS ),       aux2d_02( NCOLS, NROWS ),
@@ -407,10 +331,36 @@ C.. Get fractional surf-zone coverage from the OCEAN file.
      &             o3_old( NCOLS, NROWS, NLAYS ), no2_old( NCOLS, NROWS, NLAYS ),
      &             o3_new( NCOLS, NROWS, NLAYS ), no2_new( NCOLS, NROWS, NLAYS ),
      &             o3_tend(NCOLS, NROWS, NLAYS ), no2_tend(NCOLS, NROWS, NLAYS ))
-
 !IVAI
 
+C..Initialize shared photolysis data
+         CALL INIT_PHOT_SHARED()
 
+C..Determine which cells need IRR
+         ALLOCATE( LFLAGIRR ( NCOLS, NROWS, NLAYS ) )
+         CALL      PA_IRR_CKCELLS ( LFLAGIRR )
+
+#ifdef isam
+        NUMB_ISAM_CELLS = 1.0D0 / ( NCOLS * NROWS * NLAYS )
+        CALL SA_IRR_INIT
+#endif
+
+#ifdef sens
+         CALL INIT_DDM3D_CHEM()
+
+C For higher order sensitivities
+         IF ( HIGH ) THEN
+            DO RXN = 1, NRXNS
+               IF( NREACT( RXN ) .EQ. 1 ) THEN
+                  ORDER1( RXN ) = .TRUE.
+               ELSE
+                  ORDER1( RXN ) = .FALSE.
+               END IF
+            END DO
+         END IF
+#endif
+
+!IVAI
 !> ccccccccccccccccccccc canopy shade option!ccccccccccccccccccccc
          CANOPY_SHADE = ENVYN( 'CTM_CANOPY_SHADE',
      &                   'Flag for in-line canopy shading',
@@ -420,15 +370,15 @@ C.. Get fractional surf-zone coverage from the OCEAN file.
             XMSG = 'Using in-line canopy shading option'
             CALL M3MSG2( XMSG )
          END IF
-!IVAI
 
          LFIRST = .FALSE.
+!IVAI
 
       END IF      ! First time
 
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 C  Set date and time to center of time step, get necessary physical
-C  data, and get photolysis rates
+C  data
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       MIDDATE = JDATE
       MIDTIME = JTIME
@@ -455,106 +405,57 @@ C.. Compute number of time step loops and step size for EBI solver
 
 C.. Get fractional seaice coverage from the METCRO2D file.
 
-      VNAME = 'SEAICE'
-      IF ( .NOT. INTERPX( MET_CRO_2D, VNAME, PNAME,
-     &                    STRTCOLMC2,ENDCOLMC2, STRTROWMC2,ENDROWMC2, 1,1,
-     &                    MIDDATE, MIDTIME, SEAICE ) ) THEN
-         MSG = 'Could not read SEAICE from MET_CRO_2D'
-         CALL M3EXIT( PNAME, JDATE, JTIME, MSG, XSTAT1 )
-      END IF
-
-!IVAI
-!.. Get 2-m temperature from the METCRO2D file.
-      VNAME = 'TEMP2'
-      If ( .Not. INTERPX( MET_CRO_2D, VNAME, PNAME,
-     &                    STRTCOLMC2,ENDCOLMC2, STRTROWMC2,ENDROWMC2, 1,1,
-     &                    MIDDATE, MIDTIME, TEMP2 ) ) Then
-         MSG = 'Could not read TEMP2 from MET_CRO_2D'
-         CALL M3EXIT( PNAME, JDATE, JTIME, MSG, XSTAT1 )
-      End If
-
-!.. Get 2-m Specific Humidity from the METCRO2D file.
-      VNAME = 'Q2'
-      If ( .Not. INTERPX( MET_CRO_2D, VNAME, PNAME,
-     &                    STRTCOLMC2,ENDCOLMC2, STRTROWMC2,ENDROWMC2, 1,1,
-     &                    MIDDATE, MIDTIME, Q2 ) ) Then
-         MSG = 'Could not read Q2 from MET_CRO_2D'
-         Call M3EXIT( PNAME, JDATE, JTIME, MSG, XSTAT1 )
-      End If
-!IVAI
+      CALL INTERPOLATE_VAR ('SEAICE', MIDDATE, MIDTIME, SEAICE)
 
 C.. Get ambient temperature in K
 
-      VNAME = 'TA'
-      IF ( .NOT. INTERPX( MET_CRO_3D, VNAME, PNAME,
-     &                    STRTCOLMC3,ENDCOLMC3, STRTROWMC3,ENDROWMC3, 1,NLAYS,
-     &                    MIDDATE, MIDTIME, TA ) ) THEN
-         MSG = 'Could not read TA from MET_CRO_3D'
-         CALL M3EXIT( PNAME, JDATE, JTIME, MSG, XSTAT1 )
-      END IF
-
-!IVAI
-! Replace bottom model layer temp with 2-m temp
-!     TA( :,:,1 )     = TEMP2( :,: )
-!IVAI
+      CALL INTERPOLATE_VAR ('TA', MIDDATE, MIDTIME, TA)
 
 C.. Get specific humidity in Kg H2O / Kg air
-      VNAME = 'QV'
-      IF ( .NOT. INTERPX( MET_CRO_3D, VNAME, PNAME,
-     &                    STRTCOLMC3,ENDCOLMC3, STRTROWMC3,ENDROWMC3, 1,NLAYS,
-     &                    MIDDATE, MIDTIME, QV ) ) THEN
-         MSG = 'Could not read QV from MET_CRO_3D'
-         CALL M3EXIT( PNAME, JDATE, JTIME, MSG, XSTAT1 )
-      END IF
-
-!IVAI
-! Replace bottom model layer humidity specific with 2-m humidity specfic
-!     QV( :,:,1 )     = Q2M( :,: )
-!IVAI
+      CALL INTERPOLATE_VAR ('QV', MIDDATE, MIDTIME, QV)
 
 ! Get ambient MASS DENSITY in Kg/m^3
-       VNAME = 'DENS'
-       IF ( .NOT. INTERPX( MET_CRO_3D, VNAME, PNAME,
-     &                    STRTCOLMC3,ENDCOLMC3, STRTROWMC3,ENDROWMC3, 1,NLAYS,
-     &                    MIDDATE, MIDTIME, DENS ) ) THEN
-          MSG = 'Could not read DENS from MET_CRO_3D'
-          CALL M3EXIT( PNAME, JDATE, JTIME, MSG, XSTAT1 )
-       END IF
+      CALL INTERPOLATE_VAR ('DENS', MIDDATE, MIDTIME, DENS)
 
 C.. Get pressure in Pascals
-      VNAME = 'PRES'
-      IF ( .NOT. INTERPX( MET_CRO_3D, VNAME, PNAME,
-     &                    STRTCOLMC3,ENDCOLMC3, STRTROWMC3,ENDROWMC3, 1,NLAYS,
-     &                    MIDDATE, MIDTIME, PRES ) ) THEN
-         MSG = 'Could not read PRES from MET_CRO_3D'
-         CALL M3EXIT ( PNAME, JDATE, JTIME, MSG, XSTAT1 )
-      END IF
+      CALL INTERPOLATE_VAR ('PRES', MIDDATE, MIDTIME, PRES)
 
-! IVAI: 
+!IVAI
+! Get 2-m temperature in K
+      CALL INTERPOLATE_VAR ('TEMP2', MIDDATE, MIDTIME, TEMP2)
+
+! Get 2-m Specific Humidity in Kg H2O / Kg air
+      CALL INTERPOLATE_VAR ('Q2', MIDDATE, MIDTIME, Q2)
+!IVAI
+
+C.. Get Heteorogeneous rates and Update Aerosol Distribution Properties
+      CALL HETCHEM_RATES( TA, PRES, QV, CGRID, DENS )
+
+#ifdef sens
+      DATENUM = 1 + JDATE - STARTDATE !  Set the date and hour counters used in sensitivity calls
+
+C For reaction rate sensitivities
+      DO NP = 1, NPMAX
+         IF ( IPT( NP ) .EQ. 5 ) THEN
+            CALL CKTIME( JDATE,JTIME,NP,RXNFLAG(NP) ) ! Rxnflag set to true iff ipt=5 and time, date within bounds
+            IF ( IDATE( NP, DATENUM ) .NE. 1 ) RXNFLAG( NP ) = .FALSE.
+         ELSE
+            RXNFLAG( NP ) = .FALSE.
+         END IF
+      END DO
+
+#endif sens
+
+! IVAI:
 ! Species before gas-phase tendencies added (NB. Species indices defined in "hrdata_mod", for O3 = 4)
       o3_old (:,:,:) = CGRID(:,:,:,4) ! O3 = 4
 
-!IVAI
-      IF (CANOPY_SHADE ) THEN
+! Initialize canopy levels
+      If ( CANOPY_SHADE  ) Then
 
         WRITE( LOGDEV, *) 'HRDRIVER: NLAYC NLAYT = ', NLAYC, NLAYT
 
-      END IF
-! IVAI
-
-C.. Get photolysis rates in 1/min
-!     CALL PHOT ( MIDDATE, MIDTIME, JDATE, JTIME, TSTEP, RJ )
-      CALL PHOT ( MIDDATE, MIDTIME, JDATE, JTIME, TSTEP, RJ, 
-     &            o3_old  (:,:,:), o3_new  (:,:,:), o3_tend (:,:,:),  ! 3D
-     &            aux2d_01(:,:)  , aux2d_02(:,:)  , aux2d_03(:,:)  )  ! 2D
-
-C.. Get Heterogeneous rates and Update Aerosol Distribution Properties
-      CALL HETCHEM_RATES( TA, PRES, QV, CGRID )
-!
-!     The statement below must reside after call PHOT
-
-      If ( CANOPY_SHADE  ) Then
-
+! The statement below must reside after call PHOT
       IF (.FALSE.) THEN
       DO R = 1, MY_NROWS
          DO C = 1, MY_NCOLS
@@ -564,7 +465,7 @@ C.. Get Heterogeneous rates and Update Aerosol Distribution Properties
 
             IF ( KOUNT < 3 )  THEN
 
-!1             print*, 'HRDRIVER: RES2CAN = ', 
+!1             print*, 'HRDRIVER: RES2CAN = ',
 
                print*, 'HRDRIVER: KHETERO 1HY = ',
      &         KHETERO(1:NHETERO,C,R,1 )  ! NHETERO = 11  in total
@@ -572,9 +473,9 @@ C.. Get Heterogeneous rates and Update Aerosol Distribution Properties
                print*, 'HRDRIVER: KHETERO 1CY = ',
 
 !0             DO L = 1, 3 !NLAYT
- 
+
 !1   &         CONC_MOD(C,R,1, 4), ! O3 = 4
-!1   &         RJ_CAN   (C,R,1, LO3O1D), 
+!1   &         RJ_CAN   (C,R,1, LO3O1D),
 !1   &         CONC_CAN(C,R,1, 4), CONC_CAN(C,R,3, 4)  ! O3 = 4
 !
 !1   &         TA_CAN(C,R, 1), DENS_CAN(C,R, 1), QV_CAN(C,R, 1)
@@ -597,7 +498,7 @@ C.. Get Heterogeneous rates and Update Aerosol Distribution Properties
 !     aux2d_03(:,:) = RJ (:,:,1,LO3O1D)
 !     aux2d_03(:,:) = RJ_CAN (:,:,1,LO3O1D)
 !     aux2d_02(:,:) = real(    KHETERO(NHETERO,:,:,1 ),4) ! NHETERO=11 reaction
-!     aux2d_03(:,:) = real(KHETERO_CAN(NHETERO,:,:,1 ),4) ! NHETERO=11 reaction 
+!     aux2d_03(:,:) = real(KHETERO_CAN(NHETERO,:,:,1 ),4) ! NHETERO=11 reaction
 
 ! This is CONC_can from canopy_transfer after r2c (flag = 0)
 !     aux2d_02(:,:) = CONC_CAN(:,:,1,4) ! 1st canopy layer O3 = 4
@@ -606,7 +507,7 @@ C.. Get Heterogeneous rates and Update Aerosol Distribution Properties
 ! !!! TESTING !!! Overwrite met3d & cgrid calculated in get_can_levs (phot)
 !!!!!!!!!!!!!!!!!
 ! NB. Comment out to use values from canopy_transfer "resolved_to_canopy"
-
+!
 !... First, carry over original model values for the matching layers
 !     TA_CAN   (:,:,NLAYC+1:NLAYT)   = TA  (:,:,1:NLAYS)
 !     QV_CAN   (:,:,NLAYC+1:NLAYT)   = QV  (:,:,1:NLAYS)
@@ -614,8 +515,8 @@ C.. Get Heterogeneous rates and Update Aerosol Distribution Properties
 !     DENS_CAN (:,:,NLAYC+1:NLAYT)   = DENS(:,:,1:NLAYS)
 
 ! Overwrite CONC_can calculated in canopy_transfer "resolved_to_canopy"
-! NB. Comment out to use values from canopy_transfer "resolved_to_canopy"
-!     CONC_CAN(:,:,NLAYC+1:NLAYT,:) = CGRID(:,:,1:NLAYS,:)   !Nov13
+!   NB. Comment out to use values from canopy_transfer "resolved_to_canopy"
+!     CONC_CAN(:,:,NLAYC+1:NLAYT,:) = CONC(:,:,1:NLAYS,:)
 
 !... Initialize the canopy layers with 1hy layer values
 !     TA_CAN(:,:,3) = TA( :,:,1) ! using values from get_can_levs when commented out
@@ -634,18 +535,22 @@ C.. Get Heterogeneous rates and Update Aerosol Distribution Properties
 !     DENS_CAN(:,:,2) = DENS( :,:,1)
 !     DENS_CAN(:,:,1) = DENS( :,:,1)
 
-! dims KHETERO_CAN(NHETERO,NCOLS, NROWS, NLAYT)
+! NB. Must initialize all canopy & non-canopy columns RJ_CAN & KHETERO_CAN
+
+!... First, carry over original model values for the matching layers
+! NB. KHETERO_CAN(NHETERO,NCOLS, NROWS, NLAYT) is real(8)
       KHETERO_CAN(:,:,:,NLAYC+1:NLAYT)   = KHETERO(:,:,:,1:NLAYS) ! real(8)
 
+!... Initialize the canopy layers with 1hy layer values
       KHETERO_CAN(:,:,:,3) = KHETERO(:,:,:,1)  ! real(8)
       KHETERO_CAN(:,:,:,2) = KHETERO(:,:,:,1)  ! real(8)
       KHETERO_CAN(:,:,:,1) = KHETERO(:,:,:,1)  ! real(8)
 
 ! Overwrite CONC_can calculated in canopy_transfer "resolved_to_canopy"
 ! NB. Comment out to use values from canopy_transfer "resolved_to_canopy"
-!     CONC_CAN(:,:,3,:) = CGRID(:,:,1,:) !Nov13
-!     CONC_CAN(:,:,2,:) = CGRID(:,:,1,:) !Nov13
-!     CONC_CAN(:,:,1,:) = CGRID(:,:,1,:) !Nov13 ! using values from canopy_transfer when commented out
+!     CONC_CAN(:,:,3,:) = CONC(:,:,1,:)
+!     CONC_CAN(:,:,2,:) = CONC(:,:,1,:)
+!     CONC_CAN(:,:,1,:) = CONC(:,:,1,:)
 
 !!!!!!!!!!!!!!!!!!!!!
 ! !!! END TESTING !!! overwrite met3d & cgrid calculated in get_can_levs
@@ -662,6 +567,7 @@ C.. Get Heterogeneous rates and Update Aerosol Distribution Properties
 
       End If  !CANOPY_SHADE
 
+
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c  Top of loop over cells
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
@@ -675,8 +581,16 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       NCELL = 1
 
       DO L = 1, NLAYS
-         DO R = 1, MY_NROWS
-            DO C = 1, MY_NCOLS
+         DO R = 1, NROWS
+            DO C = 1, NCOLS
+
+               DEG_LAY = L
+               DEG_ROW = R
+               DEG_COL = C
+
+c..reset CALL_IRR based on cell's values
+               CALL_IRR = LFLAGIRR( C,R,L )
+
 c..Load ICs
                INV_DENS = 1.0 / DENS( C,R,L )
                DO SPC = 1, NUMB_MECH_SPC
@@ -695,21 +609,21 @@ c..Load ICs
                   DO S = 1, MODEL_SPECIES
                      YCCELL( S ) = REAL( CGRID(C,R,L,S), 8)
                   END DO
-                  CALL INIT_DEGRADE(YCCELL,TA(C,R,L),DENS(C,R,L),RJIN(NCELL,:),
-     &                              JDATE, JTIME, LOGDEV)
+                  CALL INIT_DEGRADE(YCCELL,TA(C,R,L),DENS(C,R,L),PRES(C,R,L),QV(C,R,L),RJIN(NCELL,:),
+     &                              JDATE, JTIME)
+
+#ifdef isam
+                  CALL SA_DEGRADE_EXTRACT( C,R,L,DENS(C,R,L) )
+#endif
                END IF
 
 c..Set physical quantities
                TEMP( NCELL )     = REAL( TA( C,R,L ), 8)
-!              PRESCELL( NCELL ) = REAL( PRES( C,R,L ), 8)
+               DENSITY( NCELL )  = REAL( DENS( C,R,L ), 8)
+!                PRESCELL( NCELL ) = REAL( PRES( C,R,L ), 8)
                ATMPRES( NCELL )  = PA2ATM * REAL( PRES( C,R,L ), 8)
                H2O( NCELL )      = REAL( MAX ( MAOMV * QV( C,R,L ), 0.0 ), 8)
-
-               IF( LAND_ZONE( C,R ) .OR. SEAICE ( C,R ) .GT. 0.0 )THEN
-                   LAND (NCELL) = .TRUE.
-               ELSE
-                   LAND (NCELL) = .FALSE.
-               END IF
+               SEAWATER (NCELL)      = MAX ( 0.0D0, ( REAL( SEAWATER_ZONE( C,R ) - SEAICE (C,R) ,8) ) )
 
 c..Get rate constants
                LSUNLIGHT = .FALSE.
@@ -718,13 +632,29 @@ c..Get rate constants
 
                FORALL ( NPH = 1:NHETERO )HET( NCELL,NPH ) = REAL( KHETERO( NPH,C,R,L ), 8)
 
-               CALL CALC_RCONST( TEMP, ATMPRES, H2O, RJIN, HET, LSUNLIGHT, LAND, RKI_SAV, NCELL )
+               CALL CALC_RCONST( TEMP, ATMPRES, H2O, RJIN, HET, LSUNLIGHT, SEAWATER, RKI_SAV, NCELL )
                FORALL( NPH = 1:NRXNS )RKI( NPH ) = RKI_SAV( NCELL, NPH )
+
+#ifdef isam
+#if defined(isam) || defined(verbose_isam)
+C...For diagnosing IRR calculations in log files
+                IF( CHECK_ISAM )THEN
+                   WRITE_CELL = .FALSE.
+                   IF( C .EQ. MAX(1, NCOLS/2) .AND. R .EQ. MAX(1,NROWS/2) .AND. L .EQ. 1 )THEN
+                        WRITE_CELL = .TRUE.
+                        WRITE(LOGDEV,*)'WRITE_CELL = .TRUE.'
+                   ELSE
+                        WRITE_CELL = .FALSE.
+                   END IF
+                END IF
+#endif
+               CALL SA_IRR_EXTRACT( C, R, L, DENS( C,R,L ),YC )
+#endif
 
 c..Call EBI solver
                N_EBI_IT = 0
 
-               CALL HRSOLVER( JDATE, JTIME, (C+PECOL_OFFSET), (R+PEROW_OFFSET), L )
+               CALL HRSOLVER( JDATE, JTIME, C, R, L )
 
 #ifdef hrstats
                MXEBI  = MAX( MXEBI, N_EBI_IT )
@@ -754,45 +684,82 @@ c..Update concentration array
                      END DO
                      CGRID(C,R,L,ISP) = REAL( YCCELL(ISP), 4)
                   END DO UPDATE_DEGRADED
+#ifdef isam
+                  CALL SA_DEGRADE_UPLOAD( C,R,L,DENS(C,R,L) )
+#endif
                END IF
+
+#ifdef isam
+               CALL SA_IRR_UPLOAD( C, R, L, DENS( C,R,L ), YC )
+#endif
+
+c..update irrout arrays if needed
+               IF ( LFLAGIRR( C,R,L ) )CALL PA_IRR_CELLENDF( C, R, L )
+#ifdef sens
+               DO RXN = 1, NRXNS
+                  SRK( RXN ) = RKI( RXN )
+                  IF ( HIGH ) THEN
+                     IF ( ORDER1 (RXN ) ) THEN
+                        SRK2( RXN ) = 0.0
+                     ELSE
+                        SRK2( RXN ) = RKI( RXN )
+                     END IF
+                  END IF
+               END DO
+
+
+               CALL SOLVE_DDM3D_CHEM( C,R,L,CHEMSTEP )
+#endif
 
             END DO
          END DO
       END DO
 
-!IVAI: 
+!IVAI
+
 ! Species after gas-phase: all canopy & non-canopy grid cells
       o3_new  (:,:,:) = CGRID(:,:,:,4)
 
 ! Gas-phase tendency  ppmv sec-1
-      o3_tend (:,:,:) = ( o3_new(:,:,:) -  o3_old(:,:,:)) / 
+      o3_tend (:,:,:) = ( o3_new(:,:,:) -  o3_old(:,:,:)) /
      &                  REAL (CHEMSTEP, 4) ! ppm  sec-1
 
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c  Top of loop over cells IF CANOPY SHADE
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Species after gas-phase: Here only non-canopy grid cells are updated (NB. Canopy grid cells are overwriten further down)
-!     IF ( .FALSE. ) THEN
       IF ( CANOPY_SHADE ) THEN
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+      NCELL = 1
+
 ! Call on combined canopy plus resolved model layer
-! Temporarily run on NLAYS
 !     DO L = 1, NLAYS
       DO L = 1, NLAYT
-         DO R = 1, MY_NROWS
-            DO C = 1, MY_NCOLS
+         DO R = 1, NROWS
+            DO C = 1, NCOLS
 
             IF ( FRT_MASK(C,R) > 0. ) THEN
 
-!IVAI: 
-!              if( L.EQ.1)  print*, 'HRDRIVER: 1HY = ', 
+               DEG_LAY = L
+               DEG_ROW = R
+               DEG_COL = C
+
+c..reset CALL_IRR based on cell's values
+               CALL_IRR = LFLAGIRR( C,R,L )
+
+!IVAI:
+!              if( L.EQ.1)  print*, 'HRDRIVER: 1HY = ',
 !    &            RJ( C,R,1 ,LO3O1D ), CGRID( C,R,1, 4 )         ! O3 = 4
 ! NB. CHEMSTEP = 3 min TSTEP = 300 (1hr)
-!              if( L.EQ.1 .OR. L.EQ.2 .OR. L.EQ.3 ) print*, 
-!    &           'HRDRIVER: CANLEV3 =', L, 
+!              if( L.EQ.1 .OR. L.EQ.2 .OR. L.EQ.3 ) print*,
+!    &           'HRDRIVER: CANLEV3 =', L,
 !    &            RJ_CAN( C,R,L ,LO3O1D ), CONC_CAN( C,R,L, 4 ) ! O3 = 4
 !    &            KHETERO_CAN(NHETERO,C,R,L ) ! REAL( 8 )
 !    &            TA_CAN(C,R,L), DENS_CAN(C,R,L), QV_CAN(C,R,L),
 !IVAI
+
 c..Load ICs
                INV_DENS = 1.0 / DENS_CAN( C,R,L )
                DO SPC = 1, NUMB_MECH_SPC
@@ -811,37 +778,52 @@ c..Load ICs
                   DO S = 1, MODEL_SPECIES
                      YCCELL( S ) = REAL( CONC_CAN(C,R,L,S), 8)
                   END DO
-                  CALL INIT_DEGRADE(YCCELL,TA_CAN(C,R,L),DENS_CAN(C,R,L),RJIN(NCELL,:),
-     &                              JDATE, JTIME, LOGDEV)
+                  CALL INIT_DEGRADE(YCCELL,TA_CAN(C,R,L),DENS_CAN(C,R,L),PRES_CAN(C,R,L),QV_CAN(C,R,L),RJIN(NCELL,:),
+     &                              JDATE, JTIME)
+
+#ifdef isam
+                  CALL SA_DEGRADE_EXTRACT( C,R,L,DENS_CAN(C,R,L) )
+#endif
                END IF
 
 c..Set physical quantities
                TEMP( NCELL )     = REAL( TA_CAN( C,R,L ), 8)
-!              PRESCELL( NCELL ) = REAL( PRES_CAN( C,R,L ), 8)
+               DENSITY( NCELL )  = REAL( DENS_CAN( C,R,L ), 8)
+!                PRESCELL( NCELL ) = REAL( PRES_CAN( C,R,L ), 8)
                ATMPRES( NCELL )  = PA2ATM * REAL( PRES_CAN( C,R,L ), 8)
                H2O( NCELL )      = REAL( MAX ( MAOMV * QV_CAN( C,R,L ), 0.0 ), 8)
-
-               IF( LAND_ZONE( C,R ) .OR. SEAICE ( C,R ) .GT. 0.0 )THEN
-                   LAND (NCELL) = .TRUE.
-               ELSE
-                   LAND (NCELL) = .FALSE.
-               END IF
+               SEAWATER (NCELL)      = MAX ( 0.0D0, ( REAL( SEAWATER_ZONE( C,R ) - SEAICE (C,R) ,8) ) )
 
 c..Get rate constants
                LSUNLIGHT = .FALSE.
                FORALL( NPH = 1:NPHOTAB ) RJIN( NCELL,NPH ) = REAL( RJ_CAN( C,R,L,NPH ), 8)
                IF( MAXVAL(RJIN) .GT. 0.0D0 ) LSUNLIGHT = .TRUE.
 
-! Resolved model layers
                FORALL ( NPH = 1:NHETERO )HET( NCELL,NPH ) = REAL( KHETERO_CAN( NPH,C,R,L ), 8)
 
-               CALL CALC_RCONST( TEMP, ATMPRES, H2O, RJIN, HET, LSUNLIGHT, LAND, RKI_SAV, NCELL )
+               CALL CALC_RCONST( TEMP, ATMPRES, H2O, RJIN, HET, LSUNLIGHT, SEAWATER, RKI_SAV, NCELL )
                FORALL( NPH = 1:NRXNS )RKI( NPH ) = RKI_SAV( NCELL, NPH )
+
+#ifdef isam
+#if defined(isam) || defined(verbose_isam)
+C...For diagnosing IRR calculations in log files
+                IF( CHECK_ISAM )THEN
+                   WRITE_CELL = .FALSE.
+                   IF( C .EQ. MAX(1, NCOLS/2) .AND. R .EQ. MAX(1,NROWS/2) .AND. L .EQ. 1 )THEN
+                        WRITE_CELL = .TRUE.
+                        WRITE(LOGDEV,*)'WRITE_CELL = .TRUE.'
+                   ELSE
+                        WRITE_CELL = .FALSE.
+                   END IF
+                END IF
+#endif
+               CALL SA_IRR_EXTRACT( C, R, L, DENS_CAN( C,R,L ),YC )
+#endif
 
 c..Call EBI solver
                N_EBI_IT = 0
 
-               CALL HRSOLVER( JDATE, JTIME, (C+PECOL_OFFSET), (R+PEROW_OFFSET), L )
+               CALL HRSOLVER( JDATE, JTIME, C, R, L )
 
 #ifdef hrstats
                MXEBI  = MAX( MXEBI, N_EBI_IT )
@@ -871,17 +853,42 @@ c..Update concentration array
                      END DO
                      CONC_CAN(C,R,L,ISP) = REAL( YCCELL(ISP), 4)
                   END DO UPDATE_DEGRADED_CAN
+#ifdef isam
+                  CALL SA_DEGRADE_UPLOAD( C,R,L,DENS_CAN(C,R,L) )
+#endif
                END IF
 
-            ELSE    ! IF (FRT_MASK(C,R) <= 0.)
+#ifdef isam
+               CALL SA_IRR_UPLOAD( C, R, L, DENS_CAN( C,R,L ), YC )
+#endif
+
+c..update irrout arrays if needed
+               IF ( LFLAGIRR( C,R,L ) )CALL PA_IRR_CELLENDF( C, R, L )
+#ifdef sens
+               DO RXN = 1, NRXNS
+                  SRK( RXN ) = RKI( RXN )
+                  IF ( HIGH ) THEN
+                     IF ( ORDER1 (RXN ) ) THEN
+                        SRK2( RXN ) = 0.0
+                     ELSE
+                        SRK2( RXN ) = RKI( RXN )
+                     END IF
+                  END IF
+               END DO
+
+
+               CALL SOLVE_DDM3D_CHEM( C,R,L,CHEMSTEP )
+#endif
+
+            ELSE    ! FRT_MASK
 !
 ! Update non-canopy grid cells after gas-phase
 !
-            END IF !FRT_MASK
+            END IF  ! FRT_MASK
 
             END DO
          END DO
-      END DO       !DO L = 1, NLAYT
+      END DO ! LOOP L = 1, NLAYT
 
 ! Species after gas-phase (NB. only canopy-grid cells are updated)
       o3_new_can (:,:,1:NLAYT) = CONC_CAN(:,:,1:NLAYT,4) ! O3 = 4
@@ -891,7 +898,7 @@ c..Update concentration array
 !     aux2d_02(:,:) = o3_new_can  (:,:,1)
 !     aux2d_02(:,:) = CONC_CAN(:,:,1,4) ! O3 = 4 => o3_new_can
 
-      o3_tend_can (:,:,:) = ( o3_new_can(:,:,:) -  o3_old_can(:,:,:)) / 
+      o3_tend_can (:,:,:) = ( o3_new_can(:,:,:) -  o3_old_can(:,:,:)) /
      &                       REAL (CHEMSTEP, 4) ! ppmv sec-1
 
 ! Temporary output
@@ -920,9 +927,9 @@ c..Update concentration array
 !     aux2d_01(:,:) =  CONC_MOD(:,:,NLAYS,4) ! top model layer O3 = 4
 !     aux2d_01(:,:) =  CONC_MOD(:,:,2,4) ! 2hy model layer O3 = 4
 !     aux2d_01(:,:) =  CONC_MOD(:,:,1,4) ! 1hy model layer O3 = 4
- 
+
 ! Update CGRID for advection, deposition etc.
-      DO L = 1, NLAYS 
+      DO L = 1, NLAYS
          DO R = 1, MY_NROWS
             DO C = 1, MY_NCOLS
 
@@ -935,11 +942,11 @@ c..Update concentration array
             DO SPC = 1, NUMB_MECH_SPC
 
                S = CGRID_INDEX( SPC )
-               print*, 'HRDRIVER: AFTER C2R SPC= ', S, 
+               print*, 'HRDRIVER: AFTER C2R SPC= ', S,
 ! N_GAS_CHEM_SPC = 127 (NO2 = 1 O3 = 4)
 !    &         CONC_CAN(C,R,1, S), CONC_CAN(C,R,2, S), CONC_CAN(C,R,3, S)  ! O3 = 4
      &         CGRID    (C,R,1, S), CONC_MOD(C,R,1, S)
-            END DO 
+            END DO
 
             END IF ! KOUNT L=1
             END IF !.FALSE.
@@ -959,16 +966,15 @@ c..Update concentration array
 
             END DO
          END DO
-      END DO 
+      END DO
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       END IF ! CANOPY_SHADE
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !IVAI
 
 !  Update Aerosol Surface Area
       CALL HETCHEM_UPDATE_AERO( CGRID )
-!IVAI: to do ...
-!     CALL HETCHEM_UPDATE_AERO( CONC_CAN )
 
 #ifdef hrstats
       AVGEBI = SUMEBI / REAL( NCOLS * NROWS * NLAYS )

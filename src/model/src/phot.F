@@ -19,9 +19,9 @@
 
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !IVAI
-      SUBROUTINE PHOT ( MDATE, MTIME, JDATE, JTIME, DTSTEP, 
-     &                  o3old   , o3new,    o3tend,     !IVAI: 3D
-     &                  aux2d_01, aux2d_02, aux2d_03 )  !IVAI: 2D
+      SUBROUTINE PHOT ( CGRID, JDATE, JTIME, DTSTEP )
+!     &                  o3old   , o3new,    o3tend,     !IVAI: 3D
+!     &                  aux2d_01, aux2d_02, aux2d_03 )  !IVAI: 2D
 !IVAI
 
 !-----------------------------------------------------------------------
@@ -145,6 +145,7 @@ C...modules
       USE SEAS_STRAT_O3_MIN    ! monthly minimum fraction of ozone column density above Pressure TOP
       !Used for canopy shade calculation
       USE ASX_DATA_MOD, ONLY : MET_DATA, GRID_DATA     !uses met data
+      USE CENTRALIZED_IO_MODULE, ONLY : LAT, LON, HT
 !IVAI
 ! NB. Moved NLAYC/NLAYT definitions to GRID_CONF (Jan 9 2025)
       use can_mask             !FRT_mask
@@ -174,8 +175,8 @@ C...modules
       INTEGER, INTENT( IN ) :: DTSTEP( : )   ! time step vector (HHMMSS)
 
 !IVAI: Allocated in hrdriver/hrdata_mod
-      REAL,    INTENT( IN    ) :: o3old(:,:,:), o3new(:,:,:), o3tend(:,:,:)
-      REAL,    INTENT( INOUT ) :: aux2d_01(:,:), aux2d_02(:,:), aux2d_03(:,:)
+!      REAL,    INTENT( IN    ) :: o3old(:,:,:), o3new(:,:,:), o3tend(:,:,:)
+!      REAL,    INTENT( INOUT ) :: aux2d_01(:,:), aux2d_02(:,:), aux2d_03(:,:)
 !IVAI
 
 !...parameters
@@ -193,8 +194,11 @@ C...modules
 
 !...local variables
 
+!IVAI: Allocated in hrdriver/hrdata_mod
+      REAL, ALLOCATABLE :: o3old(:,:,:), o3new(:,:,:), o3tend(:,:,:)
+      REAL, ALLOCATABLE :: aux2d_01(:,:), aux2d_02(:,:), aux2d_03(:,:)
+
       LOGICAL, SAVE :: FIRSTIME = .TRUE.  ! Flag for first call to PHOT
-!      LOGICAL, SAVE :: PHOTDIAG           ! Flag for PHOTDIAG file
 
       LOGICAL, SAVE :: CALL_INIT_ALBEDO = .TRUE.
       LOGICAL, SAVE :: CALL_GET_ALBEDO  = .TRUE.
@@ -207,7 +211,6 @@ C...modules
       CHARACTER(  16 )                    :: V_LIST( 2 )
       CHARACTER(  16 )                    :: REQUESTED_WAVE
       CHARACTER(  16 ), ALLOCATABLE       :: WAVE_LIST( : )
-!      CHARACTER(  16 ), SAVE              :: CTM_PHOTDIAG = 'CTM_PHOTDIAG'
 
       CHARACTER(  80 ) :: VARDESC  ! environment variable description
       CHARACTER( 240 ) :: XMSG = ' '
@@ -450,24 +453,6 @@ C In-line canopy shading option? (default = false)
          PEROW_OFFSET = ROWSD_PE( 1, MYPE+1 ) - 1
 
          CALL INIT_PHOT_SHARED()
-
-!...Get photolysis rate diagnostic file flag
-
-!         PHOTDIAG = .FALSE.         ! default
-!         VARDESC= 'Flag for writing the photolysis rate diagnostic file'
-!         PHOTDIAG = ENVYN( CTM_PHOTDIAG, VARDESC, PHOTDIAG, ESTAT )
-!         IF ( ESTAT .NE. 0 ) WRITE( LOGDEV, '(5X, A)' ) VARDESC
-!         IF ( ESTAT .EQ. 1 ) THEN
-!            XMSG = 'Environment variable improperly formatted'
-!            CALL M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT2 )
-!         ELSE IF ( ESTAT .EQ. -1 ) THEN
-!            XMSG =
-!     &          'Environment variable set, but empty ... Using default:'
-!            WRITE( LOGDEV, '(5X, A, I9)' ) XMSG, JTIME
-!         ELSE IF ( ESTAT .EQ. -2 ) THEN
-!            XMSG = 'Environment variable not set ... Using default:'
-!            WRITE( LOGDEV, '(5X, A, I9)' ) XMSG, JTIME
-!         END IF
 
 !...Allocate array needed to calculation aerosol and cloud optical properties
 
@@ -889,7 +874,7 @@ C In-line canopy shading option? (default = false)
 
 !...Get cosine of solar parameters and set DARK
 
-      CALL UPDATE_SUN( JDATE, JTIME, MDATE, MTIME )
+      CALL UPDATE_SUN( JDATE, JTIME, MIDDATE, MIDTIME)
       
       RSQD = DIST_TO_SUN * DIST_TO_SUN
 
@@ -996,8 +981,8 @@ C In-line canopy shading option? (default = false)
 ! ================================
 
       DO L = 1, NLAYS !from bottom to top model layer
-        DO ROW = 1, MY_NROWS
-          DO COL = 1, MY_NCOLS
+        DO ROW = 1, NROWS
+          DO COL = 1, NCOLS
 
           KOUNT = 0
 

@@ -271,10 +271,6 @@ C Land use information:
       CHARACTER( 20 ), SAVE :: CTM_CANOPY_SHADE = 'CTM_CANOPY_SHADE'! env var for in-line
       LOGICAL,         PUBLIC, SAVE :: CANOPY_SHADE     ! flag in-lining canopy shading
 
-! Canopy option control
-      CHARACTER( 20 ), SAVE :: CTM_CANOPY_SHADE = 'CTM_CANOPY_SHADE    '! env var for in-line
-      LOGICAL,         PUBLIC, SAVE :: CANOPY_SHADE     ! flag in-lining canopy shading
-
 ! FENGSHA option control
       CHARACTER( 18 ),         SAVE :: CTM_WBDUST_FENGSHA ='CTM_WBDUST_FENGSHA' ! env var for in-line
       LOGICAL,         PUBLIC, SAVE :: FENGSHA ! flag for fengsha option
@@ -832,35 +828,12 @@ C-----------------------------------------------------------------------
 
          Grid_Data%LON = LON
 
-!         VNAME = 'LAT'
-!         If ( .Not. INTERPX( GRID_CRO_2D, VNAME, PNAME,
-!     &                       STRTCOLGC2,ENDCOLGC2, STRTROWGC2,ENDROWGC2, 1,1,
-!     &                       JDATE, JTIME, Grid_Data%LAT ) ) Then
-!            XMSG = MSG1 // TRIM( VNAME ) // ' from ' // GRID_CRO_2D
-!            Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
-!         End If
-
-!IVAI
-!         VNAME = 'AREA'
-!         If ( .Not. INTERPX( GRID_CRO_2D, VNAME, PNAME,
-!     &                       STRTCOLGC2,ENDCOLGC2, STRTROWGC2,ENDROWGC2, 1,1,
-!     &                       JDATE, JTIME, Grid_Data%AREA ) ) Then
-!            XMSG = MSG1 // TRIM( VNAME ) // ' from ' // GRID_CRO_2D
-!            Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
-!         End If
-!IVAI
-!         VNAME = 'LWMASK'
-!         If ( .Not. INTERPX( GRID_CRO_2D, VNAME, PNAME,
-!     &                       STRTCOLGC2,ENDCOLGC2, STRTROWGC2,ENDROWGC2, 1,1,
-!     &                       JDATE, JTIME, Grid_Data%LWMASK ) ) Then
-!            XMSG = MSG1 // TRIM( VNAME ) // ' from ' // GRID_CRO_2D
-!            Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
-!         End If
-
          Grid_Data%LAT = LAT
-!IVAI         
+
+!IVAI
          Grid_Data%AREA = AREA
 !IVAI
+
          Grid_Data%LWMASK = LWMASK
 
          Grid_Data%PURB = PURB

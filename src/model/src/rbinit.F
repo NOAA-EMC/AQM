@@ -84,6 +84,11 @@ C.....Local Variables:
       INTEGER NOXYZ                ! Total number of cells for grid
       INTEGER ROW                  ! Row number index
       INTEGER STATUS               ! Status code for functions
+! IVAI
+      INTEGER IAVGSIZE_CAN         ! Average number of cells per block
+      INTEGER NCOUNT_CAN           ! Counter for number of cells for grid
+      INTEGER NOXYZ_CAN            ! Total number of cells for grid
+! IVAI
 
       REAL    DEFTOL               ! Default tolerance value
 
@@ -213,13 +218,10 @@ c..cell & solver data
      &          BLKCH2O( BLKSIZE ),
      &          BLKDENS( BLKSIZE ),
      &          BLKSVOL( BLKSIZE ), 
-     &          BLKSEAWATER( BLKSIZE ),
-!IVAI
-     &          BLKCANOPY( BLKSIZE ), STAT = STATUS )
-!IVAI
+     &          BLKSEAWATER( BLKSIZE ) , STAT = STATUS )
       IF ( STATUS .NE. 0 ) THEN
          XMSG = 'ERROR allocating BLKTEMP, BLKPRES, BLKCH2O, BLKDENS, '
-     &       // 'BLKSVOL, BLKSEAWATER, BLKCANOPY'
+     &       // 'BLKSVOL, BLKSEAWATER'
          CALL M3EXIT( PNAME, 0, 0, XMSG, XSTAT2 )
       END IF
 
@@ -281,6 +283,24 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
          END DO
       END DO
 
+!IVAI NB. NLAYC NLAYT defined in GRID_CONF
+      IF ( CANOPY_SHADE  ) Then
+
+      NCOUNT_CAN = 0
+      DO LEV = 1, NLAYS + NLAYC
+         DO COL = 1, NCOLS
+            DO ROW = 1, NROWS
+               NCOUNT_CAN = NCOUNT_CAN + 1
+               CCOL_CAN( NCOUNT_CAN ) = COL
+               CROW_CAN( NCOUNT_CAN ) = ROW
+               CLEV_CAN( NCOUNT_CAN ) = LEV
+            END DO
+         END DO
+      END DO
+
+      END IF
+!IVAI
+
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c  Define block structure for grid; stop if maxblks exceeded
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
@@ -303,6 +323,34 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       END DO
       BLKCNO( NBLKS ) = OFFSET
       BLKLEN( NBLKS ) = NOXYZ - ( ( NBLK-1 ) * IAVGSIZE )
+
+!IVAI
+! NB. Use same BLKSIZE, as defined in GRID_CONF
+      IF ( CANOPY_SHADE  ) Then
+
+      NOXYZ_CAN = NCOUNT_CAN
+      NBLKS_CAN = 1 + ( NOXYZ_CAN - 1 ) / BLKSIZE
+      WRITE( XMSG, 92021 ) NBLKS_CAN, MXBLKS_CAN   ! IVAI
+      IF ( NBLKS_CAN .GT. MXBLKS_CAN ) THEN
+         WRITE( XMSG, 92020 ) NBLKS_CAN, MXBLKS_CAN
+! IVAI: This line aborts for some nodes MXBLKS_CAN=328 or 1
+!        CALL M3EXIT( PNAME, 0, 0, XMSG, XSTAT1 )  !IVAI: comment out for debugging
+      END IF
+
+      IAVGSIZE_CAN = 1 + ( NOXYZ_CAN - 1 ) / NBLKS_CAN
+      IAVGSIZE_CAN = MIN( IAVGSIZE_CAN, BLKSIZE )
+      OFFSET = 0
+
+      DO NBLK = 1, NBLKS_CAN - 1
+         BLKCNO_CAN( NBLK ) = OFFSET
+         BLKLEN_CAN( NBLK ) = IAVGSIZE_CAN
+         OFFSET = OFFSET + IAVGSIZE_CAN
+      END DO
+      BLKCNO_CAN( NBLKS_CAN ) = OFFSET
+      BLKLEN_CAN( NBLKS_CAN ) = NOXYZ_CAN - ( ( NBLK-1 ) * IAVGSIZE_CAN )
+
+      END IF
+!IVAI
 
       RETURN
       

@@ -174,7 +174,7 @@ list(APPEND aqm_CCTM_files
 	#${GAS}/rbinit.F
 	${GAS}/rbjacob.F
 	${GAS}/rbsolve.F
-	#${GAS}/rbsolver.F
+	${GAS}/rbsolver.F
 	${GAS}/rbsparse.F
 	${GAS}/../../reactive_tracers/DEGRADE_SETUP_TOX.F
 	#${GRID}/GRID_CONF.F
@@ -202,7 +202,7 @@ list(APPEND aqm_CCTM_files
 	${PHOT}/OMI_1979_to_2019.dat
 	${PHOT}/opphot.F
 	${PHOT}/PHOT_MET_DATA.F
-	${PHOT}/PHOT_MOD.F
+	#${PHOT}/PHOT_MOD.F
 	${PHOT}/PHOTOLYSIS_ALBEDO.F
 	${PHOT}/PHOT_OPTICS.dat
 	${PHOT}/SEAS_STRAT_O3_MIN.F
@@ -255,7 +255,7 @@ list(APPEND aqm_CCTM_files
 	${VDIFF}/vdiffproc.F
         #${CIO}/centralized_io_module.F
 	${localCCTM}/o3totcol.f
-	${localCCTM}/rbdriver.F
+	#${localCCTM}/rbdriver.F
 	${localCCTM}/PT3D_DEFN.F
 	${localCCTM}/PT3D_FIRE_DEFN.F
 	${localCCTM}/PT3D_STKS_DEFN.F
@@ -265,6 +265,7 @@ list(APPEND aqm_CCTM_files
 	${localCCTM}/AERO_PHOTDATA.F
 	#IVAI Sub-canopy effects----
 	${localCCTM}/phot.F
+        ${localCCTM}/PHOT_MOD.F
 	${localCCTM}/centralized_io_util_module.F
         ${localCCTM}/can_levs_defn.F90
         ${localCCTM}/can_mask.F90
@@ -276,7 +277,7 @@ list(APPEND aqm_CCTM_files
 	#rbdriver.F also has a typo in CMAQ and is fixed here.
         ${localCCTM}/rbdriver.F
         ${localCCTM}/rbinit.F
-        ${localCCTM}/rbsolver.F
+        #${localCCTM}/rbsolver.F
         ${localCCTM}/GRID_CONF.F
 	#IVAI Sub-canopy effects----
         ${localCCTM}/RUNTIME_VARS.F

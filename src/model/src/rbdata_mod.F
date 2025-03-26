@@ -99,6 +99,10 @@ c..Block variables
 ! Canopy in-line control
       CHARACTER( 20 ), SAVE :: CTM_CANOPY_SHADE = 'CTM_CANOPY_SHADE    ' ! env var for in-line
       LOGICAL,         SAVE :: CANOPY_SHADE   ! flag in-lining canopy shading
+
+      INTEGER :: BLKID_CAN                       ! Block ID
+      INTEGER :: NBLKS_CAN                       ! No. of blocks in domain
+      INTEGER :: NUMCELLS_CAN                    ! No. of cells in a block
 ! IVAI
 
 c..Sparse Matrix variables 
@@ -165,7 +169,16 @@ C Allocated here
       INTEGER, ALLOCATABLE :: NORDCELL( : )  ! Ordered cell's original cell # 
 
 ! IVAI
+      INTEGER, ALLOCATABLE :: CCOL_CAN( : )      ! Column indx of ordered cells
+      INTEGER, ALLOCATABLE :: CROW_CAN( : )      ! Row indx for ordered cells
+      INTEGER, ALLOCATABLE :: CLEV_CAN( : )      ! Layer indx of ordered cells
+      INTEGER, ALLOCATABLE :: BLKCNO_CAN( : )    ! Cell offset for each block
+      INTEGER, ALLOCATABLE :: BLKLEN_CAN( : )    ! # of cells in each block
+      INTEGER, ALLOCATABLE :: NORDCELL_CAN( : )  ! Ordered cell's original cell #
+
       INTEGER :: IOSX            ! i/o and allocate memory status
+
+      REAL( 8 ), ALLOCATABLE :: ERRMX2_CAN( : )       ! Estimated stiffness of each cell
 ! IVAI
 
 C Domain decomposition info from CONC file
@@ -286,6 +299,75 @@ C In-line canopy shading option? (default = false)
             END IF
 
             ERRMX2 = 0
+
+!IVAI
+         IF ( CANOPY_SHADE ) THEN  ! FIRSTIME
+
+            ALLOCATE ( CCOL_CAN( MXCELLS_CAN ), STAT = ALST )
+            IF ( ALST .NE. 0 ) THEN
+               XMSG = '*** CCOL_CAN Memory allocation failed'
+               CALL M3WARN ( 'CELLVAR_ALLOC', 0, 0, XMSG )
+               SUCCESS = .FALSE.; RETURN
+            END IF
+
+            CCOL_CAN = 0
+
+            ALLOCATE ( CROW_CAN( MXCELLS_CAN ), STAT = ALST )
+            IF ( ALST .NE. 0 ) THEN
+               XMSG = '*** CROW_CAN Memory allocation failed'
+               CALL M3WARN ( 'CELLVAR_ALLOC', 0, 0, XMSG )
+               SUCCESS = .FALSE.; RETURN
+            END IF
+
+            CROW_CAN = 0
+
+            ALLOCATE ( CLEV_CAN( MXCELLS_CAN ), STAT = ALST )
+            IF ( ALST .NE. 0 ) THEN
+               XMSG = '*** CLEV_CAN Memory allocation failed'
+               CALL M3WARN ( 'CELLVAR_ALLOC', 0, 0, XMSG )
+               SUCCESS = .FALSE.; RETURN
+            END IF
+
+            CLEV_CAN = 0
+
+            ALLOCATE ( BLKCNO_CAN( MXBLKS_CAN ), STAT = ALST )
+            IF ( ALST .NE. 0 ) THEN
+               XMSG = '*** BLKCNO_CAN Memory allocation failed'
+               CALL M3WARN ( 'CELLVAR_ALLOC', 0, 0, XMSG )
+               SUCCESS = .FALSE.; RETURN
+            END IF
+
+            BLKCNO_CAN = 0
+
+            ALLOCATE ( BLKLEN_CAN( MXBLKS_CAN ), STAT = ALST )
+            IF ( ALST .NE. 0 ) THEN
+               XMSG = '*** BLKLEN_CAN Memory allocation failed'
+               CALL M3WARN ( 'CELLVAR_ALLOC', 0, 0, XMSG )
+               SUCCESS = .FALSE.; RETURN
+            END IF
+
+            BLKLEN_CAN = 0
+
+            ALLOCATE ( NORDCELL_CAN( MXCELLS_CAN ), STAT = ALST )
+            IF ( ALST .NE. 0 ) THEN
+               XMSG = '*** NORDCELL_CAN Memory allocation failed'
+               CALL M3WARN ( 'CELLVAR_ALLOC', 0, 0, XMSG )
+               SUCCESS = .FALSE.; RETURN
+            END IF
+
+            NORDCELL_CAN = 0
+
+            ALLOCATE ( ERRMX2_CAN( MXCELLS_CAN ), STAT = ALST )
+            IF ( ALST .NE. 0 ) THEN
+               XMSG = '*** ERRMX2_CAN Memory allocation failed'
+               CALL M3WARN ( 'CELLVAR_ALLOC', 0, 0, XMSG )
+               SUCCESS = .FALSE.; RETURN
+            END IF
+
+            ERRMX2_CAN = 0
+
+         END IF  ! CANOPY_SHADE
+!IVAI
 
          ELSE   ! called more than once
 

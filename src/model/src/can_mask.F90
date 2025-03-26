@@ -48,11 +48,6 @@
 
    implicit none
 
-! Horisontal arrays
-   integer(kind=4), public :: ni_can, nj_can, ni_nocan, nj_nocan  ! Number of surface grid pts with canopy shading
-   integer(kind=4), allocatable, save, public :: ni_can_col(:), ni_nocan_col(:), &
-                                           nj_can_row(:), nj_nocan_row(:)
-
    real, allocatable, save, public :: FRT_mask(:,:)     ! Continuos Forest Canopy mask
 
    public :: init_can_mask, get_can_mask
@@ -65,7 +60,7 @@
    subroutine init_can_mask(JDATE, JTIME)
 
 
-   USE GRID_CONF, ONLY: NROWS, NCOLS, NLAYS, NLAYC, NLAYT, MY_NROWS, MY_NCOLS  ! horizontal & vertical domain specifications
+   USE GRID_CONF, ONLY: NROWS, NCOLS, NLAYS, NLAYC, NLAYT  ! horizontal & vertical domain specifications
    USE UTILIO_DEFN
 
    IMPLICIT NONE
@@ -84,13 +79,9 @@
 
    LOGDEV   = INIT3()
 
-!  WRITE( LOGDEV, * ) , 'init_can_mask: NCOLS, NROWS = ', NCOLS, NROWS, MY_NROWS, MY_NCOLS
+!  WRITE( LOGDEV, * ) , 'init_can_mask: NCOLS, NROWS = ', NCOLS, NROWS
 
 !...Allocate and initialize new canopy arrays
-
-   allocate (ni_can_col(NCOLS), ni_nocan_col(NCOLS), &
-             nj_can_row(NROWS), nj_nocan_row(NROWS) )
-
    ALLOCATE( FRT_MASK (NCOLS,NROWS), STAT = ALLOCSTAT )
    IF ( ALLOCSTAT .NE. 0 ) THEN
       XMSG = 'Failure allocating FRT_MASK canopy array'
@@ -98,12 +89,6 @@
    END IF
 
 ! Initializations
-
-   ni_can_col  (:) = 0
-   ni_nocan_col(:) = 0
-   nj_can_row  (:) = 0
-   nj_nocan_row(:) = 0
-
    FRT_mask(:,:)=0.0
 
 !  WRITE( LOGDEV, * ) 'init_can_mask: NLAYC, NLAYT, NLAYS ', NLAYC, NLAYT, NLAYS
@@ -114,7 +99,7 @@
 
    subroutine get_can_mask (JDATE, JTIME)
 
-   USE GRID_CONF, ONLY: NROWS, NCOLS, NLAYS, NLAYC, NLAYT, MY_NROWS, MY_NCOLS  ! horizontal & vertical domain specifications
+   USE GRID_CONF, ONLY: NROWS, NCOLS, NLAYS, NLAYC, NLAYT  ! horizontal & vertical domain specifications
    USE  PHOT_MET_DATA        ! Met and Grid data
 !Used for canopy shade calculation
    USE ASX_DATA_MOD, ONLY : MET_DATA        !use met data
@@ -155,27 +140,16 @@
 !     Met_Data%FRT (COL,ROW), Met_Data%POPU(COL,ROW)
 
          FRT_mask(COL,ROW) = -1.0
-         nj_nocan_row(ROW) = nj_nocan_row(ROW) +1
 
       ! Continuous forest canopy
       ELSE
 
          FRT_mask(COL,ROW) = 1.0
-         nj_can_row(ROW) = nj_can_row(ROW) + 1
 
       END IF ! Forest Canopy Mask
 
    END DO
    END DO
-
-   nj_can = 0
-   nj_nocan = 0
-   DO ROW = 1, NROWS  !J-index
-      nj_can   = nj_can   + nj_can_row  (ROW)
-      nj_nocan = nj_nocan + nj_nocan_row(ROW)
-   END DO
-
-!  WRITE( LOGDEV, 5002 ) nj_can, nj_nocan
 
 
    DO COL = 1, NCOLS  !I-index
@@ -190,34 +164,19 @@
                                Met_Data%CLU (COL,ROW)) .GT. 0.45    &
                           .AND.Met_Data%FCH (COL,ROW)  .LT. 18.0) ) THEN
 
-         ni_nocan_col(COL) = ni_nocan_col(COL) +1
-
       ! Continuous forest canopy
       ELSE
-
-         ni_can_col(COL) = ni_can_col(COL) + 1
 
       END IF ! Forest Canopy Mask
 
    END DO
    END DO
 
-   ni_can = 0
-   ni_nocan = 0
-   DO COL = 1, NCOLS  !I-index
-      ni_can   = ni_can   + ni_can_col  (COL)
-      ni_nocan = ni_nocan + ni_nocan_col(COL)
-   END DO
-
-!  WRITE( LOGDEV, 5001 ) ni_can, ni_nocan
-
 !   WRITE( LOGDEV, 5003 ) COL, ROW,
 !     FRT_mask(COL,ROW),      &
 !     Met_Data%LAIE(COL,ROW), Met_Data%FCH (COL,ROW), &
 !     Met_Data%FRT (COL,ROW), Met_Data%POPU(COL,ROW)
 
-5001  FORMAT(' get_can_mask: NI_CAN = ',I6,1X,' NI_NOCAN= ',I6,1X )
-5002  FORMAT(' get_can_mask: NJ_CAN = ',I6,1X,' NJ_NOCAN= ',I6,1X )
 5003  FORMAT(' get_can_mask: CANOPY LAI FCH FRT POPU = ',1X,2(I5),4(F12.4,1X))
 
    end subroutine get_can_mask

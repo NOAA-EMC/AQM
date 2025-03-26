@@ -81,7 +81,8 @@ C**********************************************************************
       USE RBDATA                ! ROS3 solver data
       USE CGRID_SPCS            ! CGRID mechanism species
       USE UTILIO_DEFN
-      USE PHOT_MOD, Only: INIT_PHOT_SHARED, RJ, LO3O1D     ! photolysis rate, in-line module
+      USE PHOT_MOD, Only: INIT_PHOT_SHARED, RJ,                    ! photolysis rate, in-line module
+     &                    RJ_CAN, LO3O1D            !IVAI
       USE AEROSOL_CHEMISTRY
 !     USE DEGRADE_SETUP_TOX, ONLY : NCELLS, N_REACT, RXTANT_MAP
       USE DEGRADE_ROUTINES,  ONLY : NCELLS, N_REACT, RXTANT_MAP,
@@ -328,6 +329,12 @@ C...Initialize and report data
 ! NOXYZ=16384   NBLKS=328       (BLKSIZE=50)
 ! BLKLEN(1)=50  BLKLEN( NBLKS )=34 (last block)
          WRITE( LOGDEV, 92020 ) NOXYZ, BLKSIZE, NBLKS, BLKLEN( 1 ), BLKLEN( NBLKS )
+
+! IVAI
+! NOXYZ= 17152  NBLKS_CAN= 344  (BLKSIZE=50)
+! BLKLEN_CAN(1)=50   BLKLEN_CAN( NBLKS_CAN )= 2 (last block)
+         WRITE( LOGDEV, 92020 ) NOXYZ_CAN, BLKSIZE, NBLKS_CAN, BLKLEN_CAN( 1 ), BLKLEN_CAN( NBLKS_CAN )
+! IVAI
 
          WRITE( LOGDEV, 92040 ) GLBL_RTOL, GLBL_ATOL
 
@@ -974,7 +981,9 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
       ERRMX2_CAN = 0.0D0
 
+! Temporary loop over NBLKS instead of NBLKS_CAN
       DO 555 BLK = 1, NBLKS
+!     DO 555 BLK = 1, NBLKS_CAN
          BLKID = BLK
          NUMCELLS = BLKLEN( BLK )
          OFFSET = BLKCNO( BLK )
@@ -1142,7 +1151,7 @@ C..Update concentrations
 
             IF ( CALL_DEG ) THEN
 C  Update CGRID based on the degradation routines
-               CALL FINAL_DEGRADE( Y_DEGRADE )
+               CALL FINAL_DEGRADE_BLK( Y_DEGRADE )
                UPDATE_DEGRADED_CAN: DO ISP = 1, N_REACT
                   S = RXTANT_MAP( ISP )
                   IF( S .LE. 0 )CYCLE UPDATE_DEGRADED_CAN
@@ -1217,6 +1226,7 @@ C  Update CGRID based on the degradation routines
 
          END IF
 
+! NB. Should be  BLK = 1, NBLKS_CAN but aborts in rbinit
 555   CONTINUE  ! BLK = 1, NBLKS
 
       END IF ! CANOPY_SHADE

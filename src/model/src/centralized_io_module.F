@@ -152,6 +152,9 @@
      &                       HT(:,:),           ! from GRID_CRO_2D data
      &                       LAT(:,:),          ! from GRID_CRO_2D data
      &                       LON(:,:),          ! from GRID_CRO_2D data
+!IVAI
+     &                       AREA(:,:),         ! from GRID_CRO_2D data !     !IVAI
+!IVAI
      &                       PURB(:,:),         ! from GRID_CRO_2D data
      &                       LUFRAC(:,:,:),     ! from LUFRAC_CRO data
      &                       SOILCAT_A(:,:),    ! from MET_CRO_2D
@@ -3426,6 +3429,7 @@ C Read the various categories of normalized emissions
      &              HT(ncols, nrows), 
      &              LAT(ncols, nrows),
      &              LON(ncols, nrows), 
+     &              AREA(ncols, nrows), !IVAI
      &              PURB(ncols, nrows),
      &              STAT=STAT)
           IF ( STAT .NE. 0 ) THEN
@@ -3471,6 +3475,14 @@ C Read the various categories of normalized emissions
              XMSG = ' Error interpolating variable LON from ' // GRID_CRO_2D
              Call M3EXIT( PNAME, 0, 0, XMSG, XSTAT1 )
           END IF
+!IVAI
+          IF ( .NOT. INTERPX( GRID_CRO_2D, 'AREA', PNAME,
+     &                        STRTCOLGC2, ENDCOLGC2, STRTROWGC2, ENDROWGC2, 1, 1 ,
+     &                        0, 0, AREA) ) THEN
+             XMSG = ' Error interpolating variable AREA from ' // GRID_CRO_2D
+             Call M3EXIT( PNAME, 0, 0, XMSG, XSTAT1 )
+          END IF
+!IVAI
 
           if (minkz) then
              IF ( .NOT. INTERPX( GRID_CRO_2D, 'PURB', PNAME,

@@ -177,9 +177,9 @@ module can_trans_mod
    USE RXNS_DATA   ! , ONLY : NUMB_MECH_SPC, CGRID_INDEX ! SPECIES_MOLWT
 
 ! hrinit: for ebi solver
-   USE HRDATA             ! FORWARD_CONV, REVERSE_CONV
+!  USE HRDATA             ! FORWARD_CONV, REVERSE_CONV
 ! rbinit: for Rosenbrook solver
-!  USE RBDATA
+   USE RBDATA
    USE UTILIO_DEFN
 
    use can_mask

@@ -80,9 +80,6 @@
 ! Grid area
    real   (kind=4), dimension(:,:), allocatable, save :: dxdy
 
-! phot arrays
-   real   (kind=4), dimension(:,:,:,:), allocatable, save :: RJ_CAN
-
 ! met3d arrays
    real  (kind=4), dimension( :, :, : ), allocatable, save :: ZH_CAN
    real  (kind=4), dimension( :, :, : ), allocatable, save :: ZF_CAN
@@ -108,7 +105,6 @@
               kmod, zmid, zmom, z2, sigmom, sigmid2, kcan3, zcan3, ta_can3, qv_can3, ws_can3, &
               pres_can3, dens_can3, &
               ta3, qv3, ws3, pres3, dens3, klower_can, zmom_can, zmid_can, sigmom_can, sigmid_can, &
-              RJ_CAN,  &
               ZH_CAN, ZF_CAN, &
               TA_CAN, QV_CAN, WS_CAN, PRES_CAN, DENS_CAN, &
               KHETERO_CAN, CONC_CAN, CONC_MOD, CONC_2M, &
@@ -175,8 +171,6 @@
              zmid_can  (NCOLS, NROWS, NLAYT)        , &
              sigmom_can(NCOLS, NROWS, NLAYT)        , &
              sigmid_can(NCOLS, NROWS, NLAYT)        , &
-! phot arrays
-             RJ_CAN    (NCOLS, NROWS, NLAYT, NPHOTAB), &
 ! met3d arrays
              ZH_CAN    (NCOLS, NROWS, NLAYT)        , &
              ZF_CAN    (NCOLS, NROWS, NLAYT+1)      , &
@@ -230,8 +224,6 @@
    PRES_CAN (:,:,:) = 0.
    DENS_CAN (:,:,:) = 0.
    WS_CAN   (:,:,:) = 0.
-! phot arrays
-   RJ_CAN   (:,:,:,:) = 0.
 ! gas-phase arrays
    KHETERO_CAN(:,:,:,:) = 0.0D0
 
@@ -251,8 +243,6 @@
    no2_old_can (:,:,:) = 0.
    no2_new_can (:,:,:) = 0.
    no2_tend_can(:,:,:) = 0.
-
-! Consider setting RJ_CAN = RJ (need to pass RJ via interface)
 
    end subroutine init_can_levs
 

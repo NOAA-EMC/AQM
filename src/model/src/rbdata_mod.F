@@ -83,8 +83,8 @@ c...Allocatable arrays
       REAL( 8 ), ALLOCATABLE :: RKI( :,: )         ! Rate constants 
       REAL( 8 ), ALLOCATABLE :: ATOL( : )          ! Species absolute tolerances 
       REAL( 8 ), ALLOCATABLE :: RTOL( : )          ! Species relative tolerances 
-      REAL,      ALLOCATABLE :: FORWARD_CONV( : )  ! CGRID to CHEM Species conversion factor 
-      REAL( 8 ), ALLOCATABLE :: REVERSE_CONV( : )  ! CHEM to CGRID Species conversion factor
+      REAL,      ALLOCATABLE, PUBLIC, SAVE :: FORWARD_CONV( : )  ! CGRID to CHEM Species conversion factor 
+      REAL( 8 ), ALLOCATABLE, PUBLIC, SAVE :: REVERSE_CONV( : )  ! CHEM to CGRID Species conversion factor
       REAL( 8 ), ALLOCATABLE :: Y( :,: )           ! Species concentrations
       REAL( 8 ), ALLOCATABLE :: Y_DEGRADE( :,: )   ! Concentration for degradation
 #ifdef sens

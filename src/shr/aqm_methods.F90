@@ -1292,6 +1292,10 @@ LOGICAL FUNCTION  XTRACT3 ( FNAME, VNAME,                           &
       select case (trim(vname))
         case ('HT')
           p2d => stateIn % ht
+!IVAI
+        case ('AREA')
+          p2d => stateIn % area
+!IVAI
         case ('LAT')
           p2d => lat
         case ('LON')

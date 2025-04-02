@@ -52,8 +52,6 @@
 
    public :: init_can_mask, get_can_mask
 
-   INTEGER, PRIVATE                :: LOGDEV                 ! unit number for the log file
-
    CONTAINS
 
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -77,10 +75,6 @@
 
    INTEGER          :: ALLOCSTAT
 
-   LOGDEV   = INIT3()
-
-!  WRITE( LOGDEV, * ) , 'init_can_mask: NCOLS, NROWS = ', NCOLS, NROWS
-
 !...Allocate and initialize new canopy arrays
    ALLOCATE( FRT_MASK (NCOLS,NROWS), STAT = ALLOCSTAT )
    IF ( ALLOCSTAT .NE. 0 ) THEN
@@ -91,14 +85,13 @@
 ! Initializations
    FRT_mask(:,:)=0.0
 
-!  WRITE( LOGDEV, * ) 'init_can_mask: NLAYC, NLAYT, NLAYS ', NLAYC, NLAYT, NLAYS
-
    end subroutine init_can_mask
 
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
    subroutine get_can_mask (JDATE, JTIME)
 
+   USE RUNTIME_VARS, only: LOGDEV
    USE GRID_CONF, ONLY: NROWS, NCOLS, NLAYS, NLAYC, NLAYT  ! horizontal & vertical domain specifications
    USE  PHOT_MET_DATA        ! Met and Grid data
 !Used for canopy shade calculation
@@ -121,7 +114,7 @@
 
    INTEGER          :: COL, ROW
 
-   LOGDEV   = INIT3()
+!   INTEGER :: LOGDEV = -1  ! File Unit for Ascii Log File
 
    DO ROW = 1, NROWS  !J-index
    DO COL = 1, NCOLS  !I-index

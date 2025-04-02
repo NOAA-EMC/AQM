@@ -169,6 +169,9 @@
       REAL    :: GLBL_ATOL = 1.0E-7  ! Absolute Tolerance for Rosenbrock Solver
       REAL    :: GLBL_RTOL = 1.0E-3  ! Relative Tolerance for Rosenbrock Solver
 
+!IVAI: Canopy in-line control
+!      LOGICAL :: CANOPY_SHADE = .FALSE. ! Flag for inline canopy shading !IVAI
+
       ! Aerosols
       LOGICAL :: IC_AERO_M2WET=.FALSE.! flag for specifying wet aerosol size parameters 
                                       !   for initial conditions. FALSE = dry
@@ -600,6 +603,19 @@
          WRITE( OUTDEV, '(6x,A)' ),'--Env Variable-- | --Value--'
          WRITE( OUTDEV, '(6x,A)' ), REPEAT( '-',80 )
       END IF
+
+!IVAI
+      ! Get inline canopy shading flag
+!      CALL GET_ENV ( CANOPY_SHADE, 'CTM_CANOPY_SHADE', CANOPY_SHADE, VARDEV )
+!
+!      IF ( CANOPY_SHADE ) THEN
+!        XMSG = 'Using in-line canopy shading option'
+!        WRITE( OUTDEV, '(A)' )TRIM( XMSG )
+!      ELSE 
+!         XMSG = 'Environment variable error for CTM_CANOPY_SHADE'
+!         CALL M3EXIT( 'INIT_ENV_VARS', JDATE, JTIME, XMSG, EXIT_STATUS )
+!      END IF
+!IVAI
 
       ! Get photolysis rate diagnostic file flag
       CALL GET_ENV ( PHOTDIAG, 'CTM_PHOTDIAG', PHOTDIAG, VARDEV )

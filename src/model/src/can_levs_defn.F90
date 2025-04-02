@@ -112,8 +112,6 @@
               no2_new_can, no2_old_can, no2_tend_can, &
               init_can_levs, get_can_levs
 
-   INTEGER, PRIVATE                :: LOGDEV                 ! unit number for the log file
-
    contains
 
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -121,6 +119,7 @@
 
    subroutine init_can_levs(CONC, JDATE, JTIME)
 
+   USE RUNTIME_VARS, only: LOGDEV
    USE GRID_CONF               ! horizontal & vertical domain specifications
    USE UTILIO_DEFN             ! IO routines & utilties
 
@@ -139,8 +138,6 @@
 
    INTEGER, INTENT( IN ) :: JDATE         ! current Julian date (YYYYDDD)
    INTEGER, INTENT( IN ) :: JTIME         ! current time (HHMMSS)
-
-   LOGDEV   = INIT3()
 
 !...local variables
 
@@ -250,6 +247,7 @@
 
    subroutine get_can_levs(CONC, JDATE, JTIME, MDATE, MTIME)
 
+   USE RUNTIME_VARS, only: LOGDEV
    USE GRID_CONF                               ! horizontal & vertical domain
 ! NB. TA alsos assigned in HRDATA
 !   USE PHOT_MET_DATA, ONLY : ZFULL, ZM, TA     ! Met and Grid data
@@ -304,8 +302,6 @@
    logical(kind=4)                         :: local_dbg
 
    local_dbg = (.false.)
-
-   LOGDEV   = INIT3()
 
    kmod (:,:,:) = -999
    kcan3(:,:,:) = -999
@@ -381,7 +377,7 @@
    ! Continuous forest canopy
    IF (FRT_mask(COL,ROW) > 0.) THEN
 
-      write(logdev,*) 'get_can_levs: ZFULL ZM TA = ', ZFULL(COL,ROW,1) , ZM(COL,ROW,1), TA(COL,ROW,1), COL, ROW
+!      write(logdev,*) 'get_can_levs: ZFULL ZM TA = ', ZFULL(COL,ROW,1) , ZM(COL,ROW,1), TA(COL,ROW,1), COL, ROW
 
       hcan = Met_Data%FCH( COL,ROW )
 !!! Extract the canopy height (FCH)
@@ -397,7 +393,7 @@
 !!!     zcan3(2) is 0.5 * hc
 !!!     zcan3(3) is 0.2 * hc (bottom canopy level)
 
-         write(logdev,*) 'get_can_levs: ZCAN = ', zcan3(kc), COL, ROW
+!         write(logdev,*) 'get_can_levs: ZCAN = ', zcan3(kc), COL, ROW
       end do
 
 ! 1     = bottom (1st) model layer

@@ -267,16 +267,16 @@ C Land use information:
       Real, allocatable, private :: BUFF2D( :,: )   ! 2D temp var
       Real, allocatable, private :: BUFF3D( :,:,: ) ! 3D temp var
 
-! Canopy option control
-      CHARACTER( 20 ), SAVE :: CTM_CANOPY_SHADE = 'CTM_CANOPY_SHADE'! env var for in-line
-      LOGICAL,         PUBLIC, SAVE :: CANOPY_SHADE     ! flag in-lining canopy shading
-
 ! FENGSHA option control
       CHARACTER( 18 ),         SAVE :: CTM_WBDUST_FENGSHA ='CTM_WBDUST_FENGSHA' ! env var for in-line
       LOGICAL,         PUBLIC, SAVE :: FENGSHA ! flag for fengsha option
       INTEGER                          IOSX             ! i/o and allocate memory status
 
-
+!IVAI
+! Canopy in-line control
+      CHARACTER( 20 ), SAVE :: CTM_CANOPY_SHADE = 'CTM_CANOPY_SHADE    ' ! env var for in-line
+      LOGICAL, PUBLIC, SAVE :: CANOPY_SHADE   ! flag in-lining canopy shading
+!IVAI
 
 
 
@@ -736,10 +736,11 @@ C-----------------------------------------------------------------------
      &                   'Flag for in-line canopy shading',
      &                   .FALSE., IOSX )
 
-!         IF ( CANOPY_SHADE ) THEN
-!            XMSG = 'Using in-line canopy shading option'
-!            CALL M3MSG2( XMSG )
-!         END IF
+         IF ( CANOPY_SHADE ) THEN
+            XMSG = 'Using in-line canopy shading option'
+            CALL M3MSG2( XMSG )
+          END IF
+
           If ( CANOPY_SHADE  ) Then
             ALLOCATE( Met_Data%FCH    ( NCOLS,NROWS ),
      &                Met_Data%FRT    ( NCOLS,NROWS ),

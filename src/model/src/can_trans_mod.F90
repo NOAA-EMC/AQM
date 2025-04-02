@@ -52,13 +52,13 @@ module can_trans_mod
    integer(kind=4), dimension(:, :, :), allocatable, save    :: nfrct
    integer(kind=4), dimension(:, :, :, :), allocatable, save :: ifrct
    real(kind=4),    dimension(:, :, :, :), allocatable, save :: frctr2c, frctc2r
+   real(kind=4),    dimension(:),          allocatable, save :: FOR_CONV , REV_CONV
 
 
    public :: massair_can, massair, mass_resolved, mass_canopy, mmr_canopy, mmr_resolved, vmr_resolved, &
        conc3, conc_can3, vmr_canopy, &
+       FOR_CONV, REV_CONV, &
        nfrct, ifrct, frctr2c, frctc2r, init_can_trans, canopy_transfer
-
-   INTEGER, PRIVATE                :: LOGDEV                 ! unit number for the log file
 
    contains
 
@@ -78,6 +78,7 @@ module can_trans_mod
 !
 !=============================================================================
 
+   USE RUNTIME_VARS, only: LOGDEV
    USE GRID_CONF               ! horizontal & vertical domain specifications
    USE UTILIO_DEFN
 
@@ -99,8 +100,6 @@ module can_trans_mod
    INTEGER, INTENT( IN ) :: JDATE         ! current Julian date (YYYYDDD)
    INTEGER, INTENT( IN ) :: JTIME         ! current time (HHMMSS)
 
-   LOGDEV   = INIT3()
-
    allocate ( massair_can(NCOLS, NROWS, NLAYT), &
               massair    (NCOLS, NROWS, NLAYS), &
               mass_canopy  (NLAYT), &
@@ -115,6 +114,9 @@ module can_trans_mod
               ifrct  (NLAYT, 2, NCOLS, NROWS), &
               frctr2c(NLAYT, 2, NCOLS, NROWS), &
               frctc2r(NLAYT, 2, NCOLS, NROWS) )
+
+      ALLOCATE( FOR_CONV( NUMB_MECH_SPC ), &
+                REV_CONV( NUMB_MECH_SPC ))
 
    massair_can(:,:,:) = 0.
    massair    (:,:,:) = 0.
@@ -132,6 +134,9 @@ module can_trans_mod
    ifrct  (:,:,:,:) = 0
    frctr2c(:,:,:,:) = 0.
    frctc2r(:,:,:,:) = 0.
+
+   FOR_CONV(:) = 0.0
+   REV_CONV(:) = 0.0
 
  end subroutine init_can_trans
 
@@ -168,6 +173,7 @@ module can_trans_mod
 !
 !=============================================================================
 
+   USE RUNTIME_VARS, only: LOGDEV
    USE GRID_CONF                     ! horizontal & vertical domain
    USE CGRID_SPCS                    ! CGRID mechanism species, NSPCSD number of CGRID species
 
@@ -176,10 +182,15 @@ module can_trans_mod
    USE ASX_DATA_MOD, ONLY : MET_DATA, GRID_DATA ! Uses met data: Q2, TEMP2
    USE RXNS_DATA   ! , ONLY : NUMB_MECH_SPC, CGRID_INDEX ! SPECIES_MOLWT
 
+   USE CENTRALIZED_IO_MODULE, ONLY : LAT, LON, HT, AREA
+
 ! hrinit: for ebi solver
 !  USE HRDATA             ! FORWARD_CONV, REVERSE_CONV
+
 ! rbinit: for Rosenbrook solver
-   USE RBDATA
+! NB.  REAL,      :: FORWARD_CONV( : )  ! CGRID to CHEM Species conversion factor
+!      REAL( 8 )  :: REVERSE_CONV( : )  ! CHEM to CGRID Species conversion factor
+!   USE RBDATA             ! FORWARD_CONV, REVERSE_CONV
    USE UTILIO_DEFN
 
    use can_mask
@@ -212,6 +223,9 @@ module can_trans_mod
 
    IMPLICIT NONE
 
+!...Includes:
+   INCLUDE SUBST_CONST       ! CMAQ constants e.g. MWAIR
+
 !...Arguments:
 
 ! *** CONC is concentration field (including gas and aerosol variables)
@@ -225,7 +239,7 @@ module can_trans_mod
 
    INTEGER          :: ALLOCSTAT
 
-   INTEGER          :: COL, ROW, ISP, S
+   INTEGER          :: COL, ROW, ISP, N, S
 
    INTEGER          :: LEV, L
 
@@ -233,6 +247,9 @@ module can_trans_mod
 
 ! Diagnostic height is the assumed height above ground of the sampling for observations
    real(kind=4),    parameter              :: diag_hgt = 2.0
+
+!   REAL(kind=4), parameter ::    MWAIR = 28.9644  ! mean molecular weight for air
+! AQM/src/model/CMAQ/UTIL/create_ebi/src_RXNSU/CONST3.EXT:
 
 !   REAL, PARAMETER :: DENS_CONV = ( 1.0E+03 * AVO / MWAIR ) * 1.0E-06  ! convert from kg/m**3 to #/cc
 !   REAL, PARAMETER :: PPM_MCM3  = 1.0E-06  ! convert from ppm to molecules / cc mol_Spec/mol_Air = ppm * 1E-06
@@ -245,11 +262,32 @@ module can_trans_mod
    integer(kind=4) :: k, kk, kc, k2, II, npass
    real   (kind=4) :: tmp
 
-   logical(kind=4)                         :: local_dbg
+   logical(kind=4) :: local_dbg
    local_dbg = .true.
+
+!------------------------------------------------------------------------
+!hrinit.F: ...set scale factor for [ppm] -> [kg/kg]
+!rbinit.F:
+!
+! CGRID to CHEM  Species conversion factor
+!         FORWARD_CONV( N ) = 1.0E-3 * MWAIR / SPECIES_MOLWT( N )  ! ug kg-1 to ppm
+!
+! CHEM  to CGRID Species conversion factor
+!         REVERSE_CONV( N ) = 1.0E+3 / MWAIR * SPECIES_MOLWT( N )  ! ppm    to ug kg-1
+!------------------------------------------------------------------------
+
+   DO N = 1, NUMB_MECH_SPC
+      FOR_CONV( N ) = 1.0E-3 * MWAIR / REAL( SPECIES_MOLWT( N ) ) ! ug kg-1 to ppm
+      REV_CONV( N ) = 1.0E+3 / MWAIR * REAL( SPECIES_MOLWT( N ) ) ! ppm    to ug kg-1
+   END DO
+
+!   write(logdev,*) 'canopy_transfer: FORWARD_CONV = ', FOR_CONV
+!   write(logdev,*) 'canopy_transfer: REVERSE_CONV = ', REV_CONV
 
    DO ROW = 1, NROWS  !J-index
    DO COL = 1, NCOLS  !I-index
+
+   KOUNT = 0
 
    ! Continuous forest canopy
    IF (FRT_mask(COL,ROW) > 0.) THEN
@@ -276,7 +314,7 @@ module can_trans_mod
       zmom_can(COL,ROW, NLAYT + 1) = 0.0
       do k = NLAYT, 1, -1
          ! Paul's massaircan is our massair_can
-         massair_can(COL,ROW, k) = dens_can3(k) * Grid_Data%AREA (COL,ROW) * &
+         massair_can(COL,ROW, k) = dens_can3(k) * AREA (COL,ROW) * &
                               (zmom_can(COL,ROW, k) - zmom_can(COL,ROW, k + 1))
       end do
 
@@ -295,9 +333,22 @@ module can_trans_mod
       zmom(NLAYS + 1) = 0.0
       do k = NLAYS, 1, -1
          ! Paul's massairmod is our massair
-         massair(COL,ROW, k) = dens3(k) * Grid_Data%AREA (COL,ROW) * &
+         massair(COL,ROW, k) = dens3(k) * AREA (COL,ROW) * &
                              (zmom(k) - zmom(k + 1))
       end do
+
+! Print
+     IF(.FALSE.) THEN
+      IF ( KOUNT < 3 )  THEN
+         do k = 1, NLAYS
+            if (k > 62) &
+                 WRITE( LOGDEV, *) 'CAN_TRANS: MASSAIR AREA', k, &
+                     dens3(k), AREA (COL,ROW), &
+                     zmom(k), massair(COL,ROW, k)
+         end do
+      END IF ! KOUNT
+     END IF ! .FALSE.
+! End Print
 
 !  Next, we need a set of arrays which track mass transfer from resolved to model layers;
 !  how much of the original (aka "resolved") model layer mass goes into each canopy layer,
@@ -370,6 +421,10 @@ module can_trans_mod
 !  massair_can thus contains the mass of air in the canopy layers in kg, while massair contains the
 !  mass of air in the original model layers, at the canopy columns (COL,ROW)
 !
+
+! Print up to KOUNT number of canopy columns
+      KOUNT = KOUNT + 1
+
    END IF ! Continuous forest canopy: FRT_MASK == 1.
 
 
@@ -451,8 +506,8 @@ module can_trans_mod
 
 ! ...fetch gas volume mix. ratios [ppm] and convert to mass mixing ratios [ug kg-1]
             ! Paul's conc is our mmr_canopy
-            !mmr_canopy(kk) = REVERSE_CONV(isp) * conc3(k)      ! ug kg-1
-            mmr_canopy(kk) = REVERSE_CONV(isp) * vmr_resolved(k)
+            !mmr_canopy(kk) = REAL( REVERSE_CONV(isp), 4 ) * conc3(k)      ! ug kg-1
+            mmr_canopy(kk) = REV_CONV(isp) * vmr_resolved(k)
          end do
 
          do k = 1, NLAYC
@@ -460,7 +515,7 @@ module can_trans_mod
             kc = kcan3(COL,ROW, k)
 
 ! ...fetch gas volume mix. ratios [ppm] and convert to mass mixing ratios [ug kg-1]
-            mmr_canopy(kc) = REVERSE_CONV(isp) * conc_can3(k)  ! ug kg-1
+            mmr_canopy(kc) = REV_CONV(isp) * conc_can3(k)  ! ug kg-1
          end do
 
 ! Temporary diagnostic output
@@ -486,11 +541,11 @@ module can_trans_mod
          IF ( KOUNT < 3 )  THEN
             do k = 1, NLAYS
                if (k > 62) &
-                 print*,'CAN_TRANS C2R: ISP ', S, k, &
+                 WRITE( LOGDEV, *) 'CAN_TRANS C2R: ISP ', S, k, &
                  mass_resolved(k), mass_canopy(k),   &
               massair(COL,ROW, k), massair_can(COL,ROW, k)
             end do
-            print*,'CAN_TRANS C2R: ISP ', S, k, &
+            WRITE( LOGDEV, *) 'CAN_TRANS C2R: ISP ', S, k, &
             mass_canopy(NLAYS+1), mass_canopy(NLAYS+2), mass_canopy(NLAYT), &
             massair_can(COL,ROW, NLAYS+1), massair_can(COL,ROW, NLAYS+2), massair_can(COL,ROW, NLAYT)
          END IF ! KOUNT
@@ -514,7 +569,7 @@ module can_trans_mod
 ! (3a) Convert back m.m.r. [ug kg-1] to volume mix. ratios [ppm]
             ! NB. This is CONC_MOD to be used in gas-phase hrdriver call on canopy columns
             ! Paul's chem_tr is our conc3 = vmr_resolved
-            vmr_resolved(k)            = FORWARD_CONV(isp) *  mmr_resolved(k)    ! ppm
+            vmr_resolved(k)            = FOR_CONV(isp) *  mmr_resolved(k)    ! ppm
 
          end do
 
@@ -544,7 +599,7 @@ module can_trans_mod
 !  for the concentration.
             if (kk == NLAYT) then
                mmr_diag =  mmr_canopy(NLAYT) ! ug kg-1
-               vmr_resolved      (NLAYS + 1)      = FORWARD_CONV(isp) * mmr_canopy(NLAYT) ! ppm
+               vmr_resolved      (NLAYS + 1)      = FOR_CONV(isp) * mmr_canopy(NLAYT) ! ppm
             else
 ! Diagnostic height 2m is always above the lowest model hybrid level ~42m
                mmr_diag =  &
@@ -552,7 +607,7 @@ module can_trans_mod
                        (mmr_canopy(kk) - mmr_canopy(kk + 1)) / &
                           (zmid(kk) -    zmid(kk + 1)) * &
                           (diag_hgt -    zmid(kk + 1))        ! ug kg-1
-               vmr_resolved      (NLAYS + 1)      = FORWARD_CONV(isp) * mmr_diag
+               vmr_resolved      (NLAYS + 1)      = FOR_CONV(isp) * mmr_diag
             end if
 
 ! Flip back resolved layers arrays for gas-phase integration (hrdriver)
@@ -607,8 +662,6 @@ module can_trans_mod
 
          S = CGRID_INDEX( ISP )
 
-!        write(logdev,*) 'canopy_transfer: CGRID_INDEX = ', ISP, S, CONC_MOD(COL,ROW, :, S), COL, ROW
-
 ! Flip resolved layer arrays into a new array for use here
 ! (i): Model resolved layers
       do k = 1, NLAYS        ! from bottom to top
@@ -629,8 +682,8 @@ module can_trans_mod
 
 ! ...fetch gas volume mix. ratios [ppm] and convert to mass mixing ratios [ug kg-1]
          ! Paul's conc is our mmr_resolved
-! Oct9:  mmr_resolved(kk) = REVERSE_CONV(isp) * conc3(k)      ! ug kg-1
-         mmr_resolved(k) = REVERSE_CONV(isp) * conc3(k)      ! ug kg-1
+! Oct9:  mmr_resolved(kk) = REAL( REVERSE_CONV(isp), 4 ) * conc3(k)      ! ug kg-1
+         mmr_resolved(k) = REV_CONV(isp) * conc3(k)                      ! ug kg-1
       end do
 
 !  (1) Convert the original model domain values in the current column to mass from mass mixing ratio:
@@ -685,11 +738,11 @@ module can_trans_mod
          IF ( KOUNT < 3 )  THEN
             do k = 1, NLAYS
                if (k > 62) &
-               print*,'CAN_TRANS R2C: SPC ', S, k, &
+               WRITE( LOGDEV, *) 'CAN_TRANS R2C: SPC ', S, k, &
                  mass_resolved(k), mass_canopy(k), &
               massair(COL,ROW, k), massair_can(COL,ROW, k)
             end do
-            print*,'CAN_TRANS R2C: SPC ', S, k, &
+            WRITE( LOGDEV, *) 'CAN_TRANS R2C: SPC ', S, k, &
               mass_canopy(NLAYS+1), mass_canopy(NLAYS+2), mass_canopy(NLAYT), &
            massair_can(COL,ROW, NLAYS+1), massair_can(COL,ROW, NLAYS+2),massair_can(COL,ROW, NLAYT)
          END IF ! KOUNT
@@ -703,7 +756,7 @@ module can_trans_mod
                k = kmod(COL, ROW, kk)
                ! Paul's chem_tr is our conc3 = vmr_resolved (CONC_mod) <================
 !              conc3(kk)         = FORWARD_CONV(isp) * mmr_canopy(k)  ! ppm
-               vmr_resolved (kk) = FORWARD_CONV(isp) * mmr_canopy(k)  ! ppm
+               vmr_resolved (kk) = FOR_CONV(isp) * mmr_canopy(k)  ! ppm
             end do
 
 ! (i): Model resolved layers: for hrdriver (trppm from mach_gas_canopy)
@@ -721,7 +774,7 @@ module can_trans_mod
             do kc = 1, NLAYC
                k  = kcan3(COL,ROW, kc)
                ! Paul's tracers_can is our conc_can3              <====================
-               conc_can3(kc)  = FORWARD_CONV(isp) * mmr_canopy(k) ! ppm
+               conc_can3(kc)  = FOR_CONV(isp) * mmr_canopy(k) ! ppm
             end do
 
 ! (ii): Canopy shaded layers (for hrdriver) (trppm from mach_gas_canopy)
@@ -753,7 +806,7 @@ module can_trans_mod
       end do !species index loop isp
 
 ! Print
-!     print*, 'RESOLVED_TO_CANOPY: 1HY 1-2-3CY = ', CONC_MOD(COL,ROW,1, 4), & ! O3 = 4
+!     WRITE( LOGDEV, *) 'RESOLVED_TO_CANOPY: 1HY 1-2-3CY = ', CONC_MOD(COL,ROW,1, 4), & ! O3 = 4
 !       CONC_CAN(COL,ROW,1, 4), CONC_CAN(COL,ROW,2, 4), CONC_CAN(COL,ROW,3, 4)
 
 ! Print up to KOUNT number of canopy columns

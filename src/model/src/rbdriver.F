@@ -100,8 +100,7 @@ C**********************************************************************
       use can_mask
 
 ! =====================
-!     call init_can_mask called in phot 
-!     call  get_can_mask called in phot 
+!     contains: init_can_mask, get_can_mask
 ! Out:
 !      FRT_MASK         ( get_can_mask)
 ! =====================
@@ -310,7 +309,7 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
             CALL M3EXIT( PNAME, JDATE, JTIME, MSG, XSTAT1 )
          END IF
 
-! IVAI: NB. NLAYC/NLAYT must be defined in GRID_CONF before RBINIT
+! IVAI: NLAYC/NLAYT defined in GRID_CONF before RBINIT
 
          CALL RBINIT
          CALL RBSPARSE( )
@@ -1283,9 +1282,9 @@ c++++++++++++++++++++++++Debug section++++++++++++++++++++++++++++++++++
             DO SPC = 1, NUMB_MECH_SPC
 
                S = CGRID_INDEX( SPC )
-               print*, 'RBDRIVER: AFTER C2R SPC= ', S,
+               WRITE( LOGDEV, *) 'RBDRIVER: AFTER C2R SPC= ', S,
 ! N_GAS_CHEM_SPC = 127 (NO2 = 1 O3 = 4)
-!    &         CONC_CAN(C,R,1, S), CONC_CAN(C,R,2, S), CONC_CAN(C,R,3, S)  ! O3 = 4
+!    &         CONC_CAN(C,R,1, S), CONC_CAN(C,R,2, S), CONC_CAN(C,R,3, !    S),  ! O3 = 4
      &         CONC    (C,R,1, S), CONC_MOD(C,R,1, S)
             END DO
 

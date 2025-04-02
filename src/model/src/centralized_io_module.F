@@ -3552,6 +3552,14 @@ C Read the various categories of normalized emissions
              XMSG = ' Error interpolating variable LON from ' // GRID_CRO_2D
              Call M3EXIT( PNAME, 0, 0, XMSG, XSTAT1 )
           END IF
+!IVAI
+          IF ( .NOT. XTRACT3( GRID_CRO_2D, 'AREA',
+     &                        1, 1, STRTROWGC2, ENDROWGC2, STRTCOLGC2, ENDCOLGC2,
+     &                        0, 0, AREA) ) THEN
+             XMSG = ' Error interpolating variable AREA from ' // GRID_CRO_2D
+             Call M3EXIT( PNAME, 0, 0, XMSG, XSTAT1 )
+          END IF
+!IVAI
 
           if (minkz) then
              IF ( .NOT. XTRACT3( GRID_CRO_2D, 'PURB',
@@ -4758,6 +4766,7 @@ C   mminlu and num_land_cat are WRF global variables
              allocate (lwmask(in_ncols, 1),
      &                 lat(in_ncols, 1),
      &                 lon(in_ncols, 1),
+     &                 area(in_ncols, 1), !IVAI
      &                 ht(in_ncols, 1),
      &                 ocean(in_ncols, 1),
      &                 szone(in_ncols, 1),
@@ -4767,6 +4776,7 @@ C   mminlu and num_land_cat are WRF global variables
              lat    = g2ddata(:,:,lat_ind)
              ht     = g2ddata(:,:,ht_ind)
              lwmask = g2ddata(:,:,lwmask_ind)
+             area   = g2ddata(:,:,area_ind)
 
              call retrieve_ocean_data_mpas
 

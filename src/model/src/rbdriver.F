@@ -319,7 +319,7 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
 ! IVAI
          NOXYZ_CAN = NCOLS * NROWS * (NLAYS + NLAYC)
-         WRITE( LOGDEV, *) 'RBDRIVER: NLAYC NLAYT = ', NLAYC, NLAYT
+!         WRITE( LOGDEV, *) 'RBDRIVER: NLAYC NLAYT = ', NLAYC, NLAYT
 ! IVAI
 
 C...Initialize and report data
@@ -332,7 +332,7 @@ C...Initialize and report data
 ! IVAI
 ! NOXYZ= 17152  NBLKS_CAN= 344  (BLKSIZE=50)
 ! BLKLEN_CAN(1)=50   BLKLEN_CAN( NBLKS_CAN )= 2 (last block)
-         WRITE( LOGDEV, 92020 ) NOXYZ_CAN, BLKSIZE, NBLKS_CAN, BLKLEN_CAN( 1 ), BLKLEN_CAN( NBLKS_CAN )
+!         WRITE( LOGDEV, 92020 ) NOXYZ_CAN, BLKSIZE, NBLKS_CAN, BLKLEN_CAN( 1 ), BLKLEN_CAN( NBLKS_CAN )
 ! IVAI
 
          WRITE( LOGDEV, 92040 ) GLBL_RTOL, GLBL_ATOL
@@ -512,7 +512,7 @@ C   appropriately updated after the solver finds a solution.
 
       CALL HETCHEM_RATES( TA, PRES, QV, CONC, DENS )
 
-      WRITE( LOGDEV, *) , 'RBDRIVER: NBLKS, NBLKS_CAN= ', NBLKS, NBLKS_CAN
+!      WRITE( LOGDEV, *) , 'RBDRIVER: NBLKS, NBLKS_CAN= ', NBLKS, NBLKS_CAN
 
 ! IVAI: NB. Species indices defined ! in "rbdata_mod", for O3 = 4)
 ! Species before gas-phase tendencies added
@@ -687,7 +687,7 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
       ERRMX2 = 0.0D0
 
-      WRITE( LOGDEV, *) , 'RBDRIVER 500: NBLKS= ', NBLKS
+!      WRITE( LOGDEV, *) , 'RBDRIVER 500: NBLKS= ', NBLKS
       DO 500 BLK = 1, NBLKS
          BLKID = BLK
          NUMCELLS = BLKLEN( BLK )
@@ -1117,7 +1117,7 @@ C..initialize degradation routines
 
 #endif
 
-         write(logdev,*) 'RBDRIVER 555: CALL RBSOLVER OFFSET=', BLKID, NUMCELLS, OFFSET
+!         write(logdev,*) 'RBDRIVER 555: CALL RBSOLVER OFFSET=', BLKID, NUMCELLS, OFFSET
          CALL RBSOLVER( JDATE, JTIME, CHEMSTEP, NCSP,
      &                  LIRRBLK, NIRRCLS, IRRCELL )
 

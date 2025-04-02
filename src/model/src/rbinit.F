@@ -349,13 +349,7 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       BLKCNO_CAN( NBLKS_CAN ) = OFFSET
       BLKLEN_CAN( NBLKS_CAN ) = NOXYZ_CAN - ( ( NBLK-1 ) * IAVGSIZE_CAN )
 
-      ELSE   ! (CANOPY_SHADE)
-
-      NBLKS_CAN = NBLKS
-      BLKCNO_CAN( 1:MXBLKS ) = BLKCNO( : )
-      BLKLEN_CAN( 1:MXBLKS ) = BLKLEN( : )
-
-      END IF
+      END IF ! ( CANOPY_SHADE )
 !IVAI
 
       RETURN

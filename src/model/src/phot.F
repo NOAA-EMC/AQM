@@ -127,7 +127,8 @@
 
 C...modules
 
-      USE RUNTIME_VARS, ONLY : START_DATE => STDATE, START_TIME => STTIME
+      USE RUNTIME_VARS, ONLY : START_DATE => STDATE, START_TIME => STTIME, 
+     &    PHOTDIAG, NLAYS_DIAG, NWAVE !IVAI
       USE RXNS_DATA            ! chemistry varaibles and data
       USE GRID_CONF            ! horizontal & vertical domain specifications
       USE CGRID_SPCS           ! CGRID species number and offsets
@@ -142,7 +143,8 @@ C...modules
       !Used for canopy shade calculation
       USE ASX_DATA_MOD, ONLY : MET_DATA, GRID_DATA,    !uses met data
      &                         CANOPY_SHADE            ! IVAI: canopy inline option
-      USE CENTRALIZED_IO_MODULE, ONLY : LAT, LON, HT, AREA ! IVAI: area
+      USE CENTRALIZED_IO_MODULE, ONLY : LAT, LON, HT, 
+     &                         AREA ! IVAI
 !IVAI
 ! NB. NLAYC/NLAYT definitions in GRID_CONF (Jan 9 2025)
       use can_mask             ! out: FRT_mask
@@ -439,10 +441,12 @@ C...modules
          
          CALL INIT_CLOUD_OPTICS(  )
 
-!IVAI
+!IVAI: In (FIRSTIME )
 ! In-line canopy shading option? (default = false)
-      ! IF (FIRSTIME )
       IF ( CANOPY_SHADE ) THEN                      ! FIRSTIME
+
+         XMSG = 'PHOT: Using in-line canopy shading option'
+         WRITE( OUTDEV, '(A)' )TRIM( XMSG )
 
          CALL init_can_mask( JDATE, JTIME )         ! FIRSTIME
 

@@ -466,6 +466,13 @@ C For higher order sensitivities
 #endif
       END IF      ! First call
 
+!IVAI:
+      IF ( CANOPY_SHADE ) THEN
+         XMSG = 'CHEM: Using in-line canopy shading option'
+         CALL M3MSG2( XMSG )
+      END IF
+!IVAI
+
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 C  Start of integration driver after first call
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
@@ -523,7 +530,7 @@ C   appropriately updated after the solver finds a solution.
       If ( CANOPY_SHADE  ) Then
 
 c++++++++++++++++++++++++Debug section++++++++++++++++++++++++++++++++++
-!     IF (.FALSE.) THEN    ! ( CANOPY_SHADE  )
+      IF (.FALSE.) THEN    ! ( CANOPY_SHADE  )
       DO R = 1, NROWS
          DO C = 1, NCOLS
 
@@ -552,7 +559,7 @@ c++++++++++++++++++++++++Debug section++++++++++++++++++++++++++++++++++
 
          END DO
       END DO
-!     END IF ! .FALSE. & CANOPY_SHADE 
+      END IF ! .FALSE. & CANOPY_SHADE 
 c++++++++++++++++++++++++Debug section++++++++++++++++++++++++++++++++++
 
 ! Temporary output

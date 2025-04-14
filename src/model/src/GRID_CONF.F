@@ -86,10 +86,10 @@ C define vertical layer structure
 !IVAI
             NLAYT = NLAYS + NLAYC
 
-            WRITE( LOGDEV, *) 'GRID_INIT: CANOPY LAYERS = ', NLAYC, NLAYT
+!            WRITE( LOGDEV, *) 'GRID_INIT: CANOPY LAYERS = ', NLAYC, NLAYT
             MXCELLS_CAN = NCOLS * NROWS * NLAYT
             MXBLKS_CAN  = 1 + ( MXCELLS_CAN - 1 ) / BLKSIZE
-            WRITE( LOGDEV, *) 'GRID_INIT: MXBLKS_CAN = ', MXBLKS_CAN, MXCELLS_CAN,BLKSIZE
+!            WRITE( LOGDEV, *) 'GRID_INIT: MXBLKS_CAN = ', MXBLKS_CAN, MXCELLS_CAN,BLKSIZE
 !IVAI
 
             ELSE

@@ -1769,6 +1769,7 @@ LOGICAL FUNCTION WRITE3_REAL2D( FNAME, VNAME, JDATE, JTIME, BUFFER )
   type(aqm_state_type), pointer :: stateOut
 
   WRITE3_REAL2D = .TRUE.
+
 !move to WRITE3_REAL4D below since we specify all model layers in CMAQ_Control_Misc.nml.
 !  IF ( TRIM( FNAME ) .EQ. TRIM( CTM_ELMO_1 ) ) THEN
 !  IF ( TRIM( FNAME ) .EQ. TRIM( CTM_DEPV_DIAG ) ) THEN  !test depv
@@ -1793,6 +1794,66 @@ LOGICAL FUNCTION WRITE3_REAL2D( FNAME, VNAME, JDATE, JTIME, BUFFER )
 !    WRITE3_REAL2D = .TRUE.
 
 !  END IF
+
+!IVAI: photdiag fields
+  IF ( TRIM( FNAME ) .EQ. TRIM( CTM_RJ_1 ) ) THEN
+
+    WRITE3_REAL2D = .FALSE.
+
+! IVAI: in WRITE3_REAL2D
+!    print*, 'AQM_METHODS: FNAME= ', FNAME, VNAME   !IVAI: JO3O1D JNO2 ... (list of 15 vars)
+
+    IF ( TRIM( VNAME ) .EQ. TRIM('COSZENS') ) THEN
+
+!      print*, 'AQM_METHODS: VNAME= ', VNAME             !IVAI: COSZENS
+
+      nullify(stateOut)
+      call aqm_model_get(stateOut=stateOut, rc=localrc)
+      if (aqm_rc_check(localrc, msg="Failure to retrieve model output state", &
+        file=__FILE__, line=__LINE__)) return
+
+      stateOut % coszens = BUFFER
+
+!      print*, 'AQM_METHODS: COSZENS pointer = ', coszens
+!      print*, 'AQM_METHODS: COSZENS = ',  BUFFER
+
+    END IF
+
+    IF ( TRIM( VNAME ) .EQ. TRIM('JO3O1D') ) THEN
+
+!      print*, 'AQM_METHODS: VNAME= ', VNAME             !IVAI: JO3O1D
+
+      nullify(stateOut)
+      call aqm_model_get(stateOut=stateOut, rc=localrc)
+      if (aqm_rc_check(localrc, msg="Failure to retrieve model output state", &
+        file=__FILE__, line=__LINE__)) return
+
+      stateOut % JO3O1D = BUFFER
+
+!      print*, 'AQM_METHODS: JO3O1D pointer = ', JO3O1D
+!      print*, 'AQM_METHODS: JO3O1D = ', BUFFER
+
+    END IF
+
+    IF ( TRIM( VNAME ) .EQ. TRIM('JNO2') ) THEN
+
+!      print*, 'AQM_METHODS: VNAME= ', VNAME             !IVAI: JNO2
+
+      nullify(stateOut)
+      call aqm_model_get(stateOut=stateOut, rc=localrc)
+      if (aqm_rc_check(localrc, msg="Failure to retrieve model output state", &
+        file=__FILE__, line=__LINE__)) return
+
+      stateOut % JNO2 = BUFFER
+!      print*, 'AQM_METHODS: JNO2 pointer = ', JNO2
+!      print*, 'AQM_METHODS: JNO2 = ', BUFFER
+
+    END IF
+
+    WRITE3_REAL2D = .TRUE.
+
+  END IF ! CTM_RJ_1
+!IVAI
 
 END FUNCTION WRITE3_REAL2D
 

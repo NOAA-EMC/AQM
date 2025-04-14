@@ -468,8 +468,7 @@ C For higher order sensitivities
 
 !IVAI:
       IF ( CANOPY_SHADE ) THEN
-         XMSG = 'CHEM: Using in-line canopy shading option'
-         CALL M3MSG2( XMSG )
+         WRITE( LOGDEV, * ) 'CHEM: Using in-line canopy shading option'
       END IF
 !IVAI
 

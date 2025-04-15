@@ -158,7 +158,7 @@
       CHARACTER(256) :: TR_NAMELIST = '' ! Tracer Species Namelist
      
       ! Chemistry and Photolysis
-      LOGICAL :: PHOTDIAG  = .FALSE. ! Flag for PHOTDIAG file
+      LOGICAL :: PHOTDIAG  = .TRUE.  ! Flag for PHOTDIAG file
       INTEGER :: NLAYS_DIAG = 0      ! Number of Diagnostic Layers to write out for photolysis
       INTEGER :: NWAVE = 0           ! Number of Diagnostic Wavelengths
       CHARACTER(16) :: WAVE_ENV(100) ! Targeted wavelengths for diagnostic output

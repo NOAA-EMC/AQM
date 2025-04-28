@@ -72,7 +72,7 @@ C           and turbulence on boundary layer ozone." Nat. Commun. 8, 15243
 C           doi: 10.1038/ncomms15243 (2017).
 C         - add 2m meteorological fields for initializing the sub-canopy layers
 C   15 Dec 24 I.Ivanova
-C         - Add ozone diagnostics and auxilliary diagnostic output
+C         - Add ozone diagnostics
 C**********************************************************************
 
       USE RXNS_DATA
@@ -82,7 +82,7 @@ C**********************************************************************
       USE CGRID_SPCS            ! CGRID mechanism species
       USE UTILIO_DEFN
       USE PHOT_MOD, Only: INIT_PHOT_SHARED, RJ,                    ! photolysis rate, in-line module
-     &                    RJ_CAN, LO3O1D            !IVAI
+     &                    RJ_CAN, LO3O1D, O3_TEND, O3_TEND_CAN     !IVAI
       USE AEROSOL_CHEMISTRY
 !     USE DEGRADE_SETUP_TOX, ONLY : NCELLS, N_REACT, RXTANT_MAP
       USE DEGRADE_ROUTINES,  ONLY : NCELLS, N_REACT, RXTANT_MAP,
@@ -253,15 +253,10 @@ C..Local Variables:
 !IVAI
       INTEGER       :: KOUNT
 
-      REAL, ALLOCATABLE, SAVE:: AUX2D_01( :, :)          ! 2D auxiliary output
-      REAL, ALLOCATABLE, SAVE:: AUX2D_02( :, :)          ! 2D auxiliary output
-      REAL, ALLOCATABLE, SAVE:: AUX2D_03( :, :)          ! 2D auxiliary output
-      REAL, ALLOCATABLE, SAVE:: o3_old  ( :, :, : )      ! o3 before gas-phase
-      REAL, ALLOCATABLE, SAVE:: o3_new  ( :, :, : )      ! o3 after  gas-phase
-      REAL, ALLOCATABLE, SAVE:: o3_tend ( :, :, : )      ! o3 tendency gas-phase
-      REAL, ALLOCATABLE, SAVE:: no2_old ( :, :, : )      ! no2 before gas-phase
-      REAL, ALLOCATABLE, SAVE:: no2_new ( :, :, : )      ! no2 after  gas-phase
-      REAL, ALLOCATABLE, SAVE:: no2_tend( :, :, : )      ! no2 tendency gas-phase
+      REAL, ALLOCATABLE, SAVE:: o3_old     ( :, :, : )      ! o3 before gas-phase
+      REAL, ALLOCATABLE, SAVE:: o3_new     ( :, :, : )      ! o3 after  gas-phase
+      REAL, ALLOCATABLE, SAVE:: o3_old_can ( :, :, : )
+      REAL, ALLOCATABLE, SAVE:: o3_new_can ( :, :, : )
 !IVAI
 
       INTERFACE
@@ -357,14 +352,11 @@ C.. Get fractional seawater coverage from the OCEAN file.
 ! IVAI
 ! 2D
      &             Q2    ( NCOLS, NROWS ),       TEMP2   ( NCOLS, NROWS ),
-! 2D AUX
-     &           aux2d_01( NCOLS, NROWS ),       aux2d_02( NCOLS, NROWS ),
-! 3D AUX
-     &           aux2d_03( NCOLS, NROWS ),
 ! 3D
-     &             o3_old( NCOLS, NROWS, NLAYS ), no2_old( NCOLS, NROWS, NLAYS ),
-     &             o3_new( NCOLS, NROWS, NLAYS ), no2_new( NCOLS, NROWS, NLAYS ),
-     &             o3_tend(NCOLS, NROWS, NLAYS ), no2_tend(NCOLS, NROWS, NLAYS ))
+     &             o3_old     ( NCOLS, NROWS, NLAYS ), 
+     &             o3_new     ( NCOLS, NROWS, NLAYS ), 
+     &             o3_old_can ( NCOLS, NROWS, NLAYT ),
+     &             o3_new_can ( NCOLS, NROWS, NLAYT ))
 
          ALLOCATE( IRRCELL( BLKSIZE ) )
          IRRCELL = 0
@@ -560,25 +552,6 @@ c++++++++++++++++++++++++Debug section++++++++++++++++++++++++++++++++++
       END DO
       END IF ! .FALSE. & CANOPY_SHADE 
 c++++++++++++++++++++++++Debug section++++++++++++++++++++++++++++++++++
-
-! Temporary output
-!     aux2d_03(:,:) = QV      (:,:,1)          ! coszens
-!     aux2d_02(:,:) = DENS    (:,:,1)          ! jno2
-!     aux2d_01(:,:) = TA      (:,:,1)          ! jo3o1d
-!     aux2d_03(:,:) = QV_CAN  (:,:,1)          ! coszens
-!     aux2d_02(:,:) = DENS_CAN(:,:,1)          ! jno2
-!     aux2d_01(:,:) = TA_CAN  (:,:,1)          ! jo3o1d
-
-! Temporary output
-!     aux2d_03(:,:) = FRT_MASK(:,:)
-!     aux2d_03(:,:) = RJ     (:,:,1,LO3O1D)    ! coszens
-!     aux2d_02(:,:) = RJ_CAN (:,:,1,LO3O1D)    ! jno2
-
-!     aux2d_02(:,:) = real(    KHETERO(NHETERO,:,:,1 ),4) ! NHETERO=11 reaction
-!     aux2d_03(:,:) = real(KHETERO_CAN(NHETERO,:,:,1 ),4) ! NHETERO=11 reaction
-
-! This is CONC_can from canopy_transfer after r2c (flag = 0)
-!     aux2d_02(:,:) = CONC_CAN(:,:,1,4) ! 1st canopy layer O3 = 4
 
 !!!!!!!!!!!!!!!!!
 ! !!! TESTING !!! Overwrite met3d & cgrid calculated in get_can_levs (phot)
@@ -955,17 +928,12 @@ C  Update CGRID based on the degradation routines
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !IVAI
 
-! Species after gas-phase
+! Species after gas-phase (canopy off)
       o3_new  (:,:,:) = CONC(:,:,:,4)
 
-! Gas-phase tendency  ppmv sec-1
+! Gas-phase tendency  ppmv sec-1 (canopy off)
       o3_tend (:,:,:) = ( o3_new(:,:,:) -  o3_old(:,:,:)) /
      &                  REAL (CHEMSTEP, 4) ! ppm  sec-1
-
-! Temporary output
-!     aux2d_03(:,:) = o3_tend     (:,:,3)          ! coszens
-!     aux2d_02(:,:) = o3_tend     (:,:,2)          ! jno2
-      aux2d_01(:,:) = o3_tend     (:,:,1)          ! jo3o1d
 
 !IVAI
 
@@ -1240,20 +1208,15 @@ C  Update CGRID based on the degradation routines
 
       IF ( CANOPY_SHADE ) THEN
 
+! Copy the top NLAYC original model layers CONC to top 3 combined layers CONC_CAN, as loop 555 is only on NLAYS combined levels
+!... Carry over the top NLAYC original model values for the matching layers
+      CONC_CAN(:,:,NLAYT-NLAYC:NLAYT,:) = CONC(:,:,NLAYS-NLAYC:NLAYS,:)
+
 ! Species after gas-phase (NB. only canopy-grid cells are updated)
       o3_new_can (:,:,:) = CONC_CAN(:,:,:,4) ! O3 = 4
 
-! Temporary output
-!     aux2d_02(:,:) = o3_new_can  (:,:,1)
-!     aux2d_02(:,:) = CONC_CAN(:,:,1,4) ! O3 = 4 => o3_new_can
-
       o3_tend_can (:,:,:) = ( o3_new_can(:,:,:) -  o3_old_can(:,:,:)) /
      &                       REAL (CHEMSTEP, 4) ! ppmv sec-1
-
-! Temporary output
-      aux2d_03(:,:) = o3_tend_can (:,:,3)          ! coszens
-      aux2d_02(:,:) = o3_tend_can (:,:,1)          ! jno2
-!     aux2d_01(:,:) = o3_tend_can (:,:,1)          ! jo3o1d
 
 !===============================================================================
 ! Gather tracer concentration from canopy layers into model resolved layers (flag = 1)
@@ -1261,20 +1224,18 @@ C  Update CGRID based on the degradation routines
 
       CALL canopy_transfer(CONC, JDATE, JTIME, 1 )
 
+! ===================
 ! Input:
 !   CONC_CAN after gas-phase
 !
 ! Output:
 !   CONC_MOD after gas-phase
-
-! Temporary output
-!     aux2d_01(:,:) =  CONC_MOD(:,:,NLAYS,4) ! top model layer O3 = 4
-!     aux2d_01(:,:) =  CONC_MOD(:,:,2,4) ! 2hy model layer O3 = 4
-!     aux2d_01(:,:) =  CONC_MOD(:,:,1,4) ! 1hy model layer O3 = 4
-
+! ===================
 
 ! Update CGRID for advection, deposition etc.
-      DO L = 1, NLAYS
+! Update only subset NLAYS-NLAYC original/resolved model layers, as top
+! NLAYC combined canopy plus resolved layers layers are not updated in rbsolver
+      DO L = 1, NLAYS-NLAYC
          DO R = 1, NROWS
             DO C = 1, NCOLS
 
@@ -1283,7 +1244,7 @@ C  Update CGRID based on the degradation routines
 
 c++++++++++++++++++++++++Debug section++++++++++++++++++++++++++++++++++
             IF (.FALSE.) THEN
-            IF ( KOUNT < 3 .AND. L == 1)  THEN
+            IF ( KOUNT < 3 .AND. L == 1 .OR. L == NLAYS .OR. L == NLAYS-1 )  THEN
 
             DO SPC = 1, NUMB_MECH_SPC
 
@@ -1291,7 +1252,7 @@ c++++++++++++++++++++++++Debug section++++++++++++++++++++++++++++++++++
                WRITE( LOGDEV, *) 'RBDRIVER: AFTER C2R SPC= ', S,
 ! N_GAS_CHEM_SPC = 127 (NO2 = 1 O3 = 4)
 !    &         CONC_CAN(C,R,1, S), CONC_CAN(C,R,2, S), CONC_CAN(C,R,3, !    S),  ! O3 = 4
-     &         CONC    (C,R,1, S), CONC_MOD(C,R,1, S)
+     &         CONC    (C,R,L, S), CONC_MOD(C,R,L, S)
             END DO
 
             END IF ! KOUNT L=1
@@ -1305,10 +1266,11 @@ c++++++++++++++++++++++++Debug section++++++++++++++++++++++++++++++++++
             DO SPC = 1, NUMB_MECH_SPC
                S = CGRID_INDEX( SPC )
 
-!!! Udate CONC with C2R mass transfer values from canopy_transfer(1)
+!!! Udate CONC with C2R mass transfer values from canopy_transfer C2R
 ! All levels
+!!!            CONC(C,R,L,S) = MAX( CONC_MOD( C,R,L,S ), CONCMIN)
                CONC(C,R,L,S) = CONC_MOD(C,R,L,S)
-!!! Udate CONC with C2R mass transfer values from canopy_transfer(1)
+!!! Udate CONC with C2R mass transfer values from canopy_transfer C2R
 
             END DO
 
@@ -1317,6 +1279,13 @@ c++++++++++++++++++++++++Debug section++++++++++++++++++++++++++++++++++
             END DO
          END DO
       END DO
+
+! Species after gas-phase & canopy_transfer C2R
+      o3_new  (:,:,:) = CONC(:,:,:,4)
+
+! Gas-phase tendency after canopy_transfer ppmv sec-1
+      o3_tend (:,:,:) = ( o3_new(:,:,:) -  o3_old(:,:,:)) /
+     &                  REAL (CHEMSTEP, 4) ! ppm  sec-1
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       END IF ! CANOPY_SHADE

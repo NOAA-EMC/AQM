@@ -1442,6 +1442,7 @@
                 CALL M3EXIT( PNAME, 0, 0, XMSG, XSTAT3 )
              END IF
 
+           IF ( FCH_AVAIL ) then
 !!!!#ifdef twoway
              If ( .Not. INTERPX( MET_CRO_2D, 'FCH ', PNAME,
      &                           STRTCOLMC2, ENDCOLMC2,STRTROWMC2, ENDROWMC2, 1, 1,
@@ -1449,14 +1450,36 @@
                 XMSG = ' Error interpolating variable  FCH  from ' // MET_CRO_2D
                 Call M3EXIT( PNAME, 0, 0, XMSG, XSTAT1 )
              END IF
+!!!! #else
+             If ( .Not. XTRACT3( MET_CRO_2D, 'FCH ',
+     &                           1, 1, STRTROWMC2, ENDROWMC2, STRTCOLMC2, ENDCOLMC2,
+     &                           jdate, jtime, cfch  ) ) THEN
+                XMSG = ' Error interpolating variable FCH   from ' // MET_CRO_2D
+                Call M3EXIT( PNAME, 0, 0, XMSG, XSTAT1 )
+             END IF
+!!!!!#endif
+           END IF  ! ( FCH_AVAIL ) 
 
+           IF ( FRT_AVAIL ) then
+!!!!#ifdef twoway
              If ( .Not. INTERPX( MET_CRO_2D, 'FRT ', PNAME,
      &                           STRTCOLMC2, ENDCOLMC2,STRTROWMC2, ENDROWMC2, 1, 1,
      &                           jdate, jtime, cfrt  ) ) THEN
                 XMSG = ' Error interpolating variable  FRT  from ' // MET_CRO_2D
                 Call M3EXIT( PNAME, 0, 0, XMSG, XSTAT1 )
              END IF
+!!!! #else
+             If ( .Not. XTRACT3( MET_CRO_2D, 'FRT ',
+     &                           1, 1, STRTROWMC2, ENDROWMC2, STRTCOLMC2, ENDCOLMC2,
+     &                           jdate, jtime, cfrt  ) ) THEN
+                XMSG = ' Error interpolating variable FRT   from ' // MET_CRO_2D
+                Call M3EXIT( PNAME, 0, 0, XMSG, XSTAT1 )
+             END IF
+!!!!!#endif
+           END IF  ! ( FRT_AVAIL )
 
+           IF ( CLU_AVAIL ) then
+!!!!#ifdef twoway
              If ( .Not. INTERPX( MET_CRO_2D, 'CLU ', PNAME,
      &                           STRTCOLMC2, ENDCOLMC2,STRTROWMC2, ENDROWMC2, 1, 1,
      &                           jdate, jtime, cclu  ) ) THEN
@@ -1464,37 +1487,7 @@
                 Call M3EXIT( PNAME, 0, 0, XMSG, XSTAT1 )
              END IF
 
-             If ( .Not. INTERPX( MET_CRO_2D, 'LAIE', PNAME,
-     &                           STRTCOLMC2, ENDCOLMC2,STRTROWMC2, ENDROWMC2, 1, 1,
-     &                           jdate, jtime, claie ) ) THEN
-                XMSG = ' Error interpolating variable LAIE  from ' // MET_CRO_2D
-                Call M3EXIT( PNAME, 0, 0, XMSG, XSTAT1 )
-             END IF
-
-!             print*, pname, 'centralized_io: INTERPX LAIE= ', claie(:,:)
-
-             If ( .Not. INTERPX( MET_CRO_2D, 'POPU', PNAME,
-     &                           STRTCOLMC2, ENDCOLMC2,STRTROWMC2, ENDROWMC2, 1, 1,
-     &                           jdate, jtime, cpopu ) ) THEN
-                XMSG = ' Error interpolating variable  POPU from ' // MET_CRO_2D
-                Call M3EXIT( PNAME, 0, 0, XMSG, XSTAT1 )
-             END IF
-
 !!!! #else
-
-             If ( .Not. XTRACT3( MET_CRO_2D, 'FCH ',
-     &                           1, 1, STRTROWMC2, ENDROWMC2, STRTCOLMC2, ENDCOLMC2,
-     &                           jdate, jtime, cfch  ) ) THEN
-                XMSG = ' Error interpolating variable FCH   from ' // MET_CRO_2D
-                Call M3EXIT( PNAME, 0, 0, XMSG, XSTAT1 )
-             END IF
-
-             If ( .Not. XTRACT3( MET_CRO_2D, 'FRT ',
-     &                           1, 1, STRTROWMC2, ENDROWMC2, STRTCOLMC2, ENDCOLMC2,
-     &                           jdate, jtime, cfrt  ) ) THEN
-                XMSG = ' Error interpolating variable FRT   from ' // MET_CRO_2D
-                Call M3EXIT( PNAME, 0, 0, XMSG, XSTAT1 )
-             END IF
 
              If ( .Not. XTRACT3( MET_CRO_2D, 'CLU ',
      &                           1, 1, STRTROWMC2, ENDROWMC2, STRTCOLMC2, ENDCOLMC2,
@@ -1502,7 +1495,19 @@
                 XMSG = ' Error interpolating variable CLU   from ' // MET_CRO_2D
                 Call M3EXIT( PNAME, 0, 0, XMSG, XSTAT1 )
              END IF
+!!!!!#endif
+           END IF  ! ( CLU_AVAIL )
 
+           IF ( LAIE_AVAIL ) then
+!!!!#ifdef twoway
+             If ( .Not. INTERPX( MET_CRO_2D, 'LAIE', PNAME,
+     &                           STRTCOLMC2, ENDCOLMC2,STRTROWMC2, ENDROWMC2, 1, 1,
+     &                           jdate, jtime, claie ) ) THEN
+                XMSG = ' Error interpolating variable LAIE  from ' // MET_CRO_2D
+                Call M3EXIT( PNAME, 0, 0, XMSG, XSTAT1 )
+             END IF
+!             print*, pname, 'centralized_io: INTERPX LAIE= ', claie(:,:)
+!!!! #else
              If ( .Not. XTRACT3( MET_CRO_2D, 'LAIE',
      &                           1, 1, STRTROWMC2, ENDROWMC2, STRTCOLMC2, ENDCOLMC2,
      &                           jdate, jtime, claie ) ) THEN
@@ -1510,15 +1515,26 @@
                 Call M3EXIT( PNAME, 0, 0, XMSG, XSTAT1 )
              END IF
 !            print*, pname, 'centralized_io: XTRACT3 LAIE= ', claie(:,:)
+!!!!!#endif
+           END IF ! ( LAIE_AVAIL )
 
+           IF ( POPU_AVAIL ) then
+!!!!#ifdef twoway
+             If ( .Not. INTERPX( MET_CRO_2D, 'POPU', PNAME,
+     &                           STRTCOLMC2, ENDCOLMC2,STRTROWMC2, ENDROWMC2, 1, 1,
+     &                           jdate, jtime, cpopu ) ) THEN
+                XMSG = ' Error interpolating variable  POPU from ' // MET_CRO_2D
+                Call M3EXIT( PNAME, 0, 0, XMSG, XSTAT1 )
+             END IF
+!!!! #else
              If ( .Not. XTRACT3( MET_CRO_2D, 'POPU',
      &                           1, 1, STRTROWMC2, ENDROWMC2, STRTCOLMC2, ENDCOLMC2,
      &                           jdate, jtime, cpopu ) ) THEN
                 XMSG = ' Error interpolating variable POPU  from ' // MET_CRO_2D
                 Call M3EXIT( PNAME, 0, 0, XMSG, XSTAT1 )
              END IF
-
 !!!!!#endif
+           END IF ! ( POPU_AVAIL )
 !IVAI
 
 #endif

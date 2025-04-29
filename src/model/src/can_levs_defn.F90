@@ -92,9 +92,6 @@
    real (kind=8), dimension( :, :, :, : ), allocatable, save :: KHETERO_CAN ! aerosols heterogeneous rx rates
    real (kind=4), dimension( :, :, :, : ), allocatable, save :: CONC_CAN   ! concentrations (including gas and aerosols)
    real (kind=4), dimension( :, :, :, : ), allocatable, save :: CONC_MOD   ! concentrations (including gas and aerosols)
-! gas-phase tendencies
-   real  (kind=4), dimension( :, :, : ), allocatable, save :: o3_new_can,  o3_old_can,  o3_tend_can
-   real  (kind=4), dimension( :, :, : ), allocatable, save :: no2_new_can, no2_old_can, no2_tend_can
 ! gas-phase conc. 2m diagnostics
    real  (kind=4), dimension( :, :, : ), allocatable, save :: CONC_2M
 
@@ -108,8 +105,6 @@
               ZH_CAN, ZF_CAN, &
               TA_CAN, QV_CAN, WS_CAN, PRES_CAN, DENS_CAN, &
               KHETERO_CAN, CONC_CAN, CONC_MOD, CONC_2M, &
-              o3_new_can, o3_old_can, o3_tend_can, &
-              no2_new_can, no2_old_can, no2_tend_can, &
               init_can_levs, get_can_levs
 
    contains
@@ -175,14 +170,7 @@
              QV_CAN    (NCOLS, NROWS, NLAYT)        , &
              WS_CAN    (NCOLS, NROWS, NLAYT)        , &
              PRES_CAN  (NCOLS, NROWS, NLAYT)        , &
-             DENS_CAN  (NCOLS, NROWS, NLAYT)        , &
-! gas-phase tendencies
-             o3_new_can (NCOLS, NROWS, NLAYT)       , &
-             o3_old_can (NCOLS, NROWS, NLAYT)       , &
-             o3_tend_can(NCOLS, NROWS, NLAYT)       , &
-             no2_new_can (NCOLS, NROWS, NLAYT)      , &
-             no2_old_can (NCOLS, NROWS, NLAYT)      , &
-             no2_tend_can(NCOLS, NROWS, NLAYT)      )
+             DENS_CAN  (NCOLS, NROWS, NLAYT)        )
 
 
    ka (:,:) = 0
@@ -233,13 +221,6 @@
    CONC_CAN(:,:,1            ,:) = CONC(:,:,1,      :)       ! FIRSTIME
 
    CONC_2M (:,:,              :) = CONC(:,:,1,      :)       ! FIRSTIME
-! gas-phase tendencies
-   o3_old_can (:,:,:) = 0.
-   o3_new_can (:,:,:) = 0.
-   o3_tend_can(:,:,:) = 0.
-   no2_old_can (:,:,:) = 0.
-   no2_new_can (:,:,:) = 0.
-   no2_tend_can(:,:,:) = 0.
 
    end subroutine init_can_levs
 
@@ -354,15 +335,6 @@
    CONC_CAN(:,:,1            ,:) = CONC(:,:,1,      :)
 
    CONC_2M (:,:,              :) = CONC(:,:,1,      :)
-
-! zero gas-phase tendencies
-   o3_old_can (:,:,:) = CONC_CAN(:,:,:,4) ! O3 = 4
-   o3_new_can (:,:,:) = CONC_CAN(:,:,:,4) ! O3 = 4
-   o3_tend_can(:,:,:) = 0.
-   no2_old_can (:,:,:) = CONC_CAN(:,:,:,1) ! NO2 = 1
-   no2_new_can (:,:,:) = CONC_CAN(:,:,:,1) ! NO2 = 1
-   no2_tend_can(:,:,:) = 0.
-
 
    CALL GET_PHOT_MET( JDATE, JTIME, MDATE, MTIME )
 ! ===

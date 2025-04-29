@@ -1199,18 +1199,12 @@ C  Update CGRID based on the degradation routines
 
          END IF
 
-! NB. Should be  BLK = 1, NBLKS_CAN but aborts in rbinit
+! NB. Should be over NBLKS_CAN but aborts in rbinit
 555   CONTINUE  ! BLK = 1, NBLKS
 
-      END IF ! CANOPY_SHADE
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-      IF ( CANOPY_SHADE ) THEN
-
-! Copy the top NLAYC original model layers CONC to top 3 combined layers CONC_CAN, as loop 555 is only on NLAYS combined levels
-!... Carry over the top NLAYC original model values for the matching layers
-      CONC_CAN(:,:,NLAYT-NLAYC:NLAYT,:) = CONC(:,:,NLAYS-NLAYC:NLAYS,:)
+C... Update CONC_CAN/CGRID_CAN concentrations' upper-most (NLAYS:NLAYT) layers (rbsolver not called)
+C... Carry over the top (NLAYS-NLAYC:NLAYS) original model values for the matching layers
+      CONC_CAN(:,:,NLAYT-NLAYC+1:NLAYT,:) = CONC(:,:,NLAYS-NLAYC+1:NLAYS,:)
 
 ! Species after gas-phase (NB. only canopy-grid cells are updated)
       o3_new_can (:,:,:) = CONC_CAN(:,:,:,4) ! O3 = 4
@@ -1233,16 +1227,14 @@ C  Update CGRID based on the degradation routines
 ! ===================
 
 ! Update CGRID for advection, deposition etc.
-! Update only subset NLAYS-NLAYC original/resolved model layers, as top
-! NLAYC combined canopy plus resolved layers layers are not updated in rbsolver
-      DO L = 1, NLAYS-NLAYC
+!      DO L = 1, NLAYS
+! Update only bottom 3 hybrid layers
+      DO L = 1, 3
          DO R = 1, NROWS
             DO C = 1, NCOLS
 
-            KOUNT = 0
-            IF ( FRT_MASK(C,R) > 0. ) THEN
-
 c++++++++++++++++++++++++Debug section++++++++++++++++++++++++++++++++++
+            KOUNT = 0
             IF (.FALSE.) THEN
             IF ( KOUNT < 3 .AND. L == 1 .OR. L == NLAYS .OR. L == NLAYS-1 )  THEN
 
@@ -1257,22 +1249,25 @@ c++++++++++++++++++++++++Debug section++++++++++++++++++++++++++++++++++
 
             END IF ! KOUNT L=1
             END IF !.FALSE.
-c++++++++++++++++++++++++Debug section++++++++++++++++++++++++++++++++++
 
 ! Print up to KOUNT number of canopy columns
             KOUNT = KOUNT + 1
+            IF ( FRT_MASK(C,R) > 0. ) THEN
+
+c++++++++++++++++++++++++Debug section++++++++++++++++++++++++++++++++++
 
 ! Update CGRID with values from canopy_transfer
             DO SPC = 1, NUMB_MECH_SPC
                S = CGRID_INDEX( SPC )
 
-!!! Udate CONC with C2R mass transfer values from canopy_transfer C2R
-! All levels
-!!!            CONC(C,R,L,S) = MAX( CONC_MOD( C,R,L,S ), CONCMIN)
+!!! Udate CONC with CONC_MOD after C2R mass transfer from CONC_CAN
+! All levels or bottom 3 hybrid layers
                CONC(C,R,L,S) = CONC_MOD(C,R,L,S)
-!!! Udate CONC with C2R mass transfer values from canopy_transfer C2R
 
             END DO
+
+! Print up to KOUNT number of canopy columns
+            KOUNT = KOUNT + 1
 
             END IF !FRT_MASK
 

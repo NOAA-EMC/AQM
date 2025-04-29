@@ -2123,7 +2123,7 @@ C...modules
 !IVAI: 
 ! rb/hrdriver:
 !    &      o3_tend    ( :,:, NLAYS )) ) THEN ! "o3_tend"     rb/hrdriver
-     &      o3_tend    ( :,:,NLAYS-NLAYC) ) ) THEN
+     &      o3_tend    ( :,:, 1     ) ) ) THEN
 !    &      o3_tend    ( :,:, 2     )) ) THEN ! "o3_tend"     rb/hrdriver
 !    &      o3_tend_can( :,:, 3     )) ) THEN ! "o3_tend_can" rb/hrdriver
 !
@@ -2259,7 +2259,7 @@ C...modules
 ! rb/hrdriver:
 !    &      o3_tend    ( :,:,1 )     ) ) THEN ! "o3_tend"     rb/hrdriver
 !    &      o3_tend_can( :,:,NLAYT )     ) ) THEN !
-     &      o3_tend_can( :,:,NLAYS )     ) ) THEN ! NB. not defined at layers above NLAYS
+     &      o3_tend_can( :,:,1     )     ) ) THEN ! NB. not defined at layers above NLAYS
 !    &      o3_tend_can( :,:,NLAYT-1)) ) THEN !
 ! canopy_transfer:
 !    &      CONC_MOD  (:,:, 1  , LGC_NO2)  ) ) THEN
@@ -2304,7 +2304,7 @@ C...modules
 !IVAI
 ! rb/hrdriver:
 !    &      o3_tend    ( :,:,1 )          ) ) THEN !
-     &      o3_tend_can( :,:, NLAYS-1 )   ) ) THEN ! NLAYS = NLAYT-NLAYC
+!    &      o3_tend_can( :,:, NLAYS-1 )   ) ) THEN ! NLAYS = NLAYT-NLAYC
 !    &      o3_tend_can( :,:,1 )          ) ) THEN !
 ! canopy_transfer:
 !    &      CONC_MOD  (:,:, 1  , LGC_O3 )  ) ) THEN  ! 1hy model layer
@@ -2320,7 +2320,7 @@ C...modules
 !    &      frctr2c(NLAYT    ,1,:,:)      ) ) THEN  ! 1st (bot) canopy layer
 ! phot:
 !    &      RJ       ( :,:,1 ,LO3O1D) ) ) THEN   ! bottom model  layer
-!    &      RJ_CAN   ( :,:,1 ,LO3O1D) ) ) THEN  
+     &      RJ_CAN   ( :,:,1 ,LO3O1D) ) ) THEN  
 !    &      RJ_CORRM ( :,:,1 )        ) ) THEN
 ! can_levs_defn:
 !    &      TA_CAN   ( :,:,1 )        ) ) THEN   ! 1st canopy layer

@@ -606,11 +606,11 @@ c++++++++++++++++++++++++Debug section++++++++++++++++++++++++++++++++++
 ! !!! END TESTING !!! overwrite met3d & cgrid calculated in get_can_levs
 !!!!!!!!!!!!!!!!!!!!!
 
-      End If  !CANOPY_SHADE
-
 ! NB. Species indices defined ! in "rbdata_mod", for O3 = 4)
 ! Species before gas-phase tendencies added
       o3_old_can (:,:,:) = CONC_CAN(:,:,:,4) ! O3 = 4
+
+      End If  !CANOPY_SHADE
 
 !IVAI
 

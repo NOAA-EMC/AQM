@@ -1363,7 +1363,10 @@ C...modules
                END IF
 
 !IVAI:
-            IF ( CANOPY_SHADE .AND. FRT_MASK(COL,ROW) > 0.) THEN
+            IF ( CANOPY_SHADE ) THEN
+
+              IF ( FRT_MASK(COL,ROW) > 0.) THEN
+
 ! Above canopy layers
                DO L = 1, NLAYS
                   CLOUDS_CAN (NLAYC+L) = CLOUDS (L)
@@ -1375,6 +1378,7 @@ C...modules
                   CLOUDS_CAN (L) = CLOUDS (1)
                   CLDFRAC_CAN(L) = CLDFRAC(1)
                END DO
+              END IF ! FRT_MASK
             END IF ! CANOPY_SHADE
 !IVAI
             

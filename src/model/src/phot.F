@@ -964,7 +964,7 @@ C...modules
 
           KOUNT = 0
 
-          IF ( FRT_MASK(COL,ROW) > 0.) THEN  ! CANOPY_SHADE & FRT_MASK
+          IF ( FRT_MASK(COL,ROW) > 0.) THEN  ! FRT_MASK
 
             IF (.FALSE.) THEN
             IF ( KOUNT < 3 )  THEN
@@ -1023,7 +1023,7 @@ C...modules
 ! Print up to KOUNT number of canopy columns
             KOUNT = KOUNT + 1
 
-          END IF ! CANOPY_SHADE & FRT_MASK
+          END IF ! FRT_MASK
 
           END DO
         END DO
@@ -1713,7 +1713,8 @@ C...modules
 !                  IF (KOUNT < 3 ) print*, 'PHOT: AFTER NEW_OPTICS '
 !...Call new_optics for the cloudy fraction of the grid cell
 !...calculate the acm-cloud photolysis rates for combined (canopy plus resolved) model layers NLAYT
-                  IF ( CANOPY_SHADE .AND. FRT_MASK(COL,ROW) > 0.) THEN
+                  IF ( CANOPY_SHADE ) THEN
+                    IF ( FRT_MASK(COL,ROW) > 0.) THEN
 
                      NEW_PROFILE = .FALSE.
 ! Run new optics only on NLAYS out of NLAYT combined layers
@@ -1730,6 +1731,7 @@ C...modules
      &                  TAU_RAY_CAN, SSA_CAN,                !out:        (NWL)
      &                  TAU_CLOUD_CAN,                       !out: (NLAYS, NWL)
      &                  TOTAL_O3_COLUMN_CAN )                !inout:     scalar
+                    END IF
                   END IF
 !                  IF (KOUNT < 3 ) print*, 'PHOT: AFTER NEW_OPTICS -> CANOPY_SHADE '
 !IVAI
@@ -1822,7 +1824,8 @@ C...modules
 ! Print after ACM_CLOUDS correction
          KOUNT = 0
          IF (.FALSE.) THEN
-         IF ( CANOPY_SHADE .AND. FRT_MASK(COL,ROW) > 0. ) THEN
+         IF ( CANOPY_SHADE ) THEN 
+           IF ( FRT_MASK(COL,ROW) > 0. ) THEN
 
 ! Print all layers only at KOUNT number of canopy columns
             IF (KOUNT < 3 ) THEN
@@ -1845,8 +1848,8 @@ C...modules
 
 ! Print up to KOUNT canopy columns
             KOUNT = KOUNT + 1
-
-         END IF ! CANOPY_SHADE & FRT_MASK
+           END IF ! FRT_MASK
+         END IF ! CANOPY_SHADE 
          END IF ! .FALSE.
 ! End Print
 
@@ -1859,7 +1862,8 @@ C...modules
 !Nat Commun 8, 15243 (2017). https://doi.org/10.1038/ncomms15243
 
               KOUNT = 0
-              IF ( CANOPY_SHADE .AND. FRT_MASK(COL,ROW) > 0. ) THEN ! compute canopy shade reduction factor (RJ_CORR)
+              IF ( CANOPY_SHADE ) THEN
+                IF ( FRT_MASK(COL,ROW) > 0. ) THEN ! compute canopy shade reduction factor (RJ_CORR)
 
 !Fraction of cumulative LAI above each canopy layer interface counting down (C1R, C2R, C3R, C4R data from ECCC)
 
@@ -2065,8 +2069,8 @@ C...modules
 !          KOUNT = KOUNT + 1
 
 ! End Print
-
-              END IF  ! (CANOPY_SHADE & FRT_MASK )
+                END IF ! FRT_MASK
+              END IF   ! CANOPY_SHADE
 
 !               print*, 'PHOT:  AFTER RJ CANOPY CORRECTION '
 !IVAI

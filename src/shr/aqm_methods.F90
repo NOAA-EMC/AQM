@@ -1221,7 +1221,20 @@ LOGICAL FUNCTION  XTRACT3 ( FNAME, VNAME,                           &
       case ("HFX")
         p2d => stateIn % hfx
       case ("LAI")
-        p2d => stateIn % xlai
+!        p2d => stateIn % xlai
+!     a temporary solution provided by Patrick Campbell from ARL for GFSv17 CCPP and
+!     AQMv8 coupling
+        k = 0
+        do r = row0, row1
+          do c = col0, col1  
+            k = k + 1
+               if ( stateIn % xlai(c,r) > 10.0 ) then  !zero out erroneously high values
+                 buffer(k) = 0.0 * stateIn % xlai(c,r) !from Noah-MP option, which should
+               else                                    !max out at ~ 4.5 from tables and
+                 buffer(k) = stateIn % xlai(c,r)       !~ 10 from satellite input data
+               end if
+          end do 
+        end do   
       case ("LH")
         p2d => stateIn % lh
       case ("PRSFC")

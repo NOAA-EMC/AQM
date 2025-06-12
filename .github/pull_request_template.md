@@ -4,7 +4,9 @@
   - [ ] RDHPCS.
   - [ ] WCOSS2.
 
-- [ ] This PR has been tested with the ufs-srweather-app workflow online-cmaq branch.
+- This PR has been tested with:
+  - [ ] The ufs-srweather-app workflow.
+  - [ ] The AQM-Workflow workfow.
 
 - [ ] New or updated input data is required by this PR. <!-- If checked, please work with the code managers to update input data sets on all platforms.-->
 

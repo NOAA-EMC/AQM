@@ -4,7 +4,8 @@ module cmaq_model_mod
   use aqm_types_mod
   use aqm_model_mod
   use cmaq_mod
-
+  use RUNTIME_VARS  !(AQM)
+ 
   implicit none
 
   private
@@ -40,6 +41,9 @@ contains
     ! -- initialize CMAQ
     ! -- NOTE: CMAQ can only run on 1DE/PET domain decomposition (DE 0)
 
+    ! Initialize all runscript environmental variables (AQM)
+    CALL INIT_ENV_VARS( 0, 0 )
+
     ! -- initialize species from namelists on DE 0
     call cmaq_species_read(numSpecies, rc=localrc)
     if (aqm_rc_check(localrc, msg="Failed to initialize CMAQ species", &
@@ -52,6 +56,11 @@ contains
     call aqm_model_domain_get(nt=nt, rc=localrc)
     if (aqm_rc_check(localrc, msg="Failed to retrieve model domain on local DE", &
       file=__FILE__, line=__LINE__, rc=rc)) return
+    
+    !add log AQM
+    write( logdev,* ) ' NT number of tracer is: ', nt
+    write( logdev,* ) ' p_aqm_beg/ndiag is:', config % species %p_aqm_beg,'/',config % species % ndiag
+
     if (aqm_rc_test((config % species % p_aqm_beg + numSpecies - 1 > nt), &
       msg="Coupling tracer fields cannot hold all the required species", &
       file=__FILE__, line=__LINE__, rc=rc)) return

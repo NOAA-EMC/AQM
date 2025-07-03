@@ -1,4 +1,4 @@
 [submodule "src/model/CMAQ"]
 	path = src/model/CMAQ
 	url = https://github.com/USEPA/CMAQ
-	branch = 5.2.1
+	branch = 5.4+

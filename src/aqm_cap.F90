@@ -13,7 +13,7 @@ module AQM
   implicit none
 
   ! -- import fields
-  integer, parameter :: importFieldCount = 36
+  integer, parameter :: importFieldCount = 37
   character(len=*), dimension(importFieldCount), parameter :: &
     importFieldNames = (/ &
       "canopy_moisture_storage                  ", &
@@ -51,7 +51,8 @@ module AQM
       "soil_type                                ", &
       "surface_cell_area                        ", &
       "surface_snow_area_fraction               ", &
-      "temperature_of_soil_layer                "  &
+      "temperature_of_soil_layer                ", &
+      "vegetation_type                          " &
     /)
   ! -- export fields
   integer, parameter :: exportFieldCount = 2

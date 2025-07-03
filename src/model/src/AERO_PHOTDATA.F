@@ -38,16 +38,13 @@
       REAL, ALLOCATABLE :: BLK_AE_NI   ( :,:,: ) ! mean aerosol imaginary part of refractive index
 
       REAL, ALLOCATABLE :: AERO_ASYM_FAC ( :,: ) ! aerosol modal averaged asymmetry factor
-      REAL, ALLOCATABLE :: AERO_EXTI_COEF( :,: ) ! aerosol modal averaged extinction coeff.
-      REAL, ALLOCATABLE :: AERO_SCAT_COEF( :,: ) ! aerosol modal averaged scattering coeff.
+      REAL, ALLOCATABLE :: AERO_EXTI_COEF( :,: ) ! aerosol modal averaged extinction coeff., 1/m
+      REAL, ALLOCATABLE :: AERO_SCAT_COEF( :,: ) ! aerosol modal averaged scattering coeff., 1/m
+      REAL, ALLOCATABLE :: AERO_EXTI_550  ( : )  ! aerosol modal averaged extinction coeff. at 550nm, 1/m
  
-      LOGICAL           :: CORE_SHELL
-      LOGICAL           :: MIE_CALC
-
       PUBLIC            :: AERO_ASYM_FAC, AERO_EXTI_COEF, AERO_SCAT_COEF,
      &                     INIT_AERO_DATA, GET_AERO_DATA, AERO_OPTICS_INTERNAL
 
-      INTEGER, PRIVATE                :: LOGDEV                 ! unit number for the log file
       INTEGER,   ALLOCATABLE, PRIVATE :: REFRACT_INDX_MAP( : )  ! map array for refactive index
 
       REAL,      ALLOCATABLE, PRIVATE :: VOL_MINS( : )          ! minmum volume permode
@@ -56,6 +53,16 @@
 
       INTEGER,   PARAMETER, PRIVATE   :: NUMB_COR_SPCS = 3      ! number species in core
 
+      LOGICAL :: CALCULATE_EXT_550   = .FALSE. ! flag to get extinction at 550 nm
+      LOGICAL :: USE_ANGSTROM_INTERP = .FALSE. ! flag to use angstrom exponents for 550 nm
+      
+      INTEGER   :: IWL_ANGSTROM_LOWER  = 0       ! index for wavelength less than 550 nm
+      INTEGER   :: IWL_ANGSTROM_UPPER  = 0       ! index for wavelength greater than 550 nm
+      REAL( 8 ) :: ANGSTROM_RATIO      = 1.0D0   ! wavelength less than 550 nm divided by 550 nm
+      REAL( 8 ) :: LOG_ANGSTROM_RATIO  = 0.0D0    
+      REAL( 8 ) :: ANGSTROM_SPAN       = 1.0D0   ! reciprocal of log ((wavelength < 550 nm)/(wavelength > 550 nm)
+      REAL( 8 ) :: ANGSTROM_EXPONENT   = 1.0D0   ! Angstrom exponent used to interpolate extinction at 550 nm
+          
 C *** Species in aerosol core
 
       CHARACTER( 16 ), PARAMETER, PRIVATE :: CORE_SPCS( NUMB_COR_SPCS ) =
@@ -84,8 +91,6 @@ C Arguments:
 
 C Local:
          CHARACTER(  32 ) :: PNAME             = 'INIT_AERO_DATA'
-         CHARACTER(  16 ) :: CORE_SHELL_OPTICS = 'CORESHELL_OPTICS'
-         CHARACTER(  16 ) :: OPTICS_MIE_CALC   = 'MIE_OPTICS'
          CHARACTER( 120 ) :: XMSG 
 
          INTEGER          :: ALLOCSTAT
@@ -103,45 +108,10 @@ C Local:
             RETURN
          END IF
           
-         LOGDEV = INIT3()
          JDATE  = 0
          JTIME  = 0
 
-!...Get flag to use core-shell mixing model for aerosol optical properties
 
-         CORE_SHELL = .FALSE.         ! default
-         XMSG = 'Use core-shell mixing model for aerosol optical properties'
-         CORE_SHELL = ENVYN( CORE_SHELL_OPTICS, XMSG, CORE_SHELL, ESTAT )
-         IF ( ESTAT .NE. 0 ) WRITE( LOGDEV, '(5X, A)' ) XMSG
-         IF ( ESTAT .EQ. 1 ) THEN
-            XMSG = 'Environment variable improperly formatted'
-            CALL M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT2 )
-         ELSE IF ( ESTAT .EQ. -1 ) THEN
-            XMSG =
-     &          'Environment variable set, but empty ... Using default:'
-            WRITE( LOGDEV, '(5X, A, L5)' ) XMSG, CORE_SHELL
-         ELSE IF ( ESTAT .EQ. -2 ) THEN
-            XMSG = 'Environment variable not set ... Using default:'
-            WRITE( LOGDEV, '(5X, A, L5)' ) XMSG, CORE_SHELL
-         END IF
-
-!...Get flag to use fast optics for volume mixing model for aerosol optical properties
-
-         MIE_CALC = .FALSE.         ! default
-         XMSG = 'Use Mie theory for aerosol optical properties of Internal mixing model'
-         MIE_CALC = ENVYN( OPTICS_MIE_CALC, XMSG, MIE_CALC, ESTAT )
-         IF ( ESTAT .NE. 0 ) WRITE( LOGDEV, '(5X, A)' ) XMSG
-         IF ( ESTAT .EQ. 1 ) THEN
-            XMSG = 'Environment variable improperly formatted'
-            CALL M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT2 )
-         ELSE IF ( ESTAT .EQ. -1 ) THEN
-            XMSG =
-     &          'Environment variable set, but empty ... Using default:'
-            WRITE( LOGDEV, '(5X, A, L5)' ) XMSG, MIE_CALC
-         ELSE IF ( ESTAT .EQ. -2 ) THEN
-            XMSG = 'Environment variable not set ... Using default:'
-            WRITE( LOGDEV, '(5X, A, L5)' ) XMSG, MIE_CALC
-         END IF
 C...Allocate needed arrays
 
          ALLOCATE ( VOL_MINS( N_MODE ), STAT = ALLOCSTAT )
@@ -219,6 +189,15 @@ C...Allocate needed arrays
          AERO_SCAT_COEF = 0.0
          AERO_EXTI_COEF = 0.0
          AERO_ASYM_FAC  = 0.0
+
+         IF( CALCULATE_EXT_550 )THEN
+            ALLOCATE ( AERO_EXTI_550( NLAYS ), STAT = ALLOCSTAT )
+            IF ( ALLOCSTAT .NE. 0 ) THEN
+               XMSG = 'Failure allocating AERO_EXTI_550'
+               CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
+            END IF
+            AERO_EXTI_550  = 0.0
+         END IF   
 
          CALL MAP_AERO()
                   
@@ -330,6 +309,38 @@ C ***    Create map for refactive index for each species
             END IF
          END DO
 
+         IF( CALCULATE_EXT_550 )THEN ! locate 550 nm in wavebands and set-up interpolation 
+            IF ( WAVELENGTH( 1 ) .GE. 550.0 )  THEN
+                IWL_ANGSTROM_LOWER = 1
+            ELSE IF ( WAVELENGTH( NWL ) .LE. 550.0 ) THEN
+                IWL_ANGSTROM_LOWER = NWL
+            ELSE
+                LOOP_FINDW: DO V = 1, NWL - 1
+                   IF ( WAVELENGTH( V ) .LT. 550.0 .AND. WAVELENGTH( V+1 ) .GT. 550.0 ) THEN
+                      IWL_ANGSTROM_LOWER = V
+                      IWL_ANGSTROM_UPPER = V+1
+                      ANGSTROM_SPAN      = REAL( 1.0 / LOG( WAVELENGTH( V ) / WAVELENGTH( V+1 ) ), 8 )
+                      ANGSTROM_RATIO     = REAL( (WAVELENGTH( V ) / 550.0), 8)
+!                     ANGSTROM_RATIO     = REAL( (WAVELENGTH( V ) / WAVELENGTH( V+1 )), 8)
+                      LOG_ANGSTROM_RATIO = LOG( ANGSTROM_RATIO )
+!                      WRITE(LOGDEV,'(A,2(F7.3,1X))')'Angstrom Interpolation Wavelengths: ', 
+!     &                WAVELENGTH( IWL_ANGSTROM_LOWER ), WAVELENGTH( IWL_ANGSTROM_UPPER  )
+!                      WRITE(LOGDEV,'(A,2(ES12.4,1X))')'Angstrom Span, Ratio: ', 
+!     &                ANGSTROM_SPAN, ANGSTROM_RATIO
+                      USE_ANGSTROM_INTERP  = .TRUE.
+                      EXIT LOOP_FINDW
+                   ELSE IF ( WAVELENGTH( V ) .EQ. 550.0 ) THEN
+                      IWL_ANGSTROM_LOWER = V
+                      EXIT LOOP_FINDW
+                   END IF
+                END DO LOOP_FINDW
+            END IF
+            IF( .NOT. USE_ANGSTROM_INTERP )THEN
+               WRITE(LOGDEV,'(A,2(F7.3,1X))')'No Angstrom Inpolation Used 550 Extinction used at ', 
+     &         WAVELENGTH( IWL_ANGSTROM_LOWER )
+            END IF
+         END IF
+
       RETURN
 
 5000  FORMAT(2X,'NR_',I3.3,7X,'NI_',I3.3,5X)
@@ -339,7 +350,7 @@ C ***    Create map for refactive index for each species
       END SUBROUTINE INIT_AERO_DATA
 
 C:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-      SUBROUTINE GET_AERO_DATA ( COL, ROW, NLAYS, CGRID )
+      SUBROUTINE GET_AERO_DATA ( COL, ROW, NLAYS, DENS, CGRID )
 
 C-----------------------------------------------------------------------
 C  FUNCTION:  This subroutine calculates the volume, the natural logs of 
@@ -404,6 +415,7 @@ C Arguments:
       INTEGER, INTENT( IN ) :: COL               ! specified column index
       INTEGER, INTENT( IN ) :: ROW               ! specified row index
       INTEGER, INTENT( IN ) :: NLAYS             ! # of vertical layers
+      REAL,    INTENT( IN ) :: DENS( :,:,: )
       REAL,    POINTER      :: CGRID( :,:,:,: )
 
 C Parameters:
@@ -463,7 +475,9 @@ C***  variables for calculating modal averaged properties per layer and lambda
       INTEGER MODE                  ! aerosol mode loop counter
       LOGICAL SUCCESS
       LOGICAL TROUBLE
- 
+      LOGICAL, SAVE    :: FIRSTCALL  = .TRUE.
+
+
 #ifdef verbose_phot
       character( 26 ), allocatable :: lambda_list( : )
 #endif
@@ -486,16 +500,24 @@ C *** initialize internal and external dimensions of aerosols
       AE_DGN_CORE   = 0.0
       SUCCESS       = .TRUE.
 
-
       LAY_LOOP1: DO L = 1, NLAYS
 
 C *** extract grid cell concentrations of aero species from CGRID into aerospc_conc 
 C *** in aero_data module
 C     Also converts dry surface area to wet second moment
+#ifdef sens
+         CALL EXTRACT_AERO ( CGRID( COL,ROW,L,: ), .TRUE., CGRID( COL,ROW,:,: ), .FALSE. )
+#else
          CALL EXTRACT_AERO ( CGRID( COL,ROW,L,: ), .TRUE. )
+#endif
 
 C *** extract soa concentrations from CGRID
+         AIRDENS  = DENS ( COL,ROW,L )
+#ifdef sens
+         CALL EXTRACT_SOA ( CGRID( COL,ROW,L,: ), CGRID( COL,ROW,:,: ), .FALSE. )
+#else
          CALL EXTRACT_SOA ( CGRID( COL,ROW,L,: ) )
+#endif
 
 C *** Calculate geometric mean diameters and standard deviations of "wet" size distribution
          CALL GETPAR ( .FALSE. )
@@ -816,11 +838,11 @@ C***  and contribution to the overall asymmetry factor
             END DO OPTICS_LOOP
 
             AERO_SCAT_COEF( L,V ) = BSCAT
-            AERO_EXTI_COEF( L,V ) = BEXT
+            AERO_EXTI_COEF( L,V ) = MAX( BEXT, 1.0E-30 )
             AERO_ASYM_FAC ( L,V ) = G_BAR / MAX( BSCAT, 1.0E-30 )
 
 #ifdef verbose_phot_extra
-            if( l .eq. 1 .and. v .eq. 1 )then
+            if( l .eq. 1 .and. v .eq. 1)then
                write(logdev, 9502)l, wavelength( V ), dgn_core, dgn_shell, bext_mode, 
      &         bscat_mode, gbar_mode, ae_nr_shell( l, mode, v ), ae_ni_shell( v, mode, v ),
      &         ae_nr_core( l, mode, iv ), ae_ni_core( l, mode, v )
@@ -833,6 +855,37 @@ C***  and contribution to the overall asymmetry factor
          END DO LAY_LOOP2         
 
       END DO LOOP_WAVE
+
+      IF( CALCULATE_EXT_550 )THEN
+!         IF( USE_ANGSTROM_INTERP .AND. FIRSTCALL )THEN
+!          WRITE(LOGDEV,'(A,2(F7.3,1X))')'Angstrom Interpolation Wavelengths: ', 
+!     &     WAVELENGTH( IWL_ANGSTROM_LOWER ), WAVELENGTH( IWL_ANGSTROM_UPPER  )
+!           WRITE(LOGDEV,'(A,2(ES12.4,1X))')'Angstrom Span, Ratio: ', 
+!     &     ANGSTROM_SPAN, ANGSTROM_RATIO
+!         END IF
+         LOOP_550NM: DO L = 1, NLAYS
+              IF( USE_ANGSTROM_INTERP )THEN
+                 ANGSTROM_EXPONENT  =  - REAL( LOG( AERO_EXTI_COEF( L,IWL_ANGSTROM_LOWER ) 
+     &                                         / AERO_EXTI_COEF( L,IWL_ANGSTROM_UPPER ) ), 8 )
+     &                              *  ANGSTROM_SPAN
+!                AERO_EXTI_550( L ) = LOG( AERO_EXTI_COEF( L,IWL_ANGSTROM_LOWER ) )
+!    &                              + REAL( ANGSTROM_EXPONENT * LOG_ANGSTROM_RATIO, 4 )
+!                AERO_EXTI_550( L ) =  EXP( AERO_EXTI_550( L ) )
+                 AERO_EXTI_550( L ) =  AERO_EXTI_COEF( L,IWL_ANGSTROM_LOWER ) 
+     &                              *  REAL( ANGSTROM_RATIO ** ANGSTROM_EXPONENT, 4 )
+!                 IF ( FIRSTCALL ) THEN
+!                     WRITE( LOGDEV,'(I3,A,7(ES12.4,1X))')L,
+!     &              ' AERO_EXT_LOWER,AERO_EXT_UPPER,EXPONENT,EXPONENT*LOG(RATIO),EXT_550_1,EXT_550_2: ',
+!     &               AERO_EXTI_COEF( L,IWL_ANGSTROM_LOWER ), AERO_EXTI_COEF( L,IWL_ANGSTROM_UPPER ),
+!     &               ANGSTROM_EXPONENT,REAL( ANGSTROM_EXPONENT * LOG_ANGSTROM_RATIO,4),AERO_EXTI_550( L ),
+!     &               AERO_EXTI_COEF( L,IWL_ANGSTROM_LOWER)*ANGSTROM_RATIO ** ANGSTROM_EXPONENT
+!                 END IF
+              ELSE
+                 AERO_EXTI_550( L ) =  AERO_EXTI_COEF( L,IWL_ANGSTROM_LOWER )
+              END IF
+         END DO LOOP_550NM
+!         IF ( FIRSTCALL ) FIRSTCALL = .FALSE.
+      END IF 
       
 #ifdef verbose_phot
       if ( col .eq. 1 .and. row .eq. 1 ) then
@@ -1003,10 +1056,18 @@ C *** initialize internal and external dimensions of aerosols
 C *** extract grid cell concentrations of aero species from CGRID into aerospc_conc 
 C *** in aero_data module
 C     Also converts surface area to wet second moment
+#ifdef sens
+         CALL EXTRACT_AERO ( CGRID( COL,ROW,L,: ), .TRUE., CGRID( COL,ROW,:,: ), .FALSE. )
+#else
          CALL EXTRACT_AERO ( CGRID( COL,ROW,L,: ), .TRUE. )
+#endif
 
 C *** extract soa concentrations from CGRID
+#ifdef sens
+         CALL EXTRACT_SOA ( CGRID( COL,ROW,L,: ), CGRID( COL,ROW,:,: ), .FALSE. )
+#else
          CALL EXTRACT_SOA ( CGRID( COL,ROW,L,: ) )
+#endif
 
 C *** Calculate geometric mean diameters and standard deviations of "wet" size distribution
          CALL GETPAR ( .FALSE. )
@@ -1335,7 +1396,7 @@ C***internal variables
 
       REAL T1F1, T2F1, T1F2, T2F2, T1F3, T2F3
       REAL T1G1, T2G1, T1G2, T2G2, T1G3, T2G3, T1G4, T2G4
-      REAL T1G5, T2G5
+      REAL T1G5, T2G5 
       REAL(8) T1P1, T2P1
 
 C***the following are for calculating the Penndorff Coefficients
@@ -1818,7 +1879,7 @@ C***internal variables
       REAL T1F1, T2F1, T1F2, T2F2, T1F3, T2F3
       REAL T1G1, T2G1, T1G2, T2G2, T1G3, T2G3, T1G4, T2G4
       REAL T1G5, T2G5
-      REAL(8) T1P1, T2P1
+      REAL(8)  T1P1, T2P1
 
 C***the following are for calculating the Penndorff Coefficients
 
@@ -1922,8 +1983,8 @@ C***FSB start calculation
       XLNSIG = LOG( SIGMA_G ) 
 
       ALPHV = DBLE(SCALE * PI * DGN * EXP( 3.0 * XLNSIG * XLNSIG ) / LAMBDA)
-      ALPHV2 = DBLE( ALPHV * ALPHV )
-      ALPHV3 = DBLE( ALPHV * ALPHV * ALPHV )
+      ALPHV2 = DBLE(ALPHV * ALPHV)
+      ALPHV3 = DBLE(ALPHV * ALPHV * ALPHV)
 
       XLNSIG2 = XLNSIG * XLNSIG
       A = 0.5 / XLNSIG2
@@ -2035,8 +2096,8 @@ C*** Calculate the Penndorf Coefficients for the small particle limit
 C***PENN1 is the analytic integral of the Pendorff formulae over
 C***   a log normal particle size distribution.
 
-         PENN1 = DBLE( THREE_PI_TWO * ( T1P1 + T2P1 ) )
-         PENN2 = DBLE( THREE_PI_TWO * T2P1 )
+         PENN1 = DBLE(THREE_PI_TWO * ( T1P1 + T2P1 ))
+         PENN2 = DBLE(THREE_PI_TWO * T2P1)
 
       END IF                    ! test of ni > 0.0
 

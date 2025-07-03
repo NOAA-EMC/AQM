@@ -20,7 +20,8 @@ if(CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
   set(CMAKE_Fortran_FLAGS "-ffree-line-length-none -ffixed-line-length-none")
 elseif(CMAKE_Fortran_COMPILER_ID MATCHES "Intel")
   set(CMAKE_Fortran_FLAGS "-extend-source 132")
-  set(CMAKE_Fortran_FLAGS_DEBUG "-O0 -g -check bounds -check uninit -fpe0 -fno-alias -ftrapuv -traceback")
+  set(CMAKE_Fortran_FLAGS_DEBUG "-O0 -g -check all -check noarg_temp_created -fpe0 -fno-alias -ftrapuv -traceback")
+  # set(CMAKE_Fortran_FLAGS_DEBUG "-O0 -g -check bounds -check uninit -fpe0 -fno-alias -ftrapuv -traceback")
 else()
   message(WARNING "Fortran compiler with ID ${CMAKE_Fortran_COMPILER_ID} will be used with CMake default options")
 endif()
@@ -93,6 +94,7 @@ target_compile_definitions(CCTM PUBLIC SUBST_FILES_ID="FILES_CTM.EXT"
                                        SUBST_PE_COMM="PE_COMM.EXT"
                                        SUBST_COMM=NOOP_COMM
                                        SUBST_BARRIER=NOOP_BARRIER
+                                       SUBST_HI_LO_BND_PE=NOOP_HI_LO_BND_PE
                                        SUBST_SUBGRID_INDEX=NOOP_SUBGRID_INDEX
                                        AQCHEM=DUMMY_AQCHEM
                                        CONVCLD_ACM=DUMMY_CONVCLD_ACM
@@ -105,7 +107,8 @@ target_compile_definitions(CCTM PUBLIC SUBST_FILES_ID="FILES_CTM.EXT"
 				       WR_INIT=DUMMY_WR_INIT
                                        verbose_aero
 				       verbose_gas
-                                       mpas
+                                       verbose_cio
+                                      # mpas
 				       _AQM_)
 
 # AQM

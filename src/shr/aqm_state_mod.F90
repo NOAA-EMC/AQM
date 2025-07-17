@@ -47,11 +47,25 @@ module aqm_state_mod
 
     real(AQM_KIND_R8), dimension(:,:,:,:), pointer :: tr       => null()
 
+!IVAI
+    ! -- canopy variables
+    real(AQM_KIND_R8), dimension(:,:),     pointer :: cfch     => null()
+    real(AQM_KIND_R8), dimension(:,:),     pointer :: cfrt     => null()
+    real(AQM_KIND_R8), dimension(:,:),     pointer :: cclu     => null()
+    real(AQM_KIND_R8), dimension(:,:),     pointer :: cpopu    => null()
+    real(AQM_KIND_R8), dimension(:,:),     pointer :: claie    => null()
+!IVAI
+
     ! -- diagnostics
     real(AQM_KIND_R8), dimension(:,:),     pointer :: aod      => null()
+!IVAI:
+    ! -- photolysis diagnostics
+    real(AQM_KIND_R8), dimension(:,:),     pointer :: coszens  => null()
+    real(AQM_KIND_R8), dimension(:,:),     pointer :: jo3o1d   => null()
+    real(AQM_KIND_R8), dimension(:,:),     pointer :: jno2     => null()
+!IVAI
 
   end type aqm_state_type
 
   public
-
 end module aqm_state_mod

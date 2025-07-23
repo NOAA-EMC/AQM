@@ -102,7 +102,6 @@ list(APPEND aqm_CCTM_files
 	${AERO}/aero_subs.F
 	${AERO}/coags.f
 	${AERO}/getpar.f
-	${AERO}/isocom.f
 	${AERO}/isofwd.f
 	${AERO}/isorev.f
 	${AERO}/isrpia.inc
@@ -198,7 +197,6 @@ list(APPEND aqm_CCTM_files
         ${PA}/PA_IRR_CTL.F
 	${PHOT}/CLOUD_OPTICS.F
 	${PHOT}/complex_number_module.F90
-	${PHOT}/CSQY_DATA.F
 	${PHOT}/OMI_1979_to_2019.dat
 	${PHOT}/opphot.F
 	${PHOT}/PHOT_MET_DATA.F
@@ -221,15 +219,6 @@ list(APPEND aqm_CCTM_files
         ${STM}/STM_VARS.F
         ${STM}/STM_MODULE.F
 	${STENEX}/noop_comm_module.f
-	${STENEX}/noop_data_copy_module.f
-	${STENEX}/noop_gather_module.f
-	${STENEX}/noop_global_max_module.f
-	${STENEX}/noop_global_min_module.f
-	${STENEX}/noop_global_sum_module.f
-	${STENEX}/noop_init_module.f
-	${STENEX}/noop_modules.f
-	${STENEX}/noop_slice_module.f
-	${STENEX}/noop_term_module.f
 	${STENEX}/noop_util_module.f
 	${UTIL}/findex.f
         ${UTIL}/log_header.F
@@ -243,7 +232,7 @@ list(APPEND aqm_CCTM_files
         ${DRIV}/ELMO_PROC.F
         ${DRIV}/ELMO_DATA.F
 	${VDIFF}/aero_sedv.F
-        ${VDIFF}/aero_depv.F
+	${VDIFF}/aero_depv.F
 	${VDIFF}/conv_cgrid.F
 	${VDIFF}/matrix1.F
 	${VDIFF}/opddep.F
@@ -263,6 +252,9 @@ list(APPEND aqm_CCTM_files
 	${localCCTM}/ASX_DATA_MOD.F
 	${localCCTM}/DUST_EMIS.F
 	${localCCTM}/AERO_PHOTDATA.F
+	${localCCTM}/noop_modules.f
+	${localCCTM}/CSQY_DATA.F
+	${localCCTM}/isocom.f
 	#IVAI Sub-canopy effects----
 	${localCCTM}/phot.F
         ${localCCTM}/PHOT_MOD.F

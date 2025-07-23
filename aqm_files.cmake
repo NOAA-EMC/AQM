@@ -232,7 +232,6 @@ list(APPEND aqm_CCTM_files
         ${DRIV}/ELMO_PROC.F
         ${DRIV}/ELMO_DATA.F
 	${VDIFF}/aero_sedv.F
-	${VDIFF}/aero_depv.F
 	${VDIFF}/conv_cgrid.F
 	${VDIFF}/matrix1.F
 	${VDIFF}/opddep.F
@@ -255,6 +254,7 @@ list(APPEND aqm_CCTM_files
 	${localCCTM}/noop_modules.f
 	${localCCTM}/CSQY_DATA.F
 	${localCCTM}/isocom.f
+	${localCCTM}/aero_depv.F
 	#IVAI Sub-canopy effects----
 	${localCCTM}/phot.F
         ${localCCTM}/PHOT_MOD.F

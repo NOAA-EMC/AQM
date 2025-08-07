@@ -40,7 +40,7 @@ target_include_directories(shr PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_
 				       $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src/model>)
 target_compile_definitions(shr PUBLIC SUBST_CONST="CONST.EXT" 
 				      SUBST_FILES_ID="FILES_CTM.EXT")
-target_link_libraries(shr PRIVATE esmf)
+target_link_libraries(shr PRIVATE ESMF::ESMF)
 
 # src/drv
 add_library(drv OBJECT ${aqm_drv_files})
@@ -52,14 +52,14 @@ target_include_directories(drv PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_
                                        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src/io/aqmio>
                                        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src/model>)
 target_compile_definitions(drv PUBLIC verbose_driver)
-#target_link_libraries(drv PRIVATE shr CCTM esmf)
+#target_link_libraries(drv PRIVATE shr CCTM ESMF::ESMF)
 target_link_libraries(drv PRIVATE shr CCTM)
 
 # src/io/aqmio
 add_library(aqmio OBJECT ${aqm_aqmio_files})
 set_target_properties(aqmio PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/mod)
 target_include_directories(aqmio PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/mod>)
-target_link_libraries(aqmio PRIVATE esmf)
+target_link_libraries(aqmio PRIVATE ESMF::ESMF)
 
 # src/io/ioapi
 add_library(ioapi OBJECT ${aqm_ioapi_files})
@@ -67,7 +67,7 @@ set_target_properties(ioapi PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_
 target_include_directories(ioapi PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/mod>
                                          $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/model/CMAQ/CCTM/src/ICL/fixed/filenames>)
 target_compile_definitions(ioapi PUBLIC SUBST_FILES_ID="FILES_CTM.EXT")
-target_link_libraries(ioapi PRIVATE esmf)
+target_link_libraries(ioapi PRIVATE ESMF::ESMF)
 
 # custom targets
 add_custom_target(aqm_mosaic
@@ -121,7 +121,7 @@ set_target_properties(aqm PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BI
 add_library(aqm::aqm ALIAS aqm)
 target_include_directories(aqm PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/mod>
                                       $<INSTALL_INTERFACE:mod>)
-target_link_libraries(aqm PUBLIC esmf NetCDF::NetCDF_Fortran)
+target_link_libraries(aqm PUBLIC ESMF::ESMF NetCDF::NetCDF_Fortran)
 list(APPEND LIB_TARGETS aqm)
 
 ###############################################################################

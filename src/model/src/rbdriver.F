@@ -33,6 +33,7 @@ C                                    RBSOLVER
 C                                    FIND_DEGRADED
 C                                    INIT_DEGRADE
 C                                    FINAL_DEGRADE
+C                                    CANOPY_TRANSFER
 C
 C  Revision History: Prototype created by Jerry Gipson, August, 2004
 C                    Based on the solver described by Sandu et al
@@ -44,28 +45,34 @@ C                    concepts originally developed by M. Jacobson
 C                    for SMVGEAR (Atm. Env., Vol 28, No 2, 1994).
 C                    Adapted from Subroutine CHEM in CMAQ SMVGEAR
 C
-C                    31 Jan 05 J.Young: dyn alloc - establish both horizontal
+C   31 Jan 05 J.Young: dyn alloc - establish both horizontal
 C                    & vertical domain specifications in one module (GRID_CONF)
-C                    29 Jul 05     WTH: Added IF blocks that call degrade 
-C                                       routines if MECHNAME contains 'TX' 
-C                                       substring.
-C                    28 Jun 10 J.Young: convert for Namelist redesign
-C                    29 Mar 11 S.Roselle: Replaced I/O API include files
-C                               with UTILIO_DEFN
-C                    31 Aug 11 B.Hutzell revised method that determines calling
-C                              degrade routine
-C                    29 Sep 11 D.Wong: incorporated twoway model implementation
-C                    18 Jan 13 B.Hutzell: 1) added using heteorogeneous rate constants
+C   29 Jul 05     WTH: Added IF blocks that call degrade 
+C                    routines if MECHNAME contains 'TX' substring.
+C   28 Jun 10 J.Young: convert for Namelist redesign
+C   29 Mar 11 S.Roselle: Replaced I/O API include files with UTILIO_DEFN
+C   31 Aug 11 B.Hutzell revised method that determines calling degrade routine
+C   29 Sep 11 D.Wong: incorporated twoway model implementation
+C   18 Jan 13 B.Hutzell: 1) added using heteorogeneous rate constants
 C                    by using function in AEROSOL_CHEMISTRY module,
-C                    15 Jul 14 B.Hutzell: 1) replaced mechanism include files with 
+C   15 Jul 14 B.Hutzell: 1) replaced mechanism include files with 
 C                    RXNS_DATA module, 2) replaced call to CALCLK with CALC_RCONST in 
 C                    RXNS_FUNCTION module, 3) enabled reactions between all species 
 C                    types by using unit conversion factors and 4) revised usage for 
 C                    INIT_DEGRADE and FINAL_DEGRADE routines
-C                    02 Dec 14 B.Hutzell 1) added terrestrial data to conduct surface
+C   02 Dec 14 B.Hutzell 1) added terrestrial data to conduct surface
 C                    dependent reactions and 2) modified the call CALC_RCONST routine
-C                    16 Sep 16 J.Young: update for inline procan (IRR)
-C                    21 Mar 22 G . Sarwar: updated simple halogen chemistry 
+C   16 Sep 16 J.Young: update for inline procan (IRR)
+C   21 Mar 22 G . Sarwar: updated simple halogen chemistry
+C   01 Dec 24 I.Ivanova:
+C         - Split the RB solver on 3 sub-layer canopy layers to account for the
+C           the canopy shading effect on photolysis attenuation.
+C           based on Makar, P. A. et al. (2017) "The effects of forest canopy shading
+C           and turbulence on boundary layer ozone." Nat. Commun. 8, 15243
+C           doi: 10.1038/ncomms15243 (2017).
+C         - add 2m meteorological fields for initializing the sub-canopy layers
+C   15 Dec 24 I.Ivanova
+C         - Add ozone diagnostics
 C**********************************************************************
 
       USE RXNS_DATA
@@ -74,10 +81,11 @@ C**********************************************************************
       USE RBDATA                ! ROS3 solver data
       USE CGRID_SPCS            ! CGRID mechanism species
       USE UTILIO_DEFN
-      USE PHOT_MOD, Only: INIT_PHOT_SHARED, RJ     ! photolysis rate, in-line module
+      USE PHOT_MOD, Only: INIT_PHOT_SHARED, RJ,                    ! photolysis rate, in-line module
+     &                    RJ_CAN, LO3O1D, O3_TEND, O3_TEND_CAN     !IVAI
       USE AEROSOL_CHEMISTRY
-!     USE DEGRADE_SETUP_TOX, ONLY : NCELLS, N_REACT, RXTANT_MAP, 
-      USE DEGRADE_ROUTINES,  ONLY : NCELLS, N_REACT, RXTANT_MAP, 
+!     USE DEGRADE_SETUP_TOX, ONLY : NCELLS, N_REACT, RXTANT_MAP
+      USE DEGRADE_ROUTINES,  ONLY : NCELLS, N_REACT, RXTANT_MAP,
      &                              ICELL_WRITE, WRITE_CELL, WRITE_BLOCK,
      &                              FIND_DEGRADED, INIT_DEGRADE_BLK, FINAL_DEGRADE_BLK
       USE PA_DEFN, Only: LIRR   ! Process Anaylsis control and data variable
@@ -87,7 +95,47 @@ C**********************************************************************
       USE DDM3D_CHEM
       Use DDM3D_DEFN, Only: DATENUM, STARTDATE, IPT, IDATE, HIGH, NP, NPMAX, CKTIME
 #endif
-      
+
+!IVAI
+      use can_mask
+
+! =====================
+!     contains: init_can_mask, get_can_mask
+! Out:
+!      FRT_MASK         ( get_can_mask)
+! =====================
+
+      use can_levs_defn
+
+! =====================
+! In:  CONC
+!
+! Out: ZMID_CAN  (:,:,NLAYT)    (get_can_levs)
+!      ZMOM_CAN  (:,:,NLAYT+1)
+!      TA_CAN    (:,:,NLAYT)
+!      QV_CAN
+!      PRES_CAN
+!      DENS_CAN
+!      CONC_MOD        <= CONC       ! ALL CANOPY & NON-CANOPY COLUMNS !
+!      CONC_CAN(1,2,3) <= CONC(1)   ! ALL CANOPY & NON-CANOPY COLUMNS !
+!      RJ_CAN
+! =====================
+
+      use can_trans_mod
+
+! =====================
+!     call canopy_transfer
+!  In:
+!   CONC    (:,:, NLAYS, NSPCSD) :  Chemical tracers conc. ppmv on model levels
+!   CONC_MOD(:,:, NLAYS, NSPCSD) :  Chemical tracers conc. ppmv on model levels
+!
+!  Output: (canopy_transfer)
+!   CONC_CAN(:,:, NLAYT, NSPCSD) :  Chemical tracers conc. ppmv on combined canopy+resolved layers
+!                                    ! CANOPY COLUMNS ONLY !
+! ================================
+!IVAI
+
+
       IMPLICIT NONE 
 
 C..Includes:
@@ -102,6 +150,11 @@ C..Arguments:
       INTEGER JDATE                     ! Current date (YYYYDDD)
       INTEGER JTIME                     ! Current time (HHMMSS)
       INTEGER TSTEP( 3 )                ! Time step vector (HHMMSS)
+! IVAI:
+! TSTEP(1) = local output step
+! TSTEP(2) = sciproc sync. step (chem)
+! TSTEP(3) = twoway model time step w.r.t. wrf time
+! IVAI
 
 C..Parameters:
 
@@ -112,6 +165,7 @@ C..Parameters:
       REAL,    PARAMETER :: PA2ATM    = 1.0 / STDATMPA  ! Pascal to atm conv fac
       REAL,    PARAMETER :: MAOMV     = MWAIR / MWWAT   ! Mol Wt of air over Mol Wt of water
       REAL,    PARAMETER :: QV_TO_PPM = CONCOFM * MAOMV ! factor to convert water wapor into ppm
+
 C..External Functions:
 
 C..Local Variables:
@@ -121,6 +175,11 @@ C..Local Variables:
       LOGICAL, SAVE :: LIRRBLK         ! Flag for IRR to be done for block
 
       INTEGER, SAVE :: NOXYZ           ! Total number of grid cells
+
+! IVAI
+      INTEGER N                        ! Reaction rates index
+      INTEGER, SAVE :: NOXYZ_CAN       ! Total number of grid cells in canopy layers
+! IVAI
 
       REAL,    SAVE :: AIRFC           ! Factor to convert gms air to ppm
 
@@ -158,11 +217,11 @@ C..Local Variables:
       INTEGER ROW             ! Row index
       INTEGER SPC             ! Species loop index
       INTEGER VAR             ! Variable number on I/O API file
-      
+
       INTEGER NUMB_CELLS
 
       INTEGER, ALLOCATABLE, SAVE :: IRRCELL( : )   ! Cell No. of an IRR cell
-       
+
       REAL, ALLOCATABLE, SAVE :: SEAICE ( :, : )          ! fractional seaice cover, [-] 
 
 !      REAL, ALLOCATABLE, SAVE :: DENSA_J( :, :, : )      ! Cell density (Kg/m**3)
@@ -170,14 +229,18 @@ C..Local Variables:
       REAL, ALLOCATABLE, SAVE :: PRES   ( :, :, : )      ! Cell pressure (Pa)
       REAL, ALLOCATABLE, SAVE :: QV     ( :, :, : )      ! Cell water vapor (Kg/Kg air)
       REAL, ALLOCATABLE, SAVE :: TA     ( :, :, : )      ! Cell temperature (K)
+!IVAI
+      REAL, ALLOCATABLE, SAVE :: TEMP2( :, :)             ! 2-m temperature (K)
+      REAL, ALLOCATABLE, SAVE :: Q2   ( :, :)             ! 2-m water vapor (Kg/Kg air)
+!IVAI
 
-      REAL, ALLOCATABLE, SAVE :: SEAWATER_ZONE   ( :,: )          ! fractional area of OPEN+SURF  
+      REAL, ALLOCATABLE, SAVE :: SEAWATER_ZONE   ( :,: )          ! fractional area of OPEN+SURF
 
 
       REAL( 8 ), ALLOCATABLE, SAVE :: BLKHET( :, : )
 #ifdef rbstats
 
-      CHARACTER( 16 ), SAVE              :: CTM_RBSTATS_1 = 'CTM_RBSTATS_1' 
+      CHARACTER( 16 ), SAVE              :: CTM_RBSTATS_1 = 'CTM_RBSTATS_1'
       CHARACTER( 16 ), ALLOCATABLE, SAVE :: VSTATS( : )        !
 
       INTEGER, SAVE                      :: WSTEP = 0     
@@ -185,8 +248,16 @@ C..Local Variables:
       INTEGER  EDATE, ETIME
 
       REAL     ALLOCATABLE, SAVE         :: STATOUT( :, :, : )
-
 #endif
+
+!IVAI
+      INTEGER       :: KOUNT
+
+      REAL, ALLOCATABLE, SAVE:: o3_old     ( :, :, : )      ! o3 before gas-phase
+      REAL, ALLOCATABLE, SAVE:: o3_new     ( :, :, : )      ! o3 after  gas-phase
+      REAL, ALLOCATABLE, SAVE:: o3_old_can ( :, :, : )
+      REAL, ALLOCATABLE, SAVE:: o3_new_can ( :, :, : )
+!IVAI
 
       INTERFACE
          SUBROUTINE RBSOLVER ( JDATE, JTIME, CHEMSTEP, NCSP,
@@ -200,7 +271,7 @@ C..Local Variables:
          END SUBROUTINE RBSOLVER
          SUBROUTINE HETCHEM_UPDATE_AERO( CGRID )
            REAL, POINTER :: CGRID( :,:,:,: )    !  species concentration in cell
-         END SUBROUTINE HETCHEM_UPDATE_AERO      
+         END SUBROUTINE HETCHEM_UPDATE_AERO
       END INTERFACE
 
 C**********************************************************************
@@ -233,24 +304,40 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
             CALL M3EXIT( PNAME, JDATE, JTIME, MSG, XSTAT1 )
          END IF
 
+! IVAI: NLAYC/NLAYT defined in GRID_CONF before RBINIT
+
          CALL RBINIT
          CALL RBSPARSE( )
          CALL RESET_SPECIES_POINTERS( IOLD2NEW )
 
          NOXYZ = NCOLS * NROWS * NLAYS
 
+! IVAI
+         NOXYZ_CAN = NCOLS * NROWS * (NLAYS + NLAYC)
+!         WRITE( LOGDEV, *) 'RBDRIVER: NLAYC NLAYT = ', NLAYC, NLAYT
+! IVAI
+
 C...Initialize and report data
 
+!NB. 
+! NOXYZ=16384   NBLKS=328       (BLKSIZE=50)
+! BLKLEN(1)=50  BLKLEN( NBLKS )=34 (last block)
          WRITE( LOGDEV, 92020 ) NOXYZ, BLKSIZE, NBLKS, BLKLEN( 1 ), BLKLEN( NBLKS )
+
+! IVAI
+! NOXYZ= 17152  NBLKS_CAN= 344  (BLKSIZE=50)
+! BLKLEN_CAN(1)=50   BLKLEN_CAN( NBLKS_CAN )= 2 (last block)
+!         WRITE( LOGDEV, 92020 ) NOXYZ_CAN, BLKSIZE, NBLKS_CAN, BLKLEN_CAN( 1 ), BLKLEN_CAN( NBLKS_CAN )
+! IVAI
 
          WRITE( LOGDEV, 92040 ) GLBL_RTOL, GLBL_ATOL
 
 C.. Get fractional seawater coverage from the OCEAN file.
          ALLOCATE( SEAWATER_ZONE( NCOLS, NROWS ) )
-         
+
          DO ROW = 1, NROWS
-            DO COL = 1, NCOLS                
-                 SEAWATER_ZONE( COL,ROW ) =  OCEAN( COL,ROW ) + SZONE( COL,ROW )                  
+            DO COL = 1, NCOLS
+                 SEAWATER_ZONE( COL,ROW ) =  OCEAN( COL,ROW ) + SZONE( COL,ROW )
              END DO
          END DO
 
@@ -261,7 +348,15 @@ C.. Get fractional seawater coverage from the OCEAN file.
 
          ALLOCATE( DENS( NCOLS, NROWS, NLAYS ), PRES( NCOLS, NROWS, NLAYS ),
      &             QV  ( NCOLS, NROWS, NLAYS ), TA  ( NCOLS, NROWS, NLAYS ),
-     &             SEAICE( NCOLS, NROWS ) )
+     &             SEAICE( NCOLS, NROWS ),
+! IVAI
+! 2D
+     &             Q2    ( NCOLS, NROWS ),       TEMP2   ( NCOLS, NROWS ),
+! 3D
+     &             o3_old     ( NCOLS, NROWS, NLAYS ), 
+     &             o3_new     ( NCOLS, NROWS, NLAYS ), 
+     &             o3_old_can ( NCOLS, NROWS, NLAYT ),
+     &             o3_new_can ( NCOLS, NROWS, NLAYT ))
 
          ALLOCATE( IRRCELL( BLKSIZE ) )
          IRRCELL = 0
@@ -334,7 +429,7 @@ C Determine whether DEGRADE rountines are needed.
          IF( CALL_DEG ) THEN
             WRITE( LOGDEV, * ) 'DEGRADE ROUTINES USED'
             WRITE( LOGDEV, * ) 'Mechanism contains degraded species'
-#ifdef verbose_gas         
+#ifdef verbose_gas
             ALLOCATE( WRITE_CELL( BLKSIZE ) )
          ELSE
             WRITE( LOGDEV, * ) 'DEGRADE ROUTINES not USED'
@@ -363,6 +458,12 @@ C For higher order sensitivities
 #endif
       END IF      ! First call
 
+!IVAI:
+      IF ( CANOPY_SHADE ) THEN
+         WRITE( LOGDEV, * ) 'CHEM: Using in-line canopy shading option'
+      END IF
+!IVAI
+
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 C  Start of integration driver after first call
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
@@ -377,7 +478,7 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       ITMSTEP = TIME2SEC( TSTEP( 2 ) )
       CHEMSTEP = REAL( ITMSTEP, 8 ) / 60.0D0
       CALL NEXTIME( MIDDATE, MIDTIME, SEC2TIME( ITMSTEP / 2 ) )
-
+ 
 C.. Get fractional seaice coverage from the METCRO2D file.
 
       CALL INTERPOLATE_VAR ('SEAICE', MIDDATE, MIDTIME, SEAICE)
@@ -395,15 +496,127 @@ C.. Get specific humidity in Kg H2O / Kg air
 C.. Get pressure in Pascals
       CALL INTERPOLATE_VAR ('PRES', MIDDATE, MIDTIME, PRES)
 
+!IVAI
+! Get 2-m temperature in K
+      CALL INTERPOLATE_VAR ('TEMP2', MIDDATE, MIDTIME, TEMP2)
+
+! Get 2-m Specific Humidity in Kg H2O / Kg air
+      CALL INTERPOLATE_VAR ('Q2', MIDDATE, MIDTIME, Q2)
+!IVAI
+
 C.. Get Heterogeneous Rates using Aerosol Surface Area. Also Store
 C   a snapshot of the aerosol surface area so that it can be
 C   appropriately updated after the solver finds a solution.
 
       CALL HETCHEM_RATES( TA, PRES, QV, CONC, DENS )
 
+!      WRITE( LOGDEV, *) , 'RBDRIVER: NBLKS, NBLKS_CAN= ', NBLKS, NBLKS_CAN
+
+! IVAI: NB. Species indices defined ! in "rbdata_mod", for O3 = 4)
+! Species before gas-phase tendencies added
+      o3_old     (:,:,:) = CONC    (:,:,:,4) ! O3 = 4
+!IVAI
+
+! Initialize canopy levels 
+      If ( CANOPY_SHADE  ) Then
+
+c++++++++++++++++++++++++Debug section++++++++++++++++++++++++++++++++++
+      IF (.FALSE.) THEN    ! ( CANOPY_SHADE  )
+      DO R = 1, NROWS
+         DO C = 1, NCOLS
+
+            KOUNT = 0
+            IF ( FRT_MASK(C,R) > 0. ) THEN
+
+            IF ( KOUNT < 4 )  THEN
+
+               DO L = 1, 4 !NLAYT
+
+               WRITE( LOGDEV, '( A, 2I4, I3, 1X, I7, 1X, I6 ) ' )
+     &              'Canopy Debug output for col/row/lev/date/time:',
+     &               C, R, L, JDATE, JTIME
+
+               WRITE( LOGDEV,  '( A, 1X, 1PE13.5, 1PE13.5, 1PE13.5, 1PE13.5)' )
+     &         'PHY CANOPY ', TA_CAN(C,R, L), PRES_CAN(C,R, L), DENS_CAN(C,R, L), QV_CAN(C,R, L)
+
+               END DO ! NLAYT
+
+            END IF ! KOUNT
+
+! Print up to KOUNT number of canopy columns
+               KOUNT = KOUNT + 1
+
+            END IF ! FRT_MASK
+
+         END DO
+      END DO
+      END IF ! .FALSE. & CANOPY_SHADE 
+c++++++++++++++++++++++++Debug section++++++++++++++++++++++++++++++++++
+
+!!!!!!!!!!!!!!!!!
+! !!! TESTING !!! Overwrite met3d & cgrid calculated in get_can_levs (phot)
+!!!!!!!!!!!!!!!!! 
+! NB. Comment out to use values from canopy_transfer "resolved_to_canopy"
+!
+!... First, carry over original model values for the matching layers
+!     TA_CAN   (:,:,NLAYC+1:NLAYT)   = TA  (:,:,1:NLAYS)
+!     QV_CAN   (:,:,NLAYC+1:NLAYT)   = QV  (:,:,1:NLAYS)
+!     PRES_CAN (:,:,NLAYC+1:NLAYT)   = PRES(:,:,1:NLAYS)
+!     DENS_CAN (:,:,NLAYC+1:NLAYT)   = DENS(:,:,1:NLAYS)
+
+! Overwrite CONC_can calculated in canopy_transfer "resolved_to_canopy"
+!   NB. Comment out to use values from canopy_transfer "resolved_to_canopy"
+!     CONC_CAN(:,:,NLAYC+1:NLAYT,:) = CONC(:,:,1:NLAYS,:)
+
+!... Initialize the canopy layers with 1hy layer values
+!     TA_CAN(:,:,3) = TA( :,:,1) ! using values from get_can_levs when commented out
+!     TA_CAN(:,:,2) = TA( :,:,1)
+!     TA_CAN(:,:,1) = TA( :,:,1)
+
+!     QV_CAN(:,:,3) = QV( :,:,1)
+!     QV_CAN(:,:,2) = QV( :,:,1)
+!     QV_CAN(:,:,1) = QV( :,:,1)
+
+!     PRES_CAN(:,:,3) = PRES( :,:,1)
+!     PRES_CAN(:,:,2) = PRES( :,:,1)
+!     PRES_CAN(:,:,1) = PRES( :,:,1)
+
+!     DENS_CAN(:,:,3) = DENS( :,:,1)
+!     DENS_CAN(:,:,2) = DENS( :,:,1)
+!     DENS_CAN(:,:,1) = DENS( :,:,1)
+
+! NB. Must initialize all canopy & non-canopy columns RJ_CAN & KHETERO_CAN
+
+!... First, carry over original model values for the matching layers
+! NB. KHETERO_CAN(NHETERO,NCOLS, NROWS, NLAYT) is real(8)
+      KHETERO_CAN(:,:,:,NLAYC+1:NLAYT)   = KHETERO(:,:,:,1:NLAYS) ! real(8)
+
+!... Initialize the canopy layers with 1hy layer values
+      KHETERO_CAN(:,:,:,3) = KHETERO(:,:,:,1)  ! real(8)
+      KHETERO_CAN(:,:,:,2) = KHETERO(:,:,:,1)  ! real(8)
+      KHETERO_CAN(:,:,:,1) = KHETERO(:,:,:,1)  ! real(8)
+
+! Overwrite CONC_can calculated in canopy_transfer "resolved_to_canopy"
+! NB. Comment out to use values from canopy_transfer "resolved_to_canopy"
+!     CONC_CAN(:,:,3,:) = CONC(:,:,1,:)
+!     CONC_CAN(:,:,2,:) = CONC(:,:,1,:)
+!     CONC_CAN(:,:,1,:) = CONC(:,:,1,:)
+
+!!!!!!!!!!!!!!!!!!!!!
+! !!! END TESTING !!! overwrite met3d & cgrid calculated in get_can_levs
+!!!!!!!!!!!!!!!!!!!!!
+
+! NB. Species indices defined ! in "rbdata_mod", for O3 = 4)
+! Species before gas-phase tendencies added
+      o3_old_can (:,:,:) = CONC_CAN(:,:,:,4) ! O3 = 4
+
+      End If  !CANOPY_SHADE
+
+!IVAI
+
 #ifdef sens
 C Set the date and hour counters used in sensitivity calls
-      DATENUM = 1 + JDATE - STARTDATE 
+      DATENUM = 1 + JDATE - STARTDATE
 
 C For reaction rate sensitivities
       DO NP = 1, NPMAX
@@ -426,14 +639,34 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
          NORDCELL( NCELL ) = NCELL
       END DO
 
+!IVAI: NB. Same LORDERING flag applies on canopy layers
+!NB.  NORDCELL = 1 ... 16384
+!     write( logdev,* ) 'RBDRIVER: NORDCELL = ', NORDCELL(:)
+
+      IF (CANOPY_SHADE) THEN
+
+      DO NCELL = 1, NOXYZ_CAN
+         NORDCELL_CAN( NCELL ) = NCELL
+      END DO
+
+!NB. NORDCELL_CAN = 1... 17152
+!     write( logdev,* ) 'RBDRIVER: NORDCELL_CAN = ', NORDCELL_CAN(:)
+
+      End If  !CANOPY_SHADE
+
+!IVAI
+
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 C  Top of loop over blocks. This loop will be done once if
 C  no reordering, twice if reordering is required
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 100   CONTINUE
 
+      write( logdev,* ) 'driver-lordering,lreorder: ', lordering, lreorder
+
       ERRMX2 = 0.0D0
 
+!      WRITE( LOGDEV, *) , 'RBDRIVER 500: NBLKS= ', NBLKS
       DO 500 BLK = 1, NBLKS
          BLKID = BLK
          NUMCELLS = BLKLEN( BLK )
@@ -447,7 +680,7 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 C  Put the grid cell physical data in the block arrays, converting
 C  pressure to atmospheres, water vapor to ppm, emissions to ppm/min,
-C  assigning seawater values  
+C  assigning seawater values
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
          DO NCELL = 1, NUMCELLS
@@ -460,7 +693,7 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
             BLKSVOL( NCELL ) = 1.0 /  DENS( COL,ROW,LEV )
             BLKPRES( NCELL ) = REAL( PA2ATM * PRES( COL, ROW, LEV ), 8 )
             BLKCH2O( NCELL ) = REAL( MAX( QV_TO_PPM * QV( COL,ROW,LEV ), 0.0 ), 8)
-            BLKSEAWATER (NCELL)  = MAX ( 0.0, ( SEAWATER_ZONE( COL,ROW ) - SEAICE (COL,ROW) ) )            
+            BLKSEAWATER (NCELL)  = MAX ( 0.0, ( SEAWATER_ZONE( COL,ROW ) - SEAICE (COL,ROW) ) )
          END DO
 
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
@@ -494,16 +727,37 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
             COL = CCOL( CELLNUM )   ! wrong order
             ROW = CROW( CELLNUM )
             LEV = CLEV( CELLNUM )
+!IVAI
+!              IF (LEV .EQ. 1)
+!    &         WRITE( LOGDEV, '( A, 2I4, I3, 1X, I7, 1X, I6 ) ' )
+!    &              'Canopy Debug output for col/row/lev/date/time:',
+!    &               COL, ROW, LEV, JDATE, JTIME
+!IVAI
             DO NPH = 1, NHETERO
                BLKHET( NCELL, NPH ) =  KHETERO( NPH, COL, ROW, LEV )
             END DO
             DO NPH = 1, NPHOTAB
                RJBLK( NCELL,NPH ) = REAL( RJ( COL,ROW,LEV,NPH ), 8 )
                IF ( RJBLK( NCELL, NPH ) .GT. 0.0D0 ) LSUNLIGHT = .TRUE.
+!IVAI
+!              IF (LEV .EQ. 1)
+!    &         WRITE( LOGDEV,  '( A, I3, 1X, 1PE13.5, E13.5 )' )
+!    &        'RJ ', NPH, RJBLK( NCELL,NPH ), RJ( COL,ROW,LEV,NPH )
+!IVAI
             END DO                         
          END DO
          
          CALL CALC_RCONST( BLKTEMP, BLKPRES, BLKCH2O, RJBLK, BLKHET, LSUNLIGHT, BLKSEAWATER, RKI, NUMCELLS )
+
+! IVAI
+!        write(logdev,*) 'RBDRIVER 500: Canopy Debug output from RCONST '
+!        DO NCELL = 1, NUMCELLS
+!          DO N = 1, N_RXNS
+!            WRITE( LOGDEV, '( A, I3, 1X, 1PE13.5 )' )
+!    &                     'RKI ', N, RKI( NCELL, N )
+!          END DO
+!        END DO
+! IVAI
 
          IF ( LSUNLIGHT ) THEN
             NCSP = NCS
@@ -545,9 +799,11 @@ C  update cell concentrations for degradation routines
             END DO
 #endif
 
+!IVAI NB. Not used
+            WRITE( LOGDEV, *) 'RBDRIVER 500: BLKID = ', BLKID, NUMCELLS !IVAI
 C..initialize degradation routines
-            NCELLS = NUMCELLS 
-            CALL INIT_DEGRADE_BLK( Y_DEGRADE, BLKTEMP, BLKDENS, BLKPRES, BLKCH2O, RJBLK, 
+            NCELLS = NUMCELLS
+            CALL INIT_DEGRADE_BLK( Y_DEGRADE, BLKTEMP, BLKDENS, BLKPRES, BLKCH2O, RJBLK,
      &                         JDATE, JTIME )
 
          END IF
@@ -612,7 +868,7 @@ C  Update CGRID based on the degradation routines
 #ifdef sens
 
             NUMB_CELLS = NUMCELLS
-            
+
             DO NCELL = 1, NUMB_CELLS
                DO IRXN = 1, NRXNS
                   SRK( IRXN ) = RKI( NCELL,IRXN )
@@ -661,13 +917,375 @@ C  Update CGRID based on the degradation routines
             END DO
 
 #endif
-                      
+                     
             IF ( LIRRBLK ) CALL PA_IRR_BLKENDC ( OFFSET, CCOL, CROW, CLEV,
      &                                           NORDCELL, NIRRCLS, IRRCELL )
 
          END IF
 
 500   CONTINUE
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!IVAI
+
+! Species after gas-phase (canopy off)
+      o3_new  (:,:,:) = CONC(:,:,:,4)
+
+! Gas-phase tendency  ppmv sec-1 (canopy off)
+      o3_tend (:,:,:) = ( o3_new(:,:,:) -  o3_old(:,:,:)) /
+     &                  REAL (CHEMSTEP, 4) ! ppm  sec-1
+
+!IVAI
+
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+C  Top of canopy loop over blocks. This loop will be done once if
+C  no reordering, twice if reordering is required
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+
+200   CONTINUE
+
+      IF ( CANOPY_SHADE ) THEN
+
+      write( logdev,* ) 'Canopy driver-lordering,lreorder: ', lordering, lreorder
+
+!IVAI
+      WRITE( LOGDEV, *) , 'RBDRIVER 555: CANOPY LOOP BEGINS NBLKS_CAN= ', NBLKS_CAN
+!IVAI
+
+      ERRMX2_CAN = 0.0D0
+
+! Temporary loop over NBLKS instead of NBLKS_CAN
+      DO 555 BLK = 1, NBLKS
+!     DO 555 BLK = 1, NBLKS_CAN
+         BLKID = BLK
+         NUMCELLS = BLKLEN( BLK )
+         OFFSET = BLKCNO( BLK )
+!        NUMCELLS = BLKLEN_CAN( BLK )
+!        OFFSET = BLKCNO_CAN( BLK )
+
+!IVAI
+!        WRITE( LOGDEV, *) 'RBDRIVER 555: OFFSET = ', BLKID, NUMCELLS, OFFSET
+!IVAI
+
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+C  Put the grid cell physical data in the block arrays, converting
+C  pressure to atmospheres, water vapor to ppm, emissions to ppm/min,
+C  assigning seawater values
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+
+         DO NCELL = 1, NUMCELLS
+            CELLNUM = NORDCELL( OFFSET + NCELL )
+            COL = CCOL( CELLNUM )
+            ROW = CROW( CELLNUM )
+            LEV = CLEV( CELLNUM )
+!IVAI
+!           CELLNUM = NORDCELL_CAN( OFFSET + NCELL )
+!           COL = CCOL_CAN( CELLNUM )
+!           ROW = CROW_CAN( CELLNUM )
+!           LEV = CLEV_CAN( CELLNUM )
+!           write( LOGDEV, *) 'RBDRIVER 555: COL,ROW,LEV= ', COL,ROW,LEV,CELLNUM, NUMCELLS
+!IVAI
+            BLKTEMP( NCELL ) = REAL(   TA_CAN( COL,ROW,LEV ), 8 )
+            BLKDENS( NCELL ) = REAL( DENS_CAN( COL,ROW,LEV ), 8 )
+            BLKSVOL( NCELL ) = REAL( 1.0 / DENS_CAN( COL,ROW,LEV ), 8 )
+            BLKPRES( NCELL ) = REAL( PA2ATM * PRES_CAN( COL, ROW, LEV ), 8 )
+            BLKCH2O( NCELL ) = REAL( MAX( QV_TO_PPM * QV_CAN( COL,ROW,LEV ), 0.0 ), 8)
+            BLKSEAWATER (NCELL)  = MAX ( 0.0, ( SEAWATER_ZONE( COL,ROW ) - SEAICE (COL,ROW) ) )
+
+         END DO
+
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+C  Put the grid cell concentrations in the block arrays
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+         DO ISP = 1, ISCHANG( NCS )
+            SPC    = CGRID_INDEX( ISP )
+!            SPC    = ISP
+            ISPNEW = IOLD2NEW( ISP,NCS )
+            DO NCELL = 1, NUMCELLS
+               CELLNUM = NORDCELL( OFFSET + NCELL )
+               COL = CCOL( CELLNUM )
+               ROW = CROW( CELLNUM )
+               LEV = CLEV( CELLNUM )
+               IF( CONVERT_CONC( ISP ) )THEN
+                   Y( NCELL,ISPNEW ) = REAL( MAX( FORWARD_CONV( ISP ) * BLKSVOL( NCELL )
+     &                               *       CONC_CAN( COL,ROW,LEV,SPC ), CONCMIN), 8 )
+               ELSE
+                   Y( NCELL,ISPNEW ) = REAL( MAX( CONC_CAN( COL,ROW,LEV,SPC ), CONCMIN), 8 )
+               END IF
+            END DO
+         END DO
+
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+C   Get photolytic, heteorogeneous and thermal rate constants & call solver
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+         LSUNLIGHT = .FALSE.
+
+         DO NCELL = 1, NUMCELLS
+            CELLNUM = NORDCELL( OFFSET + NCELL )
+            COL = CCOL( CELLNUM )   ! wrong order
+            ROW = CROW( CELLNUM )
+            LEV = CLEV( CELLNUM )
+            DO NPH = 1, NHETERO
+               BLKHET( NCELL, NPH ) =  KHETERO_CAN( NPH, COL, ROW, LEV )
+            END DO
+            DO NPH = 1, NPHOTAB
+               RJBLK( NCELL,NPH ) = REAL( RJ_CAN( COL,ROW,LEV,NPH ), 8 )
+               IF ( RJBLK( NCELL, NPH ) .GT. 0.0D0 ) LSUNLIGHT = .TRUE.
+            END DO
+         END DO
+
+         CALL CALC_RCONST( BLKTEMP, BLKPRES, BLKCH2O, RJBLK, BLKHET, LSUNLIGHT, BLKSEAWATER, RKI, NUMCELLS )
+
+         IF ( LSUNLIGHT ) THEN
+            NCSP = NCS
+         ELSE
+            NCSP = NCS + 1
+         END IF
+
+C  update cell concentrations for degradation routines
+
+         IF ( CALL_DEG ) THEN
+
+            Y_DEGRADE = 0.0
+            DO ISP = 1, NSPCSD
+               DO NCELL = 1, NUMCELLS
+                  CELLNUM = NORDCELL( OFFSET + NCELL )
+                  COL = CCOL( CELLNUM )
+                  ROW = CROW( CELLNUM )
+                  LEV = CLEV( CELLNUM )
+                  Y_DEGRADE( NCELL,ISP ) = REAL(MAX( CONC_CAN( COL,ROW,LEV,ISP ), CONCMIN), 8 )
+               END DO
+            END DO
+
+! Use FPP flag to check results from species degrade routines
+#ifdef verbose_gas
+            WRITE_BLOCK = .FALSE.
+            ICELL_WRITE = 1
+            DO NCELL = 1, NUMCELLS
+                CELLNUM = NORDCELL( OFFSET + NCELL )
+                COL = CCOL( CELLNUM )
+                ROW = CROW( CELLNUM )
+                LEV = CLEV( CELLNUM )
+                IF( LEV .EQ. 1 .AND. ROW .EQ. 1 .AND. COL .EQ. 1 )THEN
+                    WRITE_BLOCK = .TRUE.
+                    ICELL_WRITE = NCELL
+                    WRITE_CELL( NCELL ) = .TRUE.
+                ELSE
+                    WRITE_CELL( NCELL ) = .FALSE.
+                END IF
+            END DO
+#endif
+
+C..initialize degradation routines
+            NCELLS = NUMCELLS
+            CALL INIT_DEGRADE_BLK( Y_DEGRADE, BLKTEMP, BLKDENS, BLKPRES, BLKCH2O, RJBLK,
+     &                         JDATE, JTIME )
+
+         END IF
+
+#ifdef rbstats
+
+         NSTEPS = 0
+         NFAILS = 0
+         N_BAD_STARTS = 0
+
+#endif
+
+!         write(logdev,*) 'RBDRIVER 555: CALL RBSOLVER OFFSET=', BLKID, NUMCELLS, OFFSET
+         CALL RBSOLVER( JDATE, JTIME, CHEMSTEP, NCSP,
+     &                  LIRRBLK, NIRRCLS, IRRCELL )
+
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+C  If not ordering cells, save performance statistics and
+C  store updated concentrations.
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+         IF ( .NOT. LORDERING ) THEN
+
+C..Update concentrations
+            DO ISP = 1, ISCHANG( NCS )
+               ISPOLD  = INEW2OLD( ISP,NCS )
+               SPC     = CGRID_INDEX( ISPOLD )
+               DO NCELL = 1, NUMCELLS
+                  CELLNUM = NORDCELL( OFFSET + NCELL )
+                  COL = CCOL( CELLNUM )
+                  ROW = CROW( CELLNUM )
+                  LEV = CLEV( CELLNUM )
+                  IF( CONVERT_CONC( ISPOLD ) )THEN
+                     CONC_CAN( COL,ROW,LEV,SPC ) = REAL( REVERSE_CONV( ISPOLD )
+     &                                       *       BLKDENS( NCELL ) * Y( NCELL,ISP ), 4)
+                  ELSE
+                     CONC_CAN( COL,ROW,LEV,SPC ) = REAL( Y( NCELL,ISP ), 4)
+                  END IF
+              END DO
+            END DO
+
+
+
+
+            IF ( CALL_DEG ) THEN
+C  Update CGRID based on the degradation routines
+               CALL FINAL_DEGRADE_BLK( Y_DEGRADE )
+               UPDATE_DEGRADED_CAN: DO ISP = 1, N_REACT
+                  S = RXTANT_MAP( ISP )
+                  IF( S .LE. 0 )CYCLE UPDATE_DEGRADED_CAN
+                  DO SPC = 1, NUMB_MECH_SPC
+                     IF( S .EQ. CGRID_INDEX( SPC ) )CYCLE UPDATE_DEGRADED_CAN
+                  END DO
+                  DO NCELL = 1, NUMCELLS
+                     CELLNUM = NORDCELL( OFFSET + NCELL )
+                     COL = CCOL( CELLNUM )
+                     ROW = CROW( CELLNUM )
+                     LEV = CLEV( CELLNUM )
+                     CONC_CAN( COL,ROW,LEV,S ) = REAL( Y_DEGRADE( NCELL,S ), 4)
+                  END DO
+               END DO UPDATE_DEGRADED_CAN
+            END IF            !WTH
+
+#ifdef sens
+
+            NUMB_CELLS = NUMCELLS
+
+            DO NCELL = 1, NUMB_CELLS
+               DO IRXN = 1, NRXNS
+                  SRK( IRXN ) = RKI( NCELL,IRXN )
+                  IF ( HIGH ) THEN
+                     IF ( NREACT( IRXN ) .LE. 1 ) THEN
+                        SRK2( IRXN ) = 0.0
+                     ELSE IF ( NREACT( IRXN ) .EQ. 2 ) THEN
+                        SRK2( IRXN ) = REAL( RKI( NCELL,IRXN ), 4 )
+                     ELSE IF ( NREACT( IRXN ) .EQ. 3 ) THEN
+                        SRK2( IRXN ) = REAL( RKI( NCELL,IRXN ),4 )
+                     ELSE
+                        SRK2( IRXN ) = 0.0
+                     END IF
+                  END IF
+              END DO
+
+              DO ISP = 1,NUMB_MECH_SPC
+!                  ISPOLD = INEW2OLD( ISP,NCS )
+!                  YCDDM( ISPOLD ) = YAVE(NCELL,ISP)
+                  YCDDM( ISP ) = YAVE(NCELL,ISP)
+               END DO
+               CELLNUM = NORDCELL( OFFSET + NCELL )
+               COL = CCOL( CELLNUM )
+               ROW = CROW( CELLNUM )
+               LEV = CLEV( CELLNUM )
+
+!                CALL SOLVE_DDM3D_CHEM( COL,ROW,LEV,CHEMSTEP )
+               CALL SOLVE_DDM3D_CHEM( COL,ROW,LEV,CHEMSTEP,IOLD2NEW,INEW2OLD )
+            END DO
+            NUMCELLS = NUMB_CELLS
+#endif
+
+#ifdef rbstats
+
+            DO NCELL = 1, NUMCELLS
+               CELLNUM = NORDCELL( OFFSET + NCELL )
+               COL = CCOL( CELLNUM )
+               ROW = CROW( CELLNUM )
+               LEV = CLEV( CELLNUM )
+               STAT_SUM( COL,ROW,LEV,1 ) = STAT_SUM( COL,ROW,LEV,1 )
+     &                                   + N_BAD_STARTS
+               STAT_SUM( COL,ROW,LEV,2 ) = STAT_SUM( COL,ROW,LEV,2 )
+     &                                   + NFAILS
+               STAT_SUM( COL,ROW,LEV,3 ) = STAT_SUM( COL,ROW,LEV,3 )
+     &                                   + NSTEPS
+            END DO
+
+#endif
+
+            IF ( LIRRBLK ) CALL PA_IRR_BLKENDC ( OFFSET, CCOL, CROW, CLEV,
+     &                                           NORDCELL, NIRRCLS, IRRCELL )  !IVAI: NORDCELL_CAN
+
+         END IF
+
+! NB. Should be over NBLKS_CAN but aborts in rbinit
+555   CONTINUE  ! BLK = 1, NBLKS
+
+C... Update CONC_CAN/CGRID_CAN concentrations' upper-most (NLAYS:NLAYT) layers (rbsolver not called)
+C... Carry over the top (NLAYS-NLAYC:NLAYS) original model values for the matching layers
+      CONC_CAN(:,:,NLAYT-NLAYC+1:NLAYT,:) = CONC(:,:,NLAYS-NLAYC+1:NLAYS,:)
+
+! Species after gas-phase (NB. only canopy-grid cells are updated)
+      o3_new_can (:,:,:) = CONC_CAN(:,:,:,4) ! O3 = 4
+
+      o3_tend_can (:,:,:) = ( o3_new_can(:,:,:) -  o3_old_can(:,:,:)) /
+     &                       REAL (CHEMSTEP, 4) ! ppmv sec-1
+
+!===============================================================================
+! Gather tracer concentration from canopy layers into model resolved layers (flag = 1)
+!===============================================================================
+
+      CALL canopy_transfer(CONC, JDATE, JTIME, 1 )
+
+! ===================
+! Input:
+!   CONC_CAN after gas-phase
+!
+! Output:
+!   CONC_MOD after gas-phase
+! ===================
+
+! Update CGRID for advection, deposition etc.
+!      DO L = 1, NLAYS
+! Update only bottom 3 hybrid layers
+      DO L = 1, 3
+         DO R = 1, NROWS
+            DO C = 1, NCOLS
+
+c++++++++++++++++++++++++Debug section++++++++++++++++++++++++++++++++++
+            KOUNT = 0
+            IF (.FALSE.) THEN
+            IF ( KOUNT < 3 .AND. L == 1 .OR. L == NLAYS .OR. L == NLAYS-1 )  THEN
+
+            DO SPC = 1, NUMB_MECH_SPC
+
+               S = CGRID_INDEX( SPC )
+               WRITE( LOGDEV, *) 'RBDRIVER: AFTER C2R SPC= ', S,
+! N_GAS_CHEM_SPC = 127 (NO2 = 1 O3 = 4)
+!    &         CONC_CAN(C,R,1, S), CONC_CAN(C,R,2, S), CONC_CAN(C,R,3, !    S),  ! O3 = 4
+     &         CONC    (C,R,L, S), CONC_MOD(C,R,L, S)
+            END DO
+
+            END IF ! KOUNT L=1
+            END IF !.FALSE.
+
+! Print up to KOUNT number of canopy columns
+            KOUNT = KOUNT + 1
+            IF ( FRT_MASK(C,R) > 0. ) THEN
+
+c++++++++++++++++++++++++Debug section++++++++++++++++++++++++++++++++++
+
+! Update CGRID with values from canopy_transfer
+            DO SPC = 1, NUMB_MECH_SPC
+               S = CGRID_INDEX( SPC )
+
+!!! Udate CONC with CONC_MOD after C2R mass transfer from CONC_CAN
+! All levels or bottom 3 hybrid layers
+               CONC(C,R,L,S) = CONC_MOD(C,R,L,S)
+
+            END DO
+
+! Print up to KOUNT number of canopy columns
+            KOUNT = KOUNT + 1
+
+            END IF !FRT_MASK
+
+            END DO
+         END DO
+      END DO
+
+! Species after gas-phase & canopy_transfer C2R
+      o3_new  (:,:,:) = CONC(:,:,:,4)
+
+! Gas-phase tendency after canopy_transfer ppmv sec-1
+      o3_tend (:,:,:) = ( o3_new(:,:,:) -  o3_old(:,:,:)) /
+     &                  REAL (CHEMSTEP, 4) ! ppm  sec-1
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      END IF ! CANOPY_SHADE
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!IVAI
 
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 C  End of block loop; reorder cells if necessary and go back do the  
@@ -714,10 +1332,59 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
          ERRMX2( IPAR ) = VALLOW
          NORDCELL( IPAR ) = JREORD
          GO TO 600
-      END IF
+
+!IVAI: Repeat on canopy columns "reorder cells if necessary..."
+      IF (CANOPY_SHADE) THEN
+
+         LVAL = NOXYZ_CAN / 2 + 1
+         IRVAL = NOXYZ_CAN
+700      CONTINUE
+         IF ( LVAL .GT. 1 ) THEN
+            LVAL = LVAL - 1
+            VALLOW = ERRMX2_CAN( LVAL )
+            JREORD = NORDCELL_CAN( LVAL )
+         ELSE
+            VALLOW = ERRMX2_CAN( IRVAL )
+            JREORD = NORDCELL_CAN( IRVAL )
+            ERRMX2_CAN( IRVAL ) = ERRMX2_CAN( 1 )
+            NORDCELL_CAN( IRVAL ) = NORDCELL_CAN( 1 )
+            IRVAL = IRVAL - 1
+            IF ( IRVAL.EQ.1 ) THEN
+               ERRMX2_CAN( IRVAL ) = VALLOW
+               NORDCELL_CAN( IRVAL ) = JREORD
+               GO TO 200
+            END IF
+         END IF
+         IPAR = LVAL
+         JPAR = LVAL + LVAL
+750      CONTINUE
+         IF ( JPAR .LE. IRVAL ) THEN
+            IF ( JPAR .LT. IRVAL ) THEN
+               IF ( ERRMX2_CAN( JPAR ) .LT. ERRMX2_CAN( JPAR + 1 ) ) JPAR = JPAR + 1
+            END IF
+            IF ( VALLOW .LT. ERRMX2_CAN( JPAR )) THEN
+               ERRMX2_CAN( IPAR ) = ERRMX2_CAN( JPAR )
+               NORDCELL_CAN( IPAR ) = NORDCELL_CAN( JPAR )
+               IPAR = JPAR
+               JPAR = JPAR + JPAR
+            ELSE
+               JPAR = IRVAL + 1
+            END IF
+            GO TO 750
+         END IF
+         ERRMX2_CAN( IPAR ) = VALLOW
+         NORDCELL_CAN( IPAR ) = JREORD
+         GO TO 700
+      END IF ! (CANOPY_SHADE)
+!IVAI
+      END IF ! (LORDERING)
        
       !Update Aerosol Surface Area
       CALL HETCHEM_UPDATE_AERO( CONC )
+
+!IVAI: to do...
+      !Update Aerosol Surface Area
+!     CALL HETCHEM_UPDATE_AERO( CONC_CAN )
 
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 C  Output performance statistics if required and return

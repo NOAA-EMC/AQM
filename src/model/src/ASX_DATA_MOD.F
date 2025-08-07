@@ -32,6 +32,8 @@ C                         Change meso from 0.1 to 0 for some org. nitrates
 C                         Changes based on Nguyen et al. 2015 PNAS and SOAS
 C     07 May 2018 D. Schwede: Added call to CZANGLE here and removed call 
 C                         to CZANGLE in other modules
+C     01 Mar 24 I.Ivanova: Added grid cell area AREA for use in the canopy
+C                         mass transfer routines
 C
 C---------Notes
 C  * Updates based on literature review 7/96 JEP
@@ -140,7 +142,8 @@ C-------------------------------------------------------------------------------
          Real,    Allocatable :: C1R      ( :,: )  ! cumulative LAI fraction hc to 0.75 * hc
          Real,    Allocatable :: C2R      ( :,: )  ! cumulative LAI fraction hc to 0.50 * hc
          Real,    Allocatable :: C3R      ( :,: )  ! cumulative LAI fraction hc to 0.35 * hc
-         Real,    Allocatable :: C4R      ( :,: )  ! cumulative LAI fraction hc to 0.20 * hc 
+         Real,    Allocatable :: C4R      ( :,: )  ! cumulative LAI fraction hc to 0.20 * hc
+
 !> FENGSHA option
          Real,    Allocatable :: CLAYF    ( :,: )  ! Fractional Clay Content 
          Real,    Allocatable :: SANDF    ( :,: )  ! Fractional Sand Content 
@@ -183,6 +186,9 @@ C-------------------------------------------------------------------------------
          Real,    Allocatable :: RMSFX4 ( :,: )  ! inverse map scale factor ** 4
          Real,    Allocatable :: LON    ( :,: )  ! longitude
          Real,    Allocatable :: LAT    ( :,: )  ! latitude
+!IVAI
+         Real,    Allocatable :: AREA   ( :,: )  ! grid cell area
+!IVAI
          Real,    Allocatable :: LWMASK ( :,: )  ! land water mask
          Real,    Allocatable :: OCEAN  ( :,: )  ! Open ocean fraction
          Real,    Allocatable :: SZONE  ( :,: )  ! Surf zone fraction
@@ -262,16 +268,16 @@ C Land use information:
       Real, allocatable, private :: BUFF2D( :,: )   ! 2D temp var
       Real, allocatable, private :: BUFF3D( :,:,: ) ! 3D temp var
 
-! Canopy option control
-      CHARACTER( 20 ), SAVE :: CTM_CANOPY_SHADE = 'CTM_CANOPY_SHADE'! env var for in-line
-      LOGICAL,         PUBLIC, SAVE :: CANOPY_SHADE     ! flag in-lining canopy shading
-
 ! FENGSHA option control
       CHARACTER( 18 ),         SAVE :: CTM_WBDUST_FENGSHA ='CTM_WBDUST_FENGSHA' ! env var for in-line
       LOGICAL,         PUBLIC, SAVE :: FENGSHA ! flag for fengsha option
       INTEGER                          IOSX             ! i/o and allocate memory status
 
-
+!IVAI
+! Canopy in-line control
+      CHARACTER( 20 ), SAVE :: CTM_CANOPY_SHADE = 'CTM_CANOPY_SHADE    ' ! env var for in-line
+      LOGICAL, PUBLIC, SAVE :: CANOPY_SHADE   ! flag in-lining canopy shading
+!IVAI
 
 
 
@@ -663,6 +669,9 @@ C-----------------------------------------------------------------------
      &             Grid_Data%RMSFX4  ( NCOLS,NROWS ),
      &             Grid_Data%LON     ( NCOLS,NROWS ),
      &             Grid_Data%LAT     ( NCOLS,NROWS ),
+!IVAI
+     &             Grid_Data%AREA    ( NCOLS,NROWS ),
+!IVAI
      &             Grid_Data%LWMASK  ( NCOLS,NROWS ),
      &             Grid_Data%OCEAN   ( NCOLS,NROWS ),
      &             Grid_Data%SZONE   ( NCOLS,NROWS ),
@@ -728,10 +737,11 @@ C-----------------------------------------------------------------------
      &                   'Flag for in-line canopy shading',
      &                   .FALSE., IOSX )
 
-!         IF ( CANOPY_SHADE ) THEN
-!            XMSG = 'Using in-line canopy shading option'
-!            CALL M3MSG2( XMSG )
-!         END IF
+         IF ( CANOPY_SHADE ) THEN
+            XMSG = 'Using in-line canopy shading option'
+            CALL M3MSG2( XMSG )
+          END IF
+
           If ( CANOPY_SHADE  ) Then
             ALLOCATE( Met_Data%FCH    ( NCOLS,NROWS ),
      &                Met_Data%FRT    ( NCOLS,NROWS ),
@@ -747,7 +757,7 @@ C-----------------------------------------------------------------------
                XMSG = 'Failure allocating Canopy Shade variables'
                Call M3EXIT( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
             End If
-          End If
+         End If
 
 !> ccccccccccccccccccccc Fengsha option!ccccccccccccccccccccc
          FENGSHA = ENVYN( CTM_WBDUST_FENGSHA,
@@ -821,6 +831,10 @@ C-----------------------------------------------------------------------
          Grid_Data%LON = LON
 
          Grid_Data%LAT = LAT
+
+!IVAI
+         Grid_Data%AREA = AREA
+!IVAI
 
          Grid_Data%LWMASK = LWMASK
 
@@ -987,6 +1001,7 @@ C FENGSHA vars
          
          call interpolate_var ('UTHR', jdate, jtime, Met_Data%UTHR)
        End if    
+
 C Soil vars
          call interpolate_var ('SOIM1', jdate, jtime, Met_Data%SOIM1)
 

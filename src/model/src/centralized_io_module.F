@@ -152,9 +152,19 @@
      &                       HT(:,:),           ! from GRID_CRO_2D data
      &                       LAT(:,:),          ! from GRID_CRO_2D data
      &                       LON(:,:),          ! from GRID_CRO_2D data
+!IVAI
+     &                       AREA(:,:),         ! from GRID_CRO_2D data !     !IVAI
+!IVAI
      &                       PURB(:,:),         ! from GRID_CRO_2D data
      &                       LUFRAC(:,:,:),     ! from LUFRAC_CRO data
      &                       SOILCAT_A(:,:),    ! from MET_CRO_2D
+!IVAI: add 9 canopy vars to MET_CRO_2D
+     &                       cfch (:,:),        ! from MET_CRO_2D ! IVAI
+     &                       cfrt (:,:),        ! from MET_CRO_2D ! IVAI
+     &                       cclu (:,:),        ! from MET_CRO_2D ! IVAI
+     &                       cpopu(:,:),        ! from MET_CRO_2D ! IVAI
+     &                       claie(:,:),        ! from MET_CRO_2D ! IVAI
+!IVAI
      &                       MSFD2(:,:),        ! from GRID_DOT_2D data
      &                       X3HT0M(:,:),       ! from GRID_CRO_3D data
      &                       X3HT0F(:,:),       ! from GRID_CRO_3D data
@@ -286,6 +296,13 @@
      &             Q2_AVAIL       = .true.,  ! flag for Q2, two meter mixing ratio available in MET_CRO_2D
      &             LH_AVAIL,                 ! flag for LH, two meter mixing ratio available in MET_CRO_2D
      &             HAS_SEAICE,               ! flag for SEAICE in MET_CRO_2D
+!IVAI
+     &             FCH_AVAIL     = .false., ! flag for FCH, Canopy firest Height in MET_CRO_2D !IVAI
+     &             FRT_AVAIL     = .false., ! flag for FRT, Canopy forest fraction in MET_CRO_2D !IVAI
+     &             CLU_AVAIL     = .false., ! flag for CLU, Canopy clumping index in MET_CRO_2D !IVAI
+     &             POPU_AVAIL    = .false., ! flag for POP, Canopy population density in MET_CRO_2D !IVAI
+     &             LAIE_AVAIL    = .false., ! flag for LAIE, canopy leaf area index in MET_CRO_2D !IVAI
+!IVAI
      &             WR_AVAIL       = .true.,  ! flag for WR, canopy wetness available in MET_CRO_2D
      &             MEDC_AVAIL     = .true.,  ! file INIT_MEDC_1 is available
      &             E2C_CHEM_AVAIL = .true.,  ! file E2C_CHEM is available
@@ -570,6 +587,36 @@
           end if
 
           HAS_SEAICE = (INDEX1( 'SEAICE', NVARS3D, VNAME3D ) .gt. 0)
+
+
+!IVAI: in gridded_files_setup
+          IF (INDEX1( 'FCH', NVARS3D, VNAME3D ) .gt. 0) then
+             FCH_AVAIL = .true.
+          else
+             FCH_AVAIL = .false.
+          end if
+          IF (INDEX1( 'FRT', NVARS3D, VNAME3D ) .gt. 0) then
+             FRT_AVAIL = .true.
+          else
+             FRT_AVAIL = .false.
+          end if
+          IF (INDEX1( 'CLU', NVARS3D, VNAME3D ) .gt. 0) then
+             CLU_AVAIL = .true.
+          else
+             CLU_AVAIL = .false.
+          end if
+          IF (INDEX1( 'LAIE', NVARS3D, VNAME3D ) .gt. 0) then
+             LAIE_AVAIL = .true.
+          else
+             LAIE_AVAIL = .false.
+          end if
+!         print*, pname, 'LAIE_AVAIL= ', LAIE_AVAIL
+          IF (INDEX1( 'POPU', NVARS3D, VNAME3D ) .gt. 0) then
+             POPU_AVAIL = .true.
+          else
+             POPU_AVAIL = .false.
+          end if
+!IVAI
 
 ! include an additional variable TSEASFC when MET_CRO_2D does not have it and CMAQ code is looking for it
           n_c2d = nvars3d + adj
@@ -1356,6 +1403,139 @@
                 Call M3EXIT( PNAME, 0, 0, XMSG, XSTAT1 )
              END IF
 #endif
+
+!IVAI: In firstime, in retrieve_time_dep_gridded_data
+!      Repeat what is done for SLTYP/soilcat_a for canopy fields
+
+             allocate (cfch  (ncols, nrows), STAT=STAT) ! firstime
+
+             IF ( STAT .NE. 0 ) THEN
+                XMSG = 'Failure allocating CFCH array'
+                CALL M3EXIT( PNAME, 0, 0, XMSG, XSTAT3 )
+             END IF
+
+             allocate (cfrt  (ncols, nrows), STAT=STAT) ! firstime
+
+             IF ( STAT .NE. 0 ) THEN
+                XMSG = 'Failure allocating CFRT array'
+                CALL M3EXIT( PNAME, 0, 0, XMSG, XSTAT3 )
+             END IF
+
+             allocate (cclu  (ncols, nrows), STAT=STAT) ! firstime
+
+             IF ( STAT .NE. 0 ) THEN
+                XMSG = 'Failure allocating CCLU array'
+                CALL M3EXIT( PNAME, 0, 0, XMSG, XSTAT3 )
+             END IF
+
+             allocate (claie (ncols, nrows), STAT=STAT) ! firstime
+
+             IF ( STAT .NE. 0 ) THEN
+                XMSG = 'Failure allocating LAIE array'
+                CALL M3EXIT( PNAME, 0, 0, XMSG, XSTAT3 )
+             END IF
+
+             allocate (cpopu (ncols, nrows), STAT=STAT) ! firstime
+
+             IF ( STAT .NE. 0 ) THEN
+                XMSG = 'Failure allocating CPOPU array'
+                CALL M3EXIT( PNAME, 0, 0, XMSG, XSTAT3 )
+             END IF
+
+           IF ( FCH_AVAIL ) then
+!!!!#ifdef twoway
+             If ( .Not. INTERPX( MET_CRO_2D, 'FCH ', PNAME,
+     &                           STRTCOLMC2, ENDCOLMC2,STRTROWMC2, ENDROWMC2, 1, 1,
+     &                           jdate, jtime, cfch  ) ) THEN
+                XMSG = ' Error interpolating variable  FCH  from ' // MET_CRO_2D
+                Call M3EXIT( PNAME, 0, 0, XMSG, XSTAT1 )
+             END IF
+!!!! #else
+             If ( .Not. XTRACT3( MET_CRO_2D, 'FCH ',
+     &                           1, 1, STRTROWMC2, ENDROWMC2, STRTCOLMC2, ENDCOLMC2,
+     &                           jdate, jtime, cfch  ) ) THEN
+                XMSG = ' Error interpolating variable FCH   from ' // MET_CRO_2D
+                Call M3EXIT( PNAME, 0, 0, XMSG, XSTAT1 )
+             END IF
+!!!!!#endif
+           END IF  ! ( FCH_AVAIL ) 
+
+           IF ( FRT_AVAIL ) then
+!!!!#ifdef twoway
+             If ( .Not. INTERPX( MET_CRO_2D, 'FRT ', PNAME,
+     &                           STRTCOLMC2, ENDCOLMC2,STRTROWMC2, ENDROWMC2, 1, 1,
+     &                           jdate, jtime, cfrt  ) ) THEN
+                XMSG = ' Error interpolating variable  FRT  from ' // MET_CRO_2D
+                Call M3EXIT( PNAME, 0, 0, XMSG, XSTAT1 )
+             END IF
+!!!! #else
+             If ( .Not. XTRACT3( MET_CRO_2D, 'FRT ',
+     &                           1, 1, STRTROWMC2, ENDROWMC2, STRTCOLMC2, ENDCOLMC2,
+     &                           jdate, jtime, cfrt  ) ) THEN
+                XMSG = ' Error interpolating variable FRT   from ' // MET_CRO_2D
+                Call M3EXIT( PNAME, 0, 0, XMSG, XSTAT1 )
+             END IF
+!!!!!#endif
+           END IF  ! ( FRT_AVAIL )
+
+           IF ( CLU_AVAIL ) then
+!!!!#ifdef twoway
+             If ( .Not. INTERPX( MET_CRO_2D, 'CLU ', PNAME,
+     &                           STRTCOLMC2, ENDCOLMC2,STRTROWMC2, ENDROWMC2, 1, 1,
+     &                           jdate, jtime, cclu  ) ) THEN
+                XMSG = ' Error interpolating variable  CLU  from ' // MET_CRO_2D
+                Call M3EXIT( PNAME, 0, 0, XMSG, XSTAT1 )
+             END IF
+
+!!!! #else
+
+             If ( .Not. XTRACT3( MET_CRO_2D, 'CLU ',
+     &                           1, 1, STRTROWMC2, ENDROWMC2, STRTCOLMC2, ENDCOLMC2,
+     &                           jdate, jtime, cclu  ) ) THEN
+                XMSG = ' Error interpolating variable CLU   from ' // MET_CRO_2D
+                Call M3EXIT( PNAME, 0, 0, XMSG, XSTAT1 )
+             END IF
+!!!!!#endif
+           END IF  ! ( CLU_AVAIL )
+
+           IF ( LAIE_AVAIL ) then
+!!!!#ifdef twoway
+             If ( .Not. INTERPX( MET_CRO_2D, 'LAIE', PNAME,
+     &                           STRTCOLMC2, ENDCOLMC2,STRTROWMC2, ENDROWMC2, 1, 1,
+     &                           jdate, jtime, claie ) ) THEN
+                XMSG = ' Error interpolating variable LAIE  from ' // MET_CRO_2D
+                Call M3EXIT( PNAME, 0, 0, XMSG, XSTAT1 )
+             END IF
+!             print*, pname, 'centralized_io: INTERPX LAIE= ', claie(:,:)
+!!!! #else
+             If ( .Not. XTRACT3( MET_CRO_2D, 'LAIE',
+     &                           1, 1, STRTROWMC2, ENDROWMC2, STRTCOLMC2, ENDCOLMC2,
+     &                           jdate, jtime, claie ) ) THEN
+                XMSG = ' Error interpolating variable LAIE  from ' // MET_CRO_2D
+                Call M3EXIT( PNAME, 0, 0, XMSG, XSTAT1 )
+             END IF
+!            print*, pname, 'centralized_io: XTRACT3 LAIE= ', claie(:,:)
+!!!!!#endif
+           END IF ! ( LAIE_AVAIL )
+
+           IF ( POPU_AVAIL ) then
+!!!!#ifdef twoway
+             If ( .Not. INTERPX( MET_CRO_2D, 'POPU', PNAME,
+     &                           STRTCOLMC2, ENDCOLMC2,STRTROWMC2, ENDROWMC2, 1, 1,
+     &                           jdate, jtime, cpopu ) ) THEN
+                XMSG = ' Error interpolating variable  POPU from ' // MET_CRO_2D
+                Call M3EXIT( PNAME, 0, 0, XMSG, XSTAT1 )
+             END IF
+!!!! #else
+             If ( .Not. XTRACT3( MET_CRO_2D, 'POPU',
+     &                           1, 1, STRTROWMC2, ENDROWMC2, STRTCOLMC2, ENDCOLMC2,
+     &                           jdate, jtime, cpopu ) ) THEN
+                XMSG = ' Error interpolating variable POPU  from ' // MET_CRO_2D
+                Call M3EXIT( PNAME, 0, 0, XMSG, XSTAT1 )
+             END IF
+!!!!!#endif
+           END IF ! ( POPU_AVAIL )
+!IVAI
 
 #endif
              head_grid = -1
@@ -3426,6 +3606,7 @@ C Read the various categories of normalized emissions
      &              HT(ncols, nrows), 
      &              LAT(ncols, nrows),
      &              LON(ncols, nrows), 
+     &              AREA(ncols, nrows), !IVAI
      &              PURB(ncols, nrows),
      &              STAT=STAT)
           IF ( STAT .NE. 0 ) THEN
@@ -3471,6 +3652,14 @@ C Read the various categories of normalized emissions
              XMSG = ' Error interpolating variable LON from ' // GRID_CRO_2D
              Call M3EXIT( PNAME, 0, 0, XMSG, XSTAT1 )
           END IF
+!IVAI: INTERPX in retrieve_grid_cro_2d_data
+          IF ( .NOT. INTERPX( GRID_CRO_2D, 'AREA', PNAME,
+     &                        STRTCOLGC2, ENDCOLGC2, STRTROWGC2, ENDROWGC2, 1, 1 ,
+     &                        0, 0, AREA) ) THEN
+             XMSG = ' Error interpolating variable AREA from ' // GRID_CRO_2D
+             Call M3EXIT( PNAME, 0, 0, XMSG, XSTAT1 )
+          END IF
+!IVAI
 
           if (minkz) then
              IF ( .NOT. INTERPX( GRID_CRO_2D, 'PURB', PNAME,
@@ -3540,6 +3729,14 @@ C Read the various categories of normalized emissions
              XMSG = ' Error interpolating variable LON from ' // GRID_CRO_2D
              Call M3EXIT( PNAME, 0, 0, XMSG, XSTAT1 )
           END IF
+!IVAI: XTRACT3 in retrieve_grid_cro_2d_data
+          IF ( .NOT. XTRACT3( GRID_CRO_2D, 'AREA',
+     &                        1, 1, STRTROWGC2, ENDROWGC2, STRTCOLGC2, ENDCOLGC2,
+     &                        0, 0, AREA) ) THEN
+             XMSG = ' Error interpolating variable AREA from ' // GRID_CRO_2D
+             Call M3EXIT( PNAME, 0, 0, XMSG, XSTAT1 )
+          END IF
+!IVAI
 
           if (minkz) then
              IF ( .NOT. XTRACT3( GRID_CRO_2D, 'PURB',
@@ -4746,6 +4943,7 @@ C   mminlu and num_land_cat are WRF global variables
              allocate (lwmask(in_ncols, 1),
      &                 lat(in_ncols, 1),
      &                 lon(in_ncols, 1),
+     &                 area(in_ncols, 1), !IVAI
      &                 ht(in_ncols, 1),
      &                 ocean(in_ncols, 1),
      &                 szone(in_ncols, 1),
@@ -4755,6 +4953,7 @@ C   mminlu and num_land_cat are WRF global variables
              lat    = g2ddata(:,:,lat_ind)
              ht     = g2ddata(:,:,ht_ind)
              lwmask = g2ddata(:,:,lwmask_ind)
+             area   = g2ddata(:,:,area_ind)
 
              call retrieve_ocean_data_mpas
 

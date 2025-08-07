@@ -97,7 +97,7 @@ list(APPEND aqm_CCTM_files
 	${AERO}/aero_driver.F
         ${AERO}/aero_nml_modes.F
 	${AERO}/AEROMET_DATA.F
-        ${AERO}/AERO_EMIS.F
+	#${AERO}/AERO_EMIS.F
 	${AERO}/AEROSOL_CHEMISTRY.F
 	${AERO}/aero_subs.F
 	${AERO}/coags.f
@@ -255,6 +255,7 @@ list(APPEND aqm_CCTM_files
 	${localCCTM}/CSQY_DATA.F
 	${localCCTM}/isocom.f
 	${localCCTM}/aero_depv.F
+	${localCCTM}/AERO_EMIS.F
 	#IVAI Sub-canopy effects----
 	${localCCTM}/phot.F
         ${localCCTM}/PHOT_MOD.F

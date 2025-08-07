@@ -8,6 +8,12 @@ module aqm_internal_mod
     real(ESMF_KIND_R4), dimension(:), pointer :: values => null()
   end type aqm_internal_rate_type
 
+  type aqm_internal_psrc_type
+    integer :: nloc
+    integer :: i
+    integer :: j
+  end type aqm_internal_psrc_type
+
   type aqm_internal_emis_type
     character(len=ESMF_MAXSTR)     :: name
     character(len=ESMF_MAXSTR)     :: type
@@ -42,9 +48,6 @@ module aqm_internal_mod
     character(len=ESMF_MAXSTR), dimension(:),   pointer :: species   => null()
     character(len=ESMF_MAXSTR), dimension(:),   pointer :: units     => null()
     integer,                    dimension(:),   pointer :: dens_flag => null()
-    integer,                    dimension(:),   pointer :: ip        => null()
-    integer,                    dimension(:),   pointer :: jp        => null()
-    integer,                    dimension(:),   pointer :: ijmap     => null()
     real(ESMF_KIND_R4),         dimension(:),   pointer :: lat       => null()
     real(ESMF_KIND_R4),         dimension(:),   pointer :: lon       => null()
     real(ESMF_KIND_R4),         dimension(:),   pointer :: stkdm     => null()
@@ -53,6 +56,7 @@ module aqm_internal_mod
     real(ESMF_KIND_R4),         dimension(:),   pointer :: stkve     => null()
     real(ESMF_KIND_R4),         dimension(:),   pointer :: factors   => null()
     type(ESMF_Field),           dimension(:),   pointer :: fields    => null()
+    type(aqm_internal_psrc_type), dimension(:), pointer :: ijmap     => null()
     type(aqm_internal_rate_type), dimension(:), pointer :: rates     => null()
     character(len=ESMF_MAXSTR), dimension(:,:), pointer :: table     => null()
   end type
@@ -69,6 +73,7 @@ module aqm_internal_mod
 
   public :: aqm_internal_data_type
   public :: aqm_internal_emis_type
+  public :: aqm_internal_psrc_type
   public :: aqm_internal_state_type
 
 end module aqm_internal_mod

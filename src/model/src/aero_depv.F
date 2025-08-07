@@ -334,6 +334,7 @@ C-----------------------------------------------------------------------
       Use LSM_Mod, Only: N_LUFRAC
       USE UTILIO_DEFN
       USE RUNTIME_VARS, ONLY: LOGDEV
+      USE, INTRINSIC :: ISO_C_BINDING, Only: C_FLOAT
       IMPLICIT NONE
       CHARACTER( 96 ) :: XMSG = ' '
 
@@ -469,6 +470,14 @@ C For USGS24
      >          1.0,    1.0,    1.0,   1.0,    1.0,
      >          1.0,    1.0,    1.0,   1.0,    1.0,
      >          1.0,    1.0,    1.0,   1.0  /
+
+      INTERFACE
+        REAL(C_FLOAT) FUNCTION EXPM1F(X) BIND(C, NAME="expm1f")
+          IMPORT C_FLOAT
+          REAL(C_FLOAT), VALUE, INTENT(IN) :: X
+        END FUNCTION EXPM1F
+      END INTERFACE
+
 C-----------------------------------------------------------------------
 
       VDEP  = 0.0   ! array assignment
@@ -607,8 +616,7 @@ C first do 0th moment for the deposition of number
             EIM2 = Fhair*STOKE2 / (1.0 + STOKE2)
             EIM = EIM1 + EIM2
             RD0 = 1.0 / ( Met_Data%USTAR( C,R )*laicr * ( Eb + EIM ) )
-
-            Vdv = VGHAT0 / ( 1.D0 - EXP( -VGHAT0 * ( Met_Data%RA( C,R ) + RD0 ) ) )
+            Vdv = VD( VGHAT0, Met_Data%RA( C,R ) + RD0)
           endif
 ! Non-vege part
           Vdnv=0.0
@@ -616,7 +624,7 @@ C first do 0th moment for the deposition of number
             Stoke = USTFAC * VGHAT0
             Eim = 10.**(-3./Stoke)
             RD0 = 1.0 / ( Met_Data%USTAR( C,R )*BAI*(Eb + EIM ) )
-            Vdnv = VGHAT0 / ( 1.D0 - EXP( -VGHAT0 * ( Met_Data%RA( C,R ) + RD0 ) ) )
+            Vdnv = VD( VGHAT0, Met_Data%RA( C,R ) + RD0)
           endif
             VDEP( C,R,VDN( IM ) ) = fveg*Vdv + fnv*Vdnv
 
@@ -637,8 +645,7 @@ C now do 2nd moment for the deposition of surface area
             EIM2 = Fhair*STOKE2 / (1.0 + STOKE2)
             EIM = EIM1 + EIM2
             RD2 = 1.0 / ( Met_Data%USTAR( C,R )*laicr * ( Eb + EIM ) )
-            Vdv = VGHAT2
-     &             / ( 1.D0 - EXP( -VGHAT2 * ( Met_Data%RA( C,R ) + RD2 ) ) )
+            Vdv = VD( VGHAT2, Met_Data%RA( C,R ) + RD2)
           endif
  ! Non-vege part
           Vdnv=0.0
@@ -646,7 +653,7 @@ C now do 2nd moment for the deposition of surface area
             Stoke = USTFAC * VGHAT2
             Eim = 10.**(-3./Stoke)
             RD2 = 1.0 / (  Met_Data%USTAR( C,R )*BAI*(Eb + EIM ) )
-            Vdnv = VGHAT2 / ( 1.D0 - EXP( -VGHAT2 * ( Met_Data%RA( C,R ) + RD2 ) ) )
+            Vdnv = VD( VGHAT2, Met_Data%RA( C,R ) + RD2)
           endif
             VDEP( C,R,VDS( IM ) ) = fveg*Vdv + fnv*Vdnv
 C now do 3rd moment for the deposition of mass
@@ -666,8 +673,7 @@ C now do 3rd moment for the deposition of mass
             EIM2 = Fhair*STOKE2 / (1.0 + STOKE2)
             EIM = EIM1 + EIM2
             RD3 = 1.0 / ( Met_Data%USTAR( C,R )*laicr * ( Eb + EIM ) )
-            Vdv = VGHAT3
-     &             / ( 1.D0 - EXP( -VGHAT3 * ( Met_Data%RA( C,R ) + RD3 ) ) )
+            Vdv = VD( VGHAT3, Met_Data%RA( C,R ) + RD3)
           endif
 ! Non-vege part
           Vdnv=0.0
@@ -675,8 +681,7 @@ C now do 3rd moment for the deposition of mass
             Stoke = USTFAC * VGHAT3
             Eim = 10.**(-3./Stoke)
             RD3 = 1.0 / ( Met_Data%USTAR( C,R )*BAI*(Eb + EIM ) )
-            Vdnv = VGHAT3
-     &             / ( 1.D0 - EXP( -VGHAT3 * ( Met_Data%RA( C,R ) + RD3 ) ) )
+            Vdnv = VD( VGHAT3, Met_Data%RA( C,R ) + RD3)
           endif
             VDEP( C,R,VDM( IM ) ) = fveg*Vdv + fnv*Vdnv
         END DO ! end loop on C
@@ -684,4 +689,27 @@ C now do 3rd moment for the deposition of mass
       END DO ! aerosol mode
 
       RETURN
+
+      CONTAINS
+
+        REAL FUNCTION VD( V, R )
+
+          DOUBLE PRECISION, INTENT(IN) :: V
+          REAL,             INTENT(IN) :: R
+
+          REAL(C_FLOAT) :: X
+          REAL(C_FLOAT), PARAMETER :: ZERO = 0._C_FLOAT
+
+          X = V * R
+
+          IF (X .NE. X) THEN
+            VD = X
+          ELSE IF (X. EQ. ZERO) THEN
+            VD = ZERO
+          ELSE
+            VD = -REAL(V, KIND=C_FLOAT) / EXPM1F(-X)
+          END IF
+
+        END FUNCTION VD
+
       END SUBROUTINE GETDEP_V

@@ -206,6 +206,8 @@ contains
       em(item) % layers      = 1
       em(item) % scalefactor = 1.0
       em(item) % topfraction = -1.0
+      em(item) % fires_surface_frac = 0.01
+      em(item) % fires_adjacent_frac = 0.15
       em(item) % gridded     = .true.
       em(item) % sync        = .false.
       em(item) % verbose     = .false.

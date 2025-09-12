@@ -26,7 +26,11 @@ contains
     integer :: lev0, lev1
     real    :: Hp, pblh, th0, th1, dz
     real    :: tfrac, w
-    real(AQM_KIND_R8) :: hbl
+    real :: fixed_surface, remaining_w
+    real :: dz_local, sigma, fixed_below, fixed_above, central_frac, gauss_sum, total_sum
+    real, dimension(nl) :: gauss_weights
+    integer :: l
+    real(AQM_KIND_R8) :: hbl, dist
     real(AQM_KIND_R8),    pointer :: phi(:)
     type(aqm_state_type), pointer :: state
 
@@ -89,18 +93,79 @@ contains
         ! -- distribute linearly between surface and plume top height
         lev0 = 1
         lev1 = maxloc(phi, 1, mask = phi <= grav * Hp)
+
+        ! Allocate fires_surface_frac of emissions to surface layer
+        fixed_surface = em % fires_surface_frac * w
+        if (fixed_surface > w) fixed_surface = w
+        profile(c,r,1) = fixed_surface
+        remaining_w = w - fixed_surface
          
-        if (lev1 > lev0) then
-          dz = 0.0
-          tfrac = 0.0
-          do l = lev0, lev1-1
-            profile(c,r,l) = w * ( phi(l) - dz ) / phi(lev1)
-            dz = phi(l)
-            tfrac = tfrac + profile(c,r,l)
-          end do
-          profile(c,r,lev1) = 1.0 - tfrac
+        ! Gaussian distribution around plume height
+        phi1 = phi(lev1)
+        if (lev1 > 1) then
+          phi2 = phi(lev1 - 1)
         else
-          profile(c,r,lev0) = 1.0
+          phi2 = phi(lev1)
+        end if
+        dz_local = onebg * (phi1 - phi2)
+        if (lev1 == 1) then
+          if (nl > 1) then
+            dz_local = onebg * (phi(2) - phi(1))
+          else
+            dz_local = onebg * phi(1)
+          end if
+        else if (lev1 == nl) then
+          dz_local = onebg * (phi(nl) - phi(nl-1))
+        end if
+      
+        sigma = dz_local / 2.0
+
+        fixed_below = 0.0
+        fixed_above = 0.0
+        central_frac = remaining_w
+
+        if (lev1 > 1) then
+          fixed_below = em % fires_adjacent_frac * remaining_w
+          central_frac = central_frac - fixed_below
+        end if
+        if (lev1 < nl) then
+          fixed_above = em % fires_adjacent_frac * remaining_w
+          central_frac = central_frac - fixed_above
+        end if
+      
+        gauss_sum = 0.0
+        do l = 1, nl
+          dist = real(l - lev1, AQM_KIND_R8)
+          gauss_weights(l) = exp(-0.5 * (dist / sigma)**2)
+          gauss_sum = gauss_sum + gauss_weights(l)
+        end do
+      
+        if (gauss_sum > 0.0) then
+          do l = 1, nl
+            gauss_weights(l) = (gauss_weights(l) / gauss_sum) * central_frac
+          end do
+        end if
+      
+        if (lev1 > 1) then
+          profile(c,r,lev1-1) = fixed_below
+        end if
+        if (lev1 < nl) then
+          profile(c,r,lev1+1) = fixed_above
+        end if
+      
+        do l = 1, nl
+          profile(c,r,l) = profile(c,r,l) + gauss_weights(l)
+        end do
+      
+        ! Renormalize to ensure total sums to w
+        total_sum = sum(profile(c,r,1:nl))
+        if (abs(total_sum - w) > 1e-10) then
+          profile(c,r,1:nl) = profile(c,r,1:nl) * (w / total_sum)
+        end if
+      
+        ! Special case for single layer
+        if (nl == 1 .and. lev1 == 1) then
+          profile(c,r,1) = w
         end if
 
       end do

@@ -9,7 +9,7 @@ module AQM
 
   use aqm_comp_mod
   use aqm_const_mod, only: rad_to_deg
-
+  
   implicit none
 
   ! -- import fields
@@ -55,36 +55,28 @@ module AQM
       "vegetation_type                          " &
     /)
   ! -- export fields
-  integer, parameter :: exportFieldCount = 2 + 5 + 3   !IVAI: add 5 canopy data fields add 3 photdiag arrays
+  integer, parameter :: exportFieldCount = 2
   character(len=*), dimension(exportFieldCount), parameter :: &
     exportFieldNames = (/ &
       "inst_tracer_mass_frac                ", &
-      "inst_tracer_diag_aod                 ", &
-      "inst_tracer_diag_coszens             ", & !IVAI: photdiag
-      "inst_tracer_diag_jo3o1d              ", & !IVAI: photdiag
-      "inst_tracer_diag_jno2                ", & !IVAI: photdiag
-      "inst_tracer_diag_claie               ", & !IVAI: canopy via aqm_emis_read
-      "inst_tracer_diag_cfch                ", & !IVAI: canopy via aqm_emis_read
-      "inst_tracer_diag_cfrt                ", & !IVAI: canopy via aqm_emis_read
-      "inst_tracer_diag_cclu                ", & !IVAI: canopy via aqm_emis_read
-      "inst_tracer_diag_cpopu               "  & !IVAI: canopy via aqm_emis_read
+      "inst_tracer_diag_aod                 "  &
     /)
 
   private
 
   public SetServices
-
+  
   !-----------------------------------------------------------------------------
   contains
   !-----------------------------------------------------------------------------
-
+  
   subroutine SetServices(model, rc)
     type(ESMF_GridComp)  :: model
     integer, intent(out) :: rc
 
     ! begin
     rc = ESMF_SUCCESS
-
+    
     ! the NUOPC model component will register the generic methods
     call NUOPC_CompDerive(model, inheritModel, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -129,7 +121,7 @@ module AQM
       return  ! bail out
 
   end subroutine
-
+  
   !-----------------------------------------------------------------------------
 
   subroutine InitializeP0(model, importState, exportState, clock, rc)
@@ -137,7 +129,7 @@ module AQM
     type(ESMF_State)     :: importState, exportState
     type(ESMF_Clock)     :: clock
     integer, intent(out) :: rc
-
+    
     ! local variables
     integer                    :: verbosity
     character(len=ESMF_MAXSTR) :: msgString, name, rcFile
@@ -204,16 +196,16 @@ module AQM
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-
+    
   end subroutine
-
+  
   !-----------------------------------------------------------------------------
   subroutine InitializeP1(model, importState, exportState, clock, rc)
     type(ESMF_GridComp)  :: model
     type(ESMF_State)     :: importState, exportState
     type(ESMF_Clock)     :: clock
     integer, intent(out) :: rc
-
+    
     ! begin
     rc = ESMF_SUCCESS
 
@@ -294,7 +286,7 @@ module AQM
       return  ! bail out
 
     ! -- check if import fields are defined
-    if (importFieldCount < 1) then
+    if (importFieldCount < 1) then 
       call ESMF_LogSetError(ESMF_RC_NOT_IMPL, &
         msg="This component requires import fields to be defined.", &
         line=__LINE__, file=__FILE__, &
@@ -303,7 +295,7 @@ module AQM
     end if
 
     ! -- check if export fields are defined
-    if (exportFieldCount < 1) then
+    if (exportFieldCount < 1) then 
       call ESMF_LogSetError(ESMF_RC_NOT_IMPL, &
         msg="This component requires export fields to be defined.", &
         line=__LINE__, file=__FILE__, &
@@ -426,7 +418,7 @@ module AQM
             line=__LINE__, &
             file=__FILE__)) &
             return  ! bail out
-
+         
         do item = 1, 2
           call ESMF_GridGetCoord(grid, coordDim=item, staggerloc=ESMF_STAGGERLOC_CENTER, &
             localDE=localDe, farrayPtr=coord, rc=rc)
@@ -543,7 +535,7 @@ module AQM
   subroutine ModelAdvance(model, rc)
     type(ESMF_GridComp)  :: model
     integer, intent(out) :: rc
-
+    
     ! local variables
     type(ESMF_Clock)              :: clock
     type(ESMF_State)              :: importState, exportState
@@ -557,7 +549,7 @@ module AQM
 
     ! begin
     rc = ESMF_SUCCESS
-
+    
     ! get component's information
     call NUOPC_CompGet(model, name=name, diagnostic=diagnostic, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &

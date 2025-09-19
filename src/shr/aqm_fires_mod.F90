@@ -21,15 +21,14 @@ contains
 
     ! -- local variables
     integer :: localrc
-    integer :: is, ie, js, je, nl, nx, ny
     integer :: c, r, l
     integer :: lev0, lev1
+    integer :: is, ie, js, je, nl, nx, ny
     real    :: Hp, pblh, th0, th1, dz
     real    :: tfrac, w
     real :: fixed_surface, remaining_w
     real :: dz_local, sigma, fixed_below, fixed_above, central_frac, gauss_sum, total_sum
-    real, dimension(nl) :: gauss_weights
-    integer :: l
+    real, dimension(:), allocatable :: gauss_weights
     real(AQM_KIND_R8) :: hbl, dist
     real(AQM_KIND_R8),    pointer :: phi(:)
     type(aqm_state_type), pointer :: state
@@ -58,6 +57,8 @@ contains
 
     nx = ie - is + 1
     ny = je - js + 1
+
+    allocate(gauss_weights(nl))
 
     ! -- compute layer empirical weights
     if (aqm_rc_test((em % topfraction > 1.0), &

@@ -23,9 +23,9 @@ module aqm_config_mod
     character(len=AQM_MAXSTR) :: csqy_data     = ""
     character(len=AQM_MAXSTR) :: optics_data   = ""
     character(len=AQM_MAXSTR) :: omi           = ""
-    character(len=AQM_MAXSTR) :: desid_chem_ctrl = ""
-    character(len=AQM_MAXSTR) :: desid_ctrl    = ""
-    character(len=AQM_MAXSTR) :: misc_ctrl     = ""
+    character(len=AQM_MAXSTR) :: desid_chem_ctrl = ""     
+    character(len=AQM_MAXSTR) :: desid_ctrl    = ""      
+    character(len=AQM_MAXSTR) :: misc_ctrl     = ""       
     character(len=AQM_MAXSTR) :: mp_map        = ""
     character(len=AQM_MAXSTR) :: ctm_stdout    = ""
     integer                   :: dy_map_beg    = 0
@@ -46,15 +46,12 @@ module aqm_config_mod
     logical                   :: run_rescld    = .false.
     logical                   :: verbose       = .false.
     logical                   :: canopy_yn     = .false.
-    real                      :: fires_surface_frac = 0.01
-    real                      :: fires_adjacent_frac = 0.15
     type(aqm_species_type), pointer :: species => null()
   end type aqm_config_type
 
   private
 
   public :: aqm_config_type
-  public :: fires_surface_frac, fires_adjacent_frac
 
   public :: aqm_config_init
 
@@ -284,40 +281,6 @@ contains
       rcToReturn=rc)) &
       return  ! bail out
 
-    ! -- fires fractions
-    call ESMF_ConfigGetAttribute(cf, config % fires_surface_frac, &
-      label="fires_surface_frac:", default=0.01, rc=localrc)
-    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__,  &
-      file=__FILE__,  &
-      rcToReturn=rc)) &
-      return  ! bail out
-
-    call ESMF_ConfigGetAttribute(cf, config % fires_adjacent_frac, &
-      label="fires_adjacent_frac:", default=0.15, rc=localrc)
-    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__,  &
-      file=__FILE__,  &
-      rcToReturn=rc)) &
-      return  ! bail out
-
-    ! -- fires fractions
-    call ESMF_ConfigGetAttribute(cf, config % fires_surface_frac, &
-      label="fires_surface_frac:", default=0.01, rc=localrc)
-    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__,  &
-      file=__FILE__,  &
-      rcToReturn=rc)) &
-      return  ! bail out
-
-    call ESMF_ConfigGetAttribute(cf, config % fires_adjacent_frac, &
-      label="fires_adjacent_frac:", default=0.15, rc=localrc)
-    if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__,  &
-      file=__FILE__,  &
-      rcToReturn=rc)) &
-      return  ! bail out
-
     ! -- set other default values
     config % ctm_depvfile  = .false.
 
@@ -515,16 +478,6 @@ contains
       file=__FILE__,  &
       rcToReturn=rc)) &
       return  ! bail out
-
-    ! -- assign fires fractions to emission structure
-    if (aqm_emis_ispresent("gbbepx")) then
-      type(aqm_internal_emis_type), pointer :: em_fires
-      em_fires => aqm_emis_get("gbbepx")
-      if (associated(em_fires)) then
-        em_fires % fires_surface_frac = config % fires_surface_frac
-        em_fires % fires_adjacent_frac = config % fires_adjacent_frac
-      end if
-    end if
 
     ! -- set up hydrometeors based on microphysics tracer map
     call aqm_config_species_init(config, rc=localrc)

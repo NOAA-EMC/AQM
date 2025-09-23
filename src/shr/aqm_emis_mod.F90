@@ -1646,6 +1646,7 @@ contains
     character(len=ESMF_MAXSTR)    :: msgString
     real(ESMF_KIND_R4),   pointer :: fptr(:,:)
     type(aqm_state_type), pointer :: stateIn
+    real(ESMF_KIND_R4) :: contrib
 
     ! -- begin
     if (present(rc)) rc = AQM_RC_SUCCESS
@@ -1688,9 +1689,8 @@ contains
               do i = lb(1), ub(1)
                 k = k + 1
                 if (abs(fptr(i,j)) < emAccept) then
-                  buffer(k) = buffer(k) &
-                    + em % factors(item) * fptr(i,j) / stateIn % area(i,j) &
-                                                     / stateIn % area(i,j) 
+                  contrib = em % factors(item) * fptr(i,j) / real(stateIn % area(i,j), ESMF_KIND_R4) / real(stateIn % area(i,j), ESMF_KIND_R4)
+                  buffer(k) = buffer(k) + max(0.0_ESMF_KIND_R4, contrib)
                 end if
               end do
             end do
@@ -1701,8 +1701,8 @@ contains
               do i = lb(1), ub(1)
                 k = k + 1
                 if (abs(fptr(i,j)) < emAccept) then
-                  buffer(k) = buffer(k) &
-                    + em % factors(item) * fptr(i,j) / stateIn % area(i,j)
+                  contrib = em % factors(item) * fptr(i,j) / real(stateIn % area(i,j), ESMF_KIND_R4)
+                  buffer(k) = buffer(k) + max(0.0_ESMF_KIND_R4, contrib)
                 end if
               end do
             end do
@@ -1713,8 +1713,8 @@ contains
               do i = lb(1), ub(1)
                 k = k + 1
                 if (abs(fptr(i,j)) < emAccept) then
-                  buffer(k) = buffer(k) &
-                    + em % factors(item) * fptr(i,j)
+                  contrib = em % factors(item) * fptr(i,j)
+                  buffer(k) = buffer(k) + max(0.0_ESMF_KIND_R4, contrib)
                 end if
               end do
             end do
@@ -1759,6 +1759,7 @@ contains
     character(len=ESMF_MAXSTR)    :: msgString
     real(ESMF_KIND_R4)            :: em_min, em_max
     type(aqm_state_type), pointer :: stateIn
+    real(ESMF_KIND_R4) :: contrib
 
     ! -- begin
     if (present(rc)) rc = AQM_RC_SUCCESS
@@ -1791,9 +1792,8 @@ contains
               n = em % ijmap(m)
               i = em % ip(n)
               j = em % jp(n)
-              buffer(n) = buffer(n) &
-                + em % factors(item) * em % rates(item) % values(n) / stateIn % area(i,j) &
-                                                                    / stateIn % area(i,j)  
+              contrib = em % factors(item) * em % rates(item) % values(n) / real(stateIn % area(i,j), ESMF_KIND_R4) / real(stateIn % area(i,j), ESMF_KIND_R4)
+              buffer(n) = buffer(n) + max(0.0_ESMF_KIND_R4, contrib)
             end do
           case (0)
             ! -- emissions are totals over each grid cell
@@ -1801,15 +1801,15 @@ contains
               n = em % ijmap(m)
               i = em % ip(n)
               j = em % jp(n)
-              buffer(n) = buffer(n) &
-                + em % factors(item) * em % rates(item) % values(n) / stateIn % area(i,j)
+              contrib = em % factors(item) * em % rates(item) % values(n) / real(stateIn % area(i,j), ESMF_KIND_R4)
+              buffer(n) = buffer(n) + max(0.0_ESMF_KIND_R4, contrib)
             end do
           case (1:)
             ! -- emissions are already provided as surface densities, no need to normalize
             do m = 1, size(em % ijmap)
               n = em % ijmap(m)
-              buffer(n) = buffer(n) &
-                + em % factors(item) * em % rates(item) % values(n) 
+              contrib = em % factors(item) * em % rates(item) % values(n)
+              buffer(n) = buffer(n) + max(0.0_ESMF_KIND_R4, contrib)
             end do
           case default
             ! -- this case should never occur

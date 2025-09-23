@@ -163,11 +163,16 @@ contains
         if (abs(total_sum - w) > 1e-10) then
           profile(c,r,1:nl) = profile(c,r,1:nl) * (w / total_sum)
         end if
-      
+       
         ! Special case for single layer
         if (nl == 1 .and. lev1 == 1) then
           profile(c,r,1) = w
         end if
+       
+        ! Ensure non-negative profile values
+        do l = 1, nl
+          profile(c,r,l) = max(0.0, profile(c,r,l))
+        end do
 
       end do
     end do

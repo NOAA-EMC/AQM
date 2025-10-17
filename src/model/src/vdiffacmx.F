@@ -58,6 +58,7 @@ C-----------------------------------------------------------------------
 !      USE BIDI_MOD
 !      USE LSM_MOD, ONLY: N_LUFRAC
 !      USE VDIFF_DIAG, NLPCR => NLPCR_MEAN
+C     USE PT3D_EMIS_DEFN
       USE HGRD_DEFN,only : COLSX_PE, ROWSX_PE
       USE BDSNP_MOD, only: GET_N_DEP
 #ifdef isam

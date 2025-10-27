@@ -231,7 +231,8 @@ C Land use information:
       Real, Parameter :: rg0        = 1000.0     ! [s/m]
       Real, Parameter :: rgwet0     = 25000.0    ! [s/m]
       Real, Parameter :: rsndiff    = 10.0       ! snow diffusivity fac
-      Real, Parameter :: rsnow0     = 10000.0    !  Changed from 1000 to 10000 - Helmig et al 2012
+!     Real, Parameter :: rsnow0     = 10000.0    !  Changed from 1000 to 10000 - Helmig et al 2012
+      Real, Parameter :: rsnow0     = 1000.0     ! Changed back to 1000 (CMAQv5.2.1) by EMC and ARL
       Real, Parameter :: svp2       = 17.67      ! from MM5 and WRF
       Real, Parameter :: svp3       = 29.65      ! from MM5 and WRF
       Real, Parameter :: rt25inK    = 1.0/(stdtemp + 25.0) ! 298.15K = 25C

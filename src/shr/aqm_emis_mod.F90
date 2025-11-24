@@ -206,6 +206,8 @@ contains
       em(item) % layers      = 1
       em(item) % scalefactor = 1.0
       em(item) % topfraction = -1.0
+      em(item) % fires_surface_frac = 0.01
+      em(item) % fires_adjacent_frac = 0.15
       em(item) % gridded     = .true.
       em(item) % sync        = .false.
       em(item) % verbose     = .false.
@@ -628,6 +630,60 @@ contains
               return  ! bail out
           end if
           if (em % topfraction > 1.0) then
+            call ESMF_LogSetError(ESMF_RC_NOT_VALID, &
+              msg="plume top fraction must not exceed 1.0", &
+              line=__LINE__,  &
+              file=__FILE__,  &
+              rcToReturn=rc)
+            return  ! bail out
+          end if
+        end if
+         if (trim(em % plumerise) /= "none") then
+          call ESMF_ConfigGetAttribute(config, em % fires_adjacent_frac, &
+            label=trim(em % name)//"_plume_top_fraction:", default=-1.0, rc=localrc)
+          if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__,  &
+            file=__FILE__,  &
+            rcToReturn=rc)) &
+            return  ! bail out
+          if (em % verbose) then
+            write(msgString,'(g20.8)') em % fires_adjacent_frac
+            call ESMF_LogWrite(trim(em % logprefix)//": "//pName &
+              //": plume_top_fraction: "//adjustl(msgString), ESMF_LOGMSG_INFO, rc=localrc)
+            if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+              line=__LINE__,  &
+              file=__FILE__,  &
+              rcToReturn=rc)) &
+              return  ! bail out
+          end if
+          if (em % fires_adjacent_frac > 1.0) then
+            call ESMF_LogSetError(ESMF_RC_NOT_VALID, &
+              msg="plume top fraction must not exceed 1.0", &
+              line=__LINE__,  &
+              file=__FILE__,  &
+              rcToReturn=rc)
+            return  ! bail out
+          end if
+        end if
+         if (trim(em % plumerise) /= "none") then
+          call ESMF_ConfigGetAttribute(config, em % fires_surface_frac, &
+            label=trim(em % name)//"_plume_top_fraction:", default=-1.0, rc=localrc)
+          if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+            line=__LINE__,  &
+            file=__FILE__,  &
+            rcToReturn=rc)) &
+            return  ! bail out
+          if (em % verbose) then
+            write(msgString,'(g20.8)') em % fires_surface_frac
+            call ESMF_LogWrite(trim(em % logprefix)//": "//pName &
+              //": plume_top_fraction: "//adjustl(msgString), ESMF_LOGMSG_INFO, rc=localrc)
+            if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
+              line=__LINE__,  &
+              file=__FILE__,  &
+              rcToReturn=rc)) &
+              return  ! bail out
+          end if
+          if (em % fires_surface_frac > 1.0) then
             call ESMF_LogSetError(ESMF_RC_NOT_VALID, &
               msg="plume top fraction must not exceed 1.0", &
               line=__LINE__,  &
@@ -1592,6 +1648,7 @@ contains
     character(len=ESMF_MAXSTR)    :: msgString
     real(ESMF_KIND_R4),   pointer :: fptr(:,:)
     type(aqm_state_type), pointer :: stateIn
+    real(ESMF_KIND_R4) :: contrib
 
     ! -- begin
     if (present(rc)) rc = AQM_RC_SUCCESS
@@ -1634,9 +1691,8 @@ contains
               do i = lb(1), ub(1)
                 k = k + 1
                 if (abs(fptr(i,j)) < emAccept) then
-                  buffer(k) = buffer(k) &
-                    + em % factors(item) * fptr(i,j) / stateIn % area(i,j) &
-                                                     / stateIn % area(i,j) 
+                  contrib = em % factors(item) * fptr(i,j) / real(stateIn % area(i,j), ESMF_KIND_R4) / real(stateIn % area(i,j), ESMF_KIND_R4)
+                  buffer(k) = buffer(k) + max(0.0_ESMF_KIND_R4, contrib)
                 end if
               end do
             end do
@@ -1647,8 +1703,8 @@ contains
               do i = lb(1), ub(1)
                 k = k + 1
                 if (abs(fptr(i,j)) < emAccept) then
-                  buffer(k) = buffer(k) &
-                    + em % factors(item) * fptr(i,j) / stateIn % area(i,j)
+                  contrib = em % factors(item) * fptr(i,j) / real(stateIn % area(i,j), ESMF_KIND_R4)
+                  buffer(k) = buffer(k) + max(0.0_ESMF_KIND_R4, contrib)
                 end if
               end do
             end do
@@ -1659,8 +1715,8 @@ contains
               do i = lb(1), ub(1)
                 k = k + 1
                 if (abs(fptr(i,j)) < emAccept) then
-                  buffer(k) = buffer(k) &
-                    + em % factors(item) * fptr(i,j)
+                  contrib = em % factors(item) * fptr(i,j)
+                  buffer(k) = buffer(k) + max(0.0_ESMF_KIND_R4, contrib)
                 end if
               end do
             end do
@@ -1705,6 +1761,7 @@ contains
     character(len=ESMF_MAXSTR)    :: msgString
     real(ESMF_KIND_R4)            :: em_min, em_max
     type(aqm_state_type), pointer :: stateIn
+    real(ESMF_KIND_R4) :: contrib
 
     ! -- begin
     if (present(rc)) rc = AQM_RC_SUCCESS
@@ -1737,9 +1794,8 @@ contains
               n = em % ijmap(m)
               i = em % ip(n)
               j = em % jp(n)
-              buffer(n) = buffer(n) &
-                + em % factors(item) * em % rates(item) % values(n) / stateIn % area(i,j) &
-                                                                    / stateIn % area(i,j)  
+              contrib = em % factors(item) * em % rates(item) % values(n) / real(stateIn % area(i,j), ESMF_KIND_R4) / real(stateIn % area(i,j), ESMF_KIND_R4)
+              buffer(n) = buffer(n) + max(0.0_ESMF_KIND_R4, contrib)
             end do
           case (0)
             ! -- emissions are totals over each grid cell
@@ -1747,15 +1803,15 @@ contains
               n = em % ijmap(m)
               i = em % ip(n)
               j = em % jp(n)
-              buffer(n) = buffer(n) &
-                + em % factors(item) * em % rates(item) % values(n) / stateIn % area(i,j)
+              contrib = em % factors(item) * em % rates(item) % values(n) / real(stateIn % area(i,j), ESMF_KIND_R4)
+              buffer(n) = buffer(n) + max(0.0_ESMF_KIND_R4, contrib)
             end do
           case (1:)
             ! -- emissions are already provided as surface densities, no need to normalize
             do m = 1, size(em % ijmap)
               n = em % ijmap(m)
-              buffer(n) = buffer(n) &
-                + em % factors(item) * em % rates(item) % values(n) 
+              contrib = em % factors(item) * em % rates(item) % values(n)
+              buffer(n) = buffer(n) + max(0.0_ESMF_KIND_R4, contrib)
             end do
           case default
             ! -- this case should never occur

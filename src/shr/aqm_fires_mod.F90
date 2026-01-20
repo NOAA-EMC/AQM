@@ -1,6 +1,6 @@
 !> @file aqm_fires_mod.f90
 !> @brief Advanced Plume Rise and Vertical Distribution for AQM
-!> @details Implements Sofiev (2012) buoyancy-driven plume rise with 
+!> @details Implements Sofiev (2012) buoyancy-driven plume rise with
 !> empirical wind-shear suppression and Beta-distribution vertical mapping.
 module aqm_fires_mod
 
@@ -39,7 +39,7 @@ contains
     real    :: w, Hp_eff, avg_U, stab_penalty
     real    :: hgt_prev, layer_top, x_low, x_high, weight, total_sum
     real    :: frp_phys, model_top_m
-    
+
     real(AQM_KIND_R8),    pointer :: phi(:)
     type(aqm_state_type), pointer :: state
 
@@ -107,7 +107,7 @@ contains
         if (use_wind_adj) then
           ! Calculate local Brunt-Vaisala frequency (N2)
           N2 = (grav / th0) * abs(th1 - th0) / max(dz, 1.0)
-          
+
           ! Calculate column-average horizontal wind speed magnitude
           plm_idx = 1
           do l = 1, nl
@@ -115,7 +115,7 @@ contains
             plm_idx = l
           end do
           avg_U = sum(sqrt(state%u(c,r,1:plm_idx)**2 + state%v(c,r,1:plm_idx)**2)) / max(1.0, real(plm_idx))
-          
+
           ! Penalty increases in stable environments (high N2)
           stab_penalty = 1.0 + (max(0.0, N2) / N2_ref)
           if (avg_U > 2.0) then
@@ -131,7 +131,7 @@ contains
         hgt_prev = 0.0
         do l = 1, nl
           layer_top = min(phi(l) * onebg, Hp_eff)
-          
+
           if (hgt_prev >= Hp_eff) exit
 
           x_low  = hgt_prev / Hp_eff
@@ -192,7 +192,7 @@ contains
         ! Case: Plume penetrates into Free Troposphere
         alpha = 0.93; beta = 298.0; gama = 0.13; delta = 0.7
       end if
-      
+
       Hp = alpha*pblh + beta*(frp/Pf0)**gama * exp(-delta*NFT_sq/N0_sq)
       Hp = max(Hp, 10.0) ! Maintain a small minimum height
 

@@ -2,6 +2,7 @@
 !> @brief Advanced Plume Rise and Vertical Distribution for AQM
 !> @details Implements Sofiev (2012) buoyancy-driven plume rise with
 !> empirical wind-shear suppression and Beta-distribution vertical mapping.
+!> forest turbulence effects on dampening distribution
 module aqm_fires_mod
 
   use aqm_const_mod, only : grav, onebg

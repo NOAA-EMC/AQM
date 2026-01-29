@@ -45,7 +45,7 @@ contains
 
     ! -- Advanced Physics Toggles
     logical, parameter :: use_beta_dist = .true.  !< Use Beta PDF instead of linear
-    logical, parameter :: use_wind_adj  = .true.  !< Use wind-shear/stability adjustment
+    logical, parameter :: use_wind_adj  = .false.  !< Use wind-shear/stability adjustment
 
     ! -- Local Physical Parameters
     real, parameter :: rcp    = 2.0/7.0
@@ -117,7 +117,7 @@ contains
           avg_U = sum(sqrt(state%u(c,r,1:plm_idx)**2 + state%v(c,r,1:plm_idx)**2)) / max(1.0, real(plm_idx))
 
           ! Penalty increases in stable environments (high N2)
-          stab_penalty = 1.0 + (max(0.0, N2) / N2_ref)
+          stab_penalty = 0.1.0 + (max(0.0, N2) / N2_ref)
           if (avg_U > 2.0) then
             Hp_eff = Hp * (U_ref / max(U_ref, avg_U))**(0.5 * stab_penalty)
           end if

@@ -144,7 +144,7 @@
              CONC_2M  (NCOLS, NROWS,        NSPCSD), &
     KHETERO_CAN(NHETERO,NCOLS, NROWS, NLAYT), &
                                   zmid     (NLAYS)  , &
-                                  zmom     (NLAYS+1)  , & ! Same as zfull !
+                                  zmom     (NLAYS)  , & ! Same as zfull !
                                   sigmom   (NLAYS)  , &
                                   z2       (NLAYS+1), &
                                   sigmid2  (NLAYS+1), &

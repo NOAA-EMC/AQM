@@ -474,7 +474,7 @@ C...modules
          END IF
 
          ALLOCATE( ZFT       (NLAYT),
-     &             rj_corrf  (NLAYT+1),
+     &             rj_corrf  (NLAYT),
      &             rj_corrmid(NLAYT), STAT = ALLOCSTAT)
          IF ( ALLOCSTAT .NE. 0 ) THEN
               XMSG = 'Failure allocating canopy RJ correction arrays'
@@ -2273,7 +2273,7 @@ C...modules
 ! canopy_transfer:
 !    &      CONC_MOD  (:,:, 1  , LGC_NO2)  ) ) THEN
 !    &      CONC_CAN  (:,:, 3  , LGC_O3 )  ) ) THEN
-!    &      CONC_2M   (:,:     , LGC_NO2)  ) ) THEN
+!    &      CONC_2M   (:,:,    , LGC_NO2)  ) ) THEN
 !    & float(ifrct (NLAYS    ,1,:,:))    ) ) THEN
 !    & float(ifrct (NLAYT    ,1,:,:))    ) ) THEN   ! 1st (bot) canopy layer
 !

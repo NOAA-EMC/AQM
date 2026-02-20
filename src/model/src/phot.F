@@ -474,7 +474,7 @@ C...modules
          END IF
 
          ALLOCATE( ZFT       (NLAYT),
-     &             rj_corrf  (NLAYT),
+     &             rj_corrf  (NLAYT+1),
      &             rj_corrmid(NLAYT), STAT = ALLOCSTAT)
          IF ( ALLOCSTAT .NE. 0 ) THEN
               XMSG = 'Failure allocating canopy RJ correction arrays'
@@ -1343,6 +1343,7 @@ C...modules
                         RWC( L ) = 0.0
                      END IF
                   END DO ! loop on layers clouds
+
 ! get optical properties of resolved cloud hydrometeors
                   CALL GET_DROPLET_OPTICS( NLAYS, BLKTA, OWATER_FRAC, SEAICE_FRAC, SNOW_FRAC, LWC )     
                   CALL GET_ICE_OPTICS( NLAYS, BLKTA, IWC )
@@ -1658,8 +1659,8 @@ C...modules
                      END DO
 
 !IVAI
-                  IF ( CANOPY_SHADE ) THEN   ! ACM_CLOUDS
-                  IF ( FRT_MASK(COL,ROW) > 0.) THEN
+            IF ( CANOPY_SHADE ) THEN   ! ACM_CLOUDS
+              IF ( FRT_MASK(COL,ROW) > 0.) THEN
 ! Canopy columns 
                     ! Above canopy layers
                      DO L = 1, NLAYS
@@ -1673,7 +1674,7 @@ C...modules
                         CLDFRAC_CAN(L) = CLDFRAC(1)
                      END DO
 
-                  ELSE   ! ( .NOT. FRT_MASK )
+              ELSE   ! ( .NOT. FRT_MASK )
 
 ! Non-Canopy columns
                     ! Above canopy layers
@@ -1687,16 +1688,16 @@ C...modules
                         CLOUDS_CAN (L) = CLOUDS (1)
                         CLDFRAC_CAN(L) = CLDFRAC(1)
                      END DO
-                  END IF ! ( FRT_MASK )
-                  END IF ! ( CANOPY_SHADE )
 
-!                  IF (KOUNT < 3 ) print*, 'PHOT: IN ACM_CLOUD -> CANOPY_SHADE'
-!IVAI
-                 
+              END IF ! ( FRT_MASK )
+            END IF ! ( CANOPY_SHADE )
+
+!           IF (KOUNT < 3 ) print*, 'PHOT: IN ACM_CLOUD -> CANOPY_SHADE'
+
 ! get optical properties of of subgrid cloud hydrometeors
                      CALL GET_DROPLET_OPTICS( LEV, BLKTA, OWATER_FRAC, SEAICE_FRAC, SNOW_FRAC, LWC )     
                      CALL GET_ICE_OPTICS( LEV, BLKTA, IWC )     
-                     CALL GET_AGGREGATE_OPTICS( LEV, RWC, SWC, GWC )     
+                     CALL GET_AGGREGATE_OPTICS( LEV, RWC, SWC, GWC )
 
 !...calculate the acm-cloud photolysis rates for all layers:
                      NEW_PROFILE = .FALSE.   
@@ -2273,7 +2274,7 @@ C...modules
 ! canopy_transfer:
 !    &      CONC_MOD  (:,:, 1  , LGC_NO2)  ) ) THEN
 !    &      CONC_CAN  (:,:, 3  , LGC_O3 )  ) ) THEN
-!    &      CONC_2M   (:,:,    , LGC_NO2)  ) ) THEN
+!    &      CONC_2M   (:,:     , LGC_NO2)  ) ) THEN
 !    & float(ifrct (NLAYS    ,1,:,:))    ) ) THEN
 !    & float(ifrct (NLAYT    ,1,:,:))    ) ) THEN   ! 1st (bot) canopy layer
 !

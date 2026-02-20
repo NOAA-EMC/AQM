@@ -590,8 +590,8 @@ module can_trans_mod
             kk = NLAYT
             do k = NLAYT, NLAYT-8, -1
                ! Paul's zt (MV3D_ZPLUS) is our zmid
-               if (diag_hgt <= zmid(k-1) .and. &
-                  diag_hgt > zmid(k)) then
+               if (diag_hgt <= zmid_can(COL,ROW,k-1) .and. &
+                  diag_hgt > zmid_can(COL,ROW,k)) then
                   kk = k - 1
                end if
             end do
@@ -605,8 +605,8 @@ module can_trans_mod
                mmr_diag =  &
                         mmr_canopy(kk) +                    &
                        (mmr_canopy(kk) - mmr_canopy(kk + 1)) / &
-                          (zmid(kk) -    zmid(kk + 1)) * &
-                          (diag_hgt -    zmid(kk + 1))        ! ug kg-1
+                          (zmid_can(COL,ROW,kk) -    zmid_can(COL,ROW,kk + 1)) * &
+                          (diag_hgt -    zmid_can(COL,ROW,kk + 1))        ! ug kg-1
                vmr_resolved      (NLAYS + 1)      = FOR_CONV(isp) * mmr_diag
             end if
 

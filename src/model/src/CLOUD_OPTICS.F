@@ -375,16 +375,6 @@
             cloud_ice_asy ( 1:levels, 1:nwl_ref ) = 0.0
             dge           ( 1:levels )            = 0.0
 
-!           forall( layer = 1:levels )
-!              dge( layer ) = 0.0
-!              forall( iwl = 1:nwl_ref ) 
-!                 cloud_liquid_ext ( layer, iwl ) = cldmin
-!                 cloud_liquid_scat( layer, iwl ) = cldtiny
-!                 cloud_liquid_ssa ( layer, iwl ) = high
-!                 cloud_liquid_asy ( layer, iwl ) = 0.0
-!              end forall 
-!           end forall
-              
 !IVAI
             if( maxval( iwc(1:levels) ) .le. cldmin )return
 ! IVAI      if( maxval( iwc ) .le. cldmin )return
@@ -560,11 +550,11 @@
             forall( k=1:levels ) ! effective radius algorithm
 ! Start with temperature-dependent value appropriate for continental air
                rel(k) = rliqland + del_land_ocean * min(1.0,max(0.0,0.05*(tmelt-t(k))))
- ! Ramp up for snow frac over land; uses fill increase if snow_frac is 100%
+! Ramp up for snow frac over land; uses fill increase if snow_frac is 100%
                rel(k) = rel(k) + (rliqocean-rel(k)) * min(1.0, snowfrac)  ! min(1.0,max( 0.0, snowh))
- ! Ramp up between polluted value over land to clean value over ocean.
+! Ramp up between polluted value over land to clean value over ocean.
                rel(k) = rel(k) + (rliqocean-rel(k)) * min(1.0,max( 0.0, owater_frac))
- ! Ramp up between the resultant value and a sea ice value in the presence of ice.
+! Ramp up between the resultant value and a sea ice value in the presence of ice.
                rel(k) = rel(k) + (rliqice-rel(k))   * min(1.0,max( 0.0, icefrac ))
             end forall
               
@@ -599,16 +589,6 @@
 
             error_flag = .false.
  
-!           forall( layer = 1:levels )
-!              rel( layer ) = 0.0
-!              forall( iwl = 1:nwl_ref ) 
-!                 cloud_liquid_ext ( layer, iwl ) = cldmin
-!                 cloud_liquid_scat( layer, iwl ) = cldtiny
-!                 cloud_liquid_ssa ( layer, iwl ) = high
-!                 cloud_liquid_asy ( layer, iwl ) = 0.0
-!              end forall 
-!           end forall
-
             cloud_liquid_ext ( 1:levels, 1:nwl_ref ) = cldmin
             cloud_liquid_scat( 1:levels, 1:nwl_ref ) = cldtiny
             cloud_liquid_ssa ( 1:levels, 1:nwl_ref ) = high
@@ -740,7 +720,6 @@
             real( 8 ), parameter :: chi_snow = -1.97059682D+01 ! -2.0*(1.0e+3*pi*rho_snow*n0_snow)**0.25, (cm-4*g/m3)**.25
             real( 8 ), parameter :: chi_grau = -1.78063523D+01 ! -2.0*(1.0e+3*pi*rho_grau*n0_grau)**0.25, (cm-4*g/m3)**.25
    
-!!!!!!!!!!! real, parameter :: limit = 1.0E-10 ! value of q where calculation converges to a lower limit
             real, parameter :: limit = 1.0E-04 ! value of q where calculation converges to a upper limit
 
             real, parameter :: dmin_snow = 887.873       ! lower convergence results for snow, um 
@@ -809,12 +788,6 @@
                   comp = newtotalw(nk) * psd
                   sum2 = sum2 + comp 
                   sum1 = sum1 + xk(nk)*comp
-! reff results sixteen point seem off from thirty two points up to a factor of two
-!              do nk = 1, 16
-!                 psd  = n0*exp(lamda*gauss_laguerre_node(nk))
-!                 comp = gauss_laguerre_total(nk) * psd
-!                 sum2 = sum2 + comp 
-!                 sum1 = sum1 + gauss_laguerre_node(nk)*comp
                end do
                if( sum2 .lt. cloud_smallest )then
                  reff(lay) = dmin
@@ -903,8 +876,6 @@
 !IVAI
             if( maxval( rwc(1:levels) ) .gt. cldmin )then
 !IVAI       if( maxval( rwc ) .gt. cldmin )then
-
-!!!!!!!!!      call aggreg_size_effective( 1, rwc, reff_rain, levels)
 
 !Parameterization for rain droplets is taken from Goddard Space Flight Radiation Model
 !in WRF version 3.6. Their derivation is discussed in Chou and Suarez (1999),

@@ -480,7 +480,11 @@ contains
       rcToReturn=rc)) &
       return  ! bail out
     ! -- set input time record according to start type (startup/continue)
-    em % irec = (currTime - startTime) / timeInterval
+    if (trim(em % frequency) /= "static") then
+      em % irec = (currTime - startTime) / timeInterval
+    else
+      em % irec = 0
+    end if
 
     em % alarm = ESMF_AlarmCreate(clock, ringTime=startTime, &
       ringInterval=timeInterval, name=trim(em % name)//"_alarm", rc=localrc)
@@ -1570,20 +1574,20 @@ contains
 
   end function aqm_emis_ispresent
 
-  !Add number of points for fire and point source 
+  !Add number of points for fire and point source
   subroutine aqm_emis_desc( etype, nlays, nvars, vnames, units, npoints )
     character(len=*),            intent(in)  :: etype
     integer,           optional, intent(out) :: nlays
     integer,           optional, intent(out) :: nvars
     character(len=16), optional, intent(out) :: vnames(:)
     character(len=16), optional, intent(out) :: units(:)
-    integer,           optional, intent(out) :: npoints  
+    integer,           optional, intent(out) :: npoints
 
     ! -- local variables
     integer :: localrc
     integer :: item, nsrc
     type(aqm_internal_emis_type), pointer :: em
-    type(aqm_state_type), pointer :: stateIn  
+    type(aqm_state_type), pointer :: stateIn
 
     ! -- begin
     ! -- get emission data
@@ -1628,7 +1632,7 @@ contains
       if (present(nvars))  nvars  = 0
       if (present(vnames)) vnames = ""
       if (present(units))  units  = ""
-      if (present(npoints)) npoints  = 0  
+      if (present(npoints)) npoints  = 0
     end if
 
   end subroutine aqm_emis_desc

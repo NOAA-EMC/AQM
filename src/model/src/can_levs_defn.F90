@@ -144,7 +144,7 @@
              CONC_2M  (NCOLS, NROWS,        NSPCSD), &
     KHETERO_CAN(NHETERO,NCOLS, NROWS, NLAYT), &
                                   zmid     (NLAYS)  , &
-                                  zmom     (NLAYS)  , & ! Same as zfull !
+                                  zmom     (NLAYS+1)  , & ! Same as zfull !
                                   sigmom   (NLAYS)  , &
                                   z2       (NLAYS+1), &
                                   sigmid2  (NLAYS+1), &
@@ -161,7 +161,7 @@
              dxdy      (NCOLS, NROWS)               , &
              zmom_can  (NCOLS, NROWS, NLAYT+1)      , &
              zmid_can  (NCOLS, NROWS, NLAYT)        , &
-             sigmom_can(NCOLS, NROWS, NLAYT)        , &
+             sigmom_can(NCOLS, NROWS, NLAYT+1)      , &
              sigmid_can(NCOLS, NROWS, NLAYT)        , &
 ! met3d arrays
              ZH_CAN    (NCOLS, NROWS, NLAYT)        , &
@@ -730,6 +730,8 @@
       do k = ka(COL,ROW)+1, NLAYT
          sigmom_can(COL,ROW, k) = (sigmid_can(COL,ROW, k-1) + sigmid_can(COL,ROW, k)) * 0.5
       end do
+! ! Lower interface at surface
+      sigmom_can(COL,ROW, NLAYT+1) = 1.0
 
 !
 !  Next, do a sort of all of the variables in the original METV3D array into canopy.  Note that

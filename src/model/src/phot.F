@@ -128,7 +128,7 @@
 C...modules
 
       USE RUNTIME_VARS, ONLY : START_DATE => STDATE, START_TIME => STTIME, 
-     &    PHOTDIAG, NLAYS_DIAG, NWAVE !IVAI
+     &    PHOTDIAG, NLAYS_DIAG, NWAVE 
       USE RXNS_DATA            ! chemistry varaibles and data
       USE GRID_CONF            ! horizontal & vertical domain specifications
       USE CGRID_SPCS           ! CGRID species number and offsets
@@ -142,15 +142,15 @@ C...modules
       USE SEAS_STRAT_O3_MIN    ! monthly minimum fraction of ozone column density above Pressure TOP
       !Used for canopy shade calculation
       USE ASX_DATA_MOD, ONLY : MET_DATA, GRID_DATA,    !uses met data
-     &                         CANOPY_SHADE            ! IVAI: canopy inline option
+     &                         CANOPY_SHADE            !canopy inline option
       USE CENTRALIZED_IO_MODULE, ONLY : LAT, LON, HT, 
-     &                         AREA ! IVAI
-!IVAI
+     &                         AREA
+
 ! NB. NLAYC/NLAYT definitions in GRID_CONF (Jan 9 2025)
-      use can_mask             ! out: FRT_mask
+      use can_mask 
       use can_levs_defn
       use can_trans_mod
-!IVAI
+
       USE centralized_io_util_module, ONLY: IntegrateTrapezoid,interp_linear1_internal
       USE ELMO_DATA, ONLY : ELMO_AOD_550, ELMO_EXT_550
 
@@ -347,14 +347,13 @@ C...modules
       REAL ZFL, ZCAN, XCANOUT                            ! local canopy variables
       INTEGER, PARAMETER      :: MAXCAN = 1000           ! Declare local maximum canopy layers
 
-!IVAI
       REAL, ALLOCATABLE, SAVE  :: ZCANX6   ( : )        ! canopy heights[m]
 
 ! Local canopy variables
       REAL :: BOTCAN, LAI_C1R, LAI_C2R, LAI_C3R, LAI_C4R, COEFF ! local canopy variables
       REAL :: TOTAL_O3_COLUMN_CAN
       INTEGER                 :: COUNTCAN, KCAN, KK, II
-!IVAI
+
       INTEGER                 :: KOUNT
       INTEGER                 :: S
       INTEGER, PARAMETER      :: MAXCAN6 = 6            ! Declare local canopy layers
@@ -435,8 +434,7 @@ C...modules
          
          CALL INIT_CLOUD_OPTICS(  )
 
-!IVAI: In (FIRSTIME )
-! In-line canopy shading option? (default = false)
+! In-line canopy shading option (default = false)
       IF ( CANOPY_SHADE ) THEN                      ! FIRSTIME
 
          XMSG = 'PHOT: Using in-line canopy shading option'
@@ -474,7 +472,7 @@ C...modules
          END IF
 
          ALLOCATE( ZFT       (NLAYT),
-     &             rj_corrf  (NLAYT),
+     &             rj_corrf  (NLAYT+1),
      &             rj_corrmid(NLAYT), STAT = ALLOCSTAT)
          IF ( ALLOCSTAT .NE. 0 ) THEN
               XMSG = 'Failure allocating canopy RJ correction arrays'
@@ -484,7 +482,7 @@ C...modules
          ALLOCATE( 
      &            RJ_CORR      ( NCOLS, NROWS ), 
      &            RJ_CORR6     ( NCOLS, NROWS ),
-     &            RJ_CORRM     ( NCOLS, NROWS, NLAYS + NLAYC ),  !IVAI
+     &            RJ_CORRM     ( NCOLS, NROWS, NLAYS + NLAYC ),
      &            STAT = ALLOCSTAT )
          IF ( ALLOCSTAT .NE. 0 ) THEN
               XMSG = 'Failure allocating canopy photolysis rate correction arrays'
@@ -509,7 +507,7 @@ C...modules
 
          RJ_CORR  (:,:)=0.0
          RJ_CORR6 (:,:)=0.0
-         RJ_CORRM (:,:,:)=0.0  !IVAI
+         RJ_CORRM (:,:,:)=0.0
 
       END IF ! ( CANOPY_SHADE )
 
@@ -552,7 +550,6 @@ C...modules
          ALLOCATE( TAUC_AERO( NLAYS,NWL ) )
          ALLOCATE( TAU_TOT  ( NLAYS,NWL ) )
 
-!IVAI
 !...Allocate and initialize new canopy arrays
       IF ( CANOPY_SHADE ) THEN
 
@@ -588,7 +585,6 @@ C...modules
          TAU_CLOUD_CAN(:, :)=0.0  !out
 
       END IF ! CANOPY_SHADE
-!IVAI
 
          ALLOCATE( TOTAL_OC ( NCOLS,NROWS ) )
          ALLOCATE( TAU_AERO_550    ( NCOLS,NROWS ) )
@@ -897,10 +893,6 @@ C...modules
 #endif
       END IF 
 
-!IVAI
-!      print*, 'PHOT: AFTER FIRSTIME '
-!      print*, 'PHOT: GRID_DATA AREA = ', AREA (1:10,1:10), LAT(1:10,1:10)
-
       IF (CANOPY_SHADE ) THEN
 
         CALL get_can_mask( JDATE, JTIME)
@@ -1020,7 +1012,6 @@ C...modules
             END IF ! KOUNT
             END IF ! .FALSE.
 
-! Print up to KOUNT number of canopy columns
             KOUNT = KOUNT + 1
 
           END IF ! FRT_MASK
@@ -1030,7 +1021,6 @@ C...modules
       END DO ! L=1,NLAYS
 
       END IF ! CANOPY_SHADE
-!IVAI
 
       CALCULATE_EXT_550 = .TRUE. !JTIME_CHK
       
@@ -1045,13 +1035,12 @@ C...modules
          ETOT_SFC_WL  = 0.0
          AERO_EXT_550 = 0.0
          TAU_AERO_550 = 0.0
-!IVAI
+
          IF (CANOPY_SHADE ) THEN
            RJ_CAN = 0.0 
            RJ_RES_CAN = 0.0
            RJ_SUB_CAN = 0.0
          END IF 
-!IVAI
 
 !...Initialize ETOT_SFC, TAU_AERO, TAU_TOT, TAUO3_TOP to 0.0
 
@@ -1128,13 +1117,12 @@ C...modules
                   RJ_RES( COL,ROW, :,: ) = 0.0
                   RJ_SUB( COL,ROW, :,: ) = 0.0
                   ETOT_SFC_WL ( COL,ROW, : ) = 0.0
-!IVAI
+
                   IF (CANOPY_SHADE ) THEN
-                    RJ_CAN    ( COL,ROW, :,: ) = 0.0  !IVAI
-                    RJ_RES_CAN( COL,ROW, :,: ) = 0.0  !IVAI
-                    RJ_SUB_CAN( COL,ROW, :,: ) = 0.0  !IVAI
+                    RJ_CAN    ( COL,ROW, :,: ) = 0.0
+                    RJ_RES_CAN( COL,ROW, :,: ) = 0.0
+                    RJ_SUB_CAN( COL,ROW, :,: ) = 0.0
                   END IF
-!IVAI
    
                   IF ( JTIME_CHK .AND. PHOTDIAG ) THEN
                      TAUO3_TOP_WL( COL,ROW, : ) = 0.0
@@ -1187,14 +1175,14 @@ C...modules
                BLKRJ_ACM = 0.0
 
                IF (CANOPY_SHADE ) THEN
-                 BLKRJ_RES_CAN = 0.0  !IVAI
-                 BLKRJ_ACM_CAN = 0.0  !IVAI
+                 BLKRJ_RES_CAN = 0.0 
+                 BLKRJ_ACM_CAN = 0.0
                END IF
 
 !...Set height of lowest level to zero
 
                BLKZF( 1 ) = 0.0
-               IF (CANOPY_SHADE ) BLKZF_CAN( 1 ) = 0.0      !IVAI
+               IF (CANOPY_SHADE ) BLKZF_CAN( 1 ) = 0.0
 
                ZSFC   = HT( COL,ROW ) ! surface height [m]
                SINZEN = SQRT( 1.0 - COSZEN * COSZEN ) ! sine of zenith angle
@@ -1202,10 +1190,8 @@ C...modules
 !...get total ozone column based on OMI observations
                CALL O3TOTCOL ( LAT( COL,ROW ), LON( COL,ROW ), MIDDATE, MIDTIME, TOTAL_O3_COLUMN )
 
-!IVAI:
                IF (CANOPY_SHADE ) 
      &           TOTAL_O3_COLUMN_CAN = TOTAL_O3_COLUMN
-!IVAI
             
                IF ( USE_ACM_CLOUD .OR. CLDATT ) THEN
                   OWATER_FRAC = MAX( ( 1.0 - SEAICE( COL,ROW ) ), 0.0 )
@@ -1315,7 +1301,6 @@ C...modules
             END IF ! FRT_MASK
 
             END IF ! CANOPY_SHADE
-!IVAI
 
 ! Cloudy atmosphere
                IF ( CLDATT .AND. CFRAC_2D( COL,ROW ) .GT. 0.0 ) THEN
@@ -1343,6 +1328,7 @@ C...modules
                         RWC( L ) = 0.0
                      END IF
                   END DO ! loop on layers clouds
+
 ! get optical properties of resolved cloud hydrometeors
                   CALL GET_DROPLET_OPTICS( NLAYS, BLKTA, OWATER_FRAC, SEAICE_FRAC, SNOW_FRAC, LWC )     
                   CALL GET_ICE_OPTICS( NLAYS, BLKTA, IWC )
@@ -1362,7 +1348,6 @@ C...modules
                   CALL CLEAR_HYDROMETEOR_OPTICS()
                END IF
 
-!IVAI:
             IF ( CANOPY_SHADE ) THEN
 
               IF ( FRT_MASK(COL,ROW) > 0.) THEN
@@ -1380,7 +1365,6 @@ C...modules
                END DO
               END IF ! FRT_MASK
             END IF ! CANOPY_SHADE
-!IVAI
             
 !..calculate needed aerosol properties in column
 
@@ -1400,7 +1384,7 @@ C...modules
                NEW_PROFILE    = .TRUE. 
                ONLY_SOLVE_RAD = .FALSE. 
                              
-               ! Clear-sky call to new_optics !IVAI
+               ! Clear-sky call to new_optics 
                CALL NEW_OPTICS ( JDATE, JTIME, NLAYS,                       !In: NLAYS # vertical layers model
      &                           BLKTA, BLKPRS, BLKDENS, BLKZH, BLKZF,
      &                           BLKO3, BLKNO2,
@@ -1409,7 +1393,6 @@ C...modules
      &                           BLKRJ_RES, TAUC_AERO, TAU_TOT, TAUO3_TOP,  !Out: RJ resolved-sky
      &                           TAU_RAY, SSA, TAU_CLOUD, TOTAL_O3_COLUMN ) !Out
 
-!IVAI: In COL,ROW LOOP
             IF ( CANOPY_SHADE ) THEN
 
 !... Non-canopy columns: fill in RJ values from "no-canopy" call to new_optics
@@ -1425,9 +1408,9 @@ C...modules
                END DO
 
 !...Temporary auxilliary diagnostics
-!GOOD           aux2d_02 ( COL,ROW ) = BLKRJ_RES_CAN( NLAYT, LO3O1D)
+!               aux2d_02 ( COL,ROW ) = BLKRJ_RES_CAN( NLAYT, LO3O1D)
 
-!GOOD           aux2d_03 ( COL,ROW ) = BLKRJ_RES_CAN( NLAYT-NLAYC, LO3O1D) ! NLAYS=NLAYT-NLAYC
+!               aux2d_03 ( COL,ROW ) = BLKRJ_RES_CAN( NLAYT-NLAYC, LO3O1D) ! NLAYS=NLAYT-NLAYC
 
 
             IF ( FRT_MASK(COL,ROW) > 0. ) THEN
@@ -1454,7 +1437,6 @@ C...modules
             END IF ! (FRT_MASK)
 
             END IF ! CANOPY_SHADE
-!IVAI
 
 !...load diagnostic file arrays
 
@@ -1614,16 +1596,12 @@ C...modules
             END IF ! KOUNT
             END IF ! .FALSE.
 
-! Print up to KOUNT canopy columns
-            KOUNT = KOUNT + 1 ! CANOPY_SHADE .AND. FRT_MASK
+            KOUNT = KOUNT + 1 
 ! End Print
 
             END IF  ! FRT_MASK
 !
             END IF  ! CANOPY_SHADE
-
-!            IF (KOUNT < 3 ) print*, 'PHOT: BEFORE ACM_CLOUD '
-!IVAI
 
                IF ( USE_ACM_CLOUD ) THEN
                   IF ( ACM_CLOUDS( COL,ROW ) .GT. 0.0 ) THEN
@@ -1636,7 +1614,7 @@ C...modules
                         IF ( ACM_CFRAC( LEV, COL,ROW ) .GT. 0.0 ) EXIT
                      END DO
 !...replace the lower layers with sub-grid cloud properties
-                     DO L = 1, LEV    !IVAI: NB. LEV is cloud top
+                     DO L = 1, LEV    ! NB. LEV is cloud top
                         SWC( L ) = 0.0
                         IF ( ACM_CFRAC( L,COL,ROW ) .GT. 0.0 ) THEN
                            CLOUDS ( L ) = .TRUE.
@@ -1657,46 +1635,10 @@ C...modules
                         CLOUD_LAYERING( L ) = .FALSE.
                      END DO
 
-!IVAI
-                  IF ( CANOPY_SHADE ) THEN   ! ACM_CLOUDS
-                  IF ( FRT_MASK(COL,ROW) > 0.) THEN
-! Canopy columns 
-                    ! Above canopy layers
-                     DO L = 1, NLAYS
-                        CLOUDS_CAN (NLAYC+L) = CLOUDS (L)
-                        CLDFRAC_CAN(NLAYC+L) = CLDFRAC(L)
-                     END DO
-
-                     ! Set sub-canopy layer values to 1st model layer
-                     DO L = 1, NLAYC
-                        CLOUDS_CAN (L) = CLOUDS (1) 
-                        CLDFRAC_CAN(L) = CLDFRAC(1)
-                     END DO
-
-                  ELSE   ! ( .NOT. FRT_MASK )
-
-! Non-Canopy columns
-                    ! Above canopy layers
-                     DO L = 1, NLAYS
-                        CLOUDS_CAN (NLAYC+L) = CLOUDS (L)
-                        CLDFRAC_CAN(NLAYC+L) = CLDFRAC(L)
-                     END DO
-
-                     ! Set sub-canopy layer values to 1st model layer
-                     DO L = 1, NLAYC
-                        CLOUDS_CAN (L) = CLOUDS (1)
-                        CLDFRAC_CAN(L) = CLDFRAC(1)
-                     END DO
-                  END IF ! ( FRT_MASK )
-                  END IF ! ( CANOPY_SHADE )
-
-!                  IF (KOUNT < 3 ) print*, 'PHOT: IN ACM_CLOUD -> CANOPY_SHADE'
-!IVAI
-                 
 ! get optical properties of of subgrid cloud hydrometeors
                      CALL GET_DROPLET_OPTICS( LEV, BLKTA, OWATER_FRAC, SEAICE_FRAC, SNOW_FRAC, LWC )     
                      CALL GET_ICE_OPTICS( LEV, BLKTA, IWC )     
-                     CALL GET_AGGREGATE_OPTICS( LEV, RWC, SWC, GWC )     
+                     CALL GET_AGGREGATE_OPTICS( LEV, RWC, SWC, GWC )
 
 !...calculate the acm-cloud photolysis rates for all layers:
                      NEW_PROFILE = .FALSE.   
@@ -1708,13 +1650,22 @@ C...modules
      &                           BLKRJ_ACM, TAUC_AERO, TAU_TOT, TAUO3_TOP,
      &                           TAU_RAY, SSA, TAU_CLOUD, TOTAL_O3_COLUMN )
 
-!IVAI: 
-
-!                  IF (KOUNT < 3 ) print*, 'PHOT: AFTER NEW_OPTICS '
 !...Call new_optics for the cloudy fraction of the grid cell
 !...calculate the acm-cloud photolysis rates for combined (canopy plus resolved) model layers NLAYT
                   IF ( CANOPY_SHADE ) THEN
                     IF ( FRT_MASK(COL,ROW) > 0.) THEN
+
+! Above canopy layers
+                     DO L = 1, NLAYS
+                        CLOUDS_CAN  (NLAYC+L) = CLOUDS (L)
+                        CLDFRAC_CAN (NLAYC+L) = CLDFRAC (L)
+                     END DO
+
+! Sub-canopy layers: set to 1st model layer
+                     DO L = 1, NLAYC
+                        CLOUDS_CAN  (L) = CLOUDS (1)
+                        CLDFRAC_CAN (L) = CLDFRAC (1)
+                     END DO
 
                      NEW_PROFILE = .FALSE.
 ! Run new optics only on NLAYS out of NLAYT combined layers
@@ -1733,8 +1684,6 @@ C...modules
      &                  TOTAL_O3_COLUMN_CAN )                !inout:     scalar
                     END IF
                   END IF
-!                  IF (KOUNT < 3 ) print*, 'PHOT: AFTER NEW_OPTICS -> CANOPY_SHADE '
-!IVAI
 
 !...load diagnostic file arrays
 !...compute a cloud-fraction weighted average of ETOT_SFC and TAU_TOT
@@ -1846,14 +1795,11 @@ C...modules
 
             END IF ! KOUNT
 
-! Print up to KOUNT canopy columns
             KOUNT = KOUNT + 1
            END IF ! FRT_MASK
          END IF ! CANOPY_SHADE 
          END IF ! .FALSE.
 ! End Print
-
-!IVAI
 
 !------------------------CANOPY PHOTOLYSIS CORRECTION/REDUCTION Section NOAA-ARL-------------------------------------------
 !Conditions to reduce weighted average of photolysis rates (RJ) due to canopy shading (if user-defined=true); P. C. Campbell
@@ -1999,7 +1945,6 @@ C...modules
 
               END DO  !end loop on model layers
 
-!IVAI
 ! Work out correction factors for layers above and below canopy (resolved model layers plus canopy layers)
               DO L = 1, NLAYT       ! from top to bottom of combined (canopy plus resolved model) layers
 
@@ -2044,36 +1989,8 @@ C...modules
                  RJ_CAN( COL,ROW, L, IPHOT ) = RJ_CAN( COL,ROW, L, IPHOT )*RJ_CORRM( COL,ROW, L )
               END FORALL  ! Loop on layers and IPHOT
 
-!IVAI
-! Print after RJ_CORR correction
-! Print up to KOUNT number of canopy columns
-!           IF (KOUNT < 3 ) THEN
-
-!              DO L = 1, 3 ! NLAYS (from bottom to model top)
-!                 print*, 'PHOT RJ_CORR MOD: L= ', L,
-!    &              RJ( COL,ROW, L, LO3O1D), RJ_CORR( COL,ROW )
-
-!                print*, 'PHOT RJ_CORR CAN: L= ', NLAYC + L,
-!    &              RJ_CAN( COL,ROW, NLAYC + L, LO3O1D), RJ_CORRM( COL,ROW, NLAYC + L )
-
-!             END DO ! NLAYS
-
-!             DO L = 1, NLAYC ! from bottom to top of canopy
-!                print*, 'PHOT RJ_CORR CAN: L= ', L,
-!    &              RJ_CAN( COL,ROW, L, LO3O1D), RJ_CORRM( COL,ROW, L )
-!             END DO
-
-!          END IF ! KOUNT
-
-! Print up to KOUNT canopy columns
-!          KOUNT = KOUNT + 1
-
-! End Print
                 END IF ! FRT_MASK
               END IF   ! CANOPY_SHADE
-
-!               print*, 'PHOT:  AFTER RJ CANOPY CORRECTION '
-!IVAI
 
                IF ( JTIME_CHK .AND. PHOTDIAG ) THEN ! compute clear sky reflection and transmission coefficients
                   IF ( ANY( CLOUDS ) ) THEN
@@ -2128,50 +2045,22 @@ C...modules
 
          VARNM = 'COSZENS'
          IF ( .NOT. WRITE3( CTM_RJ_1, VARNM, ODATE, OTIME,
-!IVAI: 
 ! rb/hrdriver:
-!    &      o3_tend    ( :,:, NLAYS )) ) THEN ! "o3_tend"     rb/hrdriver
-     &      o3_tend    ( :,:, 1     ) ) ) THEN
-!    &      o3_tend    ( :,:, 2     )) ) THEN ! "o3_tend"     rb/hrdriver
+     &      o3_tend    ( :,:, 1     )) ) THEN ! "o3_tend"     rb/hrdriver
 !    &      o3_tend_can( :,:, 3     )) ) THEN ! "o3_tend_can" rb/hrdriver
 !
 ! canopy_transfer:
-!    &      CONC_MOD  (:,:, 2  , LGC_O3 )  ) ) THEN  ! O3 = 4
-!    &      CGRID      (:,:, 1 , LGC_O3 )  ) ) THEN  ! O3 = 4
+!    &      CONC_MOD  (:,:, 2  , LGC_O3 )  ) ) THEN  ! LGC_O3 = 4
+!    &      CGRID     (:,:, 1  , LGC_O3 )  ) ) THEN  ! 
 !    &      CONC_CAN  (:,:, 4  , LGC_O3 )  ) ) THEN  !
 !    &      CONC_2M   (:,:,      LGC_NO2)  ) ) THEN  !
-!    &      frctc2r(NLAYS    ,1,:,:)     ) ) THEN
-!    &  float(nfrct(NLAYS    , :,:  ))) ) THEN
-!    &  float(nfrct(NLAYS + 3, :,:  ))) ) THEN  ! 1st (bot) canopy layer
 !
 ! phot:
 !    &      RJ_CORRM( :,:,1 )        ) ) THEN
 !    &      RJ      ( :,:,1, LO3O1D) ) ) THEN
-!    &      RJ_CAN  ( :,:,3, LO3O1D) ) ) THEN 
-!    &      COSINE_ZENITH            ) ) THEN
+!    &      RJ_CAN  ( :,:,3, LO3O1D) ) ) THEN   ! 1st canopy layer
 !    &      Grid_Data%AREA (:,:)     ) ) THEN
-!
-! can_mask:
-!    &      FRT_mask) ) THEN
-!
-! can_levs_defn:
-!    &      TA_CAN  ( :,:,3 )        ) ) THEN 
-!    &      QV_CAN  ( :,:,3 )        ) ) THEN 
-!    &      PRES_CAN( :,:,4 )        ) ) THEN
-!    &      DENS_CAN( :,:,1 )        ) ) THEN  ! 1st canopy layer
 
-!    &      ZM      (:,:,1 )        ) ) THEN   ! 1st model  layer height ~ 23.9775m
-!    &      ZFULL   (:,:,1 )        ) ) THEN   ! 1st model  layer height ~ 41.37m to 48.15m
-!
-!    &      ZMID_CAN(:,:,NLAYS )    ) ) THEN   ! 1st model  layer (reversed layer order) <52.78m
-!
-!    &      ZMID_CAN (:,:,NLAYS + 1) ) ) THEN   ! top canopy layer (reversed layer order) <26.39m
-!    &      ZMOM_CAN (:,:,NLAYS + 1) ) ) THEN   ! top canopy layer (reversed layer order)
-!    &        ZF_CAN (:,:,3        ) ) ) THEN   ! = ZMOM_CAN(NLAYS + 1)
-
-!    &      SIGMID_CAN(:,:,NLAYS + 1) ) ) THEN
-!    &      SIGMOM_CAN(:,:,NLAYS + 1) ) ) THEN
-!IVAI
             XMSG = 'Error writing variable ' // VARNM
             CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          END IF
@@ -2263,94 +2152,37 @@ C...modules
 
          VARNM = 'JNO2'
          IF ( .NOT. WRITE3( CTM_RJ_1, VARNM, ODATE, OTIME, 
-! IVAI
 ! rb/hrdriver:
 !    &      o3_tend    ( :,:,1 )     ) ) THEN ! "o3_tend"     rb/hrdriver
-     &      o3_tend    ( :,:,2 )     ) ) THEN ! "o3_tend"     rb/hrdriver
-!    &      o3_tend_can( :,:,NLAYT )     ) ) THEN !
-!>   &      o3_tend_can( :,:,1     )     ) ) THEN ! NB. not defined at layers above NLAYS
-!    &      o3_tend_can( :,:,NLAYT-1)) ) THEN !
+     &      o3_tend    ( :,:,2 )     ) ) THEN !
+!>   &      o3_tend_can( :,:,1 )     ) ) THEN ! 
 ! canopy_transfer:
 !    &      CONC_MOD  (:,:, 1  , LGC_NO2)  ) ) THEN
 !    &      CONC_CAN  (:,:, 3  , LGC_O3 )  ) ) THEN
-!    &      CONC_2M   (:,:,    , LGC_NO2)  ) ) THEN
-!    & float(ifrct (NLAYS    ,1,:,:))    ) ) THEN
-!    & float(ifrct (NLAYT    ,1,:,:))    ) ) THEN   ! 1st (bot) canopy layer
-!
+!    &      CONC_2M   (:,:     , LGC_NO2)  ) ) THEN
 ! phot:
-!    &      RJ       ( :,:,1     , LNO2  )) ) THEN
-!    &      RJ       ( :,:,NLAYS , LO3O1D)) ) THEN
-!    &      RJ       ( :,:,1     , LO3O1D)) ) THEN
-!    &      RJ_CAN   ( :,:,NLAYT-NLAYC, LO3O1D)) ) THEN
-!    &      RJ_CAN   ( :,:,1, LNO2  )) ) THEN
-!    &      RJ_CORRM ( :,:,NLAYT-NLAYC)) ) THEN
-! can_levs_defn:
-!    &      TA_CAN   ( :,:,2 )       ) ) THEN 
-!    &      QV_CAN   ( :,:,2 )       ) ) THEN
-!    &      PRES_CAN ( :,:,5 )       ) ) THEN  ! 2hy model layer
-!    &      PRES_CAN ( :,:,2 )       ) ) THEN
-!    &      DENS_CAN ( :,:,5 )       ) ) THEN  ! 2hy model layer
-!    &      DENS_CAN ( :,:,1 )       ) ) THEN  ! 2nd canopy layer
-!
-!    &      ZM       ( :,:,NLAYS)     ) ) THEN ! top model  layer height ~ 57,229.7m
-!    &      ZM       ( :,:,NLAYS - 1) ) ) THEN ! second to top    model layer ~ 49,654.2m 
-!    &      ZFULL    ( :,:,NLAYS - 1) ) ) THEN ! second to top    model layer ~ 47,529.9 to 53,107.2m
+!    &      RJ       ( :,:,1   , LNO2  )) ) THEN
+!    &      RJ_CAN   ( :,:,1   , LNO2  )) ) THEN
+!    &      RJ_CORRM ( :,:, NLAYT-NLAYC)) ) THEN
 
-!    &      ZMID_CAN (:,:,1)         ) ) THEN ! top    model layer height <57,229.7m
-!
-!    &      ZMID_CAN (:,:,NLAYS + 2) ) ) THEN ! 2nd canopy layer (reversed layer order) < 22.7274m
-!    &      ZMOM_CAN (:,:,NLAYS + 2) ) ) THEN
-!    &        ZF_CAN (:,:,2        ) ) ) THEN
-
-!    &      SIGMID_CAN(:,:,NLAYS + 2) ) ) THEN ! 2nd canopy layer
-! IVAI 
             XMSG = 'Error writing variable ' // VARNM
             CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          END IF
 
          VARNM = 'JO3O1D'
          IF ( .NOT. WRITE3( CTM_RJ_1, VARNM, ODATE, OTIME, 
-!IVAI
 ! rb/hrdriver:
 !    &      o3_tend    ( :,:,1 )          ) ) THEN !
-!    &      o3_tend_can( :,:, NLAYS-1 )   ) ) THEN ! NLAYS = NLAYT-NLAYC
 !    &      o3_tend_can( :,:,1 )          ) ) THEN !
 ! canopy_transfer:
 !    &      CONC_MOD  (:,:, 1  , LGC_O3 )  ) ) THEN  ! 1hy model layer
 !    &      CONC_CAN  (:,:, 1  , LGC_O3 )  ) ) THEN  ! 1st (bot) canopy payer
-!    &      CONC_CAN  (:,:, 1  , LGC_O3 )  ) ) THEN
 !    &      CONC_2M   (:,:,      LGC_O3 )  ) ) THEN
-!    &          massair(:,:,NLAYS - 1 )    ) ) THEN  ! 2hy layer
-!    &      massair_can(:,:,NLAYT)    ) ) THEN 
-!   C2R:
-!    &      frctc2r(NLAYT    ,1,:,:)      ) ) THEN
-!   R2C:
-!    &      frctr2c(NLAYS    ,1,:,:)      ) ) THEN
-!    &      frctr2c(NLAYT    ,1,:,:)      ) ) THEN  ! 1st (bot) canopy layer
 ! phot:
-     &      RJ       ( :,:,1 ,LO3O1D) ) ) THEN   ! bottom model  layer
+     &      RJ       ( :,:,1 ,LO3O1D) ) ) THEN   ! 1st (bot) model  layer
 !>   &      RJ_CAN   ( :,:,1 ,LO3O1D) ) ) THEN  
 !    &      RJ_CORRM ( :,:,1 )        ) ) THEN
-! can_levs_defn:
-!    &      TA_CAN   ( :,:,1 )        ) ) THEN   ! 1st canopy layer
-!    &      QV_CAN   ( :,:,1 )        ) ) THEN
-!    &      PRES_CAN ( :,:,4 )        ) ) THEN   ! 1hy model layer
-!    &      PRES_CAN ( :,:,1 )        ) ) THEN   ! 
-!    &      DENS_CAN ( :,:,4 )        ) ) THEN   ! 1hy model layer
-!    &      DENS_CAN ( :,:,1 )        ) ) THEN   ! 1st canopy layer
-!
-!    &      ZM       ( :,:,NLAYS - 2) ) ) THEN   ! 3rd top model layer height ~ 44,695.3m
-!    &      ZM       ( :,:,2 )        ) ) THEN   ! 2nd model layer height ~64.903-75.555m
-!    &      ZFULL    ( :,:,2 )        ) ) THEN   ! 2nd model layer height ~88.43-102.956m
 
-!    &      ZMID_CAN ( :,:,NLAYS - 1) ) ) THEN   ! 2nd model layer (reversed layer order) <75.183m
-!
-!    &      ZMID_CAN ( :,:,NLAYT    ) ) ) THEN   ! bottom canopy layer (reversed layer order) <10.56m
-!    &      ZMOM_CAN ( :,:,NLAYT    ) ) ) THEN   ! bottom canopy layer (reversed layer order)
-!    &        ZF_CAN ( :,:,1        ) ) ) THEN   ! = ZMOM_CAN (NLAYT)
-
-!    &      SIGMID_CAN(:,:,NLAYT    ) ) ) THEN   ! 1st (bot) canopy layer (reversed layer order)
-!IVAI
             XMSG = 'Error writing variable ' // VARNM
             CALL M3EXIT ( PNAME, JDATE, JTIME, XMSG, XSTAT1 )
          END IF

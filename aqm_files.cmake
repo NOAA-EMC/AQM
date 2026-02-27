@@ -195,7 +195,7 @@ list(APPEND aqm_CCTM_files
 	${PA}/pa_update.F
         ${PA}/PA_IRR_module.F
         ${PA}/PA_IRR_CTL.F
-	${PHOT}/CLOUD_OPTICS.F
+	#${PHOT}/CLOUD_OPTICS.F
 	${PHOT}/complex_number_module.F90
 	${PHOT}/OMI_1979_to_2019.dat
 	${PHOT}/opphot.F
@@ -262,6 +262,7 @@ list(APPEND aqm_CCTM_files
         ${localCCTM}/can_levs_defn.F90
         ${localCCTM}/can_mask.F90
         ${localCCTM}/can_trans_mod.F90
+        ${localCCTM}/CLOUD_OPTICS.F
 	#Sub-canopy codes could also use EBI solver if needed (comment out as using RB now)
 	#        ${localCCTM}/hrdata_mod.F
 	#        ${localCCTM}/hrdriver.F

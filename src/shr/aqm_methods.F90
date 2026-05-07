@@ -385,8 +385,8 @@ logical function envyn(name, description, defaultval, status)
       envyn = aqm_emis_ispresent("biogenic")
     case ('CTM_DEPVFILE')
       envyn = config % ctm_depvfile
-    case ('CTM_PMDIAG')
-      envyn = config % ctm_pmdiag
+    case ('CTM_AQDIAG')
+      envyn = config % ctm_aqdiag
     case ('CTM_PHOTDIAG')
       envyn = config % ctm_photdiag
     case ('CTM_PT3DEMIS')
@@ -1894,7 +1894,7 @@ LOGICAL FUNCTION WRITE3_REAL4D( FNAME, VNAME, JDATE, JTIME, BUFFER )
       if (aqm_rc_check(localrc, msg="Failure to retrieve model output state", &
         file=__FILE__, line=__LINE__)) return
 
-      do s = 0, config % species % ndiag - 2
+      do s = 0, config % species % ndiag - 4
         stateOut % tr(:,:,:,config % species % p_diag_beg + s) = &
           buffer(:,:,:,p_pm25at + s)
       end do

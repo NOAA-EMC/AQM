@@ -90,8 +90,9 @@
    real  (kind=4), dimension( :, :, : ), allocatable, save :: DENS_CAN       ! mass density (Kg/m^3)
 ! gas-phase arrays
    real (kind=8), dimension( :, :, :, : ), allocatable, save :: KHETERO_CAN ! aerosols heterogeneous rx rates
-   real (kind=4), dimension( :, :, :, : ), allocatable, save :: CONC_CAN   ! concentrations (including gas and aerosols)
-   real (kind=4), dimension( :, :, :, : ), allocatable, save :: CONC_MOD   ! concentrations (including gas and aerosols)
+   real (kind=4), dimension( :, :, :, : ), allocatable, save :: CONC_CAN    ! concentrations (including gas and aerosols)
+   real (kind=4), dimension( :, :, :, : ), allocatable, save :: CONC_MOD    ! concentrations (including gas and aerosols)
+   real (kind=4), dimension( :, :, :    ), allocatable, save :: O3_TEND_CAN ! ozone tendency gas-phase on combined canopy plus model layers
 ! gas-phase conc. 2m diagnostics
    real  (kind=4), dimension( :, :, : ), allocatable, save :: CONC_2M
 
@@ -104,7 +105,7 @@
               ta3, qv3, ws3, pres3, dens3, klower_can, zmom_can, zmid_can, sigmom_can, sigmid_can, &
               ZH_CAN, ZF_CAN, &
               TA_CAN, QV_CAN, WS_CAN, PRES_CAN, DENS_CAN, &
-              KHETERO_CAN, CONC_CAN, CONC_MOD, CONC_2M, &
+              KHETERO_CAN, CONC_CAN, O3_TEND_CAN, CONC_MOD, CONC_2M, &
               init_can_levs, get_can_levs
 
    contains
@@ -139,9 +140,10 @@
    allocate (                                         &
              kmod      (NCOLS, NROWS, NLAYS),         &
 ! gas-phase array
-             CONC_MOD (NCOLS, NROWS, NLAYS, NSPCSD), &
-             CONC_CAN (NCOLS, NROWS, NLAYT, NSPCSD), &
-             CONC_2M  (NCOLS, NROWS,        NSPCSD), &
+             CONC_MOD  (NCOLS, NROWS, NLAYS, NSPCSD), &
+          O3_TEND_CAN  (NCOLS, NROWS, NLAYT)        , &
+             CONC_CAN  (NCOLS, NROWS, NLAYT, NSPCSD), &
+             CONC_2M   (NCOLS, NROWS,        NSPCSD), &
     KHETERO_CAN(NHETERO,NCOLS, NROWS, NLAYT), &
                                   zmid     (NLAYS)  , &
                                   zmom     (NLAYS+1)  , & ! Same as zfull !
@@ -212,10 +214,15 @@
 ! gas-phase arrays
    KHETERO_CAN(:,:,:,:) = 0.0D0
 
+   O3_TEND_CAN (:,:,:)= 0.0
+
 ! Initialize FIRSTIME only!
    CONC_MOD (:,:,:,:) = CONC (:,:,:,:) ! FIRSTIME
 
+!... First, carry over original model values for the matching layers
    CONC_CAN(:,:,NLAYC+1:NLAYT,:) = CONC(:,:,1:NLAYS,:) ! FIRSTIME
+
+!... Initialize the canopy layers with 1hy layer values
    CONC_CAN(:,:,3            ,:) = CONC(:,:,1,      :)       ! FIRSTIME
    CONC_CAN(:,:,2            ,:) = CONC(:,:,1,      :)       ! FIRSTIME
    CONC_CAN(:,:,1            ,:) = CONC(:,:,1,      :)       ! FIRSTIME

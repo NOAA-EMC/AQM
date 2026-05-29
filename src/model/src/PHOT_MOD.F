@@ -115,7 +115,6 @@ C-----------------------------------------------------------------------
       REAL, ALLOCATABLE  :: RJ_RES_CAN  ( :, :, :, : ) ! resolved cloud J-values (min-1)
       REAL, ALLOCATABLE  :: RJ_SUB_CAN  ( :, :, :, : ) ! subgrid cloud J-values (min-1)
       REAL, ALLOCATABLE  :: O3_TEND     ( :, :, : )    ! ozone tendency gas-phase on model layers
-      REAL, ALLOCATABLE  :: O3_TEND_CAN ( :, :, : )    ! ozone tendency gas-phase on combined canopy plus model layers
 !IVAI
       
       REAL, ALLOCATABLE  :: BLKHCHO( : )           ! formaldehyde concentration [ molecules/cm**3 ]
@@ -181,7 +180,6 @@ C-----------------------------------------------------------------------
      &              RJ_SUB  ( NCOLS, NROWS, NLAYS, NPHOTAB ), 
 !IVAI
      &              O3_TEND    ( NCOLS, NROWS, NLAYS ),
-     &              O3_TEND_CAN( NCOLS, NROWS, NLAYT ),
      &              RJ_CAN     ( NCOLS, NROWS, NLAYT, NPHOTAB ),
      &              RJ_RES_CAN ( NCOLS, NROWS, NLAYT, NPHOTAB ),
      &              RJ_SUB_CAN ( NCOLS, NROWS, NLAYT, NPHOTAB ),STAT = ALLOCSTAT )
@@ -202,7 +200,7 @@ C-----------------------------------------------------------------------
 
 !IVAI
           RJ_CAN = 0.0; RJ_RES_CAN = 0.0; RJ_SUB_CAN = 0.0
-          O3_TEND= 0.0; O3_TEND_CAN= 0.0
+          O3_TEND= 0.0
 !IVAI
           
       END SUBROUTINE INIT_PHOT_SHARED

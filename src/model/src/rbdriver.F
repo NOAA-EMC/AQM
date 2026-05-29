@@ -82,7 +82,7 @@ C**********************************************************************
       USE CGRID_SPCS            ! CGRID mechanism species
       USE UTILIO_DEFN
       USE PHOT_MOD, Only: INIT_PHOT_SHARED, RJ,                    ! photolysis rate, in-line module
-     &                    RJ_CAN, LO3O1D, O3_TEND, O3_TEND_CAN     !IVAI
+     &                    RJ_CAN, LO3O1D, O3_TEND                  !IVAI
       USE AEROSOL_CHEMISTRY
 !     USE DEGRADE_SETUP_TOX, ONLY : NCELLS, N_REACT, RXTANT_MAP
       USE DEGRADE_ROUTINES,  ONLY : NCELLS, N_REACT, RXTANT_MAP,
@@ -119,6 +119,7 @@ C**********************************************************************
 !      CONC_MOD        <= CONC       ! ALL CANOPY & NON-CANOPY COLUMNS !
 !      CONC_CAN(1,2,3) <= CONC(1)   ! ALL CANOPY & NON-CANOPY COLUMNS !
 !      RJ_CAN
+!      O3_TEND_CAN (:,:,1:NLAYT)
 ! =====================
 
       use can_trans_mod
@@ -608,7 +609,7 @@ c++++++++++++++++++++++++Debug section++++++++++++++++++++++++++++++++++
 
 ! NB. Species indices defined ! in "rbdata_mod", for O3 = 4)
 ! Species before gas-phase tendencies added
-      o3_old_can (:,:,:) = CONC_CAN(:,:,:,4) ! O3 = 4
+      o3_old_can (:,:,1:NLAYT) = CONC_CAN(:,:,1:NLAYT,4) ! O3 = 4
 
       End If  !CANOPY_SHADE
 
@@ -935,6 +936,11 @@ C  Update CGRID based on the degradation routines
       o3_tend (:,:,:) = ( o3_new(:,:,:) -  o3_old(:,:,:)) /
      &                  REAL (CHEMSTEP, 4) ! ppm  sec-1
 
+C... Update CONC_CAN/CGRID_CAN concentrations' upper-most (NLAYS:NLAYT) layers (rbsolver not called)
+C... Carry over the top (NLAYS-NLAYC:NLAYS) original model values for the matching layers
+      IF ( CANOPY_SHADE ) THEN
+         o3_old_can (:,:,NLAYT-NLAYC+1:NLAYT) = CONC(:,:,NLAYS-NLAYC+1:NLAYS,4)
+      END IF
 !IVAI
 
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
@@ -1205,17 +1211,19 @@ C  Update CGRID based on the degradation routines
 C... Update CONC_CAN/CGRID_CAN concentrations' upper-most (NLAYS:NLAYT) layers (rbsolver not called)
 C... Carry over the top (NLAYS-NLAYC:NLAYS) original model values for the matching layers
       CONC_CAN(:,:,NLAYT-NLAYC+1:NLAYT,:) = CONC(:,:,NLAYS-NLAYC+1:NLAYS,:)
+      CONC_MOD(:,:,NLAYS-NLAYC+1:NLAYS,:) = CONC(:,:,NLAYS-NLAYC+1:NLAYS,:)
 
 ! Species after gas-phase (NB. only canopy-grid cells are updated)
-      o3_new_can (:,:,:) = CONC_CAN(:,:,:,4) ! O3 = 4
+      o3_new_can  (:,:,1:NLAYT) = CONC_CAN(:,:,1:NLAYT,4) ! O3 = 4
 
-      o3_tend_can (:,:,:) = ( o3_new_can(:,:,:) -  o3_old_can(:,:,:)) /
+      o3_tend_can (:,:,1:NLAYT) = ( o3_new_can (:,:,1:NLAYT) -  o3_old_can (:,:,1:NLAYT)) /
      &                       REAL (CHEMSTEP, 4) ! ppmv sec-1
 
 !===============================================================================
 ! Gather tracer concentration from canopy layers into model resolved layers (flag = 1)
 !===============================================================================
 
+! NB. CONC_MOD is updated here in canopy after gas-phase tendencies
       CALL canopy_transfer(CONC, JDATE, JTIME, 1 )
 
 ! ===================
@@ -1227,9 +1235,8 @@ C... Carry over the top (NLAYS-NLAYC:NLAYS) original model values for the matchi
 ! ===================
 
 ! Update CGRID for advection, deposition etc.
-!      DO L = 1, NLAYS
-! Update only bottom 3 hybrid layers
-      DO L = 1, 3
+! Do NOT update the top NLAYC combined layers, as canopy gas-phase doesn't run on these layers
+      DO L = 1, NLAYS-NLAYC
          DO R = 1, NROWS
             DO C = 1, NCOLS
 
@@ -1261,8 +1268,8 @@ c++++++++++++++++++++++++Debug section++++++++++++++++++++++++++++++++++
                S = CGRID_INDEX( SPC )
 
 !!! Udate CONC with CONC_MOD after C2R mass transfer from CONC_CAN
-! All levels or bottom 3 hybrid layers
-               CONC(C,R,L,S) = CONC_MOD(C,R,L,S)
+               CONC(C,R,L,S) = CONC_MOD(C,R,L,S)   !  <=========== UPDATE GAS-PHASE CANOPY COLUMNS
+! Comment out to NOT update canopy columns
 
             END DO
 

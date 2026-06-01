@@ -37,8 +37,8 @@ module aqm_config_mod
     logical                   :: biosw_yn      = .false.
     logical                   :: ctm_aod       = .false.
     logical                   :: ctm_depvfile  = .false.
-    logical                   :: ctm_photdiag  = .false.  !IVAI
-    logical                   :: ctm_pmdiag    = .false.
+    logical                   :: ctm_photdiag  = .false.
+    logical                   :: ctm_aqdiag    = .false.
     logical                   :: ctm_wb_dust   = .false.
     logical                   :: mie_optics    = .false.
     logical                   :: init_conc     = .false.
@@ -213,7 +213,6 @@ contains
       rcToReturn=rc)) &
       return  ! bail out
 
-!IVAI
     ! -- read diagnostic settings
     call ESMF_ConfigGetAttribute(cf, config % ctm_photdiag, &
       label="ctm_photdiag:", default=.false., rc=localrc)
@@ -222,10 +221,9 @@ contains
       file=__FILE__,  &
       rcToReturn=rc)) &
       return  ! bail out
-!IVAI
 
-    call ESMF_ConfigGetAttribute(cf, config % ctm_pmdiag, &
-      label="ctm_pmdiag:", default=.false., rc=localrc)
+    call ESMF_ConfigGetAttribute(cf, config % ctm_aqdiag, &
+      label="ctm_aqdiag:", default=.false., rc=localrc)
     if (ESMF_LogFoundError(rcToCheck=localrc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__,  &
       file=__FILE__,  &
@@ -365,7 +363,7 @@ contains
     end if
 
     ! -- initialize diagnostic tracers
-    if (config % ctm_pmdiag) config % species % ndiag = 4
+    if (config % ctm_aqdiag) config % species % ndiag = 6
 
   end subroutine aqm_config_species_init
 
@@ -616,7 +614,6 @@ contains
         rcToReturn=rc)) &
         return  ! bail out
     end if
-!IVAI
     if (config % ctm_photdiag) then
       call ESMF_LogWrite(trim(name) // ": config: read: ctm_photdiag: true", &
         ESMF_LOGMSG_INFO, rc=localrc)
@@ -634,7 +631,6 @@ contains
         rcToReturn=rc)) &
         return  ! bail out
     end if
-!IVAI
     if (config % ctm_wb_dust) then
       call ESMF_LogWrite(trim(name) // ": config: read: ctm_wb_dust: true", &
         ESMF_LOGMSG_INFO, rc=localrc)

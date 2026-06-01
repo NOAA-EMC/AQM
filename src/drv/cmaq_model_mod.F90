@@ -144,10 +144,10 @@ contains
     call cmaq_export(stateOut % tr, stateIn % prl, stateIn % temp, config % species % p_aqm_beg)
     if (config % verbose) call cmaq_conc_log(trim(config % name) // ": export")
 
-    if (config % ctm_pmdiag) call cmaq_pm_export(stateOut % tr, config % species % p_diag_beg)
+    if (config % ctm_aqdiag) call cmaq_aq_export(stateOut % tr, config % species % p_diag_beg)
 
     ! -- update products
-    call cmaq_prod_update(stateOut % tr, config % species % p_diag_beg, config % ctm_pmdiag, rc=localrc)
+    call cmaq_prod_update(stateOut % tr, config % species % p_diag_beg, config % ctm_aqdiag, rc=localrc)
     if (aqm_rc_check(localrc, msg="Failed to update products", &
       file=__FILE__, line=__LINE__, rc=rc)) return
 

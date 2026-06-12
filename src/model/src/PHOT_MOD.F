@@ -110,12 +110,10 @@ C-----------------------------------------------------------------------
       REAL, ALLOCATABLE  :: RJ_SUB  ( :, :, :, : ) ! subgrid cloud J-values (min-1)
       REAL, ALLOCATABLE  :: ETOT_SFC_WL ( :,:,: )  ! total downward irradiance at sfc [ Watts / m**2  ]
 
-!IVAI
       REAL, ALLOCATABLE  :: RJ_CAN      ( :, :, :, : ) ! average grid cell J-values (min-1)
       REAL, ALLOCATABLE  :: RJ_RES_CAN  ( :, :, :, : ) ! resolved cloud J-values (min-1)
       REAL, ALLOCATABLE  :: RJ_SUB_CAN  ( :, :, :, : ) ! subgrid cloud J-values (min-1)
       REAL, ALLOCATABLE  :: O3_TEND     ( :, :, : )    ! ozone tendency gas-phase on model layers
-!IVAI
       
       REAL, ALLOCATABLE  :: BLKHCHO( : )           ! formaldehyde concentration [ molecules/cm**3 ]
       REAL, ALLOCATABLE  :: BLKCO  ( : )           ! CO concentration [ molecules/cm**3 ]
@@ -178,12 +176,11 @@ C-----------------------------------------------------------------------
           ALLOCATE( RJ      ( NCOLS, NROWS, NLAYS, NPHOTAB ),
      &              RJ_RES  ( NCOLS, NROWS, NLAYS, NPHOTAB ),
      &              RJ_SUB  ( NCOLS, NROWS, NLAYS, NPHOTAB ), 
-!IVAI
      &              O3_TEND    ( NCOLS, NROWS, NLAYS ),
      &              RJ_CAN     ( NCOLS, NROWS, NLAYT, NPHOTAB ),
      &              RJ_RES_CAN ( NCOLS, NROWS, NLAYT, NPHOTAB ),
      &              RJ_SUB_CAN ( NCOLS, NROWS, NLAYT, NPHOTAB ),STAT = ALLOCSTAT )
-!IVAI
+
           IF ( ALLOCSTAT .NE. 0 ) THEN
               XMSG = 'Failure allocating photolysis rate arrays'
               CALL M3EXIT ( 'INIT_PHOT_SHARED', 0, 0, XMSG, XSTAT1 )
@@ -198,11 +195,9 @@ C-----------------------------------------------------------------------
           RJ = 0.0; RJ_RES = 0.0; RJ_SUB = 0.0
           ETOT_SFC_WL = 0.0
 
-!IVAI
           RJ_CAN = 0.0; RJ_RES_CAN = 0.0; RJ_SUB_CAN = 0.0
           O3_TEND= 0.0
-!IVAI
-          
+
       END SUBROUTINE INIT_PHOT_SHARED
 
 C///////////////////////////////////////////////////////////////////////

@@ -255,7 +255,7 @@ list(APPEND aqm_CCTM_files
 	${localCCTM}/CSQY_DATA.F
 	${localCCTM}/isocom.f
 	${localCCTM}/aero_depv.F
-	#IVAI Sub-canopy effects----
+	#Sub-canopy effects----
 	${localCCTM}/phot.F
         ${localCCTM}/PHOT_MOD.F
 	${localCCTM}/centralized_io_util_module.F
@@ -272,7 +272,7 @@ list(APPEND aqm_CCTM_files
         ${localCCTM}/rbinit.F
         #${localCCTM}/rbsolver.F
         ${localCCTM}/GRID_CONF.F
-	#IVAI Sub-canopy effects----
+	#Sub-canopy effects----
         ${localCCTM}/RUNTIME_VARS.F
         ${localCCTM}/get_env_mod.f90
         ${localCCTM}/centralized_io_module.F 

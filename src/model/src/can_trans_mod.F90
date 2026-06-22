@@ -48,7 +48,7 @@ module can_trans_mod
 
    real(kind=4), dimension(:,:,:), allocatable, save :: massair_can, massair
    real(kind=4), dimension(:), allocatable :: mass_resolved, mass_canopy, mmr_canopy, mmr_resolved, vmr_resolved, &
-                                              conc3, conc_can3, vmr_canopy
+                                              conc_3cy, vmr_canopy
    integer(kind=4), dimension(:, :, :), allocatable, save    :: nfrct
    integer(kind=4), dimension(:, :, :, :), allocatable, save :: ifrct
    real(kind=4),    dimension(:, :, :, :), allocatable, save :: frctr2c, frctc2r
@@ -56,7 +56,7 @@ module can_trans_mod
 
 
    public :: massair_can, massair, mass_resolved, mass_canopy, mmr_canopy, mmr_resolved, vmr_resolved, &
-       conc3, conc_can3, vmr_canopy, &
+       conc_3cy, vmr_canopy, &
        FOR_CONV, REV_CONV, &
        nfrct, ifrct, frctr2c, frctc2r, init_can_trans, canopy_transfer
 
@@ -108,8 +108,7 @@ module can_trans_mod
               mmr_resolved (NLAYS + 1), &
               vmr_resolved (NLAYS + 1), &
               mass_resolved(NLAYS), &
-              conc3        (NLAYS), &
-              conc_can3    (NLAYC), &
+              conc_3cy     (NLAYC), &
               nfrct  (NLAYT,    NCOLS, NROWS), &
               ifrct  (NLAYT, 2, NCOLS, NROWS), &
               frctr2c(NLAYT, 2, NCOLS, NROWS), &
@@ -121,8 +120,7 @@ module can_trans_mod
    massair_can(:,:,:) = 0.
    massair    (:,:,:) = 0.
 
-   conc_can3(:)=0.
-   conc3    (:)=0.
+   conc_3cy(:)=0.
    mass_canopy(:) = 0.
    mmr_canopy (:) = 0.
    vmr_canopy (:) = 0.
@@ -460,12 +458,9 @@ module can_trans_mod
 ! Flip resolved layer arrays into a new array for use here
          do k = 1, NLAYS        ! from bottom to top
             II = NLAYS + 1 - k  ! from top to bottom of resolved model layers
-            ! conc3(1)     is top model layer
-            ! conc3(NLAYS) is 1st (bottom) model layer
-            ! Paul's chem_tr is our conc3 = vmr_resolved
-            ! conc3(II) = CONC(COL,ROW, k, S) ! ppm
-! Oct9:     ! conc3(II) = CONC_MOD(COL,ROW, k, S) ! ppm
-            ! Paul's chem_tr is our vmr_resolved =conc3
+            ! vmr_resolved(1)     is top model layer
+            ! vmr_resolved(NLAYS) is 1st (bottom) model layer
+            ! Paul's chem_tr is our vmr_resolved
             vmr_resolved(II) = CONC_MOD(COL,ROW, k, S) ! ppm
 ! Feb10: use CONC instead of CONC_MOD
 !           vmr_resolved(II) = CONC(COL,ROW, k, S) ! ppm
@@ -483,8 +478,8 @@ module can_trans_mod
 ! (ii): Canopy shaded layers
       do kc = 1, NLAYC
          k = kcan3(COL,ROW, kc) ! kcan3(1,2,3) = 65,66,67
-         ! Paul's tracers_can is our conc_can3 array
-         conc_can3 (kc) = vmr_canopy(k)
+         ! Paul's tracers_can is our conc_3cy array
+         conc_3cy (kc) = vmr_canopy(k)
       end do
 
 !--------------
@@ -506,7 +501,6 @@ module can_trans_mod
 
 ! ...fetch gas volume mix. ratios [ppm] and convert to mass mixing ratios [ug kg-1]
             ! Paul's conc is our mmr_canopy
-            !mmr_canopy(kk) = REAL( REVERSE_CONV(isp), 4 ) * conc3(k)      ! ug kg-1
             mmr_canopy(kk) = REV_CONV(isp) * vmr_resolved(k)
          end do
 
@@ -515,7 +509,7 @@ module can_trans_mod
             kc = kcan3(COL,ROW, k)
 
 ! ...fetch gas volume mix. ratios [ppm] and convert to mass mixing ratios [ug kg-1]
-            mmr_canopy(kc) = REV_CONV(isp) * conc_can3(k)  ! ug kg-1
+            mmr_canopy(kc) = REV_CONV(isp) * conc_3cy(k)  ! ug kg-1
          end do
 
 ! Temporary diagnostic output
@@ -568,7 +562,7 @@ module can_trans_mod
 
 ! (3a) Convert back m.m.r. [ug kg-1] to volume mix. ratios [ppm]
             ! NB. This is CONC_MOD to be used in gas-phase hrdriver call on canopy columns
-            ! Paul's chem_tr is our conc3 = vmr_resolved
+            ! Paul's chem_tr is our vmr_resolved
             vmr_resolved(k)            = FOR_CONV(isp) *  mmr_resolved(k)    ! ppm
 
          end do
@@ -666,11 +660,9 @@ module can_trans_mod
 ! (i): Model resolved layers
       do k = 1, NLAYS        ! from bottom to top
          II = NLAYS + 1 - k  ! from top to bottom of resolved model layers NLAYS+1 ???
-         ! Paul's chem_tr is our conc3 = vmr_resolved (CONC_mod)
-         ! conc3(1)     is top model layer
-         ! conc3(NLAYS) is 1st (bottom) model layer
-         ! conc3(II) = CONC     (COL,ROW, k, S) ! ppm
-         conc3(II) = CONC_MOD(COL,ROW, k, S) ! ppm
+         ! Paul's chem_tr is our vmr_resolved (CONC_mod)
+         ! CONC_MOD(1)     is top model layer
+         ! CONC_MOD(NLAYS) is 1st (bottom) model layer
          vmr_resolved(II) = CONC_MOD(COL,ROW, k, S) ! ppm
       end do
 
@@ -682,8 +674,7 @@ module can_trans_mod
 
 ! ...fetch gas volume mix. ratios [ppm] and convert to mass mixing ratios [ug kg-1]
          ! Paul's conc is our mmr_resolved
-! Oct9:  mmr_resolved(kk) = REAL( REVERSE_CONV(isp), 4 ) * conc3(k)      ! ug kg-1
-         mmr_resolved(k) = REV_CONV(isp) * conc3(k)                      ! ug kg-1
+         mmr_resolved(k) = REV_CONV(isp) * vmr_resolved(k)               ! ug kg-1
       end do
 
 !  (1) Convert the original model domain values in the current column to mass from mass mixing ratio:
@@ -754,8 +745,7 @@ module can_trans_mod
 !  a canopy exists:
             do kk = 1, NLAYS
                k = kmod(COL, ROW, kk)
-               ! Paul's chem_tr is our conc3 = vmr_resolved (CONC_mod) <================
-!              conc3(kk)         = FORWARD_CONV(isp) * mmr_canopy(k)  ! ppm
+               ! Paul's chem_tr is our vmr_resolved (CONC_mod) <================
                vmr_resolved (kk) = FOR_CONV(isp) * mmr_canopy(k)  ! ppm
             end do
 
@@ -766,15 +756,14 @@ module can_trans_mod
                k = kmod(COL, ROW, kk)
 
                ! Paul's trppm is our vmr_canopy (CONC_can)
-!              vmr_canopy(k) = conc3(kk)         !ppm
                vmr_canopy(k) = vmr_resolved(kk)  !ppm
             end do
 !
 !  (4) Fill the canopy layers with the new mass mixing ratios
             do kc = 1, NLAYC
                k  = kcan3(COL,ROW, kc)
-               ! Paul's tracers_can is our conc_can3              <====================
-               conc_can3(kc)  = FOR_CONV(isp) * mmr_canopy(k) ! ppm
+               ! Paul's tracers_can is our conc_3cy              <====================
+               conc_3cy(kc)  = FOR_CONV(isp) * mmr_canopy(k) ! ppm
             end do
 
 ! (ii): Canopy shaded layers (for hrdriver) (trppm from mach_gas_canopy)
@@ -784,7 +773,7 @@ module can_trans_mod
                ! kcan3(2) = 66
                ! kcan3(3) = 67
                k = kcan3(COL,ROW, kc)
-               vmr_canopy(k) = conc_can3(kc)                      !ppm
+               vmr_canopy(k) = conc_3cy(kc)                      !ppm
             end do
 
 ! Temporary diagnostic output

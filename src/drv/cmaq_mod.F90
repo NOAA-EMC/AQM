@@ -54,7 +54,7 @@ module cmaq_mod
   public :: cmaq_species_read
   public :: cmaq_export
   public :: cmaq_import
-  public :: cmaq_pm_export
+  public :: cmaq_aq_export
 
 contains
 
@@ -358,7 +358,7 @@ contains
 
   end subroutine cmaq_export
 
-  subroutine cmaq_pm_export(tracers, diag_index, rc)
+  subroutine cmaq_aq_export(tracers, diag_index, rc)
 
     real(AQM_KIND_R8), intent(out) :: tracers(:,:,:,:)
     integer,           intent(in)  :: diag_index
@@ -367,6 +367,8 @@ contains
     ! -- local variables
     integer :: c, r, l, n
     real    :: pm25(my_ncols,my_nrows,nlays,1)
+    real    :: noy(my_ncols,my_nrows,nlays,1)
+    real    :: voc(my_ncols,my_nrows,nlays,1)
 
     ! -- begin
     if (present(rc)) rc = AQM_RC_SUCCESS
@@ -382,7 +384,29 @@ contains
       end do
     end do
 
-  end subroutine cmaq_pm_export
+    ! -- noy
+    call cmaq_prod_noy( noy, cgrid, nlays )
+    n = diag_index + 4
+    do l = 1, nlays
+      do r = 1, my_nrows
+        do c = 1, my_ncols
+          tracers( c,r,l,n ) = noy( c,r,l,1 )
+        end do
+      end do
+    end do
+ 
+    ! -- voc
+    call cmaq_prod_voc( voc, cgrid, nlays )
+    n = diag_index + 5
+    do l = 1, nlays
+      do r = 1, my_nrows
+        do c = 1, my_ncols
+          tracers( c,r,l,n ) = voc( c,r,l,1 )
+        end do
+      end do
+    end do
+
+  end subroutine cmaq_aq_export
 
   subroutine cmaq_conc_init(jdate, jtime, tstep, rc)
 
@@ -776,11 +800,11 @@ contains
 
   end subroutine cmaq_prod_units_get
 
-  subroutine cmaq_prod_update(tracers, start_index, pmdiag, rc)
+  subroutine cmaq_prod_update(tracers, start_index, aqdiag, rc)
 
     real(AQM_KIND_R8), intent(in)  :: tracers(:,:,:,:)
     integer,           intent(in)  :: start_index
-    logical,           intent(in)  :: pmdiag
+    logical,           intent(in)  :: aqdiag
     integer, optional, intent(out) :: rc
 
     ! -- local variables
@@ -803,7 +827,7 @@ contains
             select case ( trim(prod % species(n)) )
               case ("PM2.5")
                 ! --- diagnostic PM2.5
-                if ( n_ae_spc > 0 .and. pmdiag ) then
+                if ( n_ae_spc > 0 .and. aqdiag ) then
                   call cmaq_prod_pm25( pm25, cgrid, tracers, start_index, 1)
                   call aqm_prod_compute( prod, pm25, n, 1 )
                 end if
@@ -889,5 +913,84 @@ contains
     end if
 
   end subroutine cmaq_prod_pm25
+
+  subroutine cmaq_prod_noy( noy, cgrid, nlays_in)
+  
+    real,              intent(out) :: noy(:,:,:,:)
+    real,              intent(in)  :: cgrid(:,:,:,:)
+    integer,           intent(in)  :: nlays_in
+                        
+    ! -- local variables
+    integer :: i, spc
+    integer :: c, r, l
+                           
+    ! -- local parameters (updated species for CB6r5_aero7) 
+    character(len=*), parameter :: noy_species(*) = &
+      (/ "NO     ", "NO2    ", "NO3    ", "N2O5   ", "HONO   ", "HNO3   ", "PNA    ", "CRON   ", &
+         "CLNO2  ", "CLNO3  ", "PAN    ", "PANX   ", "OPAN   ", "NTR1   ", "NTR2   ", "INTR   "/)
+    real, parameter :: fac(16) = (/ 1.0, 1.0, 1.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,  &
+                                    1.0, 1.0, 1.0, 1.0 /)
+  
+    ! -- begin
+    noy = 0.
+  
+    if ( n_gc_spc > 0 ) then
+
+      do i = 1, 16
+        spc = index1( noy_species(i), n_gc_spc, gc_spc )
+        if (spc > 0) then
+          spc = spc + gc_strt - 1
+          do l = 1, nlays_in
+            do r = 1, my_nrows
+              do c = 1, my_ncols
+                noy( c,r,l,1 ) = noy( c,r,l,1 ) + fac(i) * cgrid( c,r,l,spc )
+              end do
+            end do
+          end do
+        end if
+      end do
+    end if
+
+  end subroutine cmaq_prod_noy
+
+  subroutine cmaq_prod_voc( voc, cgrid, nlays_in)
+
+    real,              intent(out) :: voc(:,:,:,:)
+    real,              intent(in)  :: cgrid(:,:,:,:)
+    integer,           intent(in)  :: nlays_in
+
+    ! -- local variables
+    integer :: i, spc
+    integer :: c, r, l
+
+    ! -- local parameters (updated species for CB6r5_aero7)                                          
+    character(len=*), parameter :: voc_species(*) = &
+      (/ "PAR    ", "ETHA   ", "PRPA   ", "MEOH   ", "ETH    ", "ETOH   ", "OLE    ", "ACET   ", &
+         "TOL    ", "XYLMN  ", "BENZENE", "FORM   ", "GLY    ", "KET    ", "ETHY   ", "ALD2   ", &
+         "IOLE   ", "ALDX   ", "ISOP   ", "TERP   ", "NAPH   ", "APIN    " /)
+    real, parameter :: fac(22) = (/ 1.0, 2.0, 3.0, 1.0, 2.0, 2.0, 2.0, 3.0, 7.0, 8.0, 6.0, 1.0,  &
+                                    3.0, 4.0, 2.0, 2.0, 4.0, 2.0, 5.0, 10.0, 10.0, 10.0 /)
+
+    ! -- begin
+    voc = 0.
+
+    if ( n_gc_spc > 0 ) then
+
+      do i = 1, 22
+        spc = index1( voc_species(i), n_gc_spc, gc_spc )
+        if (spc > 0) then
+          spc = spc + gc_strt - 1
+          do l = 1, nlays_in
+            do r = 1, my_nrows
+              do c = 1, my_ncols
+                voc( c,r,l,1 ) = voc( c,r,l,1 ) + fac(i) * cgrid( c,r,l,spc )
+              end do
+            end do
+          end do
+        end if
+      end do
+    end if
+
+  end subroutine cmaq_prod_voc
 
 end module cmaq_mod

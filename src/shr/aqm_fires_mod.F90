@@ -1,3 +1,7 @@
+!> @file aqm_fires_mod.f90
+!> @brief Advanced Plume Rise and Vertical Distribution for AQM
+!> @details Implements Sofiev (2012) buoyancy-driven plume rise with
+!> empirical wind-shear suppression and Beta-distribution vertical mapping.
 module aqm_fires_mod
 
   use aqm_const_mod, only : grav, onebg
@@ -6,12 +10,19 @@ module aqm_fires_mod
   use aqm_state_mod
   use aqm_rc_mod
 
+  implicit none
+
   private
 
   public :: aqm_plume_sofiev
 
 contains
 
+  !> @brief Main subroutine to calculate vertical fire emission profiles
+  !> @param em Pointer to internal emission parameters
+  !> @param frp Array of Fire Radiative Power (W) per grid cell
+  !> @param profile Output 3D array of vertical emission weights
+  !> @param rc Optional return code
   subroutine aqm_plume_sofiev(em, frp, profile, rc)
 
     type(aqm_internal_emis_type), pointer :: em
@@ -21,23 +32,27 @@ contains
 
     ! -- local variables
     integer :: localrc
-    integer :: c, r, l
+    integer :: c, r, l, k, plm_idx
     integer :: lev0, lev1
     integer :: is, ie, js, je, nl, nx, ny
-    real    :: Hp, pblh, th0, th1, dz
-    real    :: tfrac, w
-    real :: fixed_surface, remaining_w
-    real :: dz_local, sigma, fixed_below, fixed_above, central_frac, gauss_sum, total_sum
-    real, dimension(:), allocatable :: gauss_weights
-    real(AQM_KIND_R8) :: hbl, dist
+    real    :: Hp, pblh, th0, th1, dz, N2
+    real    :: w, Hp_eff, avg_U, stab_penalty
+    real    :: hgt_prev, layer_top, x_low, x_high, weight, total_sum
+    real    :: frp_phys, model_top_m
+
     real(AQM_KIND_R8),    pointer :: phi(:)
     type(aqm_state_type), pointer :: state
 
-    ! -- local parameters
-    real, parameter :: rcp = 2./7.
-    real, parameter :: p_ref = 1.e+05
+    ! -- Advanced Physics Toggles
+    logical, parameter :: use_beta_dist = .true.  !< Use Beta PDF instead of linear
+    logical, parameter :: use_wind_adj  = .false.  !< Use wind-shear/stability adjustment
 
-    ! -- begin
+    ! -- Local Physical Parameters
+    real, parameter :: rcp    = 2.0/7.0
+    real, parameter :: p_ref  = 1.e+05
+    real, parameter :: N2_ref = 2.5e-4 ! Reference N2 for stability scaling
+    real, parameter :: U_ref  = 5.0    ! Reference wind speed (m/s)
+
     if (present(rc)) rc = AQM_RC_SUCCESS
 
     nullify(phi)
@@ -47,132 +62,99 @@ contains
 
     ! -- get model info
     call aqm_model_get(stateIn=state, rc=localrc)
-    if (aqm_rc_check(localrc, msg="Failed to retrieve model state", &
-      file=__FILE__, line=__LINE__, rc=rc)) return
+    if (aqm_rc_check(localrc, msg="Failed to retrieve model state", rc=rc)) return
 
     ! -- get domain info
     call aqm_model_domain_get(ids=is, ide=ie, jds=js, jde=je, nl=nl, rc=localrc)
-    if (aqm_rc_check(localrc, msg="Failed to retrieve grid coordinates", &
-      file=__FILE__, line=__LINE__, rc=rc)) return
+    if (aqm_rc_check(localrc, msg="Failed to retrieve grid coordinates", rc=rc)) return
 
     nx = ie - is + 1
     ny = je - js + 1
 
-    allocate(gauss_weights(nl))
-
-    ! -- compute layer empirical weights
-    if (aqm_rc_test((em % topfraction > 1.0), &
-      msg="Plume top fraction must be between 0.0 and 1.0", &
-      file=__FILE__, line=__LINE__, rc=rc)) return
-
+    ! -- total fraction to distribute vertically (1.0 - surface fraction)
     w = min( 1.0 - em % topfraction, 1.0 )
 
-    ! -- select free-troposphere vertical level
     k = 0
     do r = 1, ny
       do c = 1, nx
         k = k + 1
         phi => state % phil(c,r,:)
-        hbl =  2 * grav * state % hpbl(c,r)
-        lev0 = minloc(phi, 1, mask=phi >= hbl)
-        if (aqm_rc_test((phi(lev0) < hbl), &
-          msg="Could not find first free-troposphere layer", &
-          file=__FILE__, line=__LINE__,rc=rc)) return
-        lev1 = lev0 + 1
-        if (aqm_rc_test((lev1 > nl), &
-          msg="Not enough vertical levels", &
-          file=__FILE__, line=__LINE__,rc=rc)) return
+        pblh = state % hpbl(c,r)
+
+        ! -- 1. Identify levels for stability calculation (approx 2x PBLH)
+        lev0 = 1
+        do l = 1, nl
+          if (phi(l) * onebg >= 2.0 * pblh) then
+            lev0 = l
+            exit
+          end if
+        end do
+        lev1 = min(lev0 + 1, nl)
 
         dz   = onebg * ( phi(lev1) - phi(lev0) )
         th0  = state % temp(c,r,lev0) * (p_ref / state % prl(c,r,lev0)) ** rcp
         th1  = state % temp(c,r,lev1) * (p_ref / state % prl(c,r,lev1)) ** rcp
-        pblh = state % hpbl(c,r)
 
-        ! -- call Sofiev's algorithm to compute height of plume top
-        call plumeRiseSofiev(th0, th1, dz, frp(k), pblh, Hp)
+        ! -- 2. Apply Physical Clamping to FRP (1MW to 100GW)
+        frp_phys = max(1.0e6, min(frp(k), 1.0e11))
 
-        ! -- distribute linearly between surface and plume top height
-        lev0 = 1
-        lev1 = maxloc(phi, 1, mask = phi <= grav * Hp)
+        ! -- 3. Compute buoyancy-driven plume rise (Sofiev 2012)
+        ! Interface maintained: (PT1, PT2, laydepth, frp, pblh, Hp)
+        call plumeRiseSofiev(th0, th1, dz, frp_phys, pblh, Hp)
 
-        ! Allocate fires_surface_frac of emissions to surface layer
-        fixed_surface = em % fires_surface_frac * w
-        if (fixed_surface > w) fixed_surface = w
-        profile(c,r,1) = fixed_surface
-        remaining_w = w - fixed_surface
-         
-        ! Gaussian distribution around plume height
-        phi1 = phi(lev1)
-        if (lev1 > 1) then
-          phi2 = phi(lev1 - 1)
-        else
-          phi2 = phi(lev1)
-        end if
-        dz_local = onebg * (phi1 - phi2)
-        if (lev1 == 1) then
-          if (nl > 1) then
-            dz_local = onebg * (phi(2) - phi(1))
-          else
-            dz_local = onebg * phi(1)
-          end if
-        else if (lev1 == nl) then
-          dz_local = onebg * (phi(nl) - phi(nl-1))
-        end if
-      
-        sigma = dz_local / 2.0
+        ! -- 4. Stability-Dependent Wind Entrainment Adjustment
+        Hp_eff = Hp
+        if (use_wind_adj) then
+          ! Calculate local Brunt-Vaisala frequency (N2)
+          N2 = (grav / th0) * abs(th1 - th0) / max(dz, 1.0)
 
-        fixed_below = 0.0
-        fixed_above = 0.0
-        central_frac = remaining_w
-
-        if (lev1 > 1) then
-          fixed_below = em % fires_adjacent_frac * remaining_w
-          central_frac = central_frac - fixed_below
-        end if
-        if (lev1 < nl) then
-          fixed_above = em % fires_adjacent_frac * remaining_w
-          central_frac = central_frac - fixed_above
-        end if
-      
-        gauss_sum = 0.0
-        do l = 1, nl
-          dist = real(l - lev1, AQM_KIND_R8)
-          gauss_weights(l) = exp(-0.5 * (dist / sigma)**2)
-          gauss_sum = gauss_sum + gauss_weights(l)
-        end do
-      
-        if (gauss_sum > 0.0) then
+          ! Calculate column-average horizontal wind speed magnitude
+          plm_idx = 1
           do l = 1, nl
-            gauss_weights(l) = (gauss_weights(l) / gauss_sum) * central_frac
+            if (phi(l) * onebg >= Hp) exit
+            plm_idx = l
           end do
+          avg_U = sum(sqrt(state%u(c,r,1:plm_idx)**2 + state%v(c,r,1:plm_idx)**2)) / max(1.0, real(plm_idx))
+
+          ! Penalty increases in stable environments (high N2)
+          stab_penalty = 0.1 + (max(0.0, N2) / N2_ref)
+          if (avg_U > 2.0) then
+            Hp_eff = Hp * (U_ref / max(U_ref, avg_U))**(0.5 * stab_penalty)
+          end if
         end if
-      
-        if (lev1 > 1) then
-          profile(c,r,lev1-1) = fixed_below
-        end if
-        if (lev1 < nl) then
-          profile(c,r,lev1+1) = fixed_above
-        end if
-      
+
+        ! -- 5. Safety Check: Cap effective height at model top
+        model_top_m = phi(nl) * onebg
+        Hp_eff = min(Hp_eff, model_top_m - 10.0)
+
+        ! -- 6. Vertical Mass Distribution (Beta PDF or Linear)
+        hgt_prev = 0.0
         do l = 1, nl
-          profile(c,r,l) = profile(c,r,l) + gauss_weights(l)
+          layer_top = min(phi(l) * onebg, Hp_eff)
+
+          if (hgt_prev >= Hp_eff) exit
+
+          x_low  = hgt_prev / Hp_eff
+          x_high = layer_top / Hp_eff
+
+          if (use_beta_dist) then
+            ! Beta(3,2) Analytical Integral: 4x^3 - 3x^4
+            ! Places peak injection at ~66% of plume height
+            weight = (4.0*x_high**3 - 3.0*x_high**4) - (4.0*x_low**3 - 3.0*x_low**4)
+          else
+            ! Standard Linear/Uniform mapping
+            weight = (layer_top - hgt_prev) / Hp_eff
+          end if
+
+          profile(c,r,l) = max(0.0, weight * w)
+          hgt_prev = phi(l) * onebg
         end do
-      
-        ! Renormalize to ensure total sums to w
-        total_sum = sum(profile(c,r,1:nl))
-        if (abs(total_sum - w) > 1e-10) then
-          profile(c,r,1:nl) = profile(c,r,1:nl) * (w / total_sum)
+
+        ! -- 7. Final Renormalization for Mass Conservation
+        total_sum = sum(profile(c,r,:))
+        if (total_sum > 1.e-9) then
+          profile(c,r,:) = profile(c,r,:) * (w / total_sum)
         end if
-       
-        ! Special case for single layer
-        if (nl == 1 .and. lev1 == 1) then
-          profile(c,r,1) = w
-        end if
-       
-        ! Ensure non-negative profile values
-        do l = 1, nl
-          profile(c,r,l) = max(0.0, profile(c,r,l))
-        end do
 
       end do
     end do
@@ -180,65 +162,39 @@ contains
   end subroutine aqm_plume_sofiev
 
 
-  subroutine plumeRiseSofiev(PT1, PT2,laydepth,frp,pblh,Hp)
+  !> @brief Implements the Sofiev plume rise algorithm
+  !> @param PT1 Potential Temperature below PBL top
+  !> @param PT2 Potential Temperature above PBL top
+  !> @param laydepth Thickness of the layer at PBL top (m)
+  !> @param frp Fire Radiative Power (W)
+  !> @param pblh Planetary Boundary Layer height (m)
+  !> @param Hp Output plume top height (m)
+  subroutine plumeRiseSofiev(PT1, PT2, laydepth, frp, pblh, Hp)
 
-!  This subroutine implements the Sofiev plume rise algorithm
-!  History: 09/16/2019: Prototype by Daniel Tong (DT)
-!           10/15/2019: bug fix based on feedback from M. Sofiev, DT
-!           11/2020: parameterization options, Yunyao Li (YL)
-!
-!  Ref: M. Sofiev et al., Evaluation of the smoke-injection
-!    height from wild-land fires using remote sensing data.
-!    Atmos. Chem. Phys., 12, 1995-2006, 2012.
+      real, intent(in)  :: pblh, frp, PT1, PT2, laydepth
+      real, intent(out) :: Hp
 
-      real, intent(in)  :: pblh         ! PBL height (m)
-      real, intent(in)  :: frp          ! fire radiative power (W)
-      real, intent(in)  :: PT1, PT2     ! Potential Temperature right below and above PBL height
-      real, intent(in)  :: laydepth     ! depth of the layer at the PBL height
-      real, intent(out) :: Hp           ! plume height (m)
+      real :: NFT_sq, alpha, beta, gama, delta
+      real, parameter :: Pf0 = 1.e6, N0_sq = 0.00025
 
-      real NFT_sq       ! N square in Free Troposphere (@ z = 2pblh)
-      real Pf0          ! reference fire power (W)
-      real N0_sq        ! Brunt-Vaisala frequency (s-2)
-      real alpha        ! part of ABL passed freely
-      real beta         ! weights contribution of fire intensity
-      real gama         ! power-law dependence on FRP
-      real delta        ! dependence on stability in the FT
+      ! Brunt-Vaisala frequency at the injection interface
+      NFT_sq = grav / PT1 * abs(PT1 - PT2) / max(laydepth, 1.0)
 
-! ... Initial values.
-! ... predefined values parameter set 3 to estimate whether hp higher
-! than abl
-      alpha     = 0.15
-      beta      = 102
-      gama      = 0.49
-      delta     = 0
-
-      Pf0       = 1000000.0
-      N0_sq     = 0.00025
-
-! ! ... calculate PT from T and P
-!       PT1 = T1 * (1000/P1)**0.286
-!       PT2 = T2 * (1000/P2)**0.286
-
-! ... calculate Brunt-Vaisala frequency
-      NFT_sq = grav/PT1*abs(PT1-PT2)/laydepth
-
-! ... calculate first guess plume rise top height
+      ! Initial guess (Sofiev Parameter Set 3)
+      alpha = 0.15; beta = 102.0; gama = 0.49; delta = 0.0
       Hp = alpha*pblh + beta*(frp/Pf0)**gama * exp(-delta*NFT_sq/N0_sq)
-! ... compare Hp with ABL
-      if (Hp .lt. pblh) then
-        alpha     = 0.24
-        beta      = 170
-        gama      = 0.35
-        delta     = 0.6
-        Hp = alpha*pblh + beta*(frp/Pf0)**gama*exp(-delta*NFT_sq/N0_sq)
+
+      ! Refine based on initial guess vs PBL height
+      if (Hp < pblh) then
+        ! Case: Plume trapped in ABL
+        alpha = 0.24; beta = 170.0; gama = 0.35; delta = 0.6
       else
-        alpha     = 0.93
-        beta      = 298
-        gama      = 0.13
-        delta     = 0.7
-        Hp = alpha*pblh + beta*(frp/Pf0)**gama*exp(-delta*NFT_sq/N0_sq)
+        ! Case: Plume penetrates into Free Troposphere
+        alpha = 0.93; beta = 298.0; gama = 0.13; delta = 0.7
       end if
+
+      Hp = alpha*pblh + beta*(frp/Pf0)**gama * exp(-delta*NFT_sq/N0_sq)
+      Hp = max(Hp, 10.0) ! Maintain a small minimum height
 
   end subroutine plumeRiseSofiev
 

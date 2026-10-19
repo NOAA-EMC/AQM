@@ -1344,7 +1344,7 @@ C...modules
                   IWC = 0.0
                   RWC = 0.0
                   SWC = 0.0
-                  RWC = 0.0
+                  GWC = 0.0
                   CALL CLEAR_HYDROMETEOR_OPTICS()
                END IF
 
